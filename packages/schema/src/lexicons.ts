@@ -33,7 +33,9 @@ function collectJsonFiles(root: string): string[] {
  *   with this package.
  */
 export function loadLexiconDocs(root: string = LEXICONS_DIR): LexiconDoc[] {
-  return collectJsonFiles(root).map((path) => JSON.parse(readFileSync(path, "utf8")) as LexiconDoc);
+  return collectJsonFiles(root)
+    .map((path) => JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>)
+    .filter((doc): doc is LexiconDoc => doc["lexicon"] === 1 && typeof doc["id"] === "string");
 }
 
 /**
