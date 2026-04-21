@@ -11,10 +11,16 @@
 #![allow(clippy::missing_panics_doc)]
 
 /// Raw json for the bundled `dev.idiolect.adapter` fixture.
-pub const ADAPTER_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/adapter.json"
-));
+pub const ADAPTER_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.adapter",
+  "framework":          "coq",
+  "versionRange":       "^8.20",
+  "invocationProtocol": { "kind": "subprocess" },
+  "isolation":          { "kind": "process" },
+  "author":             "did:plc:adapter-author",
+  "occurredAt":         "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.adapter` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -23,10 +29,18 @@ pub fn adapter() -> crate::Adapter {
 }
 
 /// Raw json for the bundled `dev.idiolect.bounty` fixture.
-pub const BOUNTY_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/bounty.json"
-));
+pub const BOUNTY_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.bounty",
+  "requester":  "did:plc:requester",
+  "wants": {
+    "$type":  "dev.idiolect.bounty#wantLens",
+    "source": { "language": "postgres-sql" },
+    "target": { "language": "atproto-lexicon" }
+  },
+  "constraints": "bidirectional, covers all nullable columns",
+  "occurredAt":  "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.bounty` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -35,10 +49,13 @@ pub fn bounty() -> crate::Bounty {
 }
 
 /// Raw json for the bundled `dev.idiolect.community` fixture.
-pub const COMMUNITY_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/community.json"
-));
+pub const COMMUNITY_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.community",
+  "name":        "syntactic-bootstrappers",
+  "description": "A small community converging on a shared parse-tree idiolect across Bluesky and HuggingFace.",
+  "createdAt":   "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.community` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -48,10 +65,15 @@ pub fn community() -> crate::Community {
 }
 
 /// Raw json for the bundled `dev.idiolect.correction` fixture.
-pub const CORRECTION_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/correction.json"
-));
+pub const CORRECTION_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.correction",
+  "encounter":  { "uri": "at://did:plc:example/dev.idiolect.encounter/abc" },
+  "path":       "/foo/bar",
+  "reason":     "lens-error",
+  "visibility": "public-detailed",
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.correction` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -61,10 +83,13 @@ pub fn correction() -> crate::Correction {
 }
 
 /// Raw json for the bundled `dev.idiolect.dialect` fixture.
-pub const DIALECT_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/dialect.json"
-));
+pub const DIALECT_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.dialect",
+  "owningCommunity": "at://did:plc:example/dev.idiolect.community/syntactic-bootstrappers",
+  "name":            "ud-en-2026",
+  "createdAt":       "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.dialect` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -73,10 +98,16 @@ pub fn dialect() -> crate::Dialect {
 }
 
 /// Raw json for the bundled `dev.idiolect.encounter` fixture.
-pub const ENCOUNTER_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/encounter.json"
-));
+pub const ENCOUNTER_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.encounter",
+  "lens":         { "uri": "at://did:plc:example/dev.idiolect.lens/abc123" },
+  "sourceSchema": { "uri": "at://did:plc:example/dev.idiolect.schema/src" },
+  "purpose":      "translate source to target",
+  "kind":         "invocation-log",
+  "visibility":   "public-detailed",
+  "occurredAt":   "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.encounter` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -86,10 +117,17 @@ pub fn encounter() -> crate::Encounter {
 }
 
 /// Raw json for the bundled `dev.idiolect.observation` fixture.
-pub const OBSERVATION_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/observation.json"
-));
+pub const OBSERVATION_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.observation",
+  "observer":   "did:plc:observer",
+  "method":     { "name": "weighted-correction-rate" },
+  "scope":      { "encounterKinds": ["production"] },
+  "output":     { "lenses": [] },
+  "version":    "1.0.0",
+  "visibility": "public-detailed",
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.observation` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -99,10 +137,16 @@ pub fn observation() -> crate::Observation {
 }
 
 /// Raw json for the bundled `dev.idiolect.recommendation` fixture.
-pub const RECOMMENDATION_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/recommendation.json"
-));
+pub const RECOMMENDATION_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.recommendation",
+  "issuingCommunity": "at://did:plc:example/dev.idiolect.community/syntactic-bootstrappers",
+  "conditions":       "when translating universal-dependencies trees to en-pos tags",
+  "lensPath": [
+    { "uri": "at://did:plc:example/dev.idiolect.lens/ud-to-en-pos" }
+  ],
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.recommendation` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -112,10 +156,15 @@ pub fn recommendation() -> crate::Recommendation {
 }
 
 /// Raw json for the bundled `dev.idiolect.retrospection` fixture.
-pub const RETROSPECTION_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/retrospection.json"
-));
+pub const RETROSPECTION_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.retrospection",
+  "encounter":      { "uri": "at://did:plc:example/dev.idiolect.encounter/abc" },
+  "finding":        { "kind": "merge-divergence", "detail": "left branch lost a record" },
+  "detectingParty": "did:plc:detector",
+  "detectedAt":     "2026-04-19T06:00:00.000Z",
+  "occurredAt":     "2026-04-19T06:30:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.retrospection` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -125,10 +174,16 @@ pub fn retrospection() -> crate::Retrospection {
 }
 
 /// Raw json for the bundled `dev.idiolect.verification` fixture.
-pub const VERIFICATION_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/idiolect/examples/verification.json"
-));
+pub const VERIFICATION_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.verification",
+  "lens":       { "uri": "at://did:plc:example/dev.idiolect.lens/abc" },
+  "kind":       "roundtrip-test",
+  "verifier":   "did:plc:verifier",
+  "tool":       { "name": "nextest", "version": "0.9.87" },
+  "result":     "holds",
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.idiolect.verification` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -138,10 +193,16 @@ pub fn verification() -> crate::Verification {
 }
 
 /// Raw json for the bundled `dev.panproto.schema.lens` fixture.
-pub const PANPROTO_LENS_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/panproto/examples/lens.json"
-));
+pub const PANPROTO_LENS_JSON: &str = r#"{
+  "$nsid": "dev.panproto.schema.lens",
+  "sourceSchema": "at://did:plc:example/dev.panproto.schema.schema/src",
+  "targetSchema": "at://did:plc:example/dev.panproto.schema.schema/tgt",
+  "objectHash":   "sha256:deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+  "roundTripClass": "iso",
+  "lawsVerified":   true,
+  "createdAt":      "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.panproto.schema.lens` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -151,10 +212,16 @@ pub fn panproto_lens() -> crate::PanprotoLens {
 }
 
 /// Raw json for the bundled `dev.panproto.schema.schema` fixture.
-pub const PANPROTO_SCHEMA_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/panproto/examples/schema.json"
-));
+pub const PANPROTO_SCHEMA_JSON: &str = r#"{
+  "$nsid": "dev.panproto.schema.schema",
+  "protocol":   "atproto-lexicon",
+  "objectHash": "sha256:aaaabbbbccccddddeeeeffff00001111222233334444555566667777888899aa",
+  "vertexCount":     7,
+  "edgeCount":       9,
+  "constraintCount": 4,
+  "createdAt": "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.panproto.schema.schema` fixture. Panics if the bundled json is invalid.
 #[must_use]
@@ -164,10 +231,20 @@ pub fn panproto_schema() -> crate::PanprotoSchema {
 }
 
 /// Raw json for the bundled `dev.panproto.vcs.commit` fixture.
-pub const PANPROTO_COMMIT_JSON: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../lexicons/dev/panproto/examples/commit.json"
-));
+pub const PANPROTO_COMMIT_JSON: &str = r#"{
+  "$nsid": "dev.panproto.vcs.commit",
+  "repo":         "at://did:plc:example/dev.panproto.vcs.repo/main",
+  "objectHash":   "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "schemaHash":   "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "parentHashes": [
+    "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+  ],
+  "protocol":  "atproto-lexicon",
+  "author":    "did:plc:example",
+  "message":   "Initial schema commit.",
+  "createdAt": "2026-04-19T00:00:00.000Z"
+}
+"#;
 
 /// Deserialised `dev.panproto.vcs.commit` fixture. Panics if the bundled json is invalid.
 #[must_use]

@@ -581,18 +581,20 @@ fn render_examples_rs(examples: &[Example]) -> String {
         let module = module_name_for_nsid(&ex.nsid);
         let upper = module.to_ascii_uppercase();
         let ty = pascal_case(&module);
-        // `CARGO_MANIFEST_DIR` is the records crate (`crates/idiolect-records`).
-        // The repo root sits two directories up; prefix with `/../../` so the
-        // concat! lands on the real fixture regardless of family.
-        let fixture_rel = format!("/../../{}", ex.repo_relative_path);
+        // Inline the fixture as a raw string literal. Embedding avoids
+        // `include_str!` with parent-directory paths, which breaks when
+        // cargo packages the crate for crates.io (the tarball contains
+        // only the crate directory, not the workspace's lexicons/ tree).
+        let pounds = fence_for(&ex.json);
+        let fence = "#".repeat(pounds);
 
         out.push_str(&format!(
             "/// Raw json for the bundled `{nsid}` fixture.\n\
-             pub const {upper}_JSON: &str = include_str!(concat!(\n    \
-             env!(\"CARGO_MANIFEST_DIR\"),\n    \"{path}\"\n));\n\n",
+             pub const {upper}_JSON: &str = r{fence}\"{json}\"{fence};\n\n",
             nsid = ex.nsid,
             upper = upper,
-            path = fixture_rel,
+            fence = fence,
+            json = ex.json,
         ));
         out.push_str(&format!(
             "/// Deserialised `{nsid}` fixture. Panics if the bundled json is invalid.\n\
@@ -611,6 +613,33 @@ fn render_examples_rs(examples: &[Example]) -> String {
 }
 
 // ---------- helpers ----------
+
+/// Pick a `#` count for a raw-string fence that won't collide with any
+/// `"#…#` substring inside `s`. Raw strings terminate on `"` followed
+/// by the same count of `#` that opened them, so any shorter run inside
+/// `s` is safe.
+fn fence_for(s: &str) -> usize {
+    let mut max_run = 0usize;
+    let mut i = 0;
+    let bytes = s.as_bytes();
+    while i < bytes.len() {
+        if bytes[i] == b'"' {
+            let mut run = 0;
+            let mut j = i + 1;
+            while j < bytes.len() && bytes[j] == b'#' {
+                run += 1;
+                j += 1;
+            }
+            if run > max_run {
+                max_run = run;
+            }
+            i = j;
+        } else {
+            i += 1;
+        }
+    }
+    max_run + 1
+}
 
 /// Produce a `#[doc = " <text>"]` attribute. The leading space matches
 /// rustfmt's convention for `/// ` rendering; prettyplease preserves

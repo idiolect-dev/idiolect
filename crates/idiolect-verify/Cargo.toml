@@ -2,20 +2,24 @@
 name = "idiolect-verify"
 description = "Verification runners for dev.idiolect.verification records: given a lens, actually check the property (roundtrip-test, static-check) and emit a signed Verification record."
 readme = "README.md"
+categories = ["data-structures", "encoding"]
+keywords = ["atproto", "lexicon", "idiolect", "panproto", "verification"]
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+# NOTE: blocked on panproto publishing to crates.io. Until then this
+# crate has git-only deps and crates.io rejects git deps at publish.
 publish = false
 
 [lints]
 workspace = true
 
 [dependencies]
-idiolect-records = { path = "../idiolect-records" }
-idiolect-lens    = { path = "../idiolect-lens" }
+idiolect-records = { version = "0.1.0", path = "../idiolect-records" }
+idiolect-lens    = { version = "0.1.0", path = "../idiolect-lens" }
 
 panproto-schema    = { workspace = true }
 

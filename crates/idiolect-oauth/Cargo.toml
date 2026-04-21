@@ -10,6 +10,9 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+# NOTE: blocked on panproto publishing to crates.io. Until then this
+# crate has git-only deps and crates.io rejects git deps at publish.
+publish = false
 
 [lints]
 workspace = true

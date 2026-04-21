@@ -2,20 +2,24 @@
 name = "idiolect-migrate"
 description = "Schema-diff and lens-based record migration. Given two versions of a lexicon, classifies the diff via panproto-check and — for diffs covered by shipped migration recipes — produces a PanprotoLens body that translates records from the old schema to the new."
 readme = "README.md"
+categories = ["data-structures", "encoding"]
+keywords = ["atproto", "lexicon", "idiolect", "panproto", "migration"]
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+# NOTE: blocked on panproto publishing to crates.io. Until then this
+# crate has git-only deps and crates.io rejects git deps at publish.
 publish = false
 
 [lints]
 workspace = true
 
 [dependencies]
-idiolect-records = { path = "../idiolect-records" }
-idiolect-lens    = { path = "../idiolect-lens" }
+idiolect-records = { version = "0.1.0", path = "../idiolect-records" }
+idiolect-lens    = { version = "0.1.0", path = "../idiolect-lens" }
 
 panproto-schema    = { workspace = true }
 panproto-protocols = { workspace = true }
