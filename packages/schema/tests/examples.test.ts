@@ -59,7 +59,7 @@ describe("examplesByNsid map", () => {
 
   test("every entry classifies against its own nsid", () => {
     for (const [nsid, record] of Object.entries(examplesByNsid)) {
-      expect(classifyRecord(nsid, record).nsid).toBe(nsid);
+      expect(classifyRecord(record)).toBe(nsid);
     }
   });
 });
