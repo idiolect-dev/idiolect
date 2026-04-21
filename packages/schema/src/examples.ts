@@ -63,9 +63,7 @@ export const recommendationExample: Recommendation = JSON.parse(
 ) as Recommendation;
 
 /** Parsed `dev.idiolect.retrospection` fixture. */
-export const retrospectionExample: Retrospection = JSON.parse(
-  RetrospectionJson,
-) as Retrospection;
+export const retrospectionExample: Retrospection = JSON.parse(RetrospectionJson) as Retrospection;
 
 /** Parsed `dev.idiolect.verification` fixture. */
 export const verificationExample: Verification = JSON.parse(VerificationJson) as Verification;

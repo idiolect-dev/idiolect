@@ -12,7 +12,8 @@
       "!**/node_modules",
       "!**/dist",
       "!**/target",
-      "!**/packages/*/src/generated"
+      "!**/packages/*/src/generated",
+      "!lexicons"
     ]
   },
   "formatter": {

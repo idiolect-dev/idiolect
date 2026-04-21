@@ -39,9 +39,8 @@ const bundle = spawnSync(
 if (bundle.status !== 0) process.exit(bundle.status ?? 1);
 
 // step 2: emit .d.ts via tsc.
-const tsc = spawnSync(
-  "bunx",
-  ["tsc", "--emitDeclarationOnly", "--outDir", "dist"],
-  { cwd: ROOT, stdio: "inherit" },
-);
+const tsc = spawnSync("bunx", ["tsc", "--emitDeclarationOnly", "--outDir", "dist"], {
+  cwd: ROOT,
+  stdio: "inherit",
+});
 process.exit(tsc.status ?? 1);

@@ -5,12 +5,6 @@
 // `./generated/` by hand; re-run `cargo run -p idiolect-codegen` after
 // changing any lexicon.
 
-export * from "./generated/index";
-export * from "./nsids";
-export * from "./recordMap";
-export * from "./validators";
-export { buildLexicons, defaultLexicons, loadLexiconDocs } from "./lexicons";
-
 // Typed parsed fixture records, mirroring the rust
 // `idiolect_records::generated::examples` module.
 export {
@@ -26,3 +20,8 @@ export {
   retrospectionExample,
   verificationExample,
 } from "./examples";
+export * from "./generated/index";
+export { buildLexicons, defaultLexicons, loadLexiconDocs } from "./lexicons";
+export * from "./nsids";
+export * from "./recordMap";
+export * from "./validators";

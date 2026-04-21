@@ -25,7 +25,14 @@
         "name": { "type": "string" },
         "entity": {
           "type": "string",
-          "knownValues": ["adapter", "bounty", "community", "dialect", "recommendation", "verification"]
+          "knownValues": [
+            "adapter",
+            "bounty",
+            "community",
+            "dialect",
+            "recommendation",
+            "verification"
+          ]
         },
         "description": { "type": "string" },
         "predicate": { "type": "string" },
@@ -45,12 +52,24 @@
         "name": { "type": "string" },
         "rust_kind": {
           "type": "string",
-          "knownValues": ["String", "SchemaRef", "LensRef", "VerificationKind", "AdapterInvocationProtocolKind"]
+          "knownValues": [
+            "String",
+            "SchemaRef",
+            "LensRef",
+            "VerificationKind",
+            "AdapterInvocationProtocolKind"
+          ]
         },
         "http_query": { "type": "string" },
         "parser": {
           "type": "string",
-          "knownValues": ["string", "schema_ref_from_uri", "lens_ref_from_uri", "verification_kind", "adapter_invocation_protocol_kind"]
+          "knownValues": [
+            "string",
+            "schema_ref_from_uri",
+            "lens_ref_from_uri",
+            "verification_kind",
+            "adapter_invocation_protocol_kind"
+          ]
         }
       }
     },

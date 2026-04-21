@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type LexiconDoc, Lexicons } from "@atproto/lexicon";
@@ -33,9 +33,7 @@ function collectJsonFiles(root: string): string[] {
  *   with this package.
  */
 export function loadLexiconDocs(root: string = LEXICONS_DIR): LexiconDoc[] {
-  return collectJsonFiles(root).map(
-    (path) => JSON.parse(readFileSync(path, "utf8")) as LexiconDoc,
-  );
+  return collectJsonFiles(root).map((path) => JSON.parse(readFileSync(path, "utf8")) as LexiconDoc);
 }
 
 /**

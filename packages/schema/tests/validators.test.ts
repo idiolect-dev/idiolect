@@ -8,7 +8,7 @@ import type {
   Retrospection,
   Verification,
 } from "../src/generated/index.ts";
-import { NSIDS, RECORD_NSIDS } from "../src/nsids.ts";
+import { NSIDS, type RECORD_NSIDS } from "../src/nsids.ts";
 import { classifyRecord, isRecord, validateRecord } from "../src/validators.ts";
 
 // minimal valid examples used to assert that the generated types

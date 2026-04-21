@@ -24,7 +24,14 @@
       "properties": {
         "kind": {
           "type": "string",
-          "knownValues": ["roundtrip-test", "property-test", "formal-proof", "conformance-test", "static-check", "convergence-preserving"]
+          "knownValues": [
+            "roundtrip-test",
+            "property-test",
+            "formal-proof",
+            "conformance-test",
+            "static-check",
+            "convergence-preserving"
+          ]
         },
         "module": { "type": "string" },
         "struct": { "type": "string" },

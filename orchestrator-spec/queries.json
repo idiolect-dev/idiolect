@@ -16,8 +16,18 @@
       "entity": "bounty",
       "predicate": "bounty_for_want_lens",
       "params": [
-        { "name": "source", "rust_kind": "SchemaRef", "http_query": "source_uri", "parser": "schema_ref_from_uri" },
-        { "name": "target", "rust_kind": "SchemaRef", "http_query": "target_uri", "parser": "schema_ref_from_uri" }
+        {
+          "name": "source",
+          "rust_kind": "SchemaRef",
+          "http_query": "source_uri",
+          "parser": "schema_ref_from_uri"
+        },
+        {
+          "name": "target",
+          "rust_kind": "SchemaRef",
+          "http_query": "target_uri",
+          "parser": "schema_ref_from_uri"
+        }
       ],
       "http": { "path": "/v1/bounties/want-lens" },
       "description": "Open bounties whose `wants` is a WantLens for the given schema pair."
@@ -27,7 +37,12 @@
       "entity": "bounty",
       "predicate": "bounty_by_requester",
       "params": [
-        { "name": "requester_did", "rust_kind": "String", "http_query": "requester_did", "parser": "string" }
+        {
+          "name": "requester_did",
+          "rust_kind": "String",
+          "http_query": "requester_did",
+          "parser": "string"
+        }
       ],
       "http": { "path": "/v1/bounties/by-requester" },
       "cli": { "subcommand": ["bounties"], "flag": "requester_did" },
@@ -38,7 +53,12 @@
       "entity": "adapter",
       "predicate": "adapter_for_framework",
       "params": [
-        { "name": "framework", "rust_kind": "String", "http_query": "framework", "parser": "string" }
+        {
+          "name": "framework",
+          "rust_kind": "String",
+          "http_query": "framework",
+          "parser": "string"
+        }
       ],
       "http": { "path": "/v1/adapters" },
       "cli": { "subcommand": ["adapters"], "flag": "framework" },
@@ -49,7 +69,12 @@
       "entity": "adapter",
       "predicate": "adapter_by_invocation_protocol",
       "params": [
-        { "name": "kind", "rust_kind": "AdapterInvocationProtocolKind", "http_query": "kind", "parser": "adapter_invocation_protocol_kind" }
+        {
+          "name": "kind",
+          "rust_kind": "AdapterInvocationProtocolKind",
+          "http_query": "kind",
+          "parser": "adapter_invocation_protocol_kind"
+        }
       ],
       "http": { "path": "/v1/adapters/by-invocation-protocol" },
       "description": "Every adapter whose invocation-protocol kind matches (`subprocess`, `http`, `wasm`)."
@@ -68,7 +93,12 @@
       "entity": "verification",
       "predicate": "verification_for_lens",
       "params": [
-        { "name": "lens", "rust_kind": "LensRef", "http_query": "lens_uri", "parser": "lens_ref_from_uri" }
+        {
+          "name": "lens",
+          "rust_kind": "LensRef",
+          "http_query": "lens_uri",
+          "parser": "lens_ref_from_uri"
+        }
       ],
       "http": { "path": "/v1/verifications" },
       "cli": { "subcommand": ["verifications"], "flag": "lens_uri" },
@@ -79,7 +109,12 @@
       "entity": "verification",
       "predicate": "verification_by_kind",
       "params": [
-        { "name": "kind", "rust_kind": "VerificationKind", "http_query": "kind", "parser": "verification_kind" }
+        {
+          "name": "kind",
+          "rust_kind": "VerificationKind",
+          "http_query": "kind",
+          "parser": "verification_kind"
+        }
       ],
       "http": { "path": "/v1/verifications/by-kind" },
       "description": "Every verification record whose `kind` matches."
@@ -89,7 +124,12 @@
       "entity": "community",
       "predicate": "community_has_member",
       "params": [
-        { "name": "member_did", "rust_kind": "String", "http_query": "member_did", "parser": "string" }
+        {
+          "name": "member_did",
+          "rust_kind": "String",
+          "http_query": "member_did",
+          "parser": "string"
+        }
       ],
       "http": { "path": "/v1/communities" },
       "description": "Every community whose `members` list includes the given DID."
@@ -109,7 +149,12 @@
       "entity": "dialect",
       "predicate": "dialect_for_community",
       "params": [
-        { "name": "community_uri", "rust_kind": "String", "http_query": "community_uri", "parser": "string" }
+        {
+          "name": "community_uri",
+          "rust_kind": "String",
+          "http_query": "community_uri",
+          "parser": "string"
+        }
       ],
       "http": { "path": "/v1/dialects/for-community" },
       "description": "Every dialect whose `owning_community` at-uri matches."
