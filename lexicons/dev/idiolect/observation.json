@@ -1,0 +1,110 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.observation",
+  "description": "A signed aggregate over a set of encounter-family records. Observations decouple ranking from the orchestrator (P6): many observers publish competing aggregates over the same traces, and users choose whom to trust.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "An observer publishes a structured summary of encounters, corrections, and retrospections matching a declared scope, using a declared method.",
+      "record": {
+        "type": "object",
+        "required": ["observer", "method", "scope", "output", "version", "visibility", "occurredAt"],
+        "properties": {
+          "observer": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the observer publishing this aggregate."
+          },
+          "method": {
+            "type": "object",
+            "description": "Structured method descriptor (see dev.idiolect.observer for the conformance floor). Enables reproducibility and comparison.",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 128,
+                "description": "Short method identifier."
+              },
+              "description": {
+                "type": "string",
+                "maxGraphemes": 4000
+              },
+              "codeRef": {
+                "type": "string",
+                "format": "at-uri",
+                "description": "Optional reference to the method's source code or specification."
+              },
+              "parameters": {
+                "type": "unknown",
+                "description": "Method parameters as a free-form JSON object; interpretation is observer-defined."
+              }
+            }
+          },
+          "scope": {
+            "type": "object",
+            "description": "The set of records this observation aggregates over.",
+            "required": [],
+            "properties": {
+              "lenses": {
+                "type": "array",
+                "description": "Lenses included in scope. Empty array or omitted means 'all'.",
+                "items": {
+                  "type": "ref",
+                  "ref": "dev.idiolect.defs#lensRef"
+                }
+              },
+              "communities": {
+                "type": "array",
+                "description": "Communities whose records are in scope.",
+                "items": {
+                  "type": "string",
+                  "format": "at-uri"
+                }
+              },
+              "encounterKinds": {
+                "type": "array",
+                "description": "Which encounter kinds this observation weights and includes. Observer must disclose this or the claim is uninterpretable.",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "invocation-log",
+                    "curated",
+                    "roundtrip-verified",
+                    "production",
+                    "adversarial"
+                  ]
+                }
+              },
+              "window": {
+                "type": "object",
+                "description": "Time window covered by the aggregation.",
+                "required": [],
+                "properties": {
+                  "from": { "type": "string", "format": "datetime" },
+                  "until": { "type": "string", "format": "datetime" }
+                }
+              }
+            }
+          },
+          "output": {
+            "type": "unknown",
+            "description": "The observation's payload. Shape is method-defined. Typical shapes include correction-rate rankings, quality scores, or structured diagnostic summaries."
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of this observation method; different versions may produce non-comparable outputs."
+          },
+          "visibility": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#visibility"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

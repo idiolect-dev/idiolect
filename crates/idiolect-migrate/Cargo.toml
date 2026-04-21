@@ -1,0 +1,32 @@
+[package]
+name = "idiolect-migrate"
+description = "Schema-diff and lens-based record migration. Given two versions of a lexicon, classifies the diff via panproto-check and — for diffs covered by shipped migration recipes — produces a PanprotoLens body that translates records from the old schema to the new."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+idiolect-records = { path = "../idiolect-records" }
+idiolect-lens    = { path = "../idiolect-lens" }
+
+panproto-schema    = { workspace = true }
+panproto-protocols = { workspace = true }
+panproto-check     = { workspace = true }
+panproto-lens      = { workspace = true }
+panproto-inst      = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1.48", default-features = false, features = ["macros", "rt"] }

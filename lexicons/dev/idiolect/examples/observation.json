@@ -1,0 +1,10 @@
+{
+  "$nsid": "dev.idiolect.observation",
+  "observer":   "did:plc:observer",
+  "method":     { "name": "weighted-correction-rate" },
+  "scope":      { "encounterKinds": ["production"] },
+  "output":     { "lenses": [] },
+  "version":    "1.0.0",
+  "visibility": "public-detailed",
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}

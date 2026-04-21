@@ -1,0 +1,24 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.schema.protolensChain",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["steps", "objectHash", "createdAt"],
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": { "type": "string", "format": "at-uri" },
+            "maxLength": 50
+          },
+          "objectHash": { "type": "string", "maxLength": 64 },
+          "blob": { "type": "blob", "accept": ["application/x-msgpack"], "maxSize": 1048576 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

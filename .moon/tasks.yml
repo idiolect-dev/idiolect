@@ -1,0 +1,29 @@
+$schema: "https://moonrepo.dev/schemas/tasks.json"
+
+# shared tasks inherited by every project in the workspace.
+# project-local moon.yml files can override or extend these.
+
+fileGroups:
+  sources:
+    - "src/**/*"
+  tests:
+    - "tests/**/*"
+  configs:
+    - "*.{json,yml,yaml,toml}"
+
+tasks:
+  lint:
+    command: "noop"
+    description: "Lint the project sources. Overridden per project."
+  format:
+    command: "noop"
+    description: "Format the project sources. Overridden per project."
+  typecheck:
+    command: "noop"
+    description: "Type-check the project. Overridden per project."
+  test:
+    command: "noop"
+    description: "Run project tests. Overridden per project."
+  build:
+    command: "noop"
+    description: "Build project artifacts. Overridden per project."

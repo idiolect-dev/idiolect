@@ -1,0 +1,57 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "rust"
+type: "library"
+
+project:
+  name: "idiolect-lens"
+  description: "Tier-1 lens runtime: resolve dev.panproto.schema.lens records from in-memory fixtures, PDS fetches, or a panproto VCS store."
+
+# idiolect-lens consumes the generated dev.panproto.schema.lens type
+# from idiolect-records, so its tasks chain behind records' generate.
+
+tasks:
+  build:
+    command: "cargo build --quiet -p idiolect-lens"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  test:
+    command: "cargo test --quiet -p idiolect-lens"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  lint:
+    command: "cargo clippy --quiet -p idiolect-lens --all-targets -- -D warnings"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  format:
+    command: "cargo fmt -p idiolect-lens -- --check"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+
+  typecheck:
+    command: "cargo check --quiet -p idiolect-lens"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"

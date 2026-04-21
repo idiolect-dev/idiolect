@@ -1,0 +1,66 @@
+name: Bug report
+description: Something in the shipped code does not behave as documented.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Before submitting, search existing
+        issues for duplicates. If the bug is a security vulnerability,
+        please follow the process in `SECURITY.md` instead of opening
+        a public issue.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Output of `idiolect --version`, the crate version, or the git commit if you built from source."
+      placeholder: "0.1.0 or sha 4a1b2c3"
+    validations:
+      required: true
+
+  - type: input
+    id: surface
+    attributes:
+      label: Surface
+      description: "Which surface reproduces it? CLI, orchestrator HTTP, observer daemon, library crate, generated code…"
+      placeholder: "idiolect-orchestrator /v1/bounties/open"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: "Smallest steps that reproduce. Include commands, expected output, and actual output."
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Relevant logs (with `RUST_LOG=debug` if possible). Redact anything sensitive."
+      render: shell
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: "OS + arch + runtime version (Rust toolchain, bun, node)."
+      placeholder: "macOS 14.4 arm64, rustc 1.95.0"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: "I searched open and closed issues for duplicates."
+          required: true
+        - label: "I am reporting a behavioral bug, not a security vulnerability. (Security: see SECURITY.md.)"
+          required: true

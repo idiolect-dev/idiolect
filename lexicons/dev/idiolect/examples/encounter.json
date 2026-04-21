@@ -1,0 +1,9 @@
+{
+  "$nsid": "dev.idiolect.encounter",
+  "lens":         { "uri": "at://did:plc:example/dev.idiolect.lens/abc123" },
+  "sourceSchema": { "uri": "at://did:plc:example/dev.idiolect.schema/src" },
+  "purpose":      "translate source to target",
+  "kind":         "invocation-log",
+  "visibility":   "public-detailed",
+  "occurredAt":   "2026-04-19T00:00:00.000Z"
+}

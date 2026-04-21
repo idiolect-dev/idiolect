@@ -1,0 +1,8 @@
+{
+  "$nsid": "dev.idiolect.correction",
+  "encounter":  { "uri": "at://did:plc:example/dev.idiolect.encounter/abc" },
+  "path":       "/foo/bar",
+  "reason":     "lens-error",
+  "visibility": "public-detailed",
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}

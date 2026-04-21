@@ -1,0 +1,23 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.schema.schema",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["protocol", "objectHash", "createdAt"],
+        "properties": {
+          "protocol": { "type": "string", "maxLength": 128 },
+          "objectHash": { "type": "string", "maxLength": 64 },
+          "vertexCount": { "type": "integer" },
+          "edgeCount": { "type": "integer" },
+          "constraintCount": { "type": "integer" },
+          "blob": { "type": "blob", "accept": ["application/x-msgpack"], "maxSize": 1048576 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+[package]
+name = "idiolect-cli"
+description = "Command-line interface for idiolect: resolve DIDs, query a local orchestrator, author records, and diff lexicons. Wraps the library crates so users don't have to write Rust for common operations."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[[bin]]
+name = "idiolect"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+idiolect-records  = { path = "../idiolect-records" }
+idiolect-identity = { path = "../idiolect-identity", features = ["resolver-reqwest"] }
+idiolect-lens     = { path = "../idiolect-lens",     features = ["pds-reqwest", "pds-resolve"] }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }
+thiserror  = { workspace = true }
+
+# async runtime for the binary.
+tokio = { version = "1.48", default-features = false, features = ["rt-multi-thread", "macros"] }
+# http client for talking to a running orchestrator.
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

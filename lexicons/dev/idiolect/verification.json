@@ -1,0 +1,75 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.verification",
+  "description": "A signed assertion of a formal property of a lens. Verifications are the formal-channel primitive: they coexist with the emergent channel (encounters, corrections, observations) and neither gates the other.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A verifier asserts that a lens has a named property, established by a named method, with dependencies and an input space the assertion covers.",
+      "record": {
+        "type": "object",
+        "required": ["lens", "kind", "verifier", "tool", "result", "occurredAt"],
+        "properties": {
+          "lens": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#lensRef",
+            "description": "The lens whose property is being asserted."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "roundtrip-test",
+              "property-test",
+              "formal-proof",
+              "conformance-test",
+              "static-check",
+              "convergence-preserving"
+            ],
+            "description": "Fixed taxonomy at the Lexicon level. Each kind has its own trust semantics."
+          },
+          "verifier": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the party asserting the verification."
+          },
+          "tool": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#tool",
+            "description": "Tool and version used to establish the verification."
+          },
+          "inputSpace": {
+            "type": "string",
+            "maxGraphemes": 4000,
+            "description": "Description of the input space covered: for property-tests, the generator; for formal-proofs, the domain over which the theorem is stated; for conformance-tests, the standard name and version."
+          },
+          "result": {
+            "type": "string",
+            "enum": ["holds", "falsified", "inconclusive"],
+            "description": "Assertion outcome. Falsified verifications are first-class records; they are how the community learns a lens is wrong."
+          },
+          "counterexample": {
+            "type": "cid-link",
+            "description": "For result=falsified: optional reference to a minimal counterexample."
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "Other verifications this one depends on (e.g. a proof assuming a lemma).",
+            "items": {
+              "type": "string",
+              "format": "at-uri"
+            }
+          },
+          "proofArtifact": {
+            "type": "cid-link",
+            "description": "For kind=formal-proof: reference to the checkable proof artifact (e.g. Coq/Lean/Agda term). Orchestrators that have the checker may mechanically verify; others take the assertion on trust."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

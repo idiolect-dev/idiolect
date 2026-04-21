@@ -1,0 +1,6 @@
+{
+  "$nsid": "dev.idiolect.dialect",
+  "owningCommunity": "at://did:plc:example/dev.idiolect.community/syntactic-bootstrappers",
+  "name":            "ud-en-2026",
+  "createdAt":       "2026-04-19T00:00:00.000Z"
+}

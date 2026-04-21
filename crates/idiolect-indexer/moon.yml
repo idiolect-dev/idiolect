@@ -1,0 +1,58 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "rust"
+type: "library"
+
+project:
+  name: "idiolect-indexer"
+  description: "Firehose consumer for dev.idiolect.* records, built on top of tapped. Decodes commits into AnyRecord and dispatches them through a RecordHandler."
+
+# idiolect-indexer decodes firehose json into the generated
+# dev.idiolect.* record types from idiolect-records, so its tasks
+# chain behind records' generate.
+
+tasks:
+  build:
+    command: "cargo build --quiet -p idiolect-indexer"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  test:
+    command: "cargo test --quiet -p idiolect-indexer"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  lint:
+    command: "cargo clippy --quiet -p idiolect-indexer --all-targets -- -D warnings"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  format:
+    command: "cargo fmt -p idiolect-indexer -- --check"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+
+  typecheck:
+    command: "cargo check --quiet -p idiolect-indexer"
+    deps:
+      - "idiolect-records:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"

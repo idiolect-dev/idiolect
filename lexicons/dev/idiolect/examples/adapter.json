@@ -1,0 +1,9 @@
+{
+  "$nsid": "dev.idiolect.adapter",
+  "framework":          "coq",
+  "versionRange":       "^8.20",
+  "invocationProtocol": { "kind": "subprocess" },
+  "isolation":          { "kind": "process" },
+  "author":             "did:plc:adapter-author",
+  "occurredAt":         "2026-04-19T00:00:00.000Z"
+}

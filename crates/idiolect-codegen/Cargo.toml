@@ -1,0 +1,54 @@
+[package]
+name = "idiolect-codegen"
+description = "Lexicon-driven codegen for idiolect: emits Rust record types and TypeScript interfaces from dev.idiolect.* lexicons."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lib]
+name = "idiolect_codegen"
+path = "src/lib.rs"
+
+[[bin]]
+name = "idiolect-codegen"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+# dogfooding panproto: the lexicon json is parsed into a panproto_schema::Schema
+# graph and breaking-change detection runs on that graph, per the cospan-codegen
+# pattern (see https://github.com/cospan-dev/cospan/tree/main/crates/cospan-codegen).
+panproto-schema    = { workspace = true }
+panproto-inst      = { workspace = true }
+panproto-protocols = { workspace = true }
+panproto-check     = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+
+# rust emitter: syn + quote to build a `syn::File` and prettyplease to print
+# it. a second target impl can slot in behind `TargetEmitter` if panproto
+# ever ships a by-construction pretty-printer for tree-sitter-rust.
+syn          = { version = "2", features = ["full", "extra-traits"] }
+quote        = "1"
+proc-macro2  = "1"
+prettyplease = "0.2"
+
+# typescript emitter: oxc's arena-allocated ast plus its ast-to-source
+# printer. every declaration (interface, type alias, import, const,
+# function) is built as an oxc ast node and rendered by `oxc_codegen`, so
+# the emitter no longer composes typescript by string concatenation.
+oxc_allocator = { workspace = true }
+oxc_ast       = { workspace = true }
+oxc_codegen   = { workspace = true }
+oxc_span      = { workspace = true }
+

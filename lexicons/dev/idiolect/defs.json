@@ -1,0 +1,92 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.defs",
+  "description": "Shared types for the dev.idiolect.* Lexicon family. Concerns that recur across record Lexicons (visibility, reference shapes, tool identity) are defined here rather than duplicated.",
+  "defs": {
+    "visibility": {
+      "type": "string",
+      "description": "Visibility scope for a record. community-scoped semantics are reserved but deferred for v1; records with visibility=community-scoped must not be served to parties outside the named community once the substrate supports scope enforcement.",
+      "enum": [
+        "public-detailed",
+        "public-minimal",
+        "public-aggregate-only",
+        "community-scoped",
+        "private"
+      ]
+    },
+    "schemaRef": {
+      "type": "object",
+      "description": "Reference to a schema. Either an at-uri pointing to a schema record or a content-addressed hash; at least one must be present.",
+      "required": [],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT-URI pointing to a schema record, when addressable via atproto."
+        },
+        "cid": {
+          "type": "cid-link",
+          "description": "Content-addressed hash of the schema, when tracked in a content-addressed store such as panproto-vcs."
+        },
+        "language": {
+          "type": "string",
+          "description": "Schema language identifier, e.g. 'atproto-lexicon', 'postgres-sql', 'protobuf', 'graphql', 'json-schema'."
+        }
+      }
+    },
+    "lensRef": {
+      "type": "object",
+      "description": "Reference to a lens (translation). Either an at-uri or a content-addressed hash; at least one must be present.",
+      "required": [],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT-URI pointing to a lens record."
+        },
+        "cid": {
+          "type": "cid-link",
+          "description": "Content-addressed hash of the lens."
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["unidirectional", "bidirectional"],
+          "description": "Whether the lens is invertible."
+        }
+      }
+    },
+    "encounterRef": {
+      "type": "object",
+      "description": "Reference to a prior encounter record. at-uri is canonical; cid pins the exact revision.",
+      "required": ["uri"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "cid-link"
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "description": "Identity and version of a tool used by a verifier or observer.",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Canonical tool name, e.g. 'panproto', 'coq', 'tlaplus', 'z3', 'nextest'."
+        },
+        "version": {
+          "type": "string",
+          "description": "Tool version string (semver when applicable)."
+        },
+        "commit": {
+          "type": "string",
+          "description": "Optional source commit or build identifier."
+        }
+      }
+    }
+  }
+}

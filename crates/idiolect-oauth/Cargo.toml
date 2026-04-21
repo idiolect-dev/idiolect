@@ -1,0 +1,58 @@
+[package]
+name = "idiolect-oauth"
+description = "Panproto-native schema and adapter traits for atproto OAuth session state. Tokens never go to a PDS; this crate models them as a side-channel schema so the rest of the appview treats session lifecycle uniformly with everything else that speaks panproto."
+readme = "README.md"
+categories = ["authentication", "data-structures"]
+keywords = ["atproto", "oauth", "dpop", "idiolect", "panproto"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# the session schema is parsed from the bundled atproto lexicon
+# through panproto's atproto protocol parser; the result is a real
+# panproto Schema graph that lenses can be compiled against.
+panproto-schema    = { workspace = true }
+panproto-protocols = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+
+# `time` is used for typed datetime round-trips on the session
+# struct. the schema uses the atproto `datetime` format, which
+# matches RFC3339.
+time = { workspace = true }
+
+rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+
+[features]
+# the crate is transport-agnostic by default — just the trait and an
+# in-memory store. the filesystem store is opt-in to avoid pulling a
+# filesystem dep into browser/wasm consumers that want only the trait.
+default = []
+# single-user filesystem-backed token store. persists each session as a
+# json file under a caller-chosen directory; appropriate for
+# single-tenant local daemons and development.
+store-filesystem = []
+# sqlite-backed token store. one row per session. appropriate for
+# multi-tenant servers that need transactional durability.
+store-sqlite = ["dep:rusqlite"]
+
+[dev-dependencies]
+# runtime tests register the schema and apply an identity lens over
+# it, exactly like the lexicon-fidelity suite in idiolect-lens.
+idiolect-lens = { path = "../idiolect-lens" }
+idiolect-records = { path = "../idiolect-records" }
+panproto-lens = { workspace = true }
+tokio = { version = "1.48", default-features = false, features = ["macros", "rt"] }
+tempfile = "3.13"
+# the session expiry tests use `time::macros::datetime!` to build
+# OffsetDateTime literals inline.
+time = { workspace = true, features = ["macros"] }

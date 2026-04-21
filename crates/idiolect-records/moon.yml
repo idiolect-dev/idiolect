@@ -1,0 +1,62 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "rust"
+type: "library"
+
+project:
+  name: "idiolect-records"
+  description: "Rust record types mirroring the dev.idiolect.* lexicon family."
+
+# the generated/ subtree is owned by idiolect-codegen. records' tasks
+# depend on ~:generate so lexicon edits propagate without anyone having
+# to remember to regenerate.
+
+tasks:
+  generate:
+    command: "noop"
+    deps:
+      - "idiolect-codegen:generate"
+
+  build:
+    command: "cargo build --quiet -p idiolect-records"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  test:
+    command: "cargo test --quiet -p idiolect-records"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  lint:
+    command: "cargo clippy --quiet -p idiolect-records --all-targets -- -D warnings"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  format:
+    command: "cargo fmt -p idiolect-records -- --check"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+
+  typecheck:
+    command: "cargo check --quiet -p idiolect-records"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"

@@ -1,0 +1,75 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.community",
+  "description": "A group of DIDs that declare shared conventions. Self-constituted per P4: no central roll, no grading of legitimacy. Communities may be small and many.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A community is a self-constituted group declaring shared schemas, lenses, and conventions. Membership may be listed inline for small communities, or referenced for larger ones.",
+      "record": {
+        "type": "object",
+        "required": ["name", "description", "createdAt"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Human-readable community name."
+          },
+          "description": {
+            "type": "string",
+            "maxGraphemes": 2000,
+            "description": "Purpose, norms, and scope of the community. Narrative, not machine-interpreted."
+          },
+          "members": {
+            "type": "array",
+            "description": "Inline list of member DIDs, for small communities. Use membershipRoll instead for communities above ~200 members.",
+            "maxLength": 500,
+            "items": {
+              "type": "string",
+              "format": "did"
+            }
+          },
+          "membershipRoll": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT-URI pointing to an externally maintained membership record for larger communities."
+          },
+          "coreSchemas": {
+            "type": "array",
+            "description": "Schemas the community treats as canonical for its purposes.",
+            "items": {
+              "type": "ref",
+              "ref": "dev.idiolect.defs#schemaRef"
+            }
+          },
+          "coreLenses": {
+            "type": "array",
+            "description": "Lenses the community treats as canonical.",
+            "items": {
+              "type": "ref",
+              "ref": "dev.idiolect.defs#lensRef"
+            }
+          },
+          "endorsedCommunities": {
+            "type": "array",
+            "description": "Other communities this community recognises as legitimate interlocutors. Endorsement is not transitive.",
+            "items": {
+              "type": "string",
+              "format": "at-uri"
+            }
+          },
+          "conventions": {
+            "type": "string",
+            "maxGraphemes": 10000,
+            "description": "Community-specific conventions not captured by schemas or lenses (style guides, review expectations, review cadence)."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

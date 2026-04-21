@@ -1,0 +1,53 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.vcs.refUpdate",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["repo", "ref", "newTarget", "committerDid", "protocol", "createdAt"],
+        "properties": {
+          "repo": { "type": "string", "format": "at-uri" },
+          "ref": { "type": "string", "maxLength": 256 },
+          "oldTarget": { "type": "string", "maxLength": 64 },
+          "newTarget": { "type": "string", "maxLength": 64 },
+          "committerDid": { "type": "string", "format": "did" },
+          "protocol": { "type": "string", "maxLength": 128 },
+          "migrationHash": { "type": "string", "maxLength": 64 },
+          "breakingChanges": {
+            "type": "array",
+            "items": { "type": "ref", "ref": "#breakingChange" },
+            "maxLength": 100
+          },
+          "lensHash": { "type": "string", "maxLength": 64 },
+          "lensQuality": { "type": "number" },
+          "commitCount": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "breakingChange": {
+      "type": "object",
+      "required": ["kind", "element", "description"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "knownValues": [
+            "vertexRemoved",
+            "edgeRemoved",
+            "constraintTightened",
+            "requiredFieldAdded",
+            "typeChanged",
+            "arityChanged",
+            "variantRemoved",
+            "semanticChange"
+          ]
+        },
+        "element": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 1024 }
+      }
+    }
+  }
+}

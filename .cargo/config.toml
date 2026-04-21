@@ -1,0 +1,6 @@
+# Cap cargo parallelism to prevent rustc's peak memory (2-4 GB/job
+# during monomorphization of a 500+ crate workspace) from saturating
+# system RAM. 4 is a safe floor on a 16 GB machine; bump to 6-8 on
+# bigger hardware.
+[build]
+jobs = 4

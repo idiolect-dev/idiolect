@@ -1,0 +1,125 @@
+{
+  "$schema": "dev.idiolect.spec.query",
+  "description": "Declarative taxonomy of catalog queries. Each entry is transformed by idiolect-codegen into a Rust query fn, an axum HTTP handler, a route registration, and (via cli-spec derivation) an `idiolect orchestrator <sub>` CLI subcommand. Hand-written predicates in crates/idiolect-orchestrator/src/predicates.rs supply the filter semantics; everything else is generated.",
+  "queries": [
+    {
+      "name": "open_bounties",
+      "entity": "bounty",
+      "predicate": "bounty_is_open",
+      "params": [],
+      "http": { "path": "/v1/bounties/open" },
+      "cli": { "subcommand": ["bounties"], "default": true },
+      "description": "Every cataloged bounty whose status is `open`, `claimed`, or unset."
+    },
+    {
+      "name": "bounties_for_want_lens",
+      "entity": "bounty",
+      "predicate": "bounty_for_want_lens",
+      "params": [
+        { "name": "source", "rust_kind": "SchemaRef", "http_query": "source_uri", "parser": "schema_ref_from_uri" },
+        { "name": "target", "rust_kind": "SchemaRef", "http_query": "target_uri", "parser": "schema_ref_from_uri" }
+      ],
+      "http": { "path": "/v1/bounties/want-lens" },
+      "description": "Open bounties whose `wants` is a WantLens for the given schema pair."
+    },
+    {
+      "name": "bounties_by_requester",
+      "entity": "bounty",
+      "predicate": "bounty_by_requester",
+      "params": [
+        { "name": "requester_did", "rust_kind": "String", "http_query": "requester_did", "parser": "string" }
+      ],
+      "http": { "path": "/v1/bounties/by-requester" },
+      "cli": { "subcommand": ["bounties"], "flag": "requester_did" },
+      "description": "Every bounty authored by the given requester DID."
+    },
+    {
+      "name": "adapters_for_framework",
+      "entity": "adapter",
+      "predicate": "adapter_for_framework",
+      "params": [
+        { "name": "framework", "rust_kind": "String", "http_query": "framework", "parser": "string" }
+      ],
+      "http": { "path": "/v1/adapters" },
+      "cli": { "subcommand": ["adapters"], "flag": "framework" },
+      "description": "Every adapter declared for the given framework (case-insensitive)."
+    },
+    {
+      "name": "adapters_by_invocation_protocol",
+      "entity": "adapter",
+      "predicate": "adapter_by_invocation_protocol",
+      "params": [
+        { "name": "kind", "rust_kind": "AdapterInvocationProtocolKind", "http_query": "kind", "parser": "adapter_invocation_protocol_kind" }
+      ],
+      "http": { "path": "/v1/adapters/by-invocation-protocol" },
+      "description": "Every adapter whose invocation-protocol kind matches (`subprocess`, `http`, `wasm`)."
+    },
+    {
+      "name": "recommendations_starting_from",
+      "entity": "recommendation",
+      "predicate": "recommendation_has_path",
+      "params": [],
+      "http": { "path": "/v1/recommendations" },
+      "cli": { "subcommand": ["recommendations"], "default": true },
+      "description": "Every recommendation whose lens_path is non-empty."
+    },
+    {
+      "name": "verifications_for_lens",
+      "entity": "verification",
+      "predicate": "verification_for_lens",
+      "params": [
+        { "name": "lens", "rust_kind": "LensRef", "http_query": "lens_uri", "parser": "lens_ref_from_uri" }
+      ],
+      "http": { "path": "/v1/verifications" },
+      "cli": { "subcommand": ["verifications"], "flag": "lens_uri" },
+      "description": "Every verification in the catalog that targets the given lens."
+    },
+    {
+      "name": "verifications_by_kind",
+      "entity": "verification",
+      "predicate": "verification_by_kind",
+      "params": [
+        { "name": "kind", "rust_kind": "VerificationKind", "http_query": "kind", "parser": "verification_kind" }
+      ],
+      "http": { "path": "/v1/verifications/by-kind" },
+      "description": "Every verification record whose `kind` matches."
+    },
+    {
+      "name": "communities_for_member",
+      "entity": "community",
+      "predicate": "community_has_member",
+      "params": [
+        { "name": "member_did", "rust_kind": "String", "http_query": "member_did", "parser": "string" }
+      ],
+      "http": { "path": "/v1/communities" },
+      "description": "Every community whose `members` list includes the given DID."
+    },
+    {
+      "name": "communities_by_name",
+      "entity": "community",
+      "predicate": "community_by_name",
+      "params": [
+        { "name": "name", "rust_kind": "String", "http_query": "name", "parser": "string" }
+      ],
+      "http": { "path": "/v1/communities/by-name" },
+      "description": "Every community whose name matches (case-insensitive)."
+    },
+    {
+      "name": "dialects_for_community",
+      "entity": "dialect",
+      "predicate": "dialect_for_community",
+      "params": [
+        { "name": "community_uri", "rust_kind": "String", "http_query": "community_uri", "parser": "string" }
+      ],
+      "http": { "path": "/v1/dialects/for-community" },
+      "description": "Every dialect whose `owning_community` at-uri matches."
+    },
+    {
+      "name": "adapters_with_verification",
+      "entity": "adapter",
+      "expression": "r.verification.uri != \"\"",
+      "http": { "path": "/v1/adapters/with-verification" },
+      "description": "Adapters that cite a verification record via `verification.uri`. Reference case for the expression predicate form."
+    }
+  ]
+}

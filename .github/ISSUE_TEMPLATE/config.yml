@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/idiolect-dev/idiolect/security/advisories/new
+    about: "Report a security vulnerability privately via GitHub Security Advisories."
+  - name: Question or discussion
+    url: https://github.com/idiolect-dev/idiolect/discussions
+    about: "Open-ended questions, architecture debates, and longer threads belong in Discussions."

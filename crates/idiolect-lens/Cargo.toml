@@ -1,0 +1,126 @@
+[package]
+name = "idiolect-lens"
+description = "Tier-1 lens runtime: resolve dev.panproto.schema.lens records from in-memory fixtures, PDS fetches, or a panproto VCS store."
+readme = "README.md"
+categories = ["data-structures", "encoding"]
+keywords = ["atproto", "lexicon", "idiolect", "panproto", "lens"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# core crate is transport-agnostic by default. `pds-atrium` pulls in
+# a live XRPC implementation of `PdsClient` backed by atrium-api +
+# atrium-xrpc-client (reqwest transport).
+default = []
+pds-atrium = [
+    "dep:atrium-api",
+    "dep:atrium-xrpc",
+    "dep:atrium-xrpc-client",
+    "dep:reqwest",
+]
+# Alternative raw-reqwest PdsClient / PdsWriter — an escape hatch for
+# consumers who want full control over the HTTP pipeline without
+# pulling the atrium typed-XRPC stack. Pulls in reqwest directly.
+pds-reqwest = ["dep:reqwest", "reqwest/json"]
+# Ships a DID -> PDS -> ReqwestPdsClient / RecordPublisher composition
+# helper. Pulls in idiolect-identity so the caller can hand a DID and
+# get a ready-to-use typed publisher back.
+pds-resolve = ["pds-reqwest", "dep:idiolect-identity"]
+# enables the `pds_smoke` test, which hits a real public PDS
+# (bsky.social) over the network. off by default so CI stays offline.
+# run locally with:
+#     cargo test -p idiolect-lens --features pds-smoke-test
+pds-smoke-test = ["pds-atrium"]
+# ES256-backed DPoP proof construction via the `p256` crate. Ships
+# `P256DpopProver` implementing the `DpopProver` trait. Opt-in so the
+# default build does not pull in a crypto dep.
+dpop-p256 = ["pds-reqwest", "dep:p256", "dep:base64", "dep:sha2", "dep:rand"]
+
+[dependencies]
+# the lens record type itself lives in idiolect-records under the
+# vendored dev.panproto.* tree. we never redefine records here — we
+# resolve and apply them.
+idiolect-records = { path = "../idiolect-records" }
+
+# the runtime side of lens application is done by panproto-lens
+# (compile + get + put), panproto-inst (json parse + to_json + wtype
+# instance ops), panproto-schema (Schema type), and panproto-protocols
+# (atproto Protocol + lexicon parser).
+panproto-schema    = { workspace = true }
+panproto-protocols = { workspace = true }
+panproto-lens      = { workspace = true }
+panproto-inst      = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+
+# atrium-backed PdsClient implementation. default-features on
+# atrium-api are turned off so the bluesky / ozone lexicons and the
+# agent module don't come along — this crate only needs
+# com.atproto.repo.getRecord. atrium-xrpc-client ships with
+# reqwest-default-tls (native-tls / openssl) enabled by default; we
+# switch to rustls by turning that off and pulling reqwest in directly
+# with `rustls-tls` so the crate builds in environments without
+# libssl-dev (including our sandbox CI).
+atrium-api         = { version = "0.25.8", optional = true, default-features = false }
+atrium-xrpc        = { version = "0.12.4", optional = true }
+atrium-xrpc-client = { version = "0.5.15", optional = true, default-features = false, features = ["reqwest"] }
+reqwest            = { version = "0.12", optional = true, default-features = false, features = ["rustls-tls"] }
+
+idiolect-identity  = { path = "../idiolect-identity", optional = true }
+
+# DPoP ES256 proof construction. All optional; enabled via `dpop-p256`.
+p256   = { version = "0.13", optional = true, default-features = false, features = ["ecdsa", "pem", "std"] }
+sha2   = { version = "0.10", optional = true, default-features = false, features = ["std"] }
+base64 = { version = "0.22", optional = true, default-features = false, features = ["std"] }
+rand   = { version = "0.8", optional = true, default-features = false, features = ["std", "std_rng"] }
+
+[dev-dependencies]
+tokio = { version = "1.48", default-features = false, features = ["macros", "rt", "net", "time"] }
+# mock XRPC server for the atrium integration test. gated to the
+# `pds-atrium` feature via `required-features` on the test target.
+wiremock = "0.6.5"
+tempfile = "3.13"
+
+[[test]]
+name = "pds_atrium"
+path = "tests/pds_atrium.rs"
+required-features = ["pds-atrium"]
+
+[[test]]
+name = "pds_atrium_write"
+path = "tests/pds_atrium_write.rs"
+required-features = ["pds-atrium"]
+
+[[test]]
+name = "pds_reqwest"
+path = "tests/pds_reqwest.rs"
+required-features = ["pds-reqwest"]
+
+[[test]]
+name = "caching"
+path = "tests/caching.rs"
+required-features = ["pds-reqwest"]
+
+[[test]]
+name = "pds_resolve"
+path = "tests/pds_resolve.rs"
+required-features = ["pds-resolve"]
+
+[[test]]
+name = "list_records"
+path = "tests/list_records.rs"
+required-features = ["pds-reqwest"]
+
+[[test]]
+name = "pds_smoke"
+path = "tests/pds_smoke.rs"
+required-features = ["pds-smoke-test"]

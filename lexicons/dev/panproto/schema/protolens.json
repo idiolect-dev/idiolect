@@ -1,0 +1,39 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.schema.protolens",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["name", "objectHash", "createdAt"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 256 },
+          "description": { "type": "string", "maxLength": 2560 },
+          "opticKind": {
+            "type": "string",
+            "knownValues": ["lens", "prism", "traversal", "iso", "affine"]
+          },
+          "complementConstructor": {
+            "type": "string",
+            "knownValues": [
+              "empty",
+              "droppedSortData",
+              "droppedOpData",
+              "natTransKernel",
+              "addedElement",
+              "coercedSortData",
+              "composite",
+              "scoped"
+            ]
+          },
+          "isLossless": { "type": "boolean" },
+          "objectHash": { "type": "string", "maxLength": 64 },
+          "blob": { "type": "blob", "accept": ["application/x-msgpack"], "maxSize": 1048576 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

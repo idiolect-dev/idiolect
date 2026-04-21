@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a capability the architecture admits but does not yet ship.
+title: "[feature] "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        idiolect holds a specific architecture and a defined set of
+        principles. Proposals that conflict with them are principled
+        non-goals, not bugs; "refuse to build this" is a coherent
+        answer. If you are unsure whether your request fits, open a
+        discussion thread first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: "What user or operator need does this address? Describe the concrete friction — what does someone actually try to do today and fail at?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed capability
+      description: "The shape of the feature, in terms of records, traits, commands, or endpoints idiolect already uses."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: "Other ways to solve the same problem — including doing nothing."
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: "I searched open and closed issues for duplicates."
+          required: true

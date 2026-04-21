@@ -1,0 +1,84 @@
+[package]
+name = "idiolect-indexer"
+description = "Firehose consumer for dev.idiolect.* records, built on top of tapped. Decodes commits into AnyRecord and dispatches them through a RecordHandler."
+readme = "README.md"
+categories = ["asynchronous", "data-structures"]
+keywords = ["atproto", "firehose", "tapped", "idiolect", "indexer"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# the core crate is transport-agnostic by default: traits, an in-memory
+# mock firehose, and the decode -> dispatch pipeline. no network. turn
+# on `firehose-tapped` to pull in the real tapped-based event source.
+default = []
+firehose-tapped = ["dep:tapped", "dep:tokio", "tokio/sync"]
+# Auto-reconnect wrapper with exponential backoff + cursor replay.
+# Pulls in tokio::time for the sleep call.
+reconnecting = ["dep:tokio", "tokio/time"]
+# Resilience wrappers: RetryingHandler and CircuitBreakerHandler.
+# Ships with tokio::time for inter-retry sleeps.
+resilience = ["dep:tokio", "tokio/time"]
+# Jetstream-backed event stream. Alternative to tapped for consumers
+# who want the Bluesky jetstream protocol (json-over-websocket) instead
+# of tap's managed-sync channel. Ships the frame parser unconditionally
+# inside the feature plus a tokio-tungstenite-backed live connector.
+firehose-jetstream = [
+    "dep:tokio",
+    "tokio/macros",
+    "tokio/rt",
+    "tokio/net",
+    "tokio/sync",
+    "tokio/time",
+    "dep:tokio-tungstenite",
+    "dep:futures-util",
+    "dep:url",
+]
+# filesystem-backed cursor store: persists cursors as a single json
+# file (one path per process). minimal deps; small single-node indexers
+# can enable this without pulling in sqlite.
+cursor-filesystem = []
+# sqlite-backed cursor store. enables a production-grade single-node
+# cursor store with wal-mode durability via rusqlite's bundled sqlite.
+cursor-sqlite = ["dep:rusqlite"]
+
+[dependencies]
+# the crate at-a-minimum decodes firehose json into AnyRecord, so it
+# depends on idiolect-records unconditionally. everything else is
+# optional.
+idiolect-records = { path = "../idiolect-records" }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = "0.1"
+
+# tapped is the production firehose adapter: it wraps the `tap` binary
+# (process + websocket) and hands us decoded record-shaped json events
+# plus ack ids. we only need it when `firehose-tapped` is enabled.
+tapped = { version = "0.3", optional = true }
+
+# tokio is a hard requirement of the tapped adapter because tapped
+# itself is async-only. the core crate does not require tokio.
+tokio = { version = "1.48", optional = true, default-features = false }
+
+# Bundled sqlite for the optional `cursor-sqlite` feature. `bundled` pulls
+# sqlite into the build so the crate works on platforms without a system
+# libsqlite3. Off by default; a caller that enables the feature opts in.
+rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+
+# Jetstream websocket transport.
+tokio-tungstenite = { version = "0.24", optional = true, features = ["rustls-tls-webpki-roots"] }
+futures-util = { version = "0.3", optional = true, default-features = false, features = ["sink", "std"] }
+url = { version = "2.5", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.48", default-features = false, features = ["macros", "rt", "sync"] }
+tempfile = "3.13"

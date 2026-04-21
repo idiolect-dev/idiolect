@@ -1,0 +1,61 @@
+# Dependabot configuration.
+#
+# Updates land as PRs that the normal CI suite gates. Conservative
+# cadence — weekly — so review burden stays manageable; ecosystems
+# that ship critical fixes faster (npm advisories, panproto) are
+# additionally covered by the daily `audit.yml` workflow.
+#
+# panproto is pinned to a specific git tag in the workspace manifest
+# and intentionally not auto-bumped; its release cadence is handled
+# as part of the project's substrate-coordination process.
+
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - rust
+    # panproto is pinned to a release tag we bump manually.
+    ignore:
+      - dependency-name: "panproto-*"
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - typescript
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+
+  - package-ecosystem: docker
+    directory: "/deploy/docker"
+    schedule:
+      interval: monthly
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - docker

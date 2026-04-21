@@ -1,0 +1,26 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.schema.lens",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["sourceSchema", "targetSchema", "objectHash", "createdAt"],
+        "properties": {
+          "sourceSchema": { "type": "string", "format": "at-uri" },
+          "targetSchema": { "type": "string", "format": "at-uri" },
+          "objectHash": { "type": "string", "maxLength": 64 },
+          "roundTripClass": {
+            "type": "string",
+            "knownValues": ["iso", "retraction", "projection", "opaque"]
+          },
+          "lawsVerified": { "type": "boolean" },
+          "blob": { "type": "blob", "accept": ["application/x-msgpack"], "maxSize": 1048576 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

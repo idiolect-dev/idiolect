@@ -1,0 +1,25 @@
+# CODEOWNERS
+#
+# Every path has at least one owner. The owner's review is required
+# before merge to `main` when branch protection enforces it.
+#
+# Ordering: later entries override earlier ones, so specialize
+# toward the bottom.
+
+# Default owner for everything — no orphan paths.
+* @aaronstevenwhite
+
+# Lexicons are architectural primitives; changes need steward
+# review.
+/lexicons/                          @aaronstevenwhite
+
+# Spec-driven taxonomies shape the generated surfaces of multiple
+# crates; review accordingly.
+/orchestrator-spec/                 @aaronstevenwhite
+/observer-spec/                     @aaronstevenwhite
+/verify-spec/                       @aaronstevenwhite
+
+# Release and CI machinery.
+/.github/workflows/                 @aaronstevenwhite
+/deploy/                            @aaronstevenwhite
+/deny.toml                          @aaronstevenwhite

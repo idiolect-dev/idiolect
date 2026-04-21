@@ -1,0 +1,256 @@
+# CI for the idiolect monorepo.
+#
+# Design shape:
+#
+# - `codegen` is the drift gate — it runs first because a lexicon
+#   edit that breaks downstream sources surfaces there most loudly,
+#   and subsequent jobs are not meaningful until it passes.
+# - `rust` and `typescript` run the core build+lint+test loops for
+#   their language halves, both depending on `codegen`.
+# - `feature-matrix` exercises the feature combinations shipped by
+#   each feature-gated crate so a feature that builds alone but
+#   breaks in combination fails CI.
+# - `check-compat` runs only on pull requests: diffs the lexicon
+#   tree against the merge-base and fails on breaking changes.
+# - `cargo-deny` enforces the workspace's supply-chain policy
+#   (licences, advisories, banned crates, duplicates).
+#
+# `workflow_call` is wired so release.yml can re-run this suite on
+# the tagged commit before shipping.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_call: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  CARGO_BUILD_JOBS: "4"
+  RUSTFLAGS: "-D warnings"
+  RUST_BACKTRACE: "1"
+
+jobs:
+  # ---------------------------------------------------------------
+  # Regenerates every artifact idiolect-codegen emits and asserts the
+  # working tree is unchanged. The load-bearing check for P2
+  # (records, not registries — the lexicons are the source of truth).
+  # ---------------------------------------------------------------
+  codegen:
+    name: codegen drift gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          shared-key: "codegen"
+
+      - name: regenerate
+        run: cargo run --quiet -p idiolect-codegen -- generate
+
+      - name: fail if working tree changed
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::generated sources are out of sync with lexicons."
+            echo "run 'cargo run -p idiolect-codegen -- generate' and commit the result."
+            git --no-pager diff
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------
+  # Lint + test the full workspace on the default feature set. Uses
+  # nextest for faster, more reliable test execution; falls through
+  # to doctests separately because nextest does not run those.
+  # ---------------------------------------------------------------
+  rust:
+    name: rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: codegen
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          components: "rustfmt, clippy"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          shared-key: "rust-${{ matrix.os }}"
+
+      - name: cargo fmt
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: install nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: "cargo-nextest@0.9.87"
+
+      - name: cargo nextest
+        run: cargo nextest run --workspace --locked
+
+      - name: cargo test doctests
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo test --workspace --locked --doc
+
+  # ---------------------------------------------------------------
+  # Exercise feature combinations that the default pass does not
+  # touch. Each row is a self-contained build+test so a failure
+  # localizes to the feature set that broke.
+  # ---------------------------------------------------------------
+  feature-matrix:
+    name: features ${{ matrix.crate }} [${{ matrix.features }}]
+    runs-on: ubuntu-latest
+    needs: codegen
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crate: idiolect-indexer
+            features: "cursor-filesystem,cursor-sqlite,firehose-jetstream,reconnecting,resilience,firehose-tapped"
+          - crate: idiolect-lens
+            features: "pds-atrium,pds-reqwest,pds-resolve"
+          - crate: idiolect-lens
+            features: "dpop-p256"
+          - crate: idiolect-oauth
+            features: "store-filesystem,store-sqlite"
+          - crate: idiolect-orchestrator
+            features: "catalog-sqlite,query-http"
+          - crate: idiolect-orchestrator
+            features: "daemon"
+          - crate: idiolect-observer
+            features: "daemon"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          shared-key: "features-${{ matrix.crate }}"
+
+      - name: cargo build
+        run: cargo build -p ${{ matrix.crate }} --features ${{ matrix.features }} --locked
+
+      - name: cargo test
+        run: cargo test -p ${{ matrix.crate }} --features ${{ matrix.features }} --locked
+
+  # ---------------------------------------------------------------
+  # Supply-chain policy. `deny.toml` enforces allowed licences,
+  # forbidden crates, advisory responses, and the workspace's
+  # dedup stance.
+  # ---------------------------------------------------------------
+  cargo-deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    needs: codegen
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          arguments: --all-features
+          log-level: warn
+
+  # ---------------------------------------------------------------
+  # On pull requests, diff the current lexicon tree against the
+  # target branch and fail on any breaking change. The architecture
+  # promises schema evolution stays backward-compatible by default;
+  # this gate enforces the promise at the PR boundary.
+  # ---------------------------------------------------------------
+  check-compat:
+    name: lexicon check-compat
+    runs-on: ubuntu-latest
+    needs: codegen
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 15
+    steps:
+      - name: check out PR head
+        uses: actions/checkout@v4
+        with:
+          path: head
+
+      - name: check out base ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "head"
+          shared-key: "check-compat"
+
+      - name: run check-compat
+        working-directory: head
+        run: |
+          cargo run --quiet -p idiolect-codegen -- \
+            check-compat --baseline "$GITHUB_WORKSPACE/base/lexicons/dev"
+
+  # ---------------------------------------------------------------
+  # TypeScript half of the monorepo: @idiolect/schema. biome + tsc
+  # + bun test.
+  # ---------------------------------------------------------------
+  typescript:
+    name: typescript
+    runs-on: ubuntu-latest
+    needs: codegen
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.2"
+
+      - name: install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: biome lint
+        run: bun run lint
+
+      - name: typecheck
+        run: bun run typecheck
+
+      - name: test
+        run: bun run test

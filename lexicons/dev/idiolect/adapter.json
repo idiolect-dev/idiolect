@@ -1,0 +1,103 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.adapter",
+  "description": "A subprocess or HTTP-endpoint wrapper for a framework's tooling, authored by incentive-aligned parties. Adapters are how idiolect glues existing frameworks (Hasura, Prisma, Datomic, FHIR, Coq, Meilisearch, ...) without forking them.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "Declaration that a specific tool version can be invoked via a specific protocol under named isolation requirements. Orchestrators and observers use adapters to run third-party tools in a known, reproducible way.",
+      "record": {
+        "type": "object",
+        "required": [
+          "framework",
+          "versionRange",
+          "invocationProtocol",
+          "isolation",
+          "author",
+          "occurredAt"
+        ],
+        "properties": {
+          "framework": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Canonical framework name, e.g. 'hasura', 'prisma', 'datomic', 'fhir-validator', 'coq', 'meilisearch'."
+          },
+          "versionRange": {
+            "type": "string",
+            "description": "Semver range the adapter supports."
+          },
+          "invocationProtocol": {
+            "type": "object",
+            "description": "How the adapter is invoked.",
+            "required": ["kind"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["subprocess", "http", "wasm"],
+                "description": "Transport protocol."
+              },
+              "entryPoint": {
+                "type": "string",
+                "description": "Binary name (subprocess), URL (http), or wasm module reference."
+              },
+              "inputSchema": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#schemaRef",
+                "description": "Schema of the adapter's input."
+              },
+              "outputSchema": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#schemaRef",
+                "description": "Schema of the adapter's output."
+              }
+            }
+          },
+          "isolation": {
+            "type": "object",
+            "description": "Sandboxing requirements the orchestrator must honour.",
+            "required": ["kind"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["none", "process", "container", "vm", "wasm-sandbox"]
+              },
+              "networkPolicy": {
+                "type": "string",
+                "enum": ["none", "egress-denylist", "egress-allowlist", "full"],
+                "description": "What network access the adapter is allowed."
+              },
+              "filesystemPolicy": {
+                "type": "string",
+                "enum": ["readonly", "scratch", "writable-subtree", "full"],
+                "description": "What filesystem access the adapter is allowed."
+              },
+              "resourceLimits": {
+                "type": "object",
+                "properties": {
+                  "maxMemoryBytes": { "type": "integer" },
+                  "maxCpuSeconds": { "type": "integer" },
+                  "maxWallSeconds": { "type": "integer" }
+                }
+              }
+            }
+          },
+          "author": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the adapter author. Not an endorsement; users judge."
+          },
+          "verification": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "Optional verification record demonstrating the adapter's conformance."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

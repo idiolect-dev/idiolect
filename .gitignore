@@ -1,0 +1,35 @@
+# rust
+/target
+**/*.rs.bk
+Cargo.lock.bak
+
+# bun / node
+node_modules/
+.pnp.*
+dist/
+build/
+*.tsbuildinfo
+
+# generated code is committed on purpose: idiolect-codegen owns the
+# content and a drift gate in ci ensures it stays in sync with the
+# lexicons. see crates/idiolect-codegen/moon.yml.
+**/.lex/
+
+# moon
+.moon/cache/
+.moon/docker/
+
+# editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# env
+.env
+.env.local
+.env.*.local
+
+# dev
+notes/

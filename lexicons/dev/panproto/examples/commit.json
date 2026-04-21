@@ -1,0 +1,13 @@
+{
+  "$nsid": "dev.panproto.vcs.commit",
+  "repo":         "at://did:plc:example/dev.panproto.vcs.repo/main",
+  "objectHash":   "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "schemaHash":   "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "parentHashes": [
+    "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+  ],
+  "protocol":  "atproto-lexicon",
+  "author":    "did:plc:example",
+  "message":   "Initial schema commit.",
+  "createdAt": "2026-04-19T00:00:00.000Z"
+}

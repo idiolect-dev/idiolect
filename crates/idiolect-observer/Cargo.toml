@@ -1,0 +1,77 @@
+[package]
+name = "idiolect-observer"
+description = "Reference observer daemon for dev.idiolect.*: consumes encounter-family records off the firehose, runs an ObservationMethod aggregator, and periodically publishes dev.idiolect.observation records."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lib]
+name = "idiolect_observer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "idiolect-observer"
+path = "src/main.rs"
+required-features = ["daemon"]
+
+[lints]
+workspace = true
+
+[features]
+# the library crate is transport-agnostic by default: traits, a
+# correction-rate reference method, an in-memory publisher, and a
+# handler that wires them to idiolect-indexer.
+default = []
+# pull in the real tapped-backed firehose adapter and the reference
+# binary. the binary needs tokio + tracing-subscriber for runtime
+# bring-up; toggling this off lets downstream consumers depend on the
+# library without dragging the runtime in.
+daemon = [
+    "idiolect-indexer/firehose-tapped",
+    "idiolect-indexer/cursor-sqlite",
+    "pds-atrium",
+    "dep:tapped",
+    "dep:tokio",
+    "dep:tracing-subscriber",
+    "dep:anyhow",
+]
+# PDS-backed publisher. pulls in `idiolect-lens` with its atrium
+# feature so `PdsPublisher` can hand observations straight to an
+# atrium-backed `PdsWriter`. the core `ObservationPublisher` trait
+# itself depends only on `idiolect-lens`, which is already a library
+# dep for `PdsWriter`; this feature only flips the atrium transport on.
+pds-atrium = ["idiolect-lens/pds-atrium"]
+
+[dependencies]
+idiolect-records = { path = "../idiolect-records" }
+idiolect-indexer = { path = "../idiolect-indexer" }
+# `idiolect-lens` exposes the `PdsWriter` trait the PDS publisher
+# depends on. pulling it in unconditionally keeps the publisher trait
+# definition transport-agnostic (no feature gate on the trait itself);
+# the atrium implementation is still gated on `pds-atrium`.
+idiolect-lens    = { path = "../idiolect-lens" }
+
+# Used by InstanceMethodAdapter to parse record JSON into WInstance
+# before dispatching to a graph-form observation method.
+panproto-schema = { workspace = true }
+panproto-inst   = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+time       = { workspace = true }
+tracing    = "0.1"
+
+tokio = { version = "1.48", optional = true, default-features = false, features = ["rt-multi-thread", "macros", "signal", "time", "sync"] }
+tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter"] }
+anyhow = { workspace = true, optional = true }
+tapped = { version = "0.3", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.48", default-features = false, features = ["macros", "rt", "sync", "time"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry"] }

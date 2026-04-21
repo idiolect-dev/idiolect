@@ -1,0 +1,18 @@
+$schema: "https://moonrepo.dev/schemas/toolchain.json"
+
+# toolchain versions pinned for reproducibility across contributors and ci.
+
+node:
+  version: "22.13.1"
+  packageManager: "bun"
+  bun:
+    version: "1.2.2"
+  dependencyVersionFormat: "workspace"
+
+rust:
+  version: "1.95.0"
+  components:
+    - "rustfmt"
+    - "clippy"
+  bins:
+    - "cargo-nextest@0.9.87"

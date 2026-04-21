@@ -1,0 +1,36 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.internal.spec.observationMethod",
+  "description": "Declarative shape of observer-spec/methods.json. An instance of this schema is consumed by idiolect-codegen to generate the observer's method registry and default_methods factory. Not a PDS record.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "literal:methods",
+      "record": {
+        "type": "object",
+        "required": ["methods"],
+        "properties": {
+          "description": { "type": "string" },
+          "methods": {
+            "type": "array",
+            "items": { "type": "ref", "ref": "#methodDecl" }
+          }
+        }
+      }
+    },
+    "methodDecl": {
+      "type": "object",
+      "required": ["name", "module", "struct"],
+      "properties": {
+        "name": { "type": "string" },
+        "module": { "type": "string" },
+        "struct": { "type": "string" },
+        "description": { "type": "string" },
+        "form": {
+          "type": "string",
+          "knownValues": ["record", "instance"]
+        }
+      }
+    }
+  }
+}

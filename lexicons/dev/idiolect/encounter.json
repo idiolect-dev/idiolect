@@ -1,0 +1,76 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.encounter",
+  "description": "A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "One invocation of a lens on a source, producing an output. Kind declares the encounter's context so observers can weight correctly.",
+      "record": {
+        "type": "object",
+        "required": ["lens", "sourceSchema", "purpose", "kind", "visibility", "occurredAt"],
+        "properties": {
+          "lens": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#lensRef",
+            "description": "The lens that was invoked."
+          },
+          "sourceSchema": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#schemaRef",
+            "description": "The source schema the lens translated from."
+          },
+          "targetSchema": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#schemaRef",
+            "description": "The target schema produced by the lens. Often implied by the lens; may be elided when unambiguous."
+          },
+          "sourceInstance": {
+            "type": "cid-link",
+            "description": "Optional content-addressed reference to the source instance, when the publisher is willing to include it. Omit when visibility restricts publication of source data."
+          },
+          "producedOutput": {
+            "type": "cid-link",
+            "description": "Optional content-addressed reference to the produced output."
+          },
+          "purpose": {
+            "type": "string",
+            "maxGraphemes": 1000,
+            "description": "Free-text statement of why this translation was performed."
+          },
+          "downstreamResult": {
+            "type": "string",
+            "enum": ["success", "corrected", "rejected", "unknown"],
+            "description": "Outcome as assessed by the invoking party at record time. 'corrected' signals a follow-up correction record is expected or exists."
+          },
+          "annotations": {
+            "type": "string",
+            "maxGraphemes": 4000,
+            "description": "Narrative notes from the invoking party."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "invocation-log",
+              "curated",
+              "roundtrip-verified",
+              "production",
+              "adversarial"
+            ],
+            "description": "Fixed taxonomy at the Lexicon level. Observers declare how they weight each kind."
+          },
+          "visibility": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#visibility"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When the lens invocation occurred. Distinct from the record's createdAt, which may be later."
+          }
+        }
+      }
+    }
+  }
+}

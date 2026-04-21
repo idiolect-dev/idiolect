@@ -1,0 +1,35 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.internal.spec.verificationRunner",
+  "description": "Declarative shape of verify-spec/runners.json. An instance of this schema is consumed by idiolect-codegen to generate the verification runner registry. Not a PDS record.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "literal:runners",
+      "record": {
+        "type": "object",
+        "required": ["runners"],
+        "properties": {
+          "description": { "type": "string" },
+          "runners": {
+            "type": "array",
+            "items": { "type": "ref", "ref": "#runnerDecl" }
+          }
+        }
+      }
+    },
+    "runnerDecl": {
+      "type": "object",
+      "required": ["kind", "module", "struct"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "knownValues": ["roundtrip-test", "property-test", "formal-proof", "conformance-test", "static-check", "convergence-preserving"]
+        },
+        "module": { "type": "string" },
+        "struct": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

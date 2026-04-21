@@ -1,0 +1,75 @@
+[package]
+name = "idiolect-orchestrator"
+description = "Reference orchestrator for dev.idiolect.*: folds adapter/bounty/community/dialect/recommendation/verification records off the firehose into an in-memory catalog and answers P4/P5-compatible queries (matching, preference, sufficiency)."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# Sqlite-backed catalog store for persistence across restarts. One row
+# per record, json blob + discriminator column. Uses bundled sqlite.
+catalog-sqlite = ["dep:rusqlite"]
+# Read-only HTTP query API over the catalog. Pulls in axum + tower-http.
+query-http = ["dep:axum", "dep:tokio", "tokio/rt-multi-thread", "tokio/net"]
+# Reference daemon binary wiring the indexer + catalog + http api with a
+# tapped-backed firehose transport. Pulls everything above plus
+# tracing-subscriber + anyhow.
+daemon = [
+    "catalog-sqlite",
+    "query-http",
+    "idiolect-indexer/firehose-tapped",
+    "idiolect-indexer/cursor-sqlite",
+    "dep:tapped",
+    "dep:tokio",
+    "tokio/rt-multi-thread",
+    "tokio/macros",
+    "tokio/signal",
+    "dep:tracing-subscriber",
+    "dep:anyhow",
+]
+
+[dependencies]
+idiolect-records  = { path = "../idiolect-records" }
+idiolect-indexer  = { path = "../idiolect-indexer" }
+
+# Used by generated expression-form query fns: each record is
+# serialized into a panproto-expr Literal and evaluated against a
+# predicate expression declared in the spec.
+panproto-expr        = { workspace = true }
+panproto-expr-parser = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = "0.1"
+
+rusqlite   = { version = "0.32", optional = true, features = ["bundled"] }
+axum       = { version = "0.8", optional = true, default-features = false, features = ["http1", "json", "query", "tokio"] }
+tokio      = { version = "1.48", optional = true, default-features = false }
+tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter"] }
+anyhow     = { workspace = true, optional = true }
+tapped     = { version = "0.3", optional = true }
+
+[[bin]]
+name = "idiolect-orchestrator"
+path = "src/main.rs"
+required-features = ["daemon"]
+
+[[test]]
+name = "http_api"
+path = "tests/http_api.rs"
+required-features = ["query-http"]
+
+[dev-dependencies]
+tokio    = { version = "1.48", default-features = false, features = ["macros", "rt", "net"] }
+tempfile = "3.13"
+reqwest  = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }

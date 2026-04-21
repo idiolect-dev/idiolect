@@ -1,0 +1,9 @@
+{
+  "$nsid": "dev.panproto.schema.schema",
+  "protocol":   "atproto-lexicon",
+  "objectHash": "sha256:aaaabbbbccccddddeeeeffff00001111222233334444555566667777888899aa",
+  "vertexCount":     7,
+  "edgeCount":       9,
+  "constraintCount": 4,
+  "createdAt": "2026-04-19T00:00:00.000Z"
+}

@@ -1,0 +1,77 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.internal.spec.query",
+  "description": "Declarative shape of orchestrator-spec/queries.json. An instance of this schema is consumed by idiolect-codegen to generate the orchestrator's query fns, HTTP handlers, and CLI dispatcher. Not a PDS record — the `internal.spec.` segment flags that instances of this schema live as codegen configuration, never on a PDS.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "literal:queries",
+      "record": {
+        "type": "object",
+        "required": ["queries"],
+        "properties": {
+          "description": { "type": "string" },
+          "queries": {
+            "type": "array",
+            "items": { "type": "ref", "ref": "#queryDecl" }
+          }
+        }
+      }
+    },
+    "queryDecl": {
+      "type": "object",
+      "required": ["name", "entity", "http"],
+      "properties": {
+        "name": { "type": "string" },
+        "entity": {
+          "type": "string",
+          "knownValues": ["adapter", "bounty", "community", "dialect", "recommendation", "verification"]
+        },
+        "description": { "type": "string" },
+        "predicate": { "type": "string" },
+        "expression": { "type": "string" },
+        "params": {
+          "type": "array",
+          "items": { "type": "ref", "ref": "#paramDecl" }
+        },
+        "http": { "type": "ref", "ref": "#httpDecl" },
+        "cli": { "type": "ref", "ref": "#cliDecl" }
+      }
+    },
+    "paramDecl": {
+      "type": "object",
+      "required": ["name", "rust_kind", "http_query", "parser"],
+      "properties": {
+        "name": { "type": "string" },
+        "rust_kind": {
+          "type": "string",
+          "knownValues": ["String", "SchemaRef", "LensRef", "VerificationKind", "AdapterInvocationProtocolKind"]
+        },
+        "http_query": { "type": "string" },
+        "parser": {
+          "type": "string",
+          "knownValues": ["string", "schema_ref_from_uri", "lens_ref_from_uri", "verification_kind", "adapter_invocation_protocol_kind"]
+        }
+      }
+    },
+    "httpDecl": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" }
+      }
+    },
+    "cliDecl": {
+      "type": "object",
+      "required": ["subcommand"],
+      "properties": {
+        "subcommand": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "flag": { "type": "string" },
+        "default": { "type": "boolean" }
+      }
+    }
+  }
+}

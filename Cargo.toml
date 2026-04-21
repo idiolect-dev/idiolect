@@ -1,0 +1,93 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/idiolect-cli",
+    "crates/idiolect-codegen",
+    "crates/idiolect-identity",
+    "crates/idiolect-indexer",
+    "crates/idiolect-lens",
+    "crates/idiolect-migrate",
+    "crates/idiolect-oauth",
+    "crates/idiolect-observer",
+    "crates/idiolect-orchestrator",
+    "crates/idiolect-records",
+    "crates/idiolect-verify",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+repository = "https://github.com/idiolect-dev/idiolect"
+homepage = "https://idiolect.dev"
+authors = ["Aaron White <aaronstevenwhite@gmail.com>"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+missing_docs_in_private_items = "allow"
+module_name_repetitions = "allow"
+
+# Policy: specific lints allowed workspace-wide with rationale.
+#
+# multiple_crate_versions — Cargo's duplicate-dep lint flags
+#   transitive deps we don't control (windows-*, hashbrown, etc.).
+#   Real duplicates worth fixing are caught by `cargo-deny check
+#   bans` with per-entry review, not by the clippy lint's
+#   all-or-nothing policy.
+multiple_crate_versions = "allow"
+# significant_drop_tightening — fires on idiomatic mutex-guard
+#   patterns where the explicit scope is clearer than the
+#   drop-at-end-of-line rewrite.
+significant_drop_tightening = "allow"
+# future_not_send — native `async fn` in traits does not carry
+#   `Send` bounds. Adopting `async-trait` to fix this would trade
+#   zero-cost async for boxed futures; the trade isn't worth it
+#   at the boundaries where this lint fires.
+future_not_send = "allow"
+# items_after_statements — common in emitters and test modules
+#   where a local helper reads better next to its use.
+items_after_statements = "allow"
+# too_long_first_doc_paragraph — style preference that fights the
+#   project's doc-style of expressive first paragraphs.
+too_long_first_doc_paragraph = "allow"
+# duration_suboptimal_units — suggests `from_mins` / `from_hours`
+#   which are nightly-only on the pinned toolchain. Revisit on
+#   stabilization.
+duration_suboptimal_units = "allow"
+
+[workspace.dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+time = { version = "0.3.45", features = ["serde", "serde-well-known"] }
+
+# panproto: idiolect dogfoods panproto for schema codegen, breaking-change
+# detection, and lens compilation. pinned to the same tag cospan uses.
+panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.35.0" }
+
+anyhow = "1.0.100"
+
+# oxc: rust-native javascript/typescript toolchain. idiolect-codegen drives
+# the typescript emitter through oxc's arena-allocated ast plus its ast-to-
+# source printer instead of composing strings by hand.
+oxc_allocator = "0.126"
+oxc_ast       = "0.126"
+oxc_codegen   = "0.126"
+oxc_span      = "0.126"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

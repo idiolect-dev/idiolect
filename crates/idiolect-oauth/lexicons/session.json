@@ -1,0 +1,80 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.internal.oauthSession",
+  "description": "Ephemeral OAuth session state for an authenticated account, held locally by the appview. Tokens are never written to a PDS: this lexicon exists so the appview treats session state uniformly with every other panproto-shaped value (identity resolution caches, DPoP nonces, firehose cursors). Token lifecycle transitions (issue, refresh, revoke) are modeled as lenses over this schema's w-instances.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "literal:self",
+      "description": "The full session state for one (did, pdsUrl) pair. Keyed by the literal 'self' so the session is a singleton per logged-in account.",
+      "record": {
+        "type": "object",
+        "required": [
+          "did",
+          "pdsUrl",
+          "accessJwt",
+          "refreshJwt",
+          "dpopPrivateKeyJwk",
+          "expiresAt",
+          "issuedAt"
+        ],
+        "properties": {
+          "did": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the authenticated account. Session ownership boundary."
+          },
+          "pdsUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Base URL of the Personal Data Server that issued the tokens. Tokens are PDS-scoped in atproto OAuth; a refresh must hit the same host."
+          },
+          "accessJwt": {
+            "type": "string",
+            "description": "Opaque access token. Semantically sensitive: never rendered to UI or logged at any level above trace."
+          },
+          "refreshJwt": {
+            "type": "string",
+            "description": "Opaque refresh token. Used to mint a new access token when the current one expires. Never rendered or logged."
+          },
+          "dpopPrivateKeyJwk": {
+            "type": "string",
+            "description": "DPoP private key, serialized as a JSON Web Key string. The appview signs DPoP proofs with this key for every request. Serialized as a string (not a nested object) so the schema node is a primitive and the entire key material round-trips as one opaque unit."
+          },
+          "dpopNonce": {
+            "type": "string",
+            "description": "Latest DPoP nonce returned by the PDS on a 401 or in a Use-DPoP-Nonce header. Updated on every request that yields a new nonce; the panproto lens for 'record nonce' rewrites exactly this field."
+          },
+          "tokenType": {
+            "type": "string",
+            "description": "OAuth 2.0 token_type. For atproto this is always 'DPoP'; carried explicitly for forward compatibility with other bindings."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Space-delimited scope string the PDS returned on issuance. Surfaces what the token is allowed to do (e.g. 'atproto transition:generic')."
+          },
+          "handle": {
+            "type": "string",
+            "format": "handle",
+            "description": "User-facing handle at the time of issuance. Cached here so UI can render it without re-resolving identity; authoritative source remains PLC / the identity layer."
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When this session was created or last refreshed."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Access-token expiry. The appview must refresh before this instant; after this instant the session is unusable without a refresh_jwt round-trip."
+          },
+          "refreshExpiresAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Optional absolute expiry of the refresh_jwt. If present and passed, the session is fully expired and the user must re-authenticate."
+          }
+        }
+      }
+    }
+  }
+}

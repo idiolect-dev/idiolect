@@ -1,0 +1,55 @@
+{
+  "name": "@idiolect/schema",
+  "version": "0.1.0",
+  "description": "Runtime validators, types, and NSIDs for the dev.idiolect.* Lexicon family.",
+  "license": "MIT",
+  "author": "Aaron White <aaronstevenwhite@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idiolect-dev/idiolect.git",
+    "directory": "packages/schema"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./lexicons": {
+      "types": "./dist/lexicons.d.ts",
+      "import": "./dist/lexicons.js"
+    },
+    "./nsids": {
+      "types": "./dist/nsids.d.ts",
+      "import": "./dist/nsids.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "lexicons",
+    "README.md"
+  ],
+  "scripts": {
+    "generate": "cargo run --quiet --manifest-path ../../Cargo.toml -p idiolect-codegen",
+    "generate:check": "cargo run --quiet --manifest-path ../../Cargo.toml -p idiolect-codegen -- --check",
+    "build": "bun run scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check src tests scripts"
+  },
+  "dependencies": {
+    "@atproto/lexicon": "0.4.8",
+    "@atproto/syntax": "0.3.4"
+  },
+  "devDependencies": {
+    "@types/bun": "1.2.2",
+    "typescript": "5.7.3"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.5"
+  }
+}

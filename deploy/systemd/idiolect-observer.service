@@ -1,0 +1,34 @@
+[Unit]
+Description=idiolect observer: firehose-to-observation daemon
+Documentation=https://github.com/idiolect-dev/idiolect
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=idiolect
+Group=idiolect
+ExecStart=/usr/local/bin/idiolect-observer
+Restart=on-failure
+RestartSec=5s
+
+# Required: the observer's authoring DID and a PDS to publish to.
+# Override via `systemctl edit idiolect-observer`.
+# Environment=IDIOLECT_OBSERVER_DID=did:plc:...
+# Environment=IDIOLECT_PDS_URL=https://bsky.social
+
+Environment=IDIOLECT_OBSERVER_CURSORS=/var/lib/idiolect/observer/cursors.db
+Environment=RUST_LOG=info
+
+StateDirectory=idiolect/observer
+RuntimeDirectory=idiolect/observer
+ReadWritePaths=/var/lib/idiolect/observer
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+LimitNOFILE=16384
+
+[Install]
+WantedBy=multi-user.target

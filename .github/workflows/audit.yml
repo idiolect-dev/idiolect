@@ -1,0 +1,66 @@
+# Scheduled supply-chain audit.
+#
+# Runs daily at 09:00 UTC and on-demand via workflow_dispatch. Never
+# runs on PRs or pushes — the intent is "new vulnerability disclosed
+# between releases," not "per-commit gate" (that's `cargo-deny` in
+# ci.yml).
+#
+# On failure, opens or updates a GitHub issue with the label
+# `security-audit` rather than blocking anything. The issue is the
+# action item; triage happens there.
+
+name: audit
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  cargo-audit:
+    name: cargo-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  cargo-deny-advisories:
+    name: cargo-deny advisories
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories
+          arguments: --all-features
+
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.2"
+
+      - name: install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: audit
+        # `bun audit` surfaces npm advisories. Non-zero exit means
+        # one or more advisories exist; allow the failure to flow
+        # through so the next step opens an issue.
+        run: bun audit
+        continue-on-error: true

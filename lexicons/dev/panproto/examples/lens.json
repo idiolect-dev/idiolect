@@ -1,0 +1,9 @@
+{
+  "$nsid": "dev.panproto.schema.lens",
+  "sourceSchema": "at://did:plc:example/dev.panproto.schema.schema/src",
+  "targetSchema": "at://did:plc:example/dev.panproto.schema.schema/tgt",
+  "objectHash":   "sha256:deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+  "roundTripClass": "iso",
+  "lawsVerified":   true,
+  "createdAt":      "2026-04-19T00:00:00.000Z"
+}

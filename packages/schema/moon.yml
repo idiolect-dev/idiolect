@@ -1,0 +1,54 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "typescript"
+type: "library"
+
+project:
+  name: "schema"
+  description: "TypeScript runtime validators and types for dev.idiolect.* Lexicons."
+
+# the generated/ subtree is owned by idiolect-codegen. schema's tasks
+# depend on ~:generate so lexicon edits propagate automatically.
+
+tasks:
+  generate:
+    command: "noop"
+    deps:
+      - "idiolect-codegen:generate"
+
+  build:
+    command: "bun run scripts/build.ts"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*"
+      - "scripts/build.ts"
+      - "package.json"
+      - "tsconfig.json"
+    outputs:
+      - "dist/**/*"
+
+  typecheck:
+    command: "tsc --noEmit"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*"
+      - "tsconfig.json"
+
+  test:
+    command: "bun test"
+    deps:
+      - "~:generate"
+    inputs:
+      - "src/**/*"
+      - "tests/**/*"
+      - "../../lexicons/**/*.json"
+
+  lint:
+    command: "biome check src tests scripts"
+    inputs:
+      - "src/**/*"
+      - "tests/**/*"
+      - "scripts/**/*"
+      - "../../biome.json"

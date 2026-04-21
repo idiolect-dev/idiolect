@@ -1,0 +1,32 @@
+{
+  "name": "idiolect-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Idiolect — a principle-first metaframework for schema-shaped cultures of practice.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idiolect-dev/idiolect.git"
+  },
+  "license": "MIT",
+  "author": "Aaron White <aaronstevenwhite@gmail.com>",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "packageManager": "bun@1.2.2",
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "build": "bun run --filter '*' build",
+    "generate": "cargo run --quiet -p idiolect-codegen",
+    "generate:check": "cargo run --quiet -p idiolect-codegen -- --check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.0",
+    "typescript": "5.7.3"
+  }
+}

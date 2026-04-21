@@ -1,0 +1,24 @@
+{
+  "$schema": "dev.idiolect.spec.verification-runner",
+  "description": "Declarative taxonomy of verification runners. Each entry maps to a hand-written module under crates/idiolect-verify/src/<module>.rs implementing the VerificationRunner trait. The generated module in the same crate exposes a RUNNERS slice of descriptors for enumeration; runner instantiation stays caller-supplied because constructors take different configuration (corpus, budget, generator closure) per kind.",
+  "runners": [
+    {
+      "kind": "roundtrip-test",
+      "module": "roundtrip",
+      "struct": "RoundtripTestRunner",
+      "description": "Apply the lens forward then backward on a caller-supplied corpus and check put(get(src)) == src for every record."
+    },
+    {
+      "kind": "property-test",
+      "module": "property_test",
+      "struct": "PropertyTestRunner",
+      "description": "Like roundtrip-test but the corpus is produced by a caller-supplied generator closure rather than a static Vec."
+    },
+    {
+      "kind": "static-check",
+      "module": "static_check",
+      "struct": "StaticCheckRunner",
+      "description": "Run panproto's schema validator on the lens's source and target schemas. Does not invoke the lens itself."
+    }
+  ]
+}

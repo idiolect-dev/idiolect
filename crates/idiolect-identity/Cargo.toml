@@ -1,0 +1,41 @@
+[package]
+name = "idiolect-identity"
+description = "DID resolution for idiolect: maps did:plc and did:web identifiers to their DID documents, handles, and PDS service URLs. Ships a transport-agnostic core, an in-memory impl for tests, and a reqwest-backed live resolver behind a feature flag."
+readme = "README.md"
+categories = ["authentication", "data-structures"]
+keywords = ["atproto", "did", "plc", "identity", "idiolect"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+# transport-agnostic by default: just the trait, document types, and
+# an in-memory impl for tests.
+default = []
+# pulls in a reqwest-backed resolver that talks to plc.directory for
+# did:plc and `.well-known/did.json` for did:web.
+resolver-reqwest = ["dep:reqwest"]
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = "0.1"
+
+reqwest = { version = "0.12", optional = true, default-features = false, features = ["rustls-tls", "json"] }
+
+[dev-dependencies]
+tokio    = { version = "1.48", default-features = false, features = ["macros", "rt", "time"] }
+wiremock = "0.6.5"
+
+[[test]]
+name = "reqwest_resolver"
+path = "tests/reqwest_resolver.rs"
+required-features = ["resolver-reqwest"]

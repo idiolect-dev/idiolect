@@ -1,0 +1,61 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.correction",
+  "description": "A signed record of a post-translation edit. Corrections are the primary signal an observer uses to detect lens quality issues; the reason taxonomy decouples 'lens was wrong' from 'the world is complicated'.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A specific edit to the output of an encounter, attributed by reason.",
+      "record": {
+        "type": "object",
+        "required": ["encounter", "path", "reason", "visibility", "occurredAt"],
+        "properties": {
+          "encounter": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#encounterRef",
+            "description": "The encounter whose output was edited."
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "JSON Pointer or equivalent path into the produced output identifying the edited location."
+          },
+          "originalValue": {
+            "type": "unknown",
+            "description": "The value prior to correction. May be elided for visibility reasons."
+          },
+          "correctedValue": {
+            "type": "unknown",
+            "description": "The value after correction."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "lens-error",
+              "domain-difference",
+              "source-error",
+              "downstream-idiosyncrasy",
+              "user-mistake",
+              "retrospective"
+            ],
+            "description": "Fixed taxonomy at the Lexicon level. Aggregators filter or weight by reason; corrections of different reasons signal different things about a lens."
+          },
+          "rationale": {
+            "type": "string",
+            "maxGraphemes": 2000,
+            "description": "Optional human-readable justification for the correction."
+          },
+          "visibility": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#visibility"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

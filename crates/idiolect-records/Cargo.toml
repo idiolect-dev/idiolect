@@ -1,0 +1,24 @@
+[package]
+name = "idiolect-records"
+description = "Rust record types mirroring the dev.idiolect.* Lexicon family."
+readme = "README.md"
+categories = ["data-structures", "encoding"]
+keywords = ["atproto", "lexicon", "idiolect", "federation", "schema"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+
+[dev-dependencies]
+time = { workspace = true, features = ["macros"] }

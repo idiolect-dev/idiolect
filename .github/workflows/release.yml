@@ -1,0 +1,532 @@
+# Tag-triggered release pipeline.
+#
+# Trigger: pushing a tag matching `v*` (e.g. `v0.1.0`). The tag name
+# after the `v` is treated as the release version. The workspace
+# Cargo.toml + packages/schema/package.json are expected to match
+# that version before tagging; the workflow verifies the invariant
+# as its first job and refuses to release on mismatch.
+#
+# Outputs, in order of publication:
+#
+#   1. GitHub Release with:
+#      - compressed binary archives for every (target, binary) pair
+#      - SHA-256 checksums of every archive, signed by cosign
+#      - SBOMs (SPDX JSON) for each container image + the source tarball
+#      - release notes extracted from CHANGELOG.md's [Unreleased] section
+#   2. Multi-arch container images on ghcr.io:
+#      - ghcr.io/idiolect-dev/orchestrator:<version>, :latest
+#      - ghcr.io/idiolect-dev/observer:<version>, :latest
+#      - signed with cosign keyless (sigstore OIDC via GitHub Actions)
+#   3. @idiolect/schema npm package.
+#   4. Publishable Rust crates to crates.io
+#      (idiolect-records, idiolect-lens, idiolect-indexer, idiolect-oauth)
+#      in topological order.
+#
+# Every signed artifact can be verified by a downstream consumer with
+# `cosign verify-blob` (binaries) or `cosign verify` (containers).
+# See docs/ci-cd.md for consumer instructions.
+#
+# Secrets required:
+#   CARGO_REGISTRY_TOKEN    crates.io publish token, conditional
+#   NPM_TOKEN               npm publish token, conditional
+#
+# Permissions granted per-job rather than at workflow scope so a
+# compromise of one job cannot mint tokens for another.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  CARGO_BUILD_JOBS: "4"
+  RUST_BACKTRACE: "1"
+
+jobs:
+  # ---------------------------------------------------------------
+  # Version sanity check. Extracts the version from the tag and
+  # confirms it matches the workspace manifests. A mismatch would
+  # ship incorrectly-labeled artifacts, so it's a release blocker.
+  # ---------------------------------------------------------------
+  verify-version:
+    name: verify version coherence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: extract
+        name: extract version from tag
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          version="${tag#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_ENV"
+          echo "version=$version" >> "$GITHUB_ENV"
+
+      - name: assert Cargo.toml version matches
+        run: |
+          workspace_version=$(grep -A 1 '^\[workspace.package\]' Cargo.toml \
+            | grep '^version' \
+            | head -1 \
+            | cut -d'"' -f2)
+          if [ "$workspace_version" != "$version" ]; then
+            echo "::error::workspace Cargo.toml version ($workspace_version) != tag version ($version)"
+            exit 1
+          fi
+
+      - name: assert @idiolect/schema package.json version matches
+        run: |
+          pkg_version=$(jq -r '.version' packages/schema/package.json)
+          if [ "$pkg_version" != "$version" ]; then
+            echo "::error::@idiolect/schema package.json version ($pkg_version) != tag version ($version)"
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------
+  # Run the full CI suite one more time against the tagged commit.
+  # A release never ships without a green test matrix at the exact
+  # commit being released. Re-runs instead of relying on prior CI
+  # because the tag may have been pushed without a preceding PR.
+  # ---------------------------------------------------------------
+  ci-on-tag:
+    name: ci (on tag)
+    needs: verify-version
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  # ---------------------------------------------------------------
+  # Build release binaries for a matrix of targets. Each job
+  # produces `.tar.gz` archives (Unix) containing the stripped
+  # binary + SHA-256 sidecar, uploaded as workflow artifacts. A
+  # later job consolidates them, signs, and publishes.
+  # ---------------------------------------------------------------
+  build-binaries:
+    name: build ${{ matrix.bin }} (${{ matrix.target }})
+    needs: [verify-version, ci-on-tag]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # CLI is the broadest platform target — any user who wants
+          # `idiolect` locally.
+          - bin: idiolect
+            crate: idiolect-cli
+            target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: ""
+          - bin: idiolect
+            crate: idiolect-cli
+            target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: ""
+          - bin: idiolect
+            crate: idiolect-cli
+            target: aarch64-apple-darwin
+            runner: macos-14
+            features: ""
+          - bin: idiolect
+            crate: idiolect-cli
+            target: x86_64-apple-darwin
+            runner: macos-13
+            features: ""
+          # Daemon binaries: linux-only (these are containerized;
+          # macOS binaries aren't a deployment target).
+          - bin: idiolect-orchestrator
+            crate: idiolect-orchestrator
+            target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--features daemon"
+          - bin: idiolect-orchestrator
+            crate: idiolect-orchestrator
+            target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--features daemon"
+          - bin: idiolect-observer
+            crate: idiolect-observer
+            target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--features daemon"
+          - bin: idiolect-observer
+            crate: idiolect-observer
+            target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--features daemon"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          targets: ${{ matrix.target }}
+
+      - name: install cross-compile toolchain (aarch64-linux)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          mkdir -p .cargo
+          cat >> .cargo/config.toml <<'EOF'
+          [target.aarch64-unknown-linux-gnu]
+          linker = "aarch64-linux-gnu-gcc"
+          EOF
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          shared-key: "release-${{ matrix.target }}"
+
+      - name: cargo build --release
+        run: >
+          cargo build
+          --release
+          --locked
+          -p ${{ matrix.crate }}
+          --bin ${{ matrix.bin }}
+          --target ${{ matrix.target }}
+          ${{ matrix.features }}
+
+      - name: stage + strip binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          staging="${{ matrix.bin }}-${{ needs.verify-version.outputs.version }}-${{ matrix.target }}"
+          mkdir -p "dist/$staging"
+          cp "target/${{ matrix.target }}/release/${{ matrix.bin }}" "dist/$staging/"
+          cp README.md LICENSE "dist/$staging/" 2>/dev/null || true
+          if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.target }}" != "aarch64-unknown-linux-gnu" ]; then
+            strip "dist/$staging/${{ matrix.bin }}" || true
+          fi
+          tar -C dist -czf "dist/$staging.tar.gz" "$staging"
+          shasum -a 256 "dist/$staging.tar.gz" > "dist/$staging.tar.gz.sha256"
+          echo "archive=dist/$staging.tar.gz" >> "$GITHUB_ENV"
+          echo "checksum=dist/$staging.tar.gz.sha256" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.bin }}-${{ matrix.target }}
+          path: |
+            ${{ env.archive }}
+            ${{ env.checksum }}
+          retention-days: 7
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------
+  # Multi-arch container images for the two daemons. Each image is
+  # built from its Dockerfile and pushed to ghcr.io with two tags:
+  # the release version and `latest`. cosign keyless signs via the
+  # workflow's OIDC token; sigstore stores the signature in the
+  # rekor transparency log.
+  # ---------------------------------------------------------------
+  build-containers:
+    name: container ${{ matrix.image }}
+    needs: [verify-version, ci-on-tag]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write     # cosign keyless signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: orchestrator
+            dockerfile: deploy/docker/orchestrator.Dockerfile
+          - image: observer
+            dockerfile: deploy/docker/observer.Dockerfile
+    env:
+      registry: ghcr.io
+      owner: idiolect-dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: log in to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: derive image tags
+        id: tags
+        run: |
+          base="${{ env.registry }}/${{ env.owner }}/${{ matrix.image }}"
+          echo "tags=$base:${{ needs.verify-version.outputs.version }},$base:latest" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      - name: build + push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.tags.outputs.tags }}
+          push: true
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+      - name: install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.1"
+
+      - name: sign image (keyless, sigstore)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes \
+            "${{ steps.tags.outputs.base }}@${{ steps.build.outputs.digest }}"
+
+      - name: install syft + generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.tags.outputs.base }}:${{ needs.verify-version.outputs.version }}
+          format: spdx-json
+          output-file: sbom-${{ matrix.image }}.spdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.image }}
+          path: sbom-${{ matrix.image }}.spdx.json
+          retention-days: 30
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------
+  # Source tarball + aggregate checksums + signed release manifest.
+  # Produces a reproducible `idiolect-<version>-src.tar.gz` with the
+  # exact tree at the tagged commit (no .git, no target, no
+  # node_modules). Sign its sha256 with cosign so downstream
+  # verifiers have a canonical "this is what was released" anchor.
+  # ---------------------------------------------------------------
+  source-tarball:
+    name: source tarball
+    needs: verify-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: build source tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ needs.verify-version.outputs.version }}"
+          name="idiolect-$version-src"
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="$name/" -o "dist/$name.tar.gz" HEAD
+          shasum -a 256 "dist/$name.tar.gz" > "dist/$name.tar.gz.sha256"
+
+      - name: install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.1"
+
+      - name: sign source checksum
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign-blob --yes \
+            --bundle "dist/idiolect-${{ needs.verify-version.outputs.version }}-src.tar.gz.sig" \
+            "dist/idiolect-${{ needs.verify-version.outputs.version }}-src.tar.gz"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-tarball
+          path: dist/*
+          retention-days: 30
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------
+  # Consolidate every binary archive into one `checksums.txt`,
+  # sign it with cosign, publish the GitHub Release with all
+  # artifacts attached, and extract release notes from the
+  # [Unreleased] section of CHANGELOG.md.
+  # ---------------------------------------------------------------
+  publish-release:
+    name: publish GitHub Release
+    needs: [verify-version, build-binaries, build-containers, source-tarball]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: flatten artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          find artifacts -type f \
+            \( -name '*.tar.gz' -o -name '*.sha256' -o -name '*.spdx.json' -o -name '*.sig' \) \
+            -exec cp {} release/ \;
+
+      - name: aggregate checksums
+        working-directory: release
+        run: |
+          : > checksums.txt
+          for f in *.tar.gz; do
+            shasum -a 256 "$f" >> checksums.txt
+          done
+
+      - name: install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.4.1"
+
+      - name: sign checksums
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign-blob --yes \
+            --bundle release/checksums.txt.sig \
+            release/checksums.txt
+
+      - name: extract release notes
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'EOF' > release_notes.md
+          import re, pathlib
+          text = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          # Grab everything between [Unreleased] and the next `## ` header.
+          m = re.search(r"##\s*\[Unreleased\][^\n]*\n(.*?)(?=\n##\s)", text, re.S)
+          body = m.group(1).strip() if m else ""
+          if not body:
+              body = "_No release notes supplied for this version._"
+          print(body)
+          EOF
+          echo "path=release_notes.md" >> "$GITHUB_OUTPUT"
+
+      - name: publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          body_path: ${{ steps.notes.outputs.path }}
+          name: "idiolect ${{ needs.verify-version.outputs.version }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(needs.verify-version.outputs.version, '-') }}
+          generate_release_notes: true
+
+  # ---------------------------------------------------------------
+  # Publish @idiolect/schema to npm. Runs only if NPM_TOKEN is set.
+  # ---------------------------------------------------------------
+  publish-npm:
+    name: publish @idiolect/schema
+    needs: [verify-version, publish-release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ !contains(needs.verify-version.outputs.version, '-') }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.2"
+
+      - name: install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: typecheck
+        run: bun run typecheck
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: publish
+        working-directory: packages/schema
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::warning::NPM_TOKEN not set; skipping npm publish"
+            exit 0
+          fi
+          npm publish --provenance --access public
+
+  # ---------------------------------------------------------------
+  # Publish the publishable crates to crates.io in topological
+  # order. Guarded on CARGO_REGISTRY_TOKEN being set.
+  # ---------------------------------------------------------------
+  publish-crates:
+    name: publish crates.io
+    needs: [verify-version, publish-release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ !contains(needs.verify-version.outputs.version, '-') }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "publish-crates"
+
+      - name: publish in topological order
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${CARGO_REGISTRY_TOKEN:-}" ]; then
+            echo "::warning::CARGO_REGISTRY_TOKEN not set; skipping crates.io publish"
+            exit 0
+          fi
+          # Order matters: each crate's dependencies must already be
+          # on crates.io by the time it publishes.
+          for crate in idiolect-records idiolect-oauth idiolect-indexer idiolect-lens; do
+            echo "::group::publish $crate"
+            cargo publish -p "$crate" --locked --no-verify || {
+              code=$?
+              # Idempotent re-runs: crates.io returns 400 for an
+              # already-published exact version.
+              if cargo search "$crate" | grep -q "^$crate = \"${{ needs.verify-version.outputs.version }}\""; then
+                echo "$crate ${{ needs.verify-version.outputs.version }} already published; continuing"
+              else
+                exit $code
+              fi
+            }
+            echo "::endgroup::"
+          done

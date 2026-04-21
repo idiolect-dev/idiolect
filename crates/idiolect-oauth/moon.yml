@@ -1,0 +1,52 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "rust"
+type: "library"
+
+project:
+  name: "idiolect-oauth"
+  description: "Panproto-native schema and adapter traits for atproto OAuth session state. Tokens live outside dev.idiolect.* because they never go to a PDS, but the schema is panproto-native so lifecycle operations are ordinary lenses."
+
+# idiolect-oauth does not consume idiolect-codegen's generated
+# records; it owns its own (bundled) lexicon and parses it at
+# runtime. so there is no dep on idiolect-records:generate.
+
+tasks:
+  build:
+    command: "cargo build --quiet -p idiolect-oauth"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "lexicons/**/*.json"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  test:
+    command: "cargo test --quiet -p idiolect-oauth"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "lexicons/**/*.json"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  lint:
+    command: "cargo clippy --quiet -p idiolect-oauth --all-targets -- -D warnings"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  format:
+    command: "cargo fmt -p idiolect-oauth -- --check"
+    inputs:
+      - "src/**/*.rs"
+      - "tests/**/*.rs"
+
+  typecheck:
+    command: "cargo check --quiet -p idiolect-oauth"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"

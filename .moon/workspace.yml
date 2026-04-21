@@ -1,0 +1,20 @@
+$schema: "https://moonrepo.dev/schemas/workspace.json"
+
+# polyglot workspace for the idiolect metaframework.
+# crates/* host rust members of the cargo workspace.
+# packages/* host bun/typescript packages.
+# lexicons/ is a flat tree of atproto lexicon json files.
+
+projects:
+  crates: "crates/*"
+  packages: "packages/*"
+
+vcs:
+  manager: "git"
+  defaultBranch: "main"
+
+extensions:
+  schema:
+    enabled: true
+
+telemetry: false

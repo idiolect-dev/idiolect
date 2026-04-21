@@ -1,0 +1,21 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.vcs.repo",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["protocol", "createdAt"],
+        "properties": {
+          "protocol": { "type": "string", "maxLength": 128 },
+          "defaultBranch": { "type": "string", "maxLength": 256, "default": "main" },
+          "headCommit": { "type": "string", "maxLength": 64 },
+          "commitCount": { "type": "integer" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+language: "rust"
+type: "application"
+
+project:
+  name: "idiolect-codegen"
+  description: "Lexicon-driven codegen for idiolect: emits Rust and TypeScript from dev.idiolect.* lexicons."
+
+# codegen is a tool crate, not a library. its public contract is the two
+# emitted trees (rust under crates/idiolect-records/src/generated, ts under
+# packages/schema/src/generated), so `generate` and `generate:check` are
+# the moon-facing entrypoints. downstream projects depend on `~:generate`
+# to make the graph explicit.
+
+tasks:
+  generate:
+    command: "cargo run --quiet -p idiolect-codegen"
+    description: "Regenerate rust and typescript sources from the lexicons/ tree."
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+      - "../../lexicons/**/*.json"
+    outputs:
+      - "../idiolect-records/src/generated/**/*.rs"
+      - "../../packages/schema/src/generated/**/*.ts"
+
+  generate-check:
+    command: "cargo run --quiet -p idiolect-codegen -- --check"
+    description: "CI drift gate: fail if generated sources are out of sync with the lexicons."
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+      - "../../lexicons/**/*.json"
+      - "../idiolect-records/src/generated/**/*.rs"
+      - "../../packages/schema/src/generated/**/*.ts"
+
+  build:
+    command: "cargo build --quiet -p idiolect-codegen"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  test:
+    command: "cargo test --quiet -p idiolect-codegen"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  lint:
+    command: "cargo clippy --quiet -p idiolect-codegen --all-targets -- -D warnings"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"
+
+  format:
+    command: "cargo fmt -p idiolect-codegen -- --check"
+    inputs:
+      - "src/**/*.rs"
+
+  typecheck:
+    command: "cargo check --quiet -p idiolect-codegen"
+    inputs:
+      - "src/**/*.rs"
+      - "Cargo.toml"
+      - "../../Cargo.toml"

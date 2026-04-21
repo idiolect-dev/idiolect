@@ -1,0 +1,30 @@
+{
+  "$schema": "dev.idiolect.spec.observation-method",
+  "description": "Declarative taxonomy of observation methods shipped with the observer. Each entry maps to a hand-written module under crates/idiolect-observer/src/methods/<module>.rs that implements the ObservationMethod trait. The generated module in the same crate re-exports the struct types and provides a METHODS slice + default_methods() constructor for registering the bundled set.",
+  "methods": [
+    {
+      "name": "correction-rate",
+      "module": "correction_rate",
+      "struct": "CorrectionRateMethod",
+      "description": "Per-lens correction counts grouped by reason. Signals translation-quality rumor."
+    },
+    {
+      "name": "encounter-throughput",
+      "module": "encounter_throughput",
+      "struct": "EncounterThroughputMethod",
+      "description": "Encounter traffic by kind and downstream result. Signals firehose liveness."
+    },
+    {
+      "name": "verification-coverage",
+      "module": "verification_coverage",
+      "struct": "VerificationCoverageMethod",
+      "description": "Per-lens verification counts by kind, result, and distinct verifiers. Signals formal-channel evidence."
+    },
+    {
+      "name": "lens-adoption",
+      "module": "lens_adoption",
+      "struct": "LensAdoptionMethod",
+      "description": "Per-lens encounter count and distinct-invoker DIDs. Signals adoption breadth."
+    }
+  ]
+}

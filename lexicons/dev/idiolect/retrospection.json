@@ -1,0 +1,76 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.retrospection",
+  "description": "A signed annotation of a prior encounter with a delayed finding. Retrospections address silent-error latency: merges, migrations, and bitemporal reconciliations often surface failures only after long delay.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "Attribution and detection of a latent issue in a prior encounter. Causal claims are the publisher's judgment; disputes are themselves first-class records.",
+      "record": {
+        "type": "object",
+        "required": [
+          "encounter",
+          "finding",
+          "detectingParty",
+          "detectedAt",
+          "occurredAt"
+        ],
+        "properties": {
+          "encounter": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#encounterRef"
+          },
+          "finding": {
+            "type": "object",
+            "description": "Structured finding kind plus free-text detail.",
+            "required": ["kind", "detail"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "merge-divergence",
+                  "data-loss",
+                  "reconciliation-mismatch",
+                  "other"
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "maxGraphemes": 8000
+              }
+            }
+          },
+          "latency": {
+            "type": "integer",
+            "description": "Detection latency in seconds (detectedAt - encounter.occurredAt). Precomputed for easy aggregation; may be omitted for 'other' findings where latency is not meaningful."
+          },
+          "detectingParty": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the party that detected the issue."
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Optional confidence score in [0, 1]. Omit when the finding is unambiguous.",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "disputedAttribution": {
+            "type": "boolean",
+            "description": "True if the detecting party anticipates the causal attribution will be contested. A hint, not a fact; contest records are separate."
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "datetime"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When this retrospection record was published."
+          }
+        }
+      }
+    }
+  }
+}

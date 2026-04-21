@@ -1,0 +1,37 @@
+[Unit]
+Description=idiolect orchestrator: read-only HTTP catalog over the firehose
+Documentation=https://github.com/idiolect-dev/idiolect
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=idiolect
+Group=idiolect
+ExecStart=/usr/local/bin/idiolect-orchestrator
+Restart=on-failure
+RestartSec=5s
+
+# Operational defaults. Override in a drop-in file
+# (/etc/systemd/system/idiolect-orchestrator.service.d/override.conf)
+# or with `systemctl edit idiolect-orchestrator`.
+Environment=IDIOLECT_HTTP_ADDR=127.0.0.1:8787
+Environment=IDIOLECT_CATALOG_SQLITE=/var/lib/idiolect/orchestrator/catalog.db
+Environment=IDIOLECT_CURSORS=/var/lib/idiolect/orchestrator/cursors.db
+Environment=RUST_LOG=info
+
+# Filesystem hardening. The daemon only needs its state directory
+# writable; everything else is read-only.
+StateDirectory=idiolect/orchestrator
+RuntimeDirectory=idiolect/orchestrator
+ReadWritePaths=/var/lib/idiolect/orchestrator
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+# Resource bounds. Tune upward for busy deployments.
+LimitNOFILE=16384
+
+[Install]
+WantedBy=multi-user.target

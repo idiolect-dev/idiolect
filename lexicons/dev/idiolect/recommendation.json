@@ -1,0 +1,75 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.recommendation",
+  "description": "A community-published opinionated path with optional verification requirements. Recommendations are declarative guidance; orchestrators do not enforce them.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A community states: for this situation, we recommend this lens path, subject to these preconditions and caveats. Consumers adopt or ignore.",
+      "record": {
+        "type": "object",
+        "required": ["issuingCommunity", "conditions", "lensPath", "occurredAt"],
+        "properties": {
+          "issuingCommunity": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "conditions": {
+            "type": "string",
+            "maxGraphemes": 4000,
+            "description": "Free-text description of when this recommendation applies. Matching is community judgment, not machine logic."
+          },
+          "lensPath": {
+            "type": "array",
+            "description": "Ordered sequence of lenses to compose. Length 1 means a single recommended lens.",
+            "minLength": 1,
+            "items": {
+              "type": "ref",
+              "ref": "dev.idiolect.defs#lensRef"
+            }
+          },
+          "annotations": {
+            "type": "string",
+            "maxGraphemes": 8000,
+            "description": "Why this path, how to use it, known strengths."
+          },
+          "requiredVerifications": {
+            "type": "array",
+            "description": "Verification kinds this recommendation assumes are in place.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "roundtrip-test",
+                "property-test",
+                "formal-proof",
+                "conformance-test",
+                "static-check",
+                "convergence-preserving"
+              ]
+            }
+          },
+          "preconditions": {
+            "type": "string",
+            "maxGraphemes": 4000,
+            "description": "Assumptions the consumer must check before adopting."
+          },
+          "caveats": {
+            "type": "string",
+            "maxGraphemes": 4000,
+            "description": "Known limitations and failure modes."
+          },
+          "supersedes": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "Prior recommendation this one replaces."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

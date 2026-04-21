@@ -1,0 +1,9 @@
+{
+  "$nsid": "dev.idiolect.recommendation",
+  "issuingCommunity": "at://did:plc:example/dev.idiolect.community/syntactic-bootstrappers",
+  "conditions":       "when translating universal-dependencies trees to en-pos tags",
+  "lensPath": [
+    { "uri": "at://did:plc:example/dev.idiolect.lens/ud-to-en-pos" }
+  ],
+  "occurredAt": "2026-04-19T00:00:00.000Z"
+}
