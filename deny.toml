@@ -44,9 +44,17 @@ version = 2
 # needs an explicit `exceptions` entry and review.
 allow = [
     "Apache-2.0",
+    # `Apache-2.0 WITH LLVM-exception` covers rustc-internal deps
+    # (ar_archive_writer) the linker pulls in transitively. Same terms
+    # as Apache-2.0 with an additional patent/exception clause that the
+    # ecosystem treats as permissive.
+    "Apache-2.0 WITH LLVM-exception",
     "BSD-2-Clause",
     "BSD-3-Clause",
     "BSL-1.0",
+    # `CDLA-Permissive-2.0` covers the `webpki-roots` cert bundle; it
+    # is Linux-Foundation-published and permissive for distribution.
+    "CDLA-Permissive-2.0",
     "CC0-1.0",
     "ISC",
     "MIT",
@@ -71,7 +79,12 @@ license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
 # ---------------------------------------------------------------
 [bans]
 multiple-versions = "warn"
+# `panproto-*` is pinned via git+tag at the workspace level, so every
+# `{ workspace = true }` reference reads as a wildcard to cargo-deny.
+# `workspace` allows wildcards declared in `[workspace.dependencies]`
+# while still flagging stray `"*"` versions in leaf crates.
 wildcards = "deny"
+allow-wildcard-paths = true
 highlight = "all"
 workspace-default-features = "allow"
 external-default-features = "allow"
