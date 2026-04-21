@@ -68,6 +68,41 @@ pub mod lexicon;
 pub mod spec_driven;
 pub mod target;
 
+/// Pipe Rust source through `rustfmt` so emitted files match what
+/// `cargo fmt --check` expects on CI. `prettyplease` produces parseable
+/// Rust but not byte-identical-to-rustfmt output; running rustfmt as a
+/// post-process keeps generated files stable under `cargo fmt`.
+///
+/// Returns the original input on rustfmt failure (missing binary,
+/// parse error). The drift gate will still catch real regressions
+/// because both emit and check go through this same function.
+#[must_use]
+pub fn rustfmt_source(source: &str) -> String {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let Ok(mut child) = Command::new("rustfmt")
+        .args(["--edition", "2024", "--emit", "stdout"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        return source.to_owned();
+    };
+    if let Some(mut stdin) = child.stdin.take()
+        && stdin.write_all(source.as_bytes()).is_err()
+    {
+        return source.to_owned();
+    }
+    match child.wait_with_output() {
+        Ok(out) if out.status.success() => {
+            String::from_utf8(out.stdout).unwrap_or_else(|_| source.to_owned())
+        }
+        _ => source.to_owned(),
+    }
+}
+
 /// One discovered record fixture.
 ///
 /// The filesystem convention is

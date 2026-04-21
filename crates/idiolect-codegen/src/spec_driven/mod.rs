@@ -148,5 +148,5 @@ pub fn render_file_with_source(
     out.push_str("\n#![allow(missing_docs, clippy::doc_markdown)]\n");
     out.push('\n');
     out.push_str(&body);
-    Ok(out)
+    Ok(crate::rustfmt_source(&out))
 }

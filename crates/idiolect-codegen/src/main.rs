@@ -80,7 +80,10 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
     let rust_files: Vec<EmittedFile> = emit::emit_rust(&docs, &examples)
         .context("rust emitter")?
         .into_iter()
-        .map(EmittedFile::from)
+        .map(|mut f| {
+            f.contents = idiolect_codegen::rustfmt_source(&f.contents);
+            EmittedFile::from(f)
+        })
         .collect();
     let ts_files: Vec<EmittedFile> = emit::emit_typescript(&docs, &examples)
         .context("typescript emitter")?
