@@ -20,18 +20,18 @@
 
 ---
 
-Idiolect turns the linguistic triple — *idiolect, dialect, language* — into an
-operating model. An **idiolect** is one party's choice of schemas, lenses, and
-conventions. A **dialect** is a community's bundle of idiolects it treats as
-canonical. **Language** is the federated substrate over which idiolects and
+Idiolect turns the linguistic distinction between *idiolects*, *dialects*, and *languages* into an
+operating model. An idiolect is one party's choice of schemas, lenses, and
+conventions. A dialect is the bundle of idiolects a community treats as
+canonical; and a language is the federated substrate over which idiolects and
 dialects meet, disagree, and slowly converge without a central arbiter.
 
-Every architectural primitive is a signed, content-addressed record on
-[ATProto](https://atproto.com); every schema and every translation between
-schemas is a [panproto](https://github.com/panproto/panproto) artifact. The
-project ships reference runtimes — a CLI, an orchestrator daemon, an observer
-daemon, a verification runtime, a migration library — on top of a small,
-stable set of ten `dev.idiolect.*` lexicons.
+Architectural primitives are signed, content-addressed records on
+[ATProto](https://atproto.com); and schemas and translations between
+schemas are [panproto](https://github.com/panproto/panproto) artifacts. The
+project ships reference runtimes, including a CLI, an orchestrator daemon, an observer
+daemon, a verification runtime, and a migration library, on top of a small,
+set of ten `dev.idiolect.*` lexicons.
 
 ## Quickstart
 
@@ -115,13 +115,9 @@ with sigstore keyless. Container images for the daemons ship to
 
 ## Stack
 
-- **Rust** — edition 2024, toolchain 1.95, resolver 3, cargo-nextest.
-- **TypeScript** — bun 1.2, biome 2.3, tsc 5.7.
-- **Monorepo** — moon for polyglot task orchestration and toolchain pinning.
-- **Schema source of truth** — atproto lexicon JSON. Generated code is
-  regenerated in CI and never hand-edited.
-- **Release pipeline** — tag-triggered GitHub Actions workflow. Multi-arch
-  binaries and containers, SBOMs, cosign keyless signatures, npm provenance.
+- **Rust:** edition 2024, toolchain 1.95, resolver 3, cargo-nextest.
+- **TypeScript:** bun 1.2, biome 2.3, tsc 5.7.
+- **Monorepo:** moon for polyglot task orchestration and toolchain pinning.
 
 ## Getting started as a contributor
 
