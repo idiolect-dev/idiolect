@@ -79,10 +79,7 @@ pub async fn fetcher_for_did<R: IdentityResolver>(
     Ok(RecordFetcher::new(client))
 }
 
-async fn resolve_pds<R: IdentityResolver>(
-    resolver: &R,
-    did: &Did,
-) -> Result<String, LensError> {
+async fn resolve_pds<R: IdentityResolver>(resolver: &R, did: &Did) -> Result<String, LensError> {
     resolver
         .resolve_pds_url(did)
         .await

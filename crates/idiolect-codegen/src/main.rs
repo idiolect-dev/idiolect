@@ -117,18 +117,15 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
     let orch_lex_path = repo_root.join("orchestrator-spec/lexicon.json");
     let orch_spec_path = repo_root.join("orchestrator-spec/queries.json");
     let (orch_generated_count, cli_generated_count) = if orch_spec_path.exists() {
-        let spec = idiolect_codegen::spec_driven::orchestrator::load_spec(
-            &orch_lex_path,
-            &orch_spec_path,
-        )
-        .with_context(|| format!("load {}", orch_spec_path.display()))?;
+        let spec =
+            idiolect_codegen::spec_driven::orchestrator::load_spec(&orch_lex_path, &orch_spec_path)
+                .with_context(|| format!("load {}", orch_spec_path.display()))?;
         let orch_src = repo_root.join("crates/idiolect-orchestrator/src");
-        let orch_written =
-            idiolect_codegen::spec_driven::orchestrator::emit_all(&spec, &orch_src)
-                .context("orchestrator codegen")?;
+        let orch_written = idiolect_codegen::spec_driven::orchestrator::emit_all(&spec, &orch_src)
+            .context("orchestrator codegen")?;
         let cli_src = repo_root.join("crates/idiolect-cli/src");
-        let cli_written = idiolect_codegen::spec_driven::cli::emit(&spec, &cli_src)
-            .context("cli codegen")?;
+        let cli_written =
+            idiolect_codegen::spec_driven::cli::emit(&spec, &cli_src).context("cli codegen")?;
         (orch_written.len(), cli_written.len())
     } else {
         (0, 0)
@@ -137,11 +134,9 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
     let obs_lex_path = repo_root.join("observer-spec/lexicon.json");
     let obs_spec_path = repo_root.join("observer-spec/methods.json");
     let obs_generated_count = if obs_spec_path.exists() {
-        let spec = idiolect_codegen::spec_driven::observer::load_spec(
-            &obs_lex_path,
-            &obs_spec_path,
-        )
-        .with_context(|| format!("load {}", obs_spec_path.display()))?;
+        let spec =
+            idiolect_codegen::spec_driven::observer::load_spec(&obs_lex_path, &obs_spec_path)
+                .with_context(|| format!("load {}", obs_spec_path.display()))?;
         let obs_src = repo_root.join("crates/idiolect-observer/src");
         let written = idiolect_codegen::spec_driven::observer::emit(&spec, &obs_src)
             .context("observer codegen")?;
@@ -153,11 +148,9 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
     let verify_lex_path = repo_root.join("verify-spec/lexicon.json");
     let verify_spec_path = repo_root.join("verify-spec/runners.json");
     let verify_generated_count = if verify_spec_path.exists() {
-        let spec = idiolect_codegen::spec_driven::verify::load_spec(
-            &verify_lex_path,
-            &verify_spec_path,
-        )
-        .with_context(|| format!("load {}", verify_spec_path.display()))?;
+        let spec =
+            idiolect_codegen::spec_driven::verify::load_spec(&verify_lex_path, &verify_spec_path)
+                .with_context(|| format!("load {}", verify_spec_path.display()))?;
         let verify_src = repo_root.join("crates/idiolect-verify/src");
         let written = idiolect_codegen::spec_driven::verify::emit(&spec, &verify_src)
             .context("verify codegen")?;
@@ -340,8 +333,9 @@ fn cmd_check_compat(repo_root: &Path, baseline_root: &Path) -> Result<ExitCode> 
                 .with_context(|| format!("parsing json in {}", path.display()))?;
             let doc = lexicon::parse(&json)
                 .with_context(|| format!("parsing lexicon {}", path.display()))?;
-            let schema = panproto_parse_lexicon(&json)
-                .map_err(|e| anyhow!("panproto parse_lexicon failed for {}: {e}", path.display()))?;
+            let schema = panproto_parse_lexicon(&json).map_err(|e| {
+                anyhow!("panproto parse_lexicon failed for {}: {e}", path.display())
+            })?;
             out.insert(doc.nsid, schema);
         }
         Ok(out)
@@ -468,13 +462,17 @@ struct Cli {
 enum CommandKind {
     Generate,
     Check,
-    Example { nsid: String },
+    Example {
+        nsid: String,
+    },
     List,
     Doctor,
     /// Diff the lexicon tree against a `--baseline <dir>` copy and
     /// report breaking / non-breaking changes. Exit code 1 on any
     /// breaking change; 0 otherwise.
-    CheckCompat { baseline: PathBuf },
+    CheckCompat {
+        baseline: PathBuf,
+    },
     Help,
 }
 
@@ -532,8 +530,8 @@ fn parse_cli(args: &[OsString]) -> Result<Cli> {
             CommandKind::Example { nsid }
         }
         Some(CommandKind::CheckCompat { .. }) => {
-            let baseline = baseline
-                .ok_or_else(|| anyhow!("`check-compat` requires --baseline <path>"))?;
+            let baseline =
+                baseline.ok_or_else(|| anyhow!("`check-compat` requires --baseline <path>"))?;
             CommandKind::CheckCompat { baseline }
         }
         Some(other) => other,

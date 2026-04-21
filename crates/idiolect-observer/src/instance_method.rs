@@ -123,8 +123,14 @@ impl StaticAdapterConfig {
 
     /// Register `(schema, root_vertex)` for `nsid`.
     #[must_use]
-    pub fn with(mut self, nsid: impl Into<String>, schema: Schema, root_vertex: impl Into<String>) -> Self {
-        self.entries.insert(nsid.into(), (schema, root_vertex.into()));
+    pub fn with(
+        mut self,
+        nsid: impl Into<String>,
+        schema: Schema,
+        root_vertex: impl Into<String>,
+    ) -> Self {
+        self.entries
+            .insert(nsid.into(), (schema, root_vertex.into()));
         self
     }
 }
@@ -287,9 +293,7 @@ mod tests {
 
     fn real_bounty_event() -> IndexerEvent {
         use idiolect_records::AnyRecord;
-        use idiolect_records::generated::bounty::{
-            Bounty, BountyStatus, BountyWants, WantAdapter,
-        };
+        use idiolect_records::generated::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
         let bounty = Bounty {
             constraints: "x".into(),
             eligibility: None,
@@ -334,8 +338,7 @@ mod tests {
     fn adapter_drops_events_with_unknown_nsid() {
         // Empty config — no nsid resolves.
         let config = StaticAdapterConfig::new();
-        let mut adapter =
-            InstanceMethodAdapter::new(CountingInstanceMethod { count: 0 }, config);
+        let mut adapter = InstanceMethodAdapter::new(CountingInstanceMethod { count: 0 }, config);
         adapter.observe(&real_bounty_event()).unwrap();
         let snap = adapter.snapshot().unwrap().unwrap();
         assert_eq!(snap["count"], 0);
@@ -344,10 +347,8 @@ mod tests {
     #[test]
     fn adapter_drops_events_without_record_body() {
         let (schema, root) = tiny_schema();
-        let config =
-            StaticAdapterConfig::new().with("dev.idiolect.bounty", schema, root);
-        let mut adapter =
-            InstanceMethodAdapter::new(CountingInstanceMethod { count: 0 }, config);
+        let config = StaticAdapterConfig::new().with("dev.idiolect.bounty", schema, root);
+        let mut adapter = InstanceMethodAdapter::new(CountingInstanceMethod { count: 0 }, config);
         adapter.observe(&delete_event()).unwrap();
         let snap = adapter.snapshot().unwrap().unwrap();
         assert_eq!(snap["count"], 0);
@@ -361,10 +362,8 @@ mod tests {
         // verifies the observable behavior: two events with the
         // same nsid both get dispatched.
         let (schema, root) = tiny_schema();
-        let config =
-            StaticAdapterConfig::new().with("dev.idiolect.bounty", schema, root);
-        let mut adapter =
-            InstanceMethodAdapter::new(CountingInstanceMethod { count: 0 }, config);
+        let config = StaticAdapterConfig::new().with("dev.idiolect.bounty", schema, root);
+        let mut adapter = InstanceMethodAdapter::new(CountingInstanceMethod { count: 0 }, config);
         // Both calls should hit the out-of-schema branch (bounty
         // doesn't match tiny_schema's `post:body` root), but the
         // test is about cache behavior, so we use unknown-nsid

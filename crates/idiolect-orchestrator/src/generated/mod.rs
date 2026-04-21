@@ -4,6 +4,6 @@
 
 #![allow(missing_docs, clippy::doc_markdown)]
 
-pub mod queries;
 #[cfg(feature = "query-http")]
 pub mod http;
+pub mod queries;

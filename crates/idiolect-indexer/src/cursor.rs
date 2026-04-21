@@ -135,10 +135,7 @@ impl CursorStore for InMemoryCursorStore {
 
     async fn list(&self) -> Result<Vec<(String, u64)>, IndexerError> {
         let cursors = self.cursors.lock().expect("cursors mutex poisoned");
-        let mut out: Vec<(String, u64)> = cursors
-            .iter()
-            .map(|(k, v)| (k.clone(), *v))
-            .collect();
+        let mut out: Vec<(String, u64)> = cursors.iter().map(|(k, v)| (k.clone(), *v)).collect();
         // Deterministic ordering so tests can compare directly.
         out.sort_by(|a, b| a.0.cmp(&b.0));
         Ok(out)

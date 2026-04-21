@@ -292,13 +292,13 @@ impl<P: DpopProver> SigningPdsWriter<P> {
                 .get("DPoP-Nonce")
                 .and_then(|v| v.to_str().ok())
                 .map(str::to_owned)
-            {
-                let mut guard = self
-                    .nonce
-                    .lock()
-                    .map_err(|e| LensError::Transport(format!("nonce mutex poisoned: {e}")))?;
-                *guard = Some(new_nonce);
-            }
+        {
+            let mut guard = self
+                .nonce
+                .lock()
+                .map_err(|e| LensError::Transport(format!("nonce mutex poisoned: {e}")))?;
+            *guard = Some(new_nonce);
+        }
         Ok(resp)
     }
 }
@@ -336,7 +336,8 @@ impl<P: DpopProver> PdsWriter for SigningPdsWriter<P> {
             body["validate"] = serde_json::Value::Bool(v);
         }
         parse_write_response(
-            self.signed_post("com.atproto.repo.createRecord", body).await?,
+            self.signed_post("com.atproto.repo.createRecord", body)
+                .await?,
         )
         .await
     }
@@ -357,10 +358,7 @@ impl<P: DpopProver> PdsWriter for SigningPdsWriter<P> {
         if let Some(swap) = request.swap_record {
             body["swapRecord"] = serde_json::Value::String(swap);
         }
-        parse_write_response(
-            self.signed_post("com.atproto.repo.putRecord", body).await?,
-        )
-        .await
+        parse_write_response(self.signed_post("com.atproto.repo.putRecord", body).await?).await
     }
 
     async fn delete_record(&self, request: DeleteRecordRequest) -> Result<(), LensError> {
@@ -388,9 +386,7 @@ impl<P: DpopProver> PdsWriter for SigningPdsWriter<P> {
 }
 
 #[cfg(feature = "pds-reqwest")]
-async fn parse_write_response(
-    resp: reqwest::Response,
-) -> Result<WriteRecordResponse, LensError> {
+async fn parse_write_response(resp: reqwest::Response) -> Result<WriteRecordResponse, LensError> {
     let status = resp.status();
     let body: serde_json::Value = resp
         .json()
@@ -466,10 +462,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(resp.cid, "bafyrei-ok");
-        assert_eq!(
-            writer.last_dpop_nonce(),
-            Some("server-nonce-1".to_owned())
-        );
+        assert_eq!(writer.last_dpop_nonce(), Some("server-nonce-1".to_owned()));
     }
 
     #[tokio::test]
@@ -581,9 +574,7 @@ mod tests {
             .await;
 
         let inner = ReqwestPdsClient::with_service_url(server.uri());
-        let prover = StaticDpopProver {
-            proof: "p".into(),
-        };
+        let prover = StaticDpopProver { proof: "p".into() };
         let writer = SigningPdsWriter::new(inner, "tok".into(), prover, None);
         let err = writer
             .delete_record(DeleteRecordRequest {

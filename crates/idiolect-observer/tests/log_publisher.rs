@@ -107,9 +107,18 @@ fn log_publisher_emits_structured_event_with_body() {
     assert_eq!(events.len(), 1);
     let event = &events[0];
     assert_eq!(event.target, "idiolect_observer::publisher");
-    assert_eq!(event.fields.get("method").map(String::as_str), Some("correction-rate"));
-    assert_eq!(event.fields.get("version").map(String::as_str), Some("1.0.0"));
-    assert_eq!(event.fields.get("observer").map(String::as_str), Some("did:plc:observer"));
+    assert_eq!(
+        event.fields.get("method").map(String::as_str),
+        Some("correction-rate")
+    );
+    assert_eq!(
+        event.fields.get("version").map(String::as_str),
+        Some("1.0.0")
+    );
+    assert_eq!(
+        event.fields.get("observer").map(String::as_str),
+        Some("did:plc:observer")
+    );
     assert_eq!(
         event.fields.get("occurred_at").map(String::as_str),
         Some("2026-04-20T12:00:00Z"),

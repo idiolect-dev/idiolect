@@ -55,8 +55,7 @@ const fn default_form() -> MethodForm {
 }
 
 pub fn load_spec(lexicon_path: &Path, spec_path: &Path) -> Result<MethodSpec> {
-    let (_schema, spec_json) =
-        super::validate_spec_through_panproto(lexicon_path, spec_path)?;
+    let (_schema, spec_json) = super::validate_spec_through_panproto(lexicon_path, spec_path)?;
     let spec: MethodSpec = serde_json::from_value(spec_json)
         .with_context(|| format!("deserialize {}", spec_path.display()))?;
     validate(&spec)?;
@@ -76,8 +75,7 @@ fn validate(spec: &MethodSpec) -> Result<()> {
 /// Emit the observer's generated.rs into `observer_src`.
 pub fn emit(spec: &MethodSpec, observer_src: &Path) -> Result<Vec<PathBuf>> {
     let out = observer_src.join("generated.rs");
-    std::fs::write(&out, emit_source(spec)?)
-        .with_context(|| format!("write {}", out.display()))?;
+    std::fs::write(&out, emit_source(spec)?).with_context(|| format!("write {}", out.display()))?;
     Ok(vec![out])
 }
 
@@ -116,50 +114,48 @@ fn emit_source(spec: &MethodSpec) -> Result<String> {
         })
         .collect();
 
-    let items: Vec<TokenStream> = vec![
-        quote! {
-            #![allow(unused_imports)]
+    let items: Vec<TokenStream> = vec![quote! {
+        #![allow(unused_imports)]
 
-            /// Whether a method's `observe` receives the raw event (record-form)
-            /// or a panproto WInstance (instance-form).
-            #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-            pub enum MethodForm {
-                /// `observe(&IndexerEvent)` — implements `crate::method::ObservationMethod`.
-                Record,
-                /// `observe(&WInstance, nsid)` — implements `crate::instance_method::InstanceMethod`.
-                Instance,
-            }
+        /// Whether a method's `observe` receives the raw event (record-form)
+        /// or a panproto WInstance (instance-form).
+        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        pub enum MethodForm {
+            /// `observe(&IndexerEvent)` — implements `crate::method::ObservationMethod`.
+            Record,
+            /// `observe(&WInstance, nsid)` — implements `crate::instance_method::InstanceMethod`.
+            Instance,
+        }
 
-            /// Static descriptor for a bundled observation method.
-            #[derive(Debug, Clone, Copy)]
-            pub struct MethodDescriptor {
-                /// Canonical method name.
-                pub name: &'static str,
-                /// Version string read from `<module>::METHOD_VERSION`.
-                pub version: &'static str,
-                /// Spec-sourced description.
-                pub description: &'static str,
-                /// Which trait the method implements.
-                pub form: MethodForm,
-            }
+        /// Static descriptor for a bundled observation method.
+        #[derive(Debug, Clone, Copy)]
+        pub struct MethodDescriptor {
+            /// Canonical method name.
+            pub name: &'static str,
+            /// Version string read from `<module>::METHOD_VERSION`.
+            pub version: &'static str,
+            /// Spec-sourced description.
+            pub description: &'static str,
+            /// Which trait the method implements.
+            pub form: MethodForm,
+        }
 
-            /// Every bundled observation method's descriptor, in spec order.
-            pub const METHODS: &[MethodDescriptor] = &[
-                #(#descriptor_rows,)*
-            ];
+        /// Every bundled observation method's descriptor, in spec order.
+        pub const METHODS: &[MethodDescriptor] = &[
+            #(#descriptor_rows,)*
+        ];
 
-            /// Fresh instances of every bundled record-form method, in spec order.
-            ///
-            /// Instance-form methods are not included — they need a caller-supplied
-            /// schema resolver passed to
-            /// [`crate::instance_method::InstanceMethodAdapter`]. See [`METHODS`]
-            /// for their descriptors.
-            #[must_use]
-            pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
-                vec![ #(#default_exprs),* ]
-            }
-        },
-    ];
+        /// Fresh instances of every bundled record-form method, in spec order.
+        ///
+        /// Instance-form methods are not included — they need a caller-supplied
+        /// schema resolver passed to
+        /// [`crate::instance_method::InstanceMethodAdapter`]. See [`METHODS`]
+        /// for their descriptors.
+        #[must_use]
+        pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
+            vec![ #(#default_exprs),* ]
+        }
+    }];
 
     let inner_doc = spec
         .description

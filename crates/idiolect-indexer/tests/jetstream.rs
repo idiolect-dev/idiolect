@@ -96,8 +96,7 @@ fn unknown_operation_is_error() {
 async fn from_lines_drives_like_in_memory() {
     let lines = vec![
         commit("create", "r1", true),
-        serde_json::json!({ "did": "did:plc:x", "time_us": 1u64, "kind": "identity" })
-            .to_string(),
+        serde_json::json!({ "did": "did:plc:x", "time_us": 1u64, "kind": "identity" }).to_string(),
         commit("update", "r1", true),
     ];
     let mut stream = JetstreamEventStream::from_lines(lines);

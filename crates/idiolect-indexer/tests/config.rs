@@ -11,8 +11,8 @@
 //!   collection is in-prefix.
 
 use idiolect_indexer::{
-    CursorStore, IndexerAction, IndexerConfig, IndexerError, IndexerEvent,
-    InMemoryCursorStore, InMemoryEventStream, RawEvent, RecordHandler, drive_indexer,
+    CursorStore, InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig,
+    IndexerError, IndexerEvent, RawEvent, RecordHandler, drive_indexer,
 };
 
 struct CountingHandler {
@@ -77,7 +77,9 @@ async fn prefix_matching_nothing_drops_every_event() {
         subscription_id: "test".into(),
         nsid_prefix: "com.example.nothing.".into(),
     };
-    drive_indexer(&mut stream, &handler, &cursors, &cfg).await.unwrap();
+    drive_indexer(&mut stream, &handler, &cursors, &cfg)
+        .await
+        .unwrap();
     // Nothing routed through handler.
     assert_eq!(handler.observed(), 0);
     assert!(cursors.load("test").await.unwrap().is_none());

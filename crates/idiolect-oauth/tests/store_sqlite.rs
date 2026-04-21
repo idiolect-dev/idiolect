@@ -42,7 +42,12 @@ async fn save_overwrites_on_conflict() {
     s2.access_jwt = "rotated".into();
     store.save(&s2).await.unwrap();
     assert_eq!(
-        store.load("did:plc:alice").await.unwrap().unwrap().access_jwt,
+        store
+            .load("did:plc:alice")
+            .await
+            .unwrap()
+            .unwrap()
+            .access_jwt,
         "rotated"
     );
 }

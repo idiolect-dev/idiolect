@@ -122,15 +122,7 @@ async fn main() -> Result<()> {
             info!(cursors_path = %path, "using SqliteCursorStore");
             let cursors = SqliteCursorStore::open(&path)
                 .with_context(|| format!("open sqlite cursor store at {path}"))?;
-            dispatch_publisher(
-                &mut stream,
-                observer_did,
-                pds_url,
-                &cursors,
-                &ix,
-                schedule,
-            )
-            .await
+            dispatch_publisher(&mut stream, observer_did, pds_url, &cursors, &ix, schedule).await
         }
         None => {
             info!(
@@ -138,15 +130,7 @@ async fn main() -> Result<()> {
                  (cursor resets on every restart)"
             );
             let cursors = InMemoryCursorStore::new();
-            dispatch_publisher(
-                &mut stream,
-                observer_did,
-                pds_url,
-                &cursors,
-                &ix,
-                schedule,
-            )
-            .await
+            dispatch_publisher(&mut stream, observer_did, pds_url, &cursors, &ix, schedule).await
         }
     }
 }

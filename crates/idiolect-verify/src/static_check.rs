@@ -70,14 +70,8 @@ where
         let lens_record = self.resolver.resolve(&parsed).await?;
 
         // Load both schemas and validate each.
-        let src = self
-            .schema_loader
-            .load(&lens_record.source_schema)
-            .await?;
-        let tgt = self
-            .schema_loader
-            .load(&lens_record.target_schema)
-            .await?;
+        let src = self.schema_loader.load(&lens_record.source_schema).await?;
+        let tgt = self.schema_loader.load(&lens_record.target_schema).await?;
 
         let src_errors = validate(&src, &self.protocol);
         let tgt_errors = validate(&tgt, &self.protocol);
@@ -179,7 +173,8 @@ mod tests {
             loader.insert(tgt_hash.clone(), bad);
         }
 
-        let uri = idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/sc").unwrap();
+        let uri =
+            idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/sc").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
             created_at: "2026-04-21T00:00:00.000Z".into(),

@@ -88,7 +88,10 @@ pub fn validate_spec_through_panproto(
     }
 
     let root = panproto_schema::primary_entry(&schema).ok_or_else(|| {
-        anyhow::anyhow!("lexicon {} has no primary entry vertex", lexicon_path.display())
+        anyhow::anyhow!(
+            "lexicon {} has no primary entry vertex",
+            lexicon_path.display()
+        )
     })?;
     parse_json(&schema, root, &spec_for_validation).with_context(|| {
         format!(
@@ -120,9 +123,8 @@ pub fn render_file_with_source(
 ) -> Result<String> {
     let mut rendered = Vec::with_capacity(items.len());
     for item in items {
-        let file: syn::File = syn::parse2(quote! { #item }).with_context(|| {
-            format!("parse generated token stream ({source_rel_path})")
-        })?;
+        let file: syn::File = syn::parse2(quote! { #item })
+            .with_context(|| format!("parse generated token stream ({source_rel_path})"))?;
         rendered.push(prettyplease::unparse(&file));
     }
     let body = rendered.join("\n");

@@ -112,12 +112,8 @@ impl<C: PdsClient> RecordFetcher<C> {
             .await?;
         let mut records = Vec::with_capacity(raw.records.len());
         for entry in raw.records {
-            let decoded = serde_json::from_value::<R>(entry.value).map_err(|e| {
-                LensError::Transport(format!(
-                    "decode record {}: {e}",
-                    entry.uri
-                ))
-            })?;
+            let decoded = serde_json::from_value::<R>(entry.value)
+                .map_err(|e| LensError::Transport(format!("decode record {}: {e}", entry.uri)))?;
             records.push(ListedEntry {
                 uri: entry.uri,
                 cid: entry.cid,
@@ -209,7 +205,10 @@ mod tests {
 
         let got: Bounty = fetcher.fetch("did:plc:alice", "b1").await.unwrap();
         assert_eq!(got.status, Some(BountyStatus::Open));
-        assert!(matches!(got.wants, BountyWants::WantAdapter(WantAdapter { .. })));
+        assert!(matches!(
+            got.wants,
+            BountyWants::WantAdapter(WantAdapter { .. })
+        ));
 
         let last = fetcher.client().last.lock().unwrap().clone().unwrap();
         assert_eq!(last.0, "did:plc:alice");
@@ -222,7 +221,10 @@ mod tests {
         let client = StaticClient::default();
         *client.fail.lock().unwrap() = Some(LensError::NotFound("RecordNotFound".into()));
         let fetcher = RecordFetcher::new(client);
-        let err = fetcher.fetch::<Bounty>("did:plc:x", "b1").await.unwrap_err();
+        let err = fetcher
+            .fetch::<Bounty>("did:plc:x", "b1")
+            .await
+            .unwrap_err();
         assert!(matches!(err, LensError::NotFound(_)));
     }
 
@@ -231,7 +233,10 @@ mod tests {
         let client = StaticClient::default();
         *client.response.lock().unwrap() = Some(serde_json::json!({ "unexpected": true }));
         let fetcher = RecordFetcher::new(client);
-        let err = fetcher.fetch::<Bounty>("did:plc:x", "b1").await.unwrap_err();
+        let err = fetcher
+            .fetch::<Bounty>("did:plc:x", "b1")
+            .await
+            .unwrap_err();
         // `From<serde_json::Error> for LensError` lands in the serde
         // variant — confirm it's not NotFound.
         assert!(!matches!(err, LensError::NotFound(_)));

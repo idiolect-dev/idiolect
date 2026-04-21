@@ -151,22 +151,21 @@ pub struct JetstreamEventStream {
 }
 
 type LiveWriter = futures_util::stream::SplitSink<
-    tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
-    >,
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
     Message,
 >;
 
 type LiveReader = futures_util::stream::SplitStream<
-    tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
-    >,
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
 >;
 
 enum JetstreamSource {
     /// Live websocket: reader for incoming frames, writer for
     /// outgoing pings.
-    Socket { writer: LiveWriter, reader: LiveReader },
+    Socket {
+        writer: LiveWriter,
+        reader: LiveReader,
+    },
     /// A finite queue of pre-supplied json lines (testing / fixtures).
     Lines(VecDeque<String>),
 }

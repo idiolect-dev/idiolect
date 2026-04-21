@@ -159,9 +159,8 @@ impl SchemaLoader for FilesystemSchemaLoader {
                 )));
             }
         };
-        let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
-            LensError::Transport(format!("parse {}: {e}", path.display()))
-        })?;
+        let value: serde_json::Value = serde_json::from_slice(&bytes)
+            .map_err(|e| LensError::Transport(format!("parse {}: {e}", path.display())))?;
         panproto_protocols::web_document::atproto::parse_lexicon(&value)
             .map_err(|e| LensError::Transport(format!("lexicon parse {object_hash}: {e}")))
     }
@@ -222,8 +221,7 @@ mod tests {
     #[tokio::test]
     async fn filesystem_loader_bad_json_surfaces_transport() {
         let dir = tempfile::tempdir().unwrap();
-        std::fs::write(dir.path().join("sha256_corrupt.json"), b"{not json")
-            .unwrap();
+        std::fs::write(dir.path().join("sha256_corrupt.json"), b"{not json").unwrap();
         let loader = FilesystemSchemaLoader::new(dir.path()).unwrap();
         let err = loader.load("sha256:corrupt").await.unwrap_err();
         assert!(matches!(err, LensError::Transport(_)));

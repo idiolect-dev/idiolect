@@ -81,7 +81,10 @@ async fn single_page_decodes_typed_records() {
         .await
         .unwrap();
     assert_eq!(page.records.len(), 2);
-    assert_eq!(page.records[0].uri, "at://did:plc:alice/dev.idiolect.bounty/b1");
+    assert_eq!(
+        page.records[0].uri,
+        "at://did:plc:alice/dev.idiolect.bounty/b1"
+    );
     assert_eq!(page.records[0].cid, "bafyrei-b1");
     assert_eq!(page.records[0].record.status, Some(BountyStatus::Open));
     assert!(matches!(
@@ -155,7 +158,10 @@ async fn decode_error_names_the_failing_uri() {
         .unwrap_err();
     match err {
         LensError::Transport(msg) => {
-            assert!(msg.contains("broken"), "expected failing uri in error: {msg}");
+            assert!(
+                msg.contains("broken"),
+                "expected failing uri in error: {msg}"
+            );
         }
         other => panic!("expected Transport error, got {other:?}"),
     }

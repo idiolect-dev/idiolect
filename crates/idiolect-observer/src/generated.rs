@@ -3,7 +3,6 @@
 //! Declarative taxonomy of observation methods shipped with the observer. Each entry maps to a hand-written module under crates/idiolect-observer/src/methods/<module>.rs that implements the ObservationMethod trait. The generated module in the same crate re-exports the struct types and provides a METHODS slice + default_methods() constructor for registering the bundled set.
 
 #![allow(missing_docs, clippy::doc_markdown)]
-
 #![allow(unused_imports)]
 /// Whether a method's `observe` receives the raw event (record-form)
 /// or a panproto WInstance (instance-form).
@@ -62,11 +61,9 @@ pub const METHODS: &[MethodDescriptor] = &[
 #[must_use]
 pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
     vec![
-        Box::new(crate ::methods::correction_rate::CorrectionRateMethod::new()),
-        Box::new(crate
-        ::methods::encounter_throughput::EncounterThroughputMethod::new()),
-        Box::new(crate
-        ::methods::verification_coverage::VerificationCoverageMethod::new()),
-        Box::new(crate ::methods::lens_adoption::LensAdoptionMethod::new())
+        Box::new(crate::methods::correction_rate::CorrectionRateMethod::new()),
+        Box::new(crate::methods::encounter_throughput::EncounterThroughputMethod::new()),
+        Box::new(crate::methods::verification_coverage::VerificationCoverageMethod::new()),
+        Box::new(crate::methods::lens_adoption::LensAdoptionMethod::new()),
     ]
 }

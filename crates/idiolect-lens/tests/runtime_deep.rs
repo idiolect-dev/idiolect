@@ -13,8 +13,7 @@
 use idiolect_lens::{
     ApplyLensEditInput, ApplyLensInput, ApplyLensPutInput, ApplyLensSymmetricInput,
     InMemoryResolver, InMemorySchemaLoader, LensError, SymmetricDirection, apply_lens,
-    apply_lens_get_edit, apply_lens_put, apply_lens_put_edit, apply_lens_symmetric,
-    parse_at_uri,
+    apply_lens_get_edit, apply_lens_put, apply_lens_put_edit, apply_lens_symmetric, parse_at_uri,
 };
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::elementary;
@@ -159,8 +158,11 @@ async fn apply_lens_missing_source_schema_surfaces_not_found() {
 #[tokio::test]
 async fn apply_lens_get_edit_empty_edit_list_returns_empty() {
     let src = single_field_schema("post:body", "string");
-    let (lens_uri, resolver, loader) =
-        stage_identity_lens("at://did:plc:x/dev.panproto.schema.lens/edit", src, "sha256:src-edit");
+    let (lens_uri, resolver, loader) = stage_identity_lens(
+        "at://did:plc:x/dev.panproto.schema.lens/edit",
+        src,
+        "sha256:src-edit",
+    );
 
     let out = apply_lens_get_edit(
         &resolver,
@@ -372,10 +374,7 @@ async fn apply_lens_symmetric_mismatched_middle_surfaces_translate_error() {
     .await
     .unwrap_err();
     let msg = err.to_string();
-    assert!(
-        msg.contains("do not share a source schema"),
-        "got: {msg}"
-    );
+    assert!(msg.contains("do not share a source schema"), "got: {msg}");
 }
 
 // -----------------------------------------------------------------
@@ -438,5 +437,8 @@ async fn apply_lens_put_with_mismatched_complement_surfaces_error() {
     )
     .await
     .expect("valid put round-trips");
-    assert_eq!(back.source_record, serde_json::json!({ "text": "original" }));
+    assert_eq!(
+        back.source_record,
+        serde_json::json!({ "text": "original" })
+    );
 }

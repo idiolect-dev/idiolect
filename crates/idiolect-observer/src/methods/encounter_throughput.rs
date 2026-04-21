@@ -115,14 +115,12 @@ impl ObservationMethod for EncounterThroughputMethod {
         };
 
         self.total = self.total.saturating_add(1);
-        *self.by_kind.entry(Self::kind_key(encounter.kind)).or_insert(0) += 1;
-        let result_key = encounter
-            .downstream_result
-            .map_or("none", Self::result_key);
         *self
-            .by_downstream_result
-            .entry(result_key)
+            .by_kind
+            .entry(Self::kind_key(encounter.kind))
             .or_insert(0) += 1;
+        let result_key = encounter.downstream_result.map_or("none", Self::result_key);
+        *self.by_downstream_result.entry(result_key).or_insert(0) += 1;
 
         Ok(())
     }

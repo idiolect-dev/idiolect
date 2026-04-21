@@ -64,39 +64,35 @@
 
 pub mod at_uri;
 pub mod caching_resolver;
+#[cfg(feature = "dpop-p256")]
+pub mod dpop_p256;
 pub mod error;
 pub mod fetcher;
 #[cfg(feature = "pds-atrium")]
 pub mod pds_atrium;
+#[cfg(feature = "pds-reqwest")]
+pub mod pds_reqwest;
 pub mod publisher;
 #[cfg(feature = "pds-resolve")]
 pub mod resolve;
-#[cfg(feature = "pds-reqwest")]
-pub mod signing_writer;
-#[cfg(feature = "dpop-p256")]
-pub mod dpop_p256;
-pub mod verifying_resolver;
-#[cfg(feature = "pds-reqwest")]
-pub mod pds_reqwest;
 pub mod resolver;
 pub mod runtime;
 pub mod schema_loader;
+#[cfg(feature = "pds-reqwest")]
+pub mod signing_writer;
+pub mod verifying_resolver;
 
 pub use at_uri::{AtUri, parse_at_uri};
 pub use caching_resolver::CachingResolver;
+#[cfg(feature = "dpop-p256")]
+pub use dpop_p256::P256DpopProver;
 pub use error::LensError;
 pub use fetcher::{ListedEntry, ListedPage, RecordFetcher};
-pub use publisher::RecordPublisher;
 #[cfg(feature = "pds-atrium")]
 pub use pds_atrium::AtriumPdsClient;
 #[cfg(feature = "pds-reqwest")]
 pub use pds_reqwest::ReqwestPdsClient;
-#[cfg(feature = "pds-reqwest")]
-pub use signing_writer::{
-    AuthScheme, DpopProver, NoOpDpopProver, SigningPdsWriter, StaticDpopProver,
-};
-#[cfg(feature = "dpop-p256")]
-pub use dpop_p256::P256DpopProver;
+pub use publisher::RecordPublisher;
 #[cfg(feature = "pds-resolve")]
 pub use resolve::{fetcher_for_did, publisher_for_did, publisher_for_did_with_client};
 pub use resolver::{
@@ -111,4 +107,8 @@ pub use runtime::{
     apply_lens_symmetric,
 };
 pub use schema_loader::{FilesystemSchemaLoader, InMemorySchemaLoader, SchemaLoader};
+#[cfg(feature = "pds-reqwest")]
+pub use signing_writer::{
+    AuthScheme, DpopProver, NoOpDpopProver, SigningPdsWriter, StaticDpopProver,
+};
 pub use verifying_resolver::{Hasher, Sha256Hasher, VerifyingResolver};

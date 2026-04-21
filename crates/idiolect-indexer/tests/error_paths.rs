@@ -35,10 +35,7 @@ impl EventStream for ExplodingStream {
 struct FailingHandler;
 
 impl RecordHandler for FailingHandler {
-    async fn handle(
-        &self,
-        _event: &idiolect_indexer::IndexerEvent,
-    ) -> Result<(), IndexerError> {
+    async fn handle(&self, _event: &idiolect_indexer::IndexerEvent) -> Result<(), IndexerError> {
         Err(IndexerError::Handler("handler rejected".to_owned()))
     }
 }
@@ -60,10 +57,7 @@ impl CursorStore for FailingCursorStore {
 struct OkHandler;
 
 impl RecordHandler for OkHandler {
-    async fn handle(
-        &self,
-        _event: &idiolect_indexer::IndexerEvent,
-    ) -> Result<(), IndexerError> {
+    async fn handle(&self, _event: &idiolect_indexer::IndexerEvent) -> Result<(), IndexerError> {
         Ok(())
     }
 }

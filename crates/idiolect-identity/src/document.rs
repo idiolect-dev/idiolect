@@ -37,7 +37,11 @@ pub struct DidDocument {
     /// Verification methods (public keys). Retained as raw json so
     /// downstream consumers that do signature verification can parse
     /// them with a richer type without a second fetch.
-    #[serde(default, rename = "verificationMethod", skip_serializing_if = "Vec::is_empty")]
+    #[serde(
+        default,
+        rename = "verificationMethod",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub verification_method: Vec<serde_json::Value>,
 
     /// Everything else in the document. Preserved verbatim so future

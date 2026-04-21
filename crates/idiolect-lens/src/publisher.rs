@@ -80,10 +80,7 @@ impl<W: PdsWriter> RecordPublisher<W> {
     /// Transport failures collapse to [`LensError::Transport`]. Records
     /// that do not serialize into a json object also surface there,
     /// which should not happen for generated record types.
-    pub async fn create<R: Record>(
-        &self,
-        record: &R,
-    ) -> Result<WriteRecordResponse, LensError> {
+    pub async fn create<R: Record>(&self, record: &R) -> Result<WriteRecordResponse, LensError> {
         self.create_with_rkey(record, None, None).await
     }
 
@@ -315,13 +312,9 @@ mod tests {
     async fn delete_requires_only_type_parameter() {
         let writer = CapturingWriter::new();
         let publisher = RecordPublisher::new(writer.clone(), "did:plc:alice".into());
-        publisher
-            .delete::<Bounty>("3l5", None)
-            .await
-            .unwrap();
+        publisher.delete::<Bounty>("3l5", None).await.unwrap();
         let req = writer.last_delete.lock().unwrap().clone().unwrap();
         assert_eq!(req.collection, "dev.idiolect.bounty");
         assert_eq!(req.rkey, "3l5");
     }
-
 }

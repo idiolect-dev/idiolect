@@ -107,7 +107,6 @@ impl P256DpopProver {
     }
 }
 
-
 impl DpopProver for P256DpopProver {
     fn proof(
         &self,
@@ -149,12 +148,10 @@ impl DpopProver for P256DpopProver {
             payload["nonce"] = serde_json::Value::String(n.to_owned());
         }
 
-        let header_b64 = URL_SAFE_NO_PAD.encode(
-            serde_json::to_vec(&header).map_err(|e| format!("serialize header: {e}"))?,
-        );
-        let payload_b64 = URL_SAFE_NO_PAD.encode(
-            serde_json::to_vec(&payload).map_err(|e| format!("serialize payload: {e}"))?,
-        );
+        let header_b64 = URL_SAFE_NO_PAD
+            .encode(serde_json::to_vec(&header).map_err(|e| format!("serialize header: {e}"))?);
+        let payload_b64 = URL_SAFE_NO_PAD
+            .encode(serde_json::to_vec(&payload).map_err(|e| format!("serialize payload: {e}"))?);
         let signing_input = format!("{header_b64}.{payload_b64}");
 
         let signature: Signature = self.signing.sign(signing_input.as_bytes());
@@ -232,7 +229,12 @@ mod tests {
     fn nonce_appears_in_payload_when_supplied() {
         let prover = P256DpopProver::generate();
         let proof = prover
-            .proof("POST", "https://pds.example/x", "tok", Some("server-nonce-1"))
+            .proof(
+                "POST",
+                "https://pds.example/x",
+                "tok",
+                Some("server-nonce-1"),
+            )
             .unwrap();
         let parts: Vec<&str> = proof.split('.').collect();
         let payload: serde_json::Value =

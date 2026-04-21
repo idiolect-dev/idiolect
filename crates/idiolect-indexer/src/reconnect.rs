@@ -140,11 +140,7 @@ where
     /// closure's argument so the upstream stream can request events
     /// from that point forward. Use when the caller already holds a
     /// cursor value (e.g. from a bespoke persistence store).
-    pub fn with_cursor(
-        connect: C,
-        backoff: BackoffPolicy,
-        initial_cursor: Option<u64>,
-    ) -> Self {
+    pub fn with_cursor(connect: C, backoff: BackoffPolicy, initial_cursor: Option<u64>) -> Self {
         Self {
             connect,
             backoff,
@@ -240,10 +236,7 @@ where
 
             // The unwrap is safe: reconnect populates self.inner or
             // returns Err above.
-            let inner = self
-                .inner
-                .as_mut()
-                .expect("reconnect must populate inner");
+            let inner = self.inner.as_mut().expect("reconnect must populate inner");
             match inner.next_event().await {
                 Ok(Some(event)) => {
                     // Remember the live cursor so the next reconnect
@@ -356,7 +349,9 @@ mod tests {
         };
         let mut wrapper = ReconnectingEventStream::new(connect, BackoffPolicy::instant_capped(3));
         let err = wrapper.next_event().await.unwrap_err();
-        assert!(matches!(err, IndexerError::Stream(msg) if msg.contains("reconnect gave up after 3 attempts")));
+        assert!(
+            matches!(err, IndexerError::Stream(msg) if msg.contains("reconnect gave up after 3 attempts"))
+        );
         assert_eq!(counter.load(Ordering::SeqCst), 3);
     }
 
@@ -452,10 +447,14 @@ mod tests {
         let connect = |_last: Option<u64>| async move {
             Ok::<InMemoryEventStream, _>(InMemoryEventStream::new())
         };
-        let wrapper =
-            ReconnectingEventStream::from_cursor_store(connect, BackoffPolicy::default(), &store, "firehose-x")
-                .await
-                .unwrap();
+        let wrapper = ReconnectingEventStream::from_cursor_store(
+            connect,
+            BackoffPolicy::default(),
+            &store,
+            "firehose-x",
+        )
+        .await
+        .unwrap();
         assert_eq!(wrapper.last_seq(), Some(1234));
     }
 

@@ -3,7 +3,6 @@
 //! Declarative taxonomy of catalog queries. Each entry is transformed by idiolect-codegen into a Rust query fn, an axum HTTP handler, a route registration, and (via cli-spec derivation) an `idiolect orchestrator <sub>` CLI subcommand. Hand-written predicates in crates/idiolect-orchestrator/src/predicates.rs supply the filter semantics; everything else is generated.
 
 #![allow(missing_docs, clippy::doc_markdown)]
-
 #![allow(unused_imports)]
 use crate::catalog::{Catalog, Entry};
 
@@ -25,11 +24,7 @@ pub fn bounties_for_want_lens<'a>(
 ) -> Vec<&'a Entry<idiolect_records::Bounty>> {
     catalog
         .bounties()
-        .filter(|entry| crate::predicates::bounty_for_want_lens(
-            &entry.record,
-            source,
-            target,
-        ))
+        .filter(|entry| crate::predicates::bounty_for_want_lens(&entry.record, source, target))
         .collect()
 }
 
@@ -41,10 +36,7 @@ pub fn bounties_by_requester<'a>(
 ) -> Vec<&'a Entry<idiolect_records::Bounty>> {
     catalog
         .bounties()
-        .filter(|entry| crate::predicates::bounty_by_requester(
-            &entry.record,
-            requester_did,
-        ))
+        .filter(|entry| crate::predicates::bounty_by_requester(&entry.record, requester_did))
         .collect()
 }
 
@@ -56,10 +48,7 @@ pub fn adapters_for_framework<'a>(
 ) -> Vec<&'a Entry<idiolect_records::Adapter>> {
     catalog
         .adapters()
-        .filter(|entry| crate::predicates::adapter_for_framework(
-            &entry.record,
-            framework,
-        ))
+        .filter(|entry| crate::predicates::adapter_for_framework(&entry.record, framework))
         .collect()
 }
 
@@ -71,10 +60,7 @@ pub fn adapters_by_invocation_protocol<'a>(
 ) -> Vec<&'a Entry<idiolect_records::Adapter>> {
     catalog
         .adapters()
-        .filter(|entry| crate::predicates::adapter_by_invocation_protocol(
-            &entry.record,
-            kind,
-        ))
+        .filter(|entry| crate::predicates::adapter_by_invocation_protocol(&entry.record, kind))
         .collect()
 }
 
@@ -121,10 +107,7 @@ pub fn communities_for_member<'a>(
 ) -> Vec<&'a Entry<idiolect_records::Community>> {
     catalog
         .communities()
-        .filter(|entry| crate::predicates::community_has_member(
-            &entry.record,
-            member_did,
-        ))
+        .filter(|entry| crate::predicates::community_has_member(&entry.record, member_did))
         .collect()
 }
 
@@ -148,23 +131,17 @@ pub fn dialects_for_community<'a>(
 ) -> Vec<&'a Entry<idiolect_records::Dialect>> {
     catalog
         .dialects()
-        .filter(|entry| crate::predicates::dialect_for_community(
-            &entry.record,
-            community_uri,
-        ))
+        .filter(|entry| crate::predicates::dialect_for_community(&entry.record, community_uri))
         .collect()
 }
 
 ///Adapters that cite a verification record via `verification.uri`. Reference case for the expression predicate form.
 #[must_use]
-pub fn adapters_with_verification(
-    catalog: &Catalog,
-) -> Vec<&Entry<idiolect_records::Adapter>> {
+pub fn adapters_with_verification(catalog: &Catalog) -> Vec<&Entry<idiolect_records::Adapter>> {
     catalog
         .adapters()
-        .filter(|entry| crate::expr_eval::eval_bool_against_record(
-            "r.verification.uri != \"\"",
-            &entry.record,
-        ))
+        .filter(|entry| {
+            crate::expr_eval::eval_bool_against_record("r.verification.uri != \"\"", &entry.record)
+        })
         .collect()
 }

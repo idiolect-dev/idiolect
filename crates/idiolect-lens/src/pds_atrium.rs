@@ -156,9 +156,9 @@ where
         cursor: Option<&str>,
     ) -> Result<crate::resolver::ListRecordsResponse, LensError> {
         let params = list_records::ParametersData {
-            collection: collection
-                .parse()
-                .map_err(|e: &'static str| LensError::Transport(format!("invalid collection: {e}")))?,
+            collection: collection.parse().map_err(|e: &'static str| {
+                LensError::Transport(format!("invalid collection: {e}"))
+            })?,
             repo: did
                 .parse()
                 .map_err(|e: &'static str| LensError::Transport(format!("invalid repo: {e}")))?,

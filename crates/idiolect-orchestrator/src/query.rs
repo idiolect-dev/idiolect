@@ -17,10 +17,10 @@
 //! matching predicate in `crate::predicates`, and run
 //! `cargo run -p idiolect-codegen -- generate`.
 
-use idiolect_records::generated::verification::{VerificationKind, VerificationResult};
+use idiolect_records::Dialect;
 use idiolect_records::generated::defs::LensRef;
 use idiolect_records::generated::recommendation::RecommendationRequiredVerifications;
-use idiolect_records::Dialect;
+use idiolect_records::generated::verification::{VerificationKind, VerificationResult};
 
 use crate::catalog::Catalog;
 
@@ -30,9 +30,8 @@ use crate::catalog::Catalog;
 
 pub use crate::generated::queries::{
     adapters_by_invocation_protocol, adapters_for_framework, bounties_by_requester,
-    bounties_for_want_lens, communities_by_name, communities_for_member,
-    dialects_for_community, open_bounties, recommendations_starting_from,
-    verifications_by_kind, verifications_for_lens,
+    bounties_for_want_lens, communities_by_name, communities_for_member, dialects_for_community,
+    open_bounties, recommendations_starting_from, verifications_by_kind, verifications_for_lens,
 };
 
 // Reference-matching helpers stay public on the query module too so

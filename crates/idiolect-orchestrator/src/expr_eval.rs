@@ -144,10 +144,10 @@ pub fn eval_bool_against_record<R: serde::Serialize>(expression: &str, record: &
 #[cfg(test)]
 mod tests {
     use super::*;
+    use idiolect_records::Bounty;
     use idiolect_records::generated::bounty::{
         BountyReward, BountyStatus, BountyWants, WantAdapter,
     };
-    use idiolect_records::Bounty;
 
     fn bounty_with_reward(summary: Option<&str>) -> Bounty {
         Bounty {
@@ -171,15 +171,27 @@ mod tests {
     #[test]
     fn equality_against_string_literal() {
         let b = bounty_with_reward(Some("grant-xyz"));
-        assert!(eval_bool_against_record("r.reward.summary == \"grant-xyz\"", &b));
-        assert!(!eval_bool_against_record("r.reward.summary == \"other\"", &b));
+        assert!(eval_bool_against_record(
+            "r.reward.summary == \"grant-xyz\"",
+            &b
+        ));
+        assert!(!eval_bool_against_record(
+            "r.reward.summary == \"other\"",
+            &b
+        ));
     }
 
     #[test]
     fn equality_against_always_present_field() {
         let b = bounty_with_reward(Some("irrelevant"));
-        assert!(eval_bool_against_record("r.requester == \"did:plc:alice\"", &b));
-        assert!(!eval_bool_against_record("r.requester == \"did:plc:other\"", &b));
+        assert!(eval_bool_against_record(
+            "r.requester == \"did:plc:alice\"",
+            &b
+        ));
+        assert!(!eval_bool_against_record(
+            "r.requester == \"did:plc:other\"",
+            &b
+        ));
     }
 
     #[test]
@@ -193,7 +205,10 @@ mod tests {
     #[test]
     fn bogus_expression_returns_false() {
         let b = bounty_with_reward(None);
-        assert!(!eval_bool_against_record("this is not a valid expression", &b));
+        assert!(!eval_bool_against_record(
+            "this is not a valid expression",
+            &b
+        ));
     }
 
     #[test]

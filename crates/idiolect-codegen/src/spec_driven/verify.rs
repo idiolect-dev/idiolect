@@ -37,8 +37,7 @@ pub struct RunnerDecl {
 }
 
 pub fn load_spec(lexicon_path: &Path, spec_path: &Path) -> Result<RunnerSpec> {
-    let (_schema, spec_json) =
-        super::validate_spec_through_panproto(lexicon_path, spec_path)?;
+    let (_schema, spec_json) = super::validate_spec_through_panproto(lexicon_path, spec_path)?;
     let spec: RunnerSpec = serde_json::from_value(spec_json)
         .with_context(|| format!("deserialize {}", spec_path.display()))?;
     validate(&spec)?;
@@ -57,8 +56,7 @@ fn validate(spec: &RunnerSpec) -> Result<()> {
 
 pub fn emit(spec: &RunnerSpec, verify_src: &Path) -> Result<Vec<PathBuf>> {
     let out = verify_src.join("generated.rs");
-    std::fs::write(&out, emit_source(spec)?)
-        .with_context(|| format!("write {}", out.display()))?;
+    std::fs::write(&out, emit_source(spec)?).with_context(|| format!("write {}", out.display()))?;
     Ok(vec![out])
 }
 

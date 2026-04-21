@@ -3,14 +3,13 @@
 //! Generated axum handlers for each catalog query. One handler per spec entry; a register_routes helper wires them into a router.
 
 #![allow(missing_docs, clippy::doc_markdown)]
-
 #![allow(unused_imports)]
+use crate::generated::queries as q;
+use crate::http::{ApiError, AppState, EnvelopedEntry, Page, Paged};
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::routing::get;
 use serde::Deserialize;
-use crate::http::{ApiError, AppState, EnvelopedEntry, Page, Paged};
-use crate::generated::queries as q;
 
 ///Every cataloged bounty whose status is `open`, `claimed`, or unset.
 async fn handler_open_bounties(
@@ -40,12 +39,10 @@ async fn handler_bounties_for_want_lens(
     State(s): State<AppState>,
     Query(p): Query<BountiesForWantLensParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Bounty>>>, ApiError> {
-    let source: idiolect_records::generated::defs::SchemaRef = crate::predicates::schema_ref_from_uri(
-        p.raw_source.clone(),
-    );
-    let target: idiolect_records::generated::defs::SchemaRef = crate::predicates::schema_ref_from_uri(
-        p.raw_target.clone(),
-    );
+    let source: idiolect_records::generated::defs::SchemaRef =
+        crate::predicates::schema_ref_from_uri(p.raw_source.clone());
+    let target: idiolect_records::generated::defs::SchemaRef =
+        crate::predicates::schema_ref_from_uri(p.raw_target.clone());
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::bounties_for_want_lens(&catalog, &source, &target)
         .into_iter()
@@ -111,12 +108,11 @@ async fn handler_adapters_by_invocation_protocol(
     State(s): State<AppState>,
     Query(p): Query<AdaptersByInvocationProtocolParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Adapter>>>, ApiError> {
-    let kind: idiolect_records::generated::adapter::AdapterInvocationProtocolKind = match crate::predicates::parse_adapter_invocation_protocol_kind(
-        &p.raw_kind,
-    ) {
-        Ok(v) => v,
-        Err(e) => return Err(ApiError::invalid_request(e)),
-    };
+    let kind: idiolect_records::generated::adapter::AdapterInvocationProtocolKind =
+        match crate::predicates::parse_adapter_invocation_protocol_kind(&p.raw_kind) {
+            Ok(v) => v,
+            Err(e) => return Err(ApiError::invalid_request(e)),
+        };
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::adapters_by_invocation_protocol(&catalog, &kind)
         .into_iter()
@@ -129,10 +125,7 @@ async fn handler_adapters_by_invocation_protocol(
 async fn handler_recommendations_starting_from(
     State(s): State<AppState>,
     Query(page): Query<Page>,
-) -> Result<
-    axum::Json<Paged<EnvelopedEntry<idiolect_records::Recommendation>>>,
-    ApiError,
-> {
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Recommendation>>>, ApiError> {
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::recommendations_starting_from(&catalog)
         .into_iter()
@@ -153,13 +146,9 @@ struct VerificationsForLensParams {
 async fn handler_verifications_for_lens(
     State(s): State<AppState>,
     Query(p): Query<VerificationsForLensParams>,
-) -> Result<
-    axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>,
-    ApiError,
-> {
-    let lens: idiolect_records::generated::defs::LensRef = crate::predicates::lens_ref_from_uri(
-        p.raw_lens.clone(),
-    );
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>, ApiError> {
+    let lens: idiolect_records::generated::defs::LensRef =
+        crate::predicates::lens_ref_from_uri(p.raw_lens.clone());
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::verifications_for_lens(&catalog, &lens)
         .into_iter()
@@ -180,16 +169,12 @@ struct VerificationsByKindParams {
 async fn handler_verifications_by_kind(
     State(s): State<AppState>,
     Query(p): Query<VerificationsByKindParams>,
-) -> Result<
-    axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>,
-    ApiError,
-> {
-    let kind: idiolect_records::generated::verification::VerificationKind = match crate::predicates::parse_verification_kind(
-        &p.raw_kind,
-    ) {
-        Ok(v) => v,
-        Err(e) => return Err(ApiError::invalid_request(e)),
-    };
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>, ApiError> {
+    let kind: idiolect_records::generated::verification::VerificationKind =
+        match crate::predicates::parse_verification_kind(&p.raw_kind) {
+            Ok(v) => v,
+            Err(e) => return Err(ApiError::invalid_request(e)),
+        };
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::verifications_by_kind(&catalog, &kind)
         .into_iter()
@@ -282,18 +267,36 @@ async fn handler_adapters_with_verification(
 pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
     router
         .route("/v1/bounties/open", get(handler_open_bounties))
-        .route("/v1/bounties/want-lens", get(handler_bounties_for_want_lens))
-        .route("/v1/bounties/by-requester", get(handler_bounties_by_requester))
+        .route(
+            "/v1/bounties/want-lens",
+            get(handler_bounties_for_want_lens),
+        )
+        .route(
+            "/v1/bounties/by-requester",
+            get(handler_bounties_by_requester),
+        )
         .route("/v1/adapters", get(handler_adapters_for_framework))
         .route(
             "/v1/adapters/by-invocation-protocol",
             get(handler_adapters_by_invocation_protocol),
         )
-        .route("/v1/recommendations", get(handler_recommendations_starting_from))
+        .route(
+            "/v1/recommendations",
+            get(handler_recommendations_starting_from),
+        )
         .route("/v1/verifications", get(handler_verifications_for_lens))
-        .route("/v1/verifications/by-kind", get(handler_verifications_by_kind))
+        .route(
+            "/v1/verifications/by-kind",
+            get(handler_verifications_by_kind),
+        )
         .route("/v1/communities", get(handler_communities_for_member))
         .route("/v1/communities/by-name", get(handler_communities_by_name))
-        .route("/v1/dialects/for-community", get(handler_dialects_for_community))
-        .route("/v1/adapters/with-verification", get(handler_adapters_with_verification))
+        .route(
+            "/v1/dialects/for-community",
+            get(handler_dialects_for_community),
+        )
+        .route(
+            "/v1/adapters/with-verification",
+            get(handler_adapters_with_verification),
+        )
 }

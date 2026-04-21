@@ -90,28 +90,70 @@ impl Catalog {
 
         match record {
             AnyRecord::Adapter(a) => {
-                self.adapters
-                    .insert(uri.clone(), Entry { uri, author, rev, record: a });
+                self.adapters.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: a,
+                    },
+                );
             }
             AnyRecord::Bounty(b) => {
-                self.bounties
-                    .insert(uri.clone(), Entry { uri, author, rev, record: b });
+                self.bounties.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: b,
+                    },
+                );
             }
             AnyRecord::Community(c) => {
-                self.communities
-                    .insert(uri.clone(), Entry { uri, author, rev, record: c });
+                self.communities.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: c,
+                    },
+                );
             }
             AnyRecord::Dialect(d) => {
-                self.dialects
-                    .insert(uri.clone(), Entry { uri, author, rev, record: d });
+                self.dialects.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: d,
+                    },
+                );
             }
             AnyRecord::Recommendation(r) => {
-                self.recommendations
-                    .insert(uri.clone(), Entry { uri, author, rev, record: r });
+                self.recommendations.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: r,
+                    },
+                );
             }
             AnyRecord::Verification(v) => {
-                self.verifications
-                    .insert(uri.clone(), Entry { uri, author, rev, record: v });
+                self.verifications.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: v,
+                    },
+                );
             }
             _ => {}
         }

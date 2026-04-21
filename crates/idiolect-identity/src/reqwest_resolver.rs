@@ -147,20 +147,15 @@ mod tests {
 
     #[test]
     fn plc_url_prepends_directory() {
-        let r = ReqwestIdentityResolver::with_client(
-            "https://plc.example",
-            reqwest::Client::new(),
-        );
+        let r = ReqwestIdentityResolver::with_client("https://plc.example", reqwest::Client::new());
         let did = Did::parse("did:plc:abc123").unwrap();
         assert_eq!(r.plc_url(&did), "https://plc.example/did:plc:abc123");
     }
 
     #[test]
     fn trailing_slash_stripped() {
-        let r = ReqwestIdentityResolver::with_client(
-            "https://plc.example/",
-            reqwest::Client::new(),
-        );
+        let r =
+            ReqwestIdentityResolver::with_client("https://plc.example/", reqwest::Client::new());
         assert_eq!(r.plc_directory(), "https://plc.example");
     }
 }

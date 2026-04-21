@@ -137,9 +137,7 @@ impl AnyRecord {
         let Some(serde_json::Value::String(nsid)) =
             value.as_object_mut().and_then(|o| o.remove("$type"))
         else {
-            return Err(DecodeError::UnknownNsid(
-                "<missing $type field>".to_owned(),
-            ));
+            return Err(DecodeError::UnknownNsid("<missing $type field>".to_owned()));
         };
         decode_record(&nsid, value)
     }
@@ -169,9 +167,7 @@ impl AnyRecord {
 /// pattern-matching and re-dispatching.
 impl Serialize for AnyRecord {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let value = self
-            .to_typed_json()
-            .map_err(serde::ser::Error::custom)?;
+        let value = self.to_typed_json().map_err(serde::ser::Error::custom)?;
         value.serialize(serializer)
     }
 }

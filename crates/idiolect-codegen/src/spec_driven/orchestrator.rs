@@ -186,8 +186,7 @@ pub struct CliDecl {
 ///   invariants (duplicate name, parser kind inconsistent with rust
 ///   kind, predicate and expression both set, neither set).
 pub fn load_spec(lexicon_path: &Path, spec_path: &Path) -> Result<QuerySpec> {
-    let (_schema, spec_json) =
-        super::validate_spec_through_panproto(lexicon_path, spec_path)?;
+    let (_schema, spec_json) = super::validate_spec_through_panproto(lexicon_path, spec_path)?;
     let spec: QuerySpec = serde_json::from_value(spec_json)
         .with_context(|| format!("deserialize {}", spec_path.display()))?;
     validate_spec(&spec)?;
@@ -208,10 +207,7 @@ fn validate_spec(spec: &QuerySpec) -> Result<()> {
                 "query {} has both `predicate` and `expression`; choose one",
                 q.name
             ),
-            (None, None) => bail!(
-                "query {} has neither `predicate` nor `expression`",
-                q.name
-            ),
+            (None, None) => bail!("query {} has neither `predicate` nor `expression`", q.name),
         }
         // Expression form does not take params — the expression
         // references the record directly. A future extension could
@@ -260,8 +256,7 @@ fn validate_spec(spec: &QuerySpec) -> Result<()> {
 /// directory — passed in so tests can target a temp dir.
 pub fn emit_all(spec: &QuerySpec, orchestrator_src: &Path) -> Result<Vec<PathBuf>> {
     let out_dir = orchestrator_src.join("generated");
-    std::fs::create_dir_all(&out_dir)
-        .with_context(|| format!("mkdir {}", out_dir.display()))?;
+    std::fs::create_dir_all(&out_dir).with_context(|| format!("mkdir {}", out_dir.display()))?;
 
     let mut written = Vec::new();
 
@@ -613,7 +608,9 @@ mod tests {
                     http_query: "x".into(),
                     parser: ParserKind::SchemaRefFromUri,
                 }],
-                http: HttpDecl { path: "/bad".into() },
+                http: HttpDecl {
+                    path: "/bad".into(),
+                },
                 description: None,
                 cli: None,
             }],

@@ -88,15 +88,12 @@ impl FilesystemCursorStore {
         let bytes = serde_json::to_vec(cache)
             .map_err(|e| IndexerError::Cursor(format!("serialize cursors: {e}")))?;
         {
-            let mut f = fs::File::create(&tmp).map_err(|e| {
-                IndexerError::Cursor(format!("open temp {}: {e}", tmp.display()))
-            })?;
-            f.write_all(&bytes).map_err(|e| {
-                IndexerError::Cursor(format!("write temp {}: {e}", tmp.display()))
-            })?;
-            f.sync_all().map_err(|e| {
-                IndexerError::Cursor(format!("fsync temp {}: {e}", tmp.display()))
-            })?;
+            let mut f = fs::File::create(&tmp)
+                .map_err(|e| IndexerError::Cursor(format!("open temp {}: {e}", tmp.display())))?;
+            f.write_all(&bytes)
+                .map_err(|e| IndexerError::Cursor(format!("write temp {}: {e}", tmp.display())))?;
+            f.sync_all()
+                .map_err(|e| IndexerError::Cursor(format!("fsync temp {}: {e}", tmp.display())))?;
         }
         fs::rename(&tmp, &self.path).map_err(|e| {
             IndexerError::Cursor(format!(
@@ -135,10 +132,7 @@ impl CursorStore for FilesystemCursorStore {
             .cache
             .lock()
             .map_err(|e| IndexerError::Cursor(format!("cache mutex poisoned: {e}")))?;
-        let mut out: Vec<(String, u64)> = cache
-            .iter()
-            .map(|(k, v)| (k.clone(), *v))
-            .collect();
+        let mut out: Vec<(String, u64)> = cache.iter().map(|(k, v)| (k.clone(), *v)).collect();
         out.sort_by(|a, b| a.0.cmp(&b.0));
         Ok(out)
     }

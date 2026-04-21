@@ -73,7 +73,10 @@ fn parse_lexicon_preserves_unknown_enum_values_verbatim() {
     let lex = load_lexicon("community");
     let schema = parse_lexicon(&lex).expect("parse_lexicon");
     let formats = constraint_values_named(&schema, "format");
-    assert!(!formats.is_empty(), "community should have format constraints");
+    assert!(
+        !formats.is_empty(),
+        "community should have format constraints"
+    );
     // at least two distinct formats (did, at-uri, datetime all appear).
     let distinct: std::collections::BTreeSet<_> = formats.iter().copied().collect();
     assert!(distinct.len() >= 2, "got {distinct:?}");

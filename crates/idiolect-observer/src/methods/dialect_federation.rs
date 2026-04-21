@@ -304,7 +304,10 @@ mod tests {
         .unwrap();
 
         let snap = m.snapshot().unwrap().unwrap();
-        assert_eq!(snap["communities"][0]["currentCreatedAt"], "2026-04-22T00:00:00Z");
+        assert_eq!(
+            snap["communities"][0]["currentCreatedAt"],
+            "2026-04-22T00:00:00Z"
+        );
         assert_eq!(snap["communities"][0]["lensCount"], 1);
     }
 

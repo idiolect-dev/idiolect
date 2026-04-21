@@ -12,9 +12,8 @@
 use std::sync::Arc;
 
 use idiolect_indexer::{
-    CursorStore, IndexerAction, IndexerConfig, IndexerError, IndexerEvent,
-    InMemoryCursorStore, InMemoryEventStream, NoopRecordHandler, RawEvent, RecordHandler,
-    drive_indexer,
+    CursorStore, InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig,
+    IndexerError, IndexerEvent, NoopRecordHandler, RawEvent, RecordHandler, drive_indexer,
 };
 
 #[tokio::test]

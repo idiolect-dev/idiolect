@@ -118,9 +118,8 @@ impl<H: RecordHandler> RecordHandler for RetryingHandler<H> {
                 }
             }
         }
-        Err(last_err.unwrap_or_else(|| {
-            IndexerError::Handler("RetryingHandler: no attempts made".into())
-        }))
+        Err(last_err
+            .unwrap_or_else(|| IndexerError::Handler("RetryingHandler: no attempts made".into())))
     }
 }
 
@@ -181,7 +180,8 @@ impl BreakerState {
 
     fn record_failure(&mut self, policy: &CircuitPolicy) {
         let now = Instant::now();
-        self.failures.retain(|t| now.duration_since(*t) < policy.window);
+        self.failures
+            .retain(|t| now.duration_since(*t) < policy.window);
         self.failures.push(now);
         if self.failures.len() as u32 >= policy.threshold {
             self.state = CircuitState::Open;

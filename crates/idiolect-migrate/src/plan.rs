@@ -6,7 +6,9 @@ use panproto_schema::{Protocol, Schema};
 
 use crate::error::PlannerError;
 
-pub use panproto_check::{CompatReport, SchemaDiff, classify as classify_diff, diff as compute_diff};
+pub use panproto_check::{
+    CompatReport, SchemaDiff, classify as classify_diff, diff as compute_diff,
+};
 
 /// Classify the diff between two schemas through `panproto-check`.
 ///
@@ -77,20 +79,18 @@ pub fn plan_auto(
     }
 
     let config = AutoLensConfig::default();
-    if let Ok(result) = auto_generate(old, new, protocol, &config) { Ok(MigrationPlan {
-        source_schema_hash: source_schema_hash.into(),
-        target_schema_hash: target_schema_hash.into(),
-        protolens_chain: result.chain,
-        alignment_quality: result.alignment_quality,
-    }) } else {
+    if let Ok(result) = auto_generate(old, new, protocol, &config) {
+        Ok(MigrationPlan {
+            source_schema_hash: source_schema_hash.into(),
+            target_schema_hash: target_schema_hash.into(),
+            protolens_chain: result.chain,
+            alignment_quality: result.alignment_quality,
+        })
+    } else {
         // auto_generate's failure modes are opaque by design —
         // translate into an actionable list of breaking changes
         // the caller must resolve by hand.
-        let reasons: Vec<String> = report
-            .breaking
-            .iter()
-            .map(|b| format!("{b:?}"))
-            .collect();
+        let reasons: Vec<String> = report.breaking.iter().map(|b| format!("{b:?}")).collect();
         Err(PlannerError::NotAutoDerivable(reasons))
     }
 }

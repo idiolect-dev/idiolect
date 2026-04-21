@@ -5,11 +5,10 @@
 use std::sync::Arc;
 
 use idiolect_indexer::{IndexerAction, IndexerEvent, RecordHandler};
-use idiolect_orchestrator::{
-    CatalogHandler, SqliteCatalogStore, handler::CatalogPersist, query,
-};
+use idiolect_orchestrator::{CatalogHandler, SqliteCatalogStore, handler::CatalogPersist, query};
 use idiolect_records::generated::adapter::{
-    AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation, AdapterIsolationKind,
+    AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
+    AdapterIsolationKind,
 };
 use idiolect_records::{Adapter, AnyRecord};
 use tempfile::tempdir;
@@ -78,10 +77,20 @@ fn upsert_replaces_existing() {
     let store = SqliteCatalogStore::open(dir.path().join("c.db")).unwrap();
     let uri = "at://did:plc:x/dev.idiolect.adapter/a1";
     store
-        .upsert(uri, "did:plc:author", "rev1", &AnyRecord::Adapter(adapter("hasura")))
+        .upsert(
+            uri,
+            "did:plc:author",
+            "rev1",
+            &AnyRecord::Adapter(adapter("hasura")),
+        )
         .unwrap();
     store
-        .upsert(uri, "did:plc:author", "rev2", &AnyRecord::Adapter(adapter("prisma")))
+        .upsert(
+            uri,
+            "did:plc:author",
+            "rev2",
+            &AnyRecord::Adapter(adapter("prisma")),
+        )
         .unwrap();
     assert_eq!(store.len().unwrap(), 1);
     let catalog = store.load_catalog().unwrap();
@@ -96,7 +105,12 @@ fn remove_deletes_row() {
     let store = SqliteCatalogStore::open(dir.path().join("c.db")).unwrap();
     let uri = "at://did:plc:x/dev.idiolect.adapter/a1";
     store
-        .upsert(uri, "did:plc:author", "rev1", &AnyRecord::Adapter(adapter("hasura")))
+        .upsert(
+            uri,
+            "did:plc:author",
+            "rev1",
+            &AnyRecord::Adapter(adapter("hasura")),
+        )
         .unwrap();
     store.remove(uri).unwrap();
     assert_eq!(store.len().unwrap(), 0);

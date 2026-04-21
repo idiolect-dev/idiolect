@@ -123,16 +123,12 @@ impl OAuthTokenStore for FilesystemOAuthTokenStore {
         let path = self.path_for(did);
         match fs::read(&path) {
             Ok(bytes) => {
-                let session: OAuthSession = serde_json::from_slice(&bytes).map_err(|e| {
-                    StoreError::Backend(format!("parse {}: {e}", path.display()))
-                })?;
+                let session: OAuthSession = serde_json::from_slice(&bytes)
+                    .map_err(|e| StoreError::Backend(format!("parse {}: {e}", path.display())))?;
                 Ok(Some(session))
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(StoreError::Backend(format!(
-                "read {}: {e}",
-                path.display()
-            ))),
+            Err(e) => Err(StoreError::Backend(format!("read {}: {e}", path.display()))),
         }
     }
 
@@ -162,8 +158,7 @@ impl OAuthTokenStore for FilesystemOAuthTokenStore {
             .map_err(|e| StoreError::Backend(format!("read_dir {}: {e}", self.dir.display())))?;
         let mut out = Vec::new();
         for entry in entries {
-            let entry = entry
-                .map_err(|e| StoreError::Backend(format!("read_dir entry: {e}")))?;
+            let entry = entry.map_err(|e| StoreError::Backend(format!("read_dir entry: {e}")))?;
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) != Some("json") {
                 continue;

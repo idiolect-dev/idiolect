@@ -8,8 +8,8 @@
 use std::sync::Arc;
 
 use idiolect_indexer::{
-    IndexerAction, IndexerConfig, IndexerError, IndexerEvent, InMemoryCursorStore,
-    InMemoryEventStream, RawEvent, RecordHandler, drive_indexer,
+    InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig, IndexerError,
+    IndexerEvent, RawEvent, RecordHandler, drive_indexer,
 };
 use idiolect_orchestrator::{CatalogHandler, query};
 use idiolect_records::generated::bounty::{BountyStatus, BountyWants, WantAdapter, WantLens};
@@ -180,7 +180,11 @@ fn recommendation(path: &[&str]) -> Recommendation {
     }
 }
 
-fn verification(lens_uri: &str, kind: VerificationKind, result: VerificationResult) -> Verification {
+fn verification(
+    lens_uri: &str,
+    kind: VerificationKind,
+    result: VerificationResult,
+) -> Verification {
     use idiolect_records::generated::defs::Tool;
     Verification {
         counterexample: None,
@@ -549,7 +553,12 @@ fn query_sufficient_verifications_empty_required_is_vacuously_true() {
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     let lens = l_ref("at://any/lens");
-    assert!(query::sufficient_verifications_for(&catalog, &lens, &[], true));
+    assert!(query::sufficient_verifications_for(
+        &catalog,
+        &lens,
+        &[],
+        true
+    ));
 }
 
 #[test]
@@ -691,7 +700,11 @@ fn upsert_across_kinds_does_not_leak_old_slot() {
             )),
         );
         assert_eq!(c.adapters().count(), 0, "old adapter slot must be vacated");
-        assert_eq!(c.bounties().count(), 1, "bounty slot should hold the new value");
+        assert_eq!(
+            c.bounties().count(),
+            1,
+            "bounty slot should hold the new value"
+        );
         assert_eq!(c.len(), 1, "total catalog size reflects one record");
     }
 }
@@ -717,10 +730,8 @@ fn query_adapters_by_invocation_protocol() {
         &AdapterInvocationProtocolKind::Subprocess,
     );
     assert!(subprocess.len() >= 2);
-    let http = query::adapters_by_invocation_protocol(
-        &catalog,
-        &AdapterInvocationProtocolKind::Http,
-    );
+    let http =
+        query::adapters_by_invocation_protocol(&catalog, &AdapterInvocationProtocolKind::Http);
     assert!(http.is_empty());
 }
 
@@ -753,10 +764,7 @@ fn query_dialects_for_community_filters_on_owning_community() {
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     // Seed catalog has one dialect owned by "at://did:plc:c/dev.idiolect.community/main"
-    let got = query::dialects_for_community(
-        &catalog,
-        "at://did:plc:c/dev.idiolect.community/main",
-    );
+    let got = query::dialects_for_community(&catalog, "at://did:plc:c/dev.idiolect.community/main");
     assert_eq!(got.len(), 1);
     let miss = query::dialects_for_community(&catalog, "at://absent");
     assert!(miss.is_empty());

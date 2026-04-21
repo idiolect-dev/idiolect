@@ -27,10 +27,10 @@ async fn resolves_did_plc_against_configured_directory() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
         .and(path("/did:plc:alice"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(doc_body(
-            "did:plc:alice",
-            "https://pds.example",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(doc_body("did:plc:alice", "https://pds.example")),
+        )
         .mount(&server)
         .await;
 
@@ -46,10 +46,10 @@ async fn resolve_pds_url_helper_returns_endpoint() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
         .and(path("/did:plc:alice"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(doc_body(
-            "did:plc:alice",
-            "https://pds.example",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(doc_body("did:plc:alice", "https://pds.example")),
+        )
         .mount(&server)
         .await;
 
@@ -96,10 +96,9 @@ async fn trailing_slash_in_directory_is_tolerated() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
         .and(path("/did:plc:x"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(doc_body(
-            "did:plc:x",
-            "https://pds.example",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(doc_body("did:plc:x", "https://pds.example")),
+        )
         .mount(&server)
         .await;
     let dir_with_slash = format!("{}/", server.uri());
@@ -114,10 +113,10 @@ async fn did_web_uses_well_known_path() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
         .and(path("/.well-known/did.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(doc_body(
-            "did:web:example",
-            "https://pds.example",
-        )))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(doc_body("did:web:example", "https://pds.example")),
+        )
         .mount(&server)
         .await;
 
@@ -135,6 +134,14 @@ async fn did_web_uses_well_known_path() {
     // the resolver's http client.
     let resolver = ReqwestIdentityResolver::with_client("unused", reqwest::Client::new());
     let url = format!("{}/.well-known/did.json", server.uri());
-    let body: idiolect_identity::DidDocument = resolver.http().get(&url).send().await.unwrap().json().await.unwrap();
+    let body: idiolect_identity::DidDocument = resolver
+        .http()
+        .get(&url)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     assert_eq!(body.id, "did:web:example");
 }

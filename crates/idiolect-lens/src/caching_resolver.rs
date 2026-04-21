@@ -101,9 +101,10 @@ impl<R: Resolver> Resolver for CachingResolver<R> {
                 .lock()
                 .map_err(|e| LensError::Transport(format!("cache poisoned: {e}")))?;
             if let Some(entry) = entries.get(&key)
-                && entry.inserted_at.elapsed() < self.ttl {
-                    return Ok(entry.lens.clone());
-                }
+                && entry.inserted_at.elapsed() < self.ttl
+            {
+                return Ok(entry.lens.clone());
+            }
         }
 
         // Miss or expired: resolve, then insert.
@@ -131,8 +132,8 @@ impl<R: Resolver> Resolver for CachingResolver<R> {
 mod tests {
     use super::*;
     use crate::at_uri::parse_at_uri;
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// Counts calls to the inner resolver.
     struct CountingResolver {

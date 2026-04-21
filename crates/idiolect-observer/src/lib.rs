@@ -108,8 +108,7 @@ pub use error::{ObserverError, ObserverResult};
 pub use handler::{ObserverConfig, ObserverHandler};
 pub use method::{ObservationMethod, build_observation};
 pub use methods::{
-    CorrectionRateMethod, EncounterThroughputMethod, LensAdoptionMethod,
-    VerificationCoverageMethod,
+    CorrectionRateMethod, EncounterThroughputMethod, LensAdoptionMethod, VerificationCoverageMethod,
 };
 pub use publisher::{
     InMemoryPublisher, LogPublisher, OBSERVATION_NSID, ObservationPublisher, PdsPublisher,

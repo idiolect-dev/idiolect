@@ -37,7 +37,8 @@ pub const RUNNERS: &[RunnerDescriptor] = &[
 #[must_use]
 pub fn runner_kinds() -> Vec<VerificationKind> {
     vec![
-        VerificationKind::RoundtripTest, VerificationKind::PropertyTest,
-        VerificationKind::StaticCheck
+        VerificationKind::RoundtripTest,
+        VerificationKind::PropertyTest,
+        VerificationKind::StaticCheck,
     ]
 }

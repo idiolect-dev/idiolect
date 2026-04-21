@@ -83,7 +83,7 @@ pub mod query;
 pub use catalog::{Catalog, CatalogRef, Entry};
 #[cfg(feature = "catalog-sqlite")]
 pub use catalog_sqlite::SqliteCatalogStore;
-#[cfg(feature = "query-http")]
-pub use http::{AppState, router as http_router};
 pub use error::{OrchestratorError, OrchestratorResult};
 pub use handler::CatalogHandler;
+#[cfg(feature = "query-http")]
+pub use http::{AppState, router as http_router};

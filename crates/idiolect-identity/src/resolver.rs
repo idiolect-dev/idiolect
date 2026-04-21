@@ -149,7 +149,10 @@ mod tests {
         let did = Did::parse("did:plc:alice").unwrap();
         let mut r = InMemoryIdentityResolver::new();
         r.insert(&did, doc("did:plc:alice"));
-        assert_eq!(r.resolve_pds_url(&did).await.unwrap(), "https://pds.example");
+        assert_eq!(
+            r.resolve_pds_url(&did).await.unwrap(),
+            "https://pds.example"
+        );
     }
 
     #[tokio::test]

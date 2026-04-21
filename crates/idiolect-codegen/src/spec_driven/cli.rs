@@ -45,8 +45,7 @@ pub fn emit(spec: &QuerySpec, cli_src: &Path) -> Result<Vec<PathBuf>> {
 }
 
 fn emit_source(spec: &QuerySpec) -> Result<String> {
-    let surfaced: Vec<&QueryDecl> =
-        spec.queries.iter().filter(|q| q.cli.is_some()).collect();
+    let surfaced: Vec<&QueryDecl> = spec.queries.iter().filter(|q| q.cli.is_some()).collect();
 
     // Group by subcommand path — same subcommand path, multiple
     // queries differentiated by flag presence/absence.
@@ -138,13 +137,14 @@ fn dispatch_arm(subcommand: &[String], queries: &[&QueryDecl]) -> TokenStream {
         .find(|q| q.cli.as_ref().is_some_and(|c| c.default));
     let flagged: Vec<&&QueryDecl> = queries
         .iter()
-        .filter(|q| q.cli.as_ref().is_some_and(|c| !c.default && c.flag.is_some()))
+        .filter(|q| {
+            q.cli
+                .as_ref()
+                .is_some_and(|c| !c.default && c.flag.is_some())
+        })
         .collect();
 
-    let flag_branches: Vec<TokenStream> = flagged
-        .iter()
-        .map(|q| flag_branch(q))
-        .collect();
+    let flag_branches: Vec<TokenStream> = flagged.iter().map(|q| flag_branch(q)).collect();
 
     let fallthrough = if let Some(default_q) = default_query {
         if default_q.params.is_empty() {
@@ -217,9 +217,7 @@ fn help_line(subcommand: &[String], q: &QueryDecl) -> TokenStream {
                 .expect("flag has matching param");
             let value_label = match param.parser {
                 ParserKind::SchemaRefFromUri | ParserKind::LensRefFromUri => "AT_URI",
-                ParserKind::VerificationKind | ParserKind::AdapterInvocationProtocolKind => {
-                    "KIND"
-                }
+                ParserKind::VerificationKind | ParserKind::AdapterInvocationProtocolKind => "KIND",
                 ParserKind::String => "VALUE",
             };
             format!(" --{f} {value_label}")

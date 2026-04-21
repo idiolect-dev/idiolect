@@ -10,7 +10,8 @@ use std::sync::{Arc, Mutex};
 
 use idiolect_orchestrator::{AppState, Catalog, http_router};
 use idiolect_records::generated::adapter::{
-    AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation, AdapterIsolationKind,
+    AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
+    AdapterIsolationKind,
 };
 use idiolect_records::generated::bounty::{BountyStatus, BountyWants, WantLens};
 use idiolect_records::generated::defs::{LensRef, SchemaRef};
@@ -233,13 +234,12 @@ async fn bounties_want_lens_filters_by_schema_pair() {
 #[tokio::test]
 async fn adapters_endpoint_matches_framework() {
     let base = serve_app(seed_catalog()).await;
-    let body: serde_json::Value =
-        reqwest::get(format!("{base}/v1/adapters?framework=hasura"))
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap();
+    let body: serde_json::Value = reqwest::get(format!("{base}/v1/adapters?framework=hasura"))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     assert_eq!(body["items"].as_array().unwrap().len(), 1);
 }
 
@@ -332,13 +332,12 @@ async fn pagination_limit_and_offset_slice_results() {
     let base = serve_app(catalog).await;
 
     // limit=2, offset=1 -> 2 items, total=5.
-    let body: serde_json::Value =
-        reqwest::get(format!("{base}/v1/bounties/open?limit=2&offset=1"))
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap();
+    let body: serde_json::Value = reqwest::get(format!("{base}/v1/bounties/open?limit=2&offset=1"))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     assert_eq!(body["items"].as_array().unwrap().len(), 2);
     assert_eq!(body["total"], 5);
     assert_eq!(body["limit"], 2);
@@ -348,13 +347,12 @@ async fn pagination_limit_and_offset_slice_results() {
 #[tokio::test]
 async fn pagination_offset_past_end_returns_empty_items() {
     let base = serve_app(seed_catalog()).await;
-    let body: serde_json::Value =
-        reqwest::get(format!("{base}/v1/bounties/open?offset=999"))
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap();
+    let body: serde_json::Value = reqwest::get(format!("{base}/v1/bounties/open?offset=999"))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     assert!(body["items"].as_array().unwrap().is_empty());
     // The seeded catalog has one open bounty; total reflects that
     // count regardless of offset.
@@ -503,13 +501,12 @@ async fn communities_by_name_filters_case_insensitively() {
         .unwrap();
     assert_eq!(hit["items"].as_array().unwrap().len(), 1);
 
-    let miss: serde_json::Value =
-        reqwest::get(format!("{base}/v1/communities/by-name?name=nope"))
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap();
+    let miss: serde_json::Value = reqwest::get(format!("{base}/v1/communities/by-name?name=nope"))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     assert!(miss["items"].as_array().unwrap().is_empty());
 }
 

@@ -131,8 +131,14 @@ impl ObservationMethod for VerificationCoverageMethod {
             .unwrap_or_else(|| "<unidentified-lens>".to_owned());
         let entry = self.lenses.entry(lens_key).or_default();
         entry.total = entry.total.saturating_add(1);
-        *entry.by_kind.entry(Self::kind_key(verification.kind)).or_insert(0) += 1;
-        *entry.by_result.entry(Self::result_key(verification.result)).or_insert(0) += 1;
+        *entry
+            .by_kind
+            .entry(Self::kind_key(verification.kind))
+            .or_insert(0) += 1;
+        *entry
+            .by_result
+            .entry(Self::result_key(verification.result))
+            .or_insert(0) += 1;
         *entry
             .verifiers
             .entry(verification.verifier.clone())

@@ -7,7 +7,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use idiolect_indexer::{IndexerError, IndexerEvent, IndexerAction, RecordHandler};
+use idiolect_indexer::{IndexerAction, IndexerError, IndexerEvent, RecordHandler};
 
 use crate::catalog::Catalog;
 

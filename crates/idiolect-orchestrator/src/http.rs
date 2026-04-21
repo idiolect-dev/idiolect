@@ -81,7 +81,10 @@ pub fn router(state: AppState) -> Router {
         .route("/readyz", get(readyz))
         .route("/metrics", get(metrics))
         .route("/v1/stats", get(stats))
-        .route("/v1/verifications/sufficient", get(verifications_sufficient));
+        .route(
+            "/v1/verifications/sufficient",
+            get(verifications_sufficient),
+        );
     // Splice the generated list endpoints onto the router.
     r = crate::generated::http::register_routes(r);
     r.with_state(state)

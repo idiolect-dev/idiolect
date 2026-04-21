@@ -94,10 +94,7 @@ mod fs_tests {
         let path = dir.path().join("bad.json");
         std::fs::write(&path, b"not json").unwrap();
         let err = FilesystemCursorStore::open(&path).unwrap_err();
-        assert!(
-            err.to_string().contains("parse"),
-            "unexpected error: {err}"
-        );
+        assert!(err.to_string().contains("parse"), "unexpected error: {err}");
     }
 }
 

@@ -142,7 +142,11 @@ async fn cmd_fetch(args: &[String]) -> Result<ExitCode> {
 /// and used as the base URL rather than a query flag.
 fn parse_orchestrator_args(
     args: &[String],
-) -> Result<(Vec<String>, std::collections::HashMap<String, String>, String)> {
+) -> Result<(
+    Vec<String>,
+    std::collections::HashMap<String, String>,
+    String,
+)> {
     let mut path = Vec::new();
     let mut flags = std::collections::HashMap::new();
     let mut url = DEFAULT_ORCHESTRATOR_URL.to_owned();

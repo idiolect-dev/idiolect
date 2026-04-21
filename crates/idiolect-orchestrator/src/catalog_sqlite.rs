@@ -61,8 +61,9 @@ impl SqliteCatalogStore {
     /// Returns [`OrchestratorError::Ingest`] on schema / open failure.
     pub fn open<P: AsRef<Path>>(path: P) -> OrchestratorResult<Self> {
         let path = path.as_ref().to_path_buf();
-        let conn = Connection::open(&path)
-            .map_err(|e| OrchestratorError::Ingest(format!("open sqlite {}: {e}", path.display())))?;
+        let conn = Connection::open(&path).map_err(|e| {
+            OrchestratorError::Ingest(format!("open sqlite {}: {e}", path.display()))
+        })?;
         conn.pragma_update(None, "journal_mode", "WAL")
             .map_err(|e| OrchestratorError::Ingest(format!("pragma journal_mode: {e}")))?;
         conn.pragma_update(None, "synchronous", "NORMAL")
@@ -172,8 +173,8 @@ impl SqliteCatalogStore {
 
         let mut catalog = Catalog::new();
         for row in rows {
-            let (uri, kind, author, rev, body_json) = row
-                .map_err(|e| OrchestratorError::Ingest(format!("row: {e}")))?;
+            let (uri, kind, author, rev, body_json) =
+                row.map_err(|e| OrchestratorError::Ingest(format!("row: {e}")))?;
             match deserialize_record_body(&kind, &body_json) {
                 Ok(record) => catalog.upsert(uri, author, rev, record),
                 Err(e) => {
@@ -261,7 +262,8 @@ fn serialize_record_body(record: &AnyRecord) -> OrchestratorResult<String> {
 /// `kind`.
 fn deserialize_record_body(kind: &str, body: &str) -> OrchestratorResult<AnyRecord> {
     fn from<R: idiolect_records::Record>(body: &str) -> OrchestratorResult<R> {
-        serde_json::from_str(body).map_err(|e| OrchestratorError::Ingest(format!("deserialize: {e}")))
+        serde_json::from_str(body)
+            .map_err(|e| OrchestratorError::Ingest(format!("deserialize: {e}")))
     }
     Ok(match kind {
         "adapter" => AnyRecord::Adapter(from(body)?),

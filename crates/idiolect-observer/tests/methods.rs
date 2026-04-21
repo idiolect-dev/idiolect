@@ -13,9 +13,7 @@ use idiolect_observer::{
 use idiolect_records::AnyRecord;
 use idiolect_records::generated::correction::{Correction, CorrectionReason};
 use idiolect_records::generated::defs::{LensRef, SchemaRef, Visibility};
-use idiolect_records::generated::encounter::{
-    Encounter, EncounterDownstreamResult, EncounterKind,
-};
+use idiolect_records::generated::encounter::{Encounter, EncounterDownstreamResult, EncounterKind};
 use idiolect_records::generated::verification::{
     Verification, VerificationKind, VerificationResult,
 };
@@ -39,7 +37,11 @@ fn ix_event(seq: u64, did: &str, record: AnyRecord) -> IndexerEvent {
     }
 }
 
-fn encounter(kind: EncounterKind, result: Option<EncounterDownstreamResult>, lens: &str) -> AnyRecord {
+fn encounter(
+    kind: EncounterKind,
+    result: Option<EncounterDownstreamResult>,
+    lens: &str,
+) -> AnyRecord {
     AnyRecord::Encounter(Encounter {
         annotations: None,
         downstream_result: result,

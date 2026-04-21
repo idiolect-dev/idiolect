@@ -3,10 +3,9 @@
 //! CLI dispatcher for `idiolect orchestrator …` subcommands.
 
 #![allow(missing_docs, clippy::doc_markdown)]
-
 #![allow(unused_imports, clippy::too_many_lines)]
-use std::process::ExitCode;
 use anyhow::{Result, anyhow, bail};
+use std::process::ExitCode;
 /// Dispatch an `idiolect orchestrator <path>` invocation.
 ///
 /// Returns the HTTP path + query string (relative to the configured base URL).
@@ -21,15 +20,16 @@ pub fn dispatch(
             if let Some(value) = flags.get("framework") {
                 return Ok(format!("/v1/adapters?framework={}", urlencode(value)));
             }
-            Err(anyhow!("`orchestrator adapters` requires one of: --framework"))
+            Err(anyhow!(
+                "`orchestrator adapters` requires one of: --framework"
+            ))
         }
         ["bounties"] => {
             if let Some(value) = flags.get("requester_did") {
-                return Ok(
-                    format!(
-                        "/v1/bounties/by-requester?requester_did={}", urlencode(value)
-                    ),
-                );
+                return Ok(format!(
+                    "/v1/bounties/by-requester?requester_did={}",
+                    urlencode(value)
+                ));
             }
             Ok("/v1/bounties/open".to_owned())
         }
@@ -38,7 +38,9 @@ pub fn dispatch(
             if let Some(value) = flags.get("lens_uri") {
                 return Ok(format!("/v1/verifications?lens_uri={}", urlencode(value)));
             }
-            Err(anyhow!("`orchestrator verifications` requires one of: --lens_uri"))
+            Err(anyhow!(
+                "`orchestrator verifications` requires one of: --lens_uri"
+            ))
         }
         [other, ..] => bail!("unknown orchestrator subcommand: {other}"),
         [] => bail!("`orchestrator` subcommand required"),
@@ -56,7 +58,7 @@ fn urlencode(s: &str) -> String {
             }
             _ => {
                 use std::fmt::Write;
-                write!(& mut out, "%{b:02X}").expect("write to String cannot fail");
+                write!(&mut out, "%{b:02X}").expect("write to String cannot fail");
             }
         }
     }

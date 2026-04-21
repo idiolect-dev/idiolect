@@ -233,9 +233,7 @@ impl PdsWriter for ReqwestPdsClient {
     }
 }
 
-async fn parse_write_response(
-    resp: reqwest::Response,
-) -> Result<WriteRecordResponse, LensError> {
+async fn parse_write_response(resp: reqwest::Response) -> Result<WriteRecordResponse, LensError> {
     let status = resp.status();
     let body: serde_json::Value = resp
         .json()

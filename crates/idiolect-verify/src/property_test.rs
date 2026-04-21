@@ -136,9 +136,7 @@ where
                 // Surface the falsifying case index in the counter-
                 // example so reproductions can rerun with the same
                 // generator and case index.
-                let counterexample = Some(format!(
-                    "case={i} source={source}"
-                ));
+                let counterexample = Some(format!("case={i} source={source}"));
                 return Ok(build_verification(
                     target,
                     self,
@@ -195,7 +193,8 @@ mod tests {
         loader.insert(src_hash.clone(), src);
         loader.insert(tgt_hash.clone(), tgt);
 
-        let uri = idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/pt").unwrap();
+        let uri =
+            idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/pt").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
             created_at: "2026-04-21T00:00:00.000Z".into(),
@@ -226,9 +225,13 @@ mod tests {
     #[tokio::test]
     async fn holds_when_every_generated_case_round_trips() {
         let (uri, resolver, loader) = stage();
-        let runner = PropertyTestRunner::new(resolver, loader, test_protocol(), 50, |i| {
-            serde_json::json!({ "text": format!("case-{i}") })
-        });
+        let runner = PropertyTestRunner::new(
+            resolver,
+            loader,
+            test_protocol(),
+            50,
+            |i| serde_json::json!({ "text": format!("case-{i}") }),
+        );
         assert_eq!(runner.budget(), 50);
         let v = runner.run(&target(uri)).await.unwrap();
         assert_eq!(v.kind, VerificationKind::PropertyTest);
@@ -239,9 +242,13 @@ mod tests {
     #[tokio::test]
     async fn zero_budget_is_invalid_input() {
         let (uri, resolver, loader) = stage();
-        let runner = PropertyTestRunner::new(resolver, loader, test_protocol(), 0, |_| {
-            serde_json::json!({ "text": "unused" })
-        });
+        let runner = PropertyTestRunner::new(
+            resolver,
+            loader,
+            test_protocol(),
+            0,
+            |_| serde_json::json!({ "text": "unused" }),
+        );
         let err = runner.run(&target(uri)).await.unwrap_err();
         assert!(matches!(err, VerifyError::InvalidInput(_)));
     }
@@ -249,9 +256,13 @@ mod tests {
     #[tokio::test]
     async fn missing_lens_uri_is_invalid_input() {
         let (_, resolver, loader) = stage();
-        let runner = PropertyTestRunner::new(resolver, loader, test_protocol(), 1, |_| {
-            serde_json::json!({ "text": "x" })
-        });
+        let runner = PropertyTestRunner::new(
+            resolver,
+            loader,
+            test_protocol(),
+            1,
+            |_| serde_json::json!({ "text": "x" }),
+        );
         let mut t = target("ignored".into());
         t.lens.uri = None;
         let err = runner.run(&t).await.unwrap_err();

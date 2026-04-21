@@ -1,8 +1,8 @@
 //! End-to-end migration tests.
 
 use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader, parse_at_uri};
-use idiolect_migrate::{MigrateError, classify, migrate_record, plan_auto};
 use idiolect_migrate::error::PlannerError;
+use idiolect_migrate::{MigrateError, classify, migrate_record, plan_auto};
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::elementary;
 use panproto_schema::{Protocol, Schema, SchemaBuilder};
@@ -50,9 +50,15 @@ async fn migrate_record_translates_through_identity_lens() {
     resolver.insert(&uri, record);
 
     let input = serde_json::json!({ "text": "hello" });
-    let output = migrate_record(&resolver, &loader, &protocol(), &uri.to_string(), input.clone())
-        .await
-        .unwrap();
+    let output = migrate_record(
+        &resolver,
+        &loader,
+        &protocol(),
+        &uri.to_string(),
+        input.clone(),
+    )
+    .await
+    .unwrap();
     // rename_sort with identical source/target kinds preserves the body.
     assert_eq!(output, input);
 }
