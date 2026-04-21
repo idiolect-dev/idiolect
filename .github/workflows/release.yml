@@ -515,8 +515,12 @@ jobs:
             exit 0
           fi
           # Order matters: each crate's dependencies must already be
-          # on crates.io by the time it publishes.
-          for crate in idiolect-records idiolect-oauth idiolect-indexer idiolect-lens; do
+          # on crates.io by the time it publishes. The list is the set
+          # of publishable = true crates in topological order; every
+          # panproto-dependent crate (lens, oauth, migrate, verify) is
+          # `publish = false` at the workspace level until panproto
+          # lands on crates.io, so they're deliberately absent here.
+          for crate in idiolect-records idiolect-identity idiolect-indexer; do
             echo "::group::publish $crate"
             cargo publish -p "$crate" --locked --no-verify || {
               code=$?
