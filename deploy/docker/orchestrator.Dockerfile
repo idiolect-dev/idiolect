@@ -41,7 +41,7 @@ COPY rust-toolchain.toml ./
 RUN cargo build \
     --release \
     -p idiolect-orchestrator \
-    --features catalog-sqlite,query-http \
+    --features daemon,catalog-sqlite,query-http \
     --bin idiolect-orchestrator
 
 # -----------------------------------------------------------------
