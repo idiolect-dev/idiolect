@@ -20,12 +20,12 @@
   </g>
   <!-- Keys: top row of four, bottom row of three, staggered -->
   <g fill="#1e293b">
-    <circle cx="75" cy="114" r="5.5"/>
-    <circle cx="93" cy="114" r="5.5"/>
-    <circle cx="111" cy="114" r="5.5"/>
-    <circle cx="129" cy="114" r="5.5"/>
-    <circle cx="84" cy="134" r="5.5"/>
-    <circle cx="102" cy="134" r="5.5"/>
-    <circle cx="120" cy="134" r="5.5"/>
+    <circle cx="73" cy="114" r="5.5"/>
+    <circle cx="91" cy="114" r="5.5"/>
+    <circle cx="109" cy="114" r="5.5"/>
+    <circle cx="127" cy="114" r="5.5"/>
+    <circle cx="82" cy="134" r="5.5"/>
+    <circle cx="100" cy="134" r="5.5"/>
+    <circle cx="118" cy="134" r="5.5"/>
   </g>
 </svg>
