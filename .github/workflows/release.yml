@@ -399,7 +399,7 @@ jobs:
       # artifacts this job actually consumes (binaries, SBOMs,
       # checksums, source tarball) so a flaky dockerbuild artifact
       # doesn't block the release.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
           pattern: "{bin-*,sbom-*,*spdx.json,source-tarball}"
