@@ -7,9 +7,10 @@
   -->
   <g fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
     <!-- Paper sheet -->
-    <path d="M 76 24 H 124 V 72 H 76 Z" />
-    <!-- Single text line suggesting the paper has been typed on -->
-    <line x1="88" y1="44" x2="112" y2="44" stroke-width="5" />
+    <path d="M 64 24 H 136 V 72 H 64 Z" />
+    <!-- Two text lines suggesting the paper has been typed on -->
+    <line x1="74" y1="40" x2="126" y2="40" stroke-width="5" />
+    <line x1="74" y1="54" x2="114" y2="54" stroke-width="5" />
     <!-- Platen / carriage roller -->
     <rect x="28" y="66" width="144" height="22" rx="11" />
     <!-- Typewriter body, trapezoidal -->
