@@ -1,4 +1,4 @@
-// public entry point for @idiolect/schema.
+// public entry point for @idiolect-dev/schema.
 //
 // types are generated from the canonical lexicon json in
 // `lexicons/dev/idiolect/*.json` by `idiolect-codegen`. do not edit

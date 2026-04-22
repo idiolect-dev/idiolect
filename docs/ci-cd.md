@@ -36,7 +36,7 @@ eight classes of artifact:
 | SBOM per container (SPDX JSON) | GitHub Release + image attestation | ✓ (via docker-buildx `sbom: true`) |
 | Source tarball | GitHub Release | ✓ |
 | `checksums.txt` across every binary | GitHub Release | ✓ |
-| `@idiolect/schema` npm package | npm | ✓ (npm provenance) |
+| `@idiolect-dev/schema` npm package | npm | ✓ (npm provenance) |
 | Publishable crates | crates.io | — (no cosign for crates) |
 
 The tag-triggered shape means a release is reproducible — cutting

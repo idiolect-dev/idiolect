@@ -4,7 +4,7 @@
 // type guards is `./generated/records`, which `idiolect-codegen` emits
 // from the lexicons. this module keeps the legacy `NSIDS` / `Nsid` /
 // `RecordNsid` names working so existing call sites (and external
-// consumers of `@idiolect/schema`) do not need to migrate in lockstep.
+// consumers of `@idiolect-dev/schema`) do not need to migrate in lockstep.
 
 import { NSID, RECORD_NSIDS } from "./generated/records";
 

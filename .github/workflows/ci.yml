@@ -228,7 +228,7 @@ jobs:
             check-compat --baseline "$GITHUB_WORKSPACE/base/lexicons/dev"
 
   # ---------------------------------------------------------------
-  # TypeScript half of the monorepo: @idiolect/schema. biome + tsc
+  # TypeScript half of the monorepo: @idiolect-dev/schema. biome + tsc
   # + bun test.
   # ---------------------------------------------------------------
   typescript:

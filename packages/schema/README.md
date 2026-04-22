@@ -1,4 +1,4 @@
-# @idiolect/schema
+# @idiolect-dev/schema
 
 TypeScript validators, record types, and NSID constants for the
 `dev.idiolect.*` lexicon family.
@@ -20,9 +20,9 @@ surfaces:
 ## Install
 
 ```sh
-bun add @idiolect/schema
+bun add @idiolect-dev/schema
 # or
-npm install @idiolect/schema
+npm install @idiolect-dev/schema
 ```
 
 ## Usage
@@ -34,7 +34,7 @@ import {
   classifyRecord,
   type Encounter,
   type AnyRecord,
-} from "@idiolect/schema";
+} from "@idiolect-dev/schema";
 
 // Narrow an unknown payload to a typed record.
 const payload: unknown = await fetch(recordUrl).then(r => r.json());
@@ -47,7 +47,7 @@ if (isRecord(NSIDS.encounter, payload)) {
 const nsid = classifyRecord(payload); // returns the matching nsid or null
 
 // Wrap a strongly-typed record into a tagged AnyRecord for buffering.
-import { tagRecord } from "@idiolect/schema";
+import { tagRecord } from "@idiolect-dev/schema";
 const tagged: AnyRecord = tagRecord(NSIDS.encounter, e);
 ```
 

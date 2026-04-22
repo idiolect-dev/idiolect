@@ -69,5 +69,5 @@ let json = examples::ENCOUNTER_JSON;
 ## Related
 
 - [`idiolect-codegen`](../idiolect-codegen) — emits this crate.
-- [`@idiolect/schema`](../../packages/schema) — TypeScript twin,
+- [`@idiolect-dev/schema`](../../packages/schema) — TypeScript twin,
   generated from the same lexicons.

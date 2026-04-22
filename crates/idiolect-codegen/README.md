@@ -61,7 +61,7 @@ cargo run -p idiolect-codegen -- doctor
 ## Related
 
 - [`idiolect-records`](../idiolect-records) — Rust emit target.
-- [`@idiolect/schema`](../../packages/schema) — TypeScript emit target.
+- [`@idiolect-dev/schema`](../../packages/schema) — TypeScript emit target.
 - [`idiolect-orchestrator`](../idiolect-orchestrator),
   [`idiolect-observer`](../idiolect-observer),
   [`idiolect-verify`](../idiolect-verify),

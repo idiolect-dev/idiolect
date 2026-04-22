@@ -30,7 +30,7 @@ new=0.1.0
 sed -i.bak "s/^version = \".*\"$/version = \"$new\"/" Cargo.toml
 rm Cargo.toml.bak
 
-# @idiolect/schema.
+# @idiolect-dev/schema.
 jq --arg v "$new" '.version = $v' packages/schema/package.json \
   > packages/schema/package.json.tmp
 mv packages/schema/package.json.tmp packages/schema/package.json
@@ -93,7 +93,7 @@ that fan out; a failure in any one fails the release:
   SBOM.
 - `source-tarball` — source archive + signed checksum.
 - `publish-release` — aggregates and publishes the GitHub Release.
-- `publish-npm` — `@idiolect/schema` to the npm registry.
+- `publish-npm` — `@idiolect-dev/schema` to the npm registry.
 - `publish-crates` — `idiolect-records`, `-oauth`, `-indexer`,
   `-lens` to crates.io in topological order.
 
@@ -142,7 +142,7 @@ release from a hotfix branch.
 - `CARGO_REGISTRY_TOKEN` — crates.io publish token. Optional; the
   `publish-crates` job skips cleanly when absent.
 - `NPM_TOKEN` — npm publish token. Optional; `publish-npm` skips
-  when absent. Using an npm automation token scoped to `@idiolect`
+  when absent. Using an npm automation token scoped to `@idiolect-dev`
   is recommended.
 
 Sigstore keyless signing via the GitHub Actions OIDC token requires

@@ -17,7 +17,7 @@
 #      - ghcr.io/idiolect-dev/orchestrator:<version>, :latest
 #      - ghcr.io/idiolect-dev/observer:<version>, :latest
 #      - signed with cosign keyless (sigstore OIDC via GitHub Actions)
-#   3. @idiolect/schema npm package.
+#   3. @idiolect-dev/schema npm package.
 #   4. Publishable Rust crates to crates.io
 #      (idiolect-records, idiolect-lens, idiolect-indexer, idiolect-oauth)
 #      in topological order.
@@ -84,11 +84,11 @@ jobs:
             exit 1
           fi
 
-      - name: assert @idiolect/schema package.json version matches
+      - name: assert @idiolect-dev/schema package.json version matches
         run: |
           pkg_version=$(jq -r '.version' packages/schema/package.json)
           if [ "$pkg_version" != "$version" ]; then
-            echo "::error::@idiolect/schema package.json version ($pkg_version) != tag version ($version)"
+            echo "::error::@idiolect-dev/schema package.json version ($pkg_version) != tag version ($version)"
             exit 1
           fi
 
@@ -446,10 +446,10 @@ jobs:
           generate_release_notes: true
 
   # ---------------------------------------------------------------
-  # Publish @idiolect/schema to npm. Runs only if NPM_TOKEN is set.
+  # Publish @idiolect-dev/schema to npm. Runs only if NPM_TOKEN is set.
   # ---------------------------------------------------------------
   publish-npm:
-    name: publish @idiolect/schema
+    name: publish @idiolect-dev/schema
     needs: [verify-version, publish-release]
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -11,7 +11,7 @@
   <a href="https://github.com/idiolect-dev/idiolect/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/idiolect-dev/idiolect/actions/workflows/ci.yml/badge.svg"/></a>
   <a href="https://github.com/idiolect-dev/idiolect/actions/workflows/release.yml"><img alt="Release" src="https://img.shields.io/github/v/release/idiolect-dev/idiolect?sort=semver&label=release"/></a>
   <a href="https://crates.io/crates/idiolect-records"><img alt="idiolect-records on crates.io" src="https://img.shields.io/crates/v/idiolect-records?label=idiolect-records&color=orange"/></a>
-  <a href="https://www.npmjs.com/package/@idiolect/schema"><img alt="@idiolect/schema on npm" src="https://img.shields.io/npm/v/@idiolect/schema?color=red"/></a>
+  <a href="https://www.npmjs.com/package/@idiolect-dev/schema"><img alt="@idiolect-dev/schema on npm" src="https://img.shields.io/npm/v/@idiolect-dev/schema?color=red"/></a>
   <a href="https://github.com/idiolect-dev/idiolect/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/idiolect-dev/idiolect?color=blue"/></a>
   <img alt="rustc 1.95+" src="https://img.shields.io/badge/rustc-1.95%2B-blue"/>
 </p>
@@ -22,7 +22,7 @@
 
 Idiolect turns the linguistic distinction between *idiolects*, *dialects*, and *languages* into an
 operating model. An idiolect is one party's choice of schemas, lenses, and
-conventions. A dialect is the bundle of idiolects a community treats as
+conventions; a dialect is the bundle of idiolects a community treats as
 canonical; and a language is the federated substrate over which idiolects and
 dialects meet, disagree, and slowly converge without a central arbiter.
 
@@ -46,11 +46,11 @@ idiolect orchestrator stats
 idiolect orchestrator adapters --framework hasura
 
 # TypeScript: validate incoming records at an appview boundary.
-bun add @idiolect/schema
+bun add @idiolect-dev/schema
 ```
 
 ```ts
-import { NSIDS, isRecord, type Encounter } from "@idiolect/schema";
+import { NSIDS, isRecord, type Encounter } from "@idiolect-dev/schema";
 
 if (isRecord(NSIDS.encounter, payload)) {
   const e: Encounter = payload;
@@ -73,7 +73,7 @@ if (isRecord(NSIDS.encounter, payload)) {
 | [`idiolect-verify`][ver]       | Verification runners (`roundtrip-test`, `property-test`, `static-check`). |
 | [`idiolect-migrate`][mig]      | Schema diff (panproto-check) + lens-based record migration.               |
 | [`idiolect-cli`][cli]          | Command-line tool wrapping the library crates.                            |
-| [`@idiolect/schema`][npm]      | TypeScript validators, types, and NSID constants (same lexicons).         |
+| [`@idiolect-dev/schema`][npm]      | TypeScript validators, types, and NSID constants (same lexicons).         |
 
 [recs]: crates/idiolect-records
 [cg]: crates/idiolect-codegen
@@ -91,15 +91,19 @@ if (isRecord(NSIDS.encounter, payload)) {
 ## Architecture in one paragraph
 
 The lexicons under `lexicons/dev/` are the single source of truth. Rust types
-(`idiolect-records`) and TypeScript validators (`@idiolect/schema`) are
-derived via `idiolect-codegen` — CI rejects any PR whose generated output
-disagrees with the lexicons. Four crates with a taxonomy of similarly-shaped
-items — the orchestrator's queries, the observer's methods, the verifier's
-runners, and the CLI's subcommands — each live behind a declarative JSON
-spec (`<crate>-spec/`) validated against its own atproto-shaped lexicon;
-codegen emits the wire-up while hand-written predicates and semantics supply
-the business logic. Runtime state that must not federate — firehose cursors,
-OAuth tokens — rides the same panproto schema apparatus as everything else,
+(`idiolect-records`) and TypeScript validators (`@idiolect-dev/schema`) are
+derived via `idiolect-codegen`. CI rejects any PR whose generated output
+disagrees with the lexicons. 
+
+Four crates with a taxonomy of similarly-shaped items–the orchestrator's queries, 
+the observer's methods, the verifier's
+runners, and the CLI's subcommands–each live behind a declarative JSON
+spec (`<crate>-spec/`) validated against its own atproto-shaped lexicon.
+Codegen emits the wire-up while hand-written predicates and semantics supply
+the business logic. 
+
+Runtime state that must not federate (firehose cursors,
+OAuth tokens) rides the same panproto schema apparatus as everything else,
 flagged under `dev.idiolect.internal.*` so conformant firehose consumers
 skip it.
 
@@ -148,4 +152,4 @@ if you are unsure whether a capability fits before opening.
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE)
