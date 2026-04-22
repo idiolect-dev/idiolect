@@ -393,9 +393,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # docker/build-push-action@v6 uploads internal *.dockerbuild
+      # provenance blobs whose archives intermittently fail to
+      # extract via download-artifact@v4. Restrict the download to
+      # artifacts this job actually consumes (binaries, SBOMs,
+      # checksums, source tarball) so a flaky dockerbuild artifact
+      # doesn't block the release.
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: "{bin-*,sbom-*,*spdx.json,source-tarball}"
 
       - name: flatten artifacts
         shell: bash
