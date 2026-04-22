@@ -137,10 +137,14 @@ jobs:
             target: aarch64-apple-darwin
             runner: macos-14
             features: ""
+          # Cross-compiled from macos-14 (ARM host) because macos-13
+          # runners are retiring and queue indefinitely. The Apple
+          # toolchain cross-compiles natively once the target is added
+          # via `rustup target add`.
           - bin: idiolect
             crate: idiolect-cli
             target: x86_64-apple-darwin
-            runner: macos-13
+            runner: macos-14
             features: ""
           # Daemon binaries: linux-only (these are containerized;
           # macOS binaries aren't a deployment target).
