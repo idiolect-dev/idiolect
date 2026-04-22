@@ -1,65 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="idiolect">
   <title>idiolect</title>
   <!--
-    Worn typewriter "i" set inside a worn circular stamp. The ring
-    and the letter share one ink pass (primary strike, heavy blur,
-    edge-level ripple) plus a second offset strike at reduced
-    opacity for uneven density. Paper splatter scatters around the
-    mark.
-
-    Filter tuning note: `baseFrequency` is kept high (0.15-0.20) so
-    the displacement warps edges at the ink-bleed scale rather than
-    shifting whole letters bodily — that's what keeps adjacent
-    glyphs on their natural grid while still feeling organic.
+    Minimalist typewriter. Paper rising from a platen, trapezoidal
+    body, two staggered rows of keys, one space bar. Line weight 8
+    throughout for a consistent monoline feel.
   -->
-  <defs>
-    <filter id="worn-primary" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="2" seed="7" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" result="warped"/>
-      <feGaussianBlur in="warped" stdDeviation="1.2"/>
-    </filter>
-    <filter id="worn-overlay" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.22" numOctaves="2" seed="17" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" result="warped"/>
-      <feGaussianBlur in="warped" stdDeviation="0.6"/>
-    </filter>
-  </defs>
-
-  <!-- Primary ink pass: circle + letter. -->
-  <g filter="url(#worn-primary)" opacity="0.92">
-    <circle cx="100" cy="100" r="88" fill="none" stroke="#1e293b" stroke-width="7"/>
-    <text x="100"
-          y="100"
-          text-anchor="middle"
-          dominant-baseline="central"
-          font-family="'Courier New', 'Courier Prime', 'IBM Plex Mono', Courier, monospace"
-          font-weight="900"
-          font-size="140"
-          fill="#1e293b">i</text>
+  <g fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Paper sheet -->
+    <path d="M 76 24 H 124 V 72 H 76 Z" />
+    <!-- Single text line suggesting the paper has been typed on -->
+    <line x1="88" y1="44" x2="112" y2="44" stroke-width="5" />
+    <!-- Platen / carriage roller -->
+    <rect x="28" y="66" width="144" height="22" rx="11" />
+    <!-- Typewriter body, trapezoidal -->
+    <path d="M 46 90 H 154 L 170 172 H 30 Z" />
+    <!-- Space bar -->
+    <line x1="72" y1="154" x2="128" y2="154" />
   </g>
-
-  <!-- Density overlay: second strike, offset warp. -->
-  <g filter="url(#worn-overlay)" opacity="0.4">
-    <circle cx="100" cy="100" r="88" fill="none" stroke="#0f172a" stroke-width="7"/>
-    <text x="100"
-          y="100"
-          text-anchor="middle"
-          dominant-baseline="central"
-          font-family="'Courier New', 'Courier Prime', 'IBM Plex Mono', Courier, monospace"
-          font-weight="900"
-          font-size="140"
-          fill="#0f172a">i</text>
-  </g>
-
-  <!-- Paper splatter around the stamp. -->
+  <!-- Keys: top row of four, bottom row of three, staggered -->
   <g fill="#1e293b">
-    <circle cx="16"  cy="44"  r="0.9" opacity="0.55"/>
-    <circle cx="184" cy="62"  r="1.3" opacity="0.45"/>
-    <circle cx="22"  cy="142" r="0.6" opacity="0.7"/>
-    <circle cx="180" cy="166" r="1.0" opacity="0.55"/>
-    <circle cx="96"  cy="12"  r="0.5" opacity="0.6"/>
-    <circle cx="106" cy="190" r="0.8" opacity="0.55"/>
-    <circle cx="158" cy="18"  r="0.4" opacity="0.8"/>
-    <circle cx="40"  cy="180" r="0.7" opacity="0.55"/>
+    <circle cx="75" cy="114" r="5.5"/>
+    <circle cx="93" cy="114" r="5.5"/>
+    <circle cx="111" cy="114" r="5.5"/>
+    <circle cx="129" cy="114" r="5.5"/>
+    <circle cx="84" cy="134" r="5.5"/>
+    <circle cx="102" cy="134" r="5.5"/>
+    <circle cx="120" cy="134" r="5.5"/>
   </g>
 </svg>
