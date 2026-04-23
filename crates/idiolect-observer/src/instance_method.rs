@@ -295,6 +295,7 @@ mod tests {
         use idiolect_records::AnyRecord;
         use idiolect_records::generated::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
         let bounty = Bounty {
+            basis: None,
             constraints: None,
             eligibility: None,
             fulfillment: None,

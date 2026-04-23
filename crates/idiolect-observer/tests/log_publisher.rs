@@ -67,6 +67,7 @@ where
 
 fn fixture_observation() -> Observation {
     Observation {
+        basis: None,
         method: ObservationMethodDescriptor {
             code_ref: None,
             description: Some("test-desc".to_owned()),

@@ -58,6 +58,7 @@ fn adapter_for(framework: &str) -> Adapter {
 
 fn bounty_want_lens(src: &str, tgt: &str) -> Bounty {
     Bounty {
+        basis: None,
         constraints: None,
         eligibility: None,
         fulfillment: None,

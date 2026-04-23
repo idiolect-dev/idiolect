@@ -78,6 +78,7 @@ fn any_to_json(record: &AnyRecord) -> serde_json::Value {
 
 fn bounty_want_lens(status: Option<BountyStatus>, src: &str, tgt: &str) -> Bounty {
     Bounty {
+        basis: None,
         constraints: None,
         eligibility: None,
         fulfillment: None,
@@ -95,6 +96,7 @@ fn bounty_want_lens(status: Option<BountyStatus>, src: &str, tgt: &str) -> Bount
 
 fn bounty_want_adapter(fw: &str) -> Bounty {
     Bounty {
+        basis: None,
         constraints: None,
         eligibility: None,
         fulfillment: None,

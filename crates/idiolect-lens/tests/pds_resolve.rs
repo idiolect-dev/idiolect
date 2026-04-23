@@ -12,6 +12,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn fixture_bounty() -> Bounty {
     Bounty {
+        basis: None,
         constraints: None,
         eligibility: None,
         fulfillment: None,

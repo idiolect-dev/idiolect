@@ -241,6 +241,7 @@ async fn publisher_and_fetcher_round_trip_via_wiremock() {
     let fetcher = RecordFetcher::new(client);
 
     let bounty = Bounty {
+        basis: None,
         constraints: None,
         eligibility: None,
         fulfillment: None,

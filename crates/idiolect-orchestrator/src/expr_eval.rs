@@ -151,6 +151,7 @@ mod tests {
 
     fn bounty_with_reward(summary: Option<&str>) -> Bounty {
         Bounty {
+            basis: None,
             constraints: None,
             eligibility: None,
             fulfillment: None,

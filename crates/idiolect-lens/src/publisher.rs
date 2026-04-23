@@ -247,6 +247,7 @@ mod tests {
 
     fn sample_bounty() -> Bounty {
         Bounty {
+            basis: None,
             constraints: None,
             eligibility: None,
             fulfillment: None,

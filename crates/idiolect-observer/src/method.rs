@@ -136,6 +136,7 @@ pub fn build_observation<M: ObservationMethod + ?Sized>(
     };
 
     Ok(Some(Observation {
+        basis: None,
         method: method.descriptor(),
         observer: observer_did.to_owned(),
         occurred_at: occurred_at.to_owned(),
