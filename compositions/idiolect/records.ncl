@@ -9,10 +9,12 @@
 # whole point — the attitudes framework and the idiolect framework
 # compose from the same primitives.
 {
-  # encounter: an assertion that a purposeful invocation happened.
+  # encounter: an assertion that a structured use was performed.
+  # ThUse supplies the action/material/purpose/actor compound;
+  # ThAssertive gives the attestation stance.
   encounter = {
-    bases = ["ThAtt", "ThAssertive", "ThPurpose"],
-    result = "ThPurposefulInvocation",
+    bases = ["ThAtt", "ThAssertive", "ThUse"],
+    result = "ThAssertedUse",
   },
 
   # recommendation: an endorsement of a lens path under conditions.

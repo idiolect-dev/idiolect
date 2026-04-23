@@ -1,0 +1,20 @@
+id: dev.idiolect.vocab.purpose-v1
+description: >
+  Reference purpose vocabulary for ThUse. Captures the "for what
+  end" dimension of a Use, distinct from the Action dimension. The
+  entries here are illustrative; communities fork and extend under
+  their own vocabulary id.
+
+  Subsumption is closed-world-with-default: subsumes(any_purpose, x)
+  holds for every x.
+world: closed-with-default
+top: any_purpose
+actions:
+  - { id: any_purpose, parents: [] }
+  - { id: commercial, parents: [any_purpose] }
+  - { id: non_commercial, parents: [any_purpose] }
+  - { id: academic, parents: [non_commercial] }
+  - { id: research, parents: [academic] }
+  - { id: pedagogy, parents: [academic] }
+  - { id: preservation, parents: [non_commercial] }
+  - { id: engineering_internal, parents: [any_purpose] }

@@ -1,41 +1,27 @@
 id: dev.idiolect.vocab.action-v1
 description: >
-  Reference action vocabulary for ThPurpose. Ships alongside the
-  content theories so encounter records can carry a structured
-  purpose without requiring every community to author its own
-  hierarchy. Communities are expected to fork, extend, and
-  re-publish under their own vocabulary id.
+  Reference action vocabulary for ThUse. Demonstrates the shape of
+  an action hierarchy; communities are expected to fork and extend
+  under their own vocabulary id. The entries here are illustrative,
+  not prescriptive — the framework accommodates any community's
+  actions, not this set.
 
-  Adopts closed-world subsumption with 'any_purpose' as the top.
-  subsumes(any_purpose, x) holds for every x in the hierarchy.
-  A community publishing its own vocabulary must declare the world
-  discipline it intends.
+  Subsumption is closed-world-with-default: subsumes(any_action, x)
+  holds for every x in the hierarchy.
 world: closed-with-default
-top: any_purpose
+top: any_action
 actions:
-  # top
-  - { id: any_purpose, parents: [] }
-  # research / scholarship
-  - { id: research, parents: [any_purpose] }
-  - { id: scholarly_analysis, parents: [research] }
-  - { id: corpus_construction, parents: [research] }
-  - { id: replication_study, parents: [research] }
-  # pedagogy / education
-  - { id: pedagogy, parents: [any_purpose] }
-  - { id: annotate, parents: [pedagogy] }
-  - { id: illustrate, parents: [pedagogy] }
-  - { id: assess, parents: [pedagogy] }
-  # engineering / operations
-  - { id: engineering, parents: [any_purpose] }
-  - { id: interop_test, parents: [engineering] }
-  - { id: schema_migration, parents: [engineering] }
-  - { id: data_ingest, parents: [engineering] }
-  # machine-learning
-  - { id: machine_learning, parents: [any_purpose] }
-  - { id: train_model, parents: [machine_learning] }
+  - { id: any_action, parents: [] }
+  # ingestion / transformation
+  - { id: ingest, parents: [any_action] }
+  - { id: transform, parents: [any_action] }
+  - { id: reuse, parents: [any_action] }
+  # training / evaluation
+  - { id: train_model, parents: [any_action] }
   - { id: fine_tune, parents: [train_model] }
-  - { id: evaluate_model, parents: [machine_learning] }
-  # curation
-  - { id: curation, parents: [any_purpose] }
-  - { id: archive, parents: [curation] }
-  - { id: translate_for_preservation, parents: [curation] }
+  - { id: evaluate_model, parents: [any_action] }
+  # preservation / curation
+  - { id: archive, parents: [any_action] }
+  - { id: annotate, parents: [any_action] }
+  # inference / serving
+  - { id: run_inference, parents: [any_action] }
