@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.encounter",
-  "description": "A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it. `purpose` is a structured ThPurpose (see dev.idiolect.theory.purpose); narrative commentary lives in `annotations`.",
+  "description": "A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it. `use` is a structured ThUse (see dev.idiolect.theory.use) covering action/material/purpose/actor; narrative commentary lives in `annotations`.",
   "defs": {
     "main": {
       "type": "record",
@@ -9,7 +9,7 @@
       "description": "One invocation of a lens on a source, producing an output. The invoker asserts a purposeful invocation: structured `purpose` records the decision-relevant action/material/actor triple, resolvable against a community vocabulary.",
       "record": {
         "type": "object",
-        "required": ["lens", "sourceSchema", "purpose", "kind", "visibility", "occurredAt"],
+        "required": ["lens", "sourceSchema", "use", "kind", "visibility", "occurredAt"],
         "properties": {
           "lens": {
             "type": "ref",
@@ -34,10 +34,10 @@
             "type": "cid-link",
             "description": "Optional content-addressed reference to the produced output."
           },
-          "purpose": {
+          "use": {
             "type": "ref",
-            "ref": "dev.idiolect.defs#purpose",
-            "description": "Structured purpose for this invocation. Resolves against a community vocabulary; consumers match by action subsumption, not substring."
+            "ref": "dev.idiolect.defs#use",
+            "description": "Structured record of the action performed, its material, its purpose, and its actor. Consumers match on action subsumption against the referenced vocabularies, not substring."
           },
           "downstreamResult": {
             "type": "string",
@@ -48,6 +48,16 @@
             "type": "string",
             "maxGraphemes": 4000,
             "description": "Narrative notes from the invoking party. Human commentary; not consumed by machine matchers."
+          },
+          "holder": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the party the encounter is attributed to. Omit for first-party records (holder is implicit in the repo owner); set explicitly for third-party attestations such as a labeler recording someone else's invocation."
+          },
+          "basis": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#basis",
+            "description": "Structured grounding for the assertion. Useful when `holder` is a third party and the record must state on what basis the invocation is being attributed."
           },
           "kind": {
             "type": "string",

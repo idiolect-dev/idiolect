@@ -71,6 +71,11 @@
             "type": "cid-link",
             "description": "For kind=formal-proof: reference to the checkable proof artifact (e.g. Coq/Lean/Agda term). Orchestrators that have the checker may mechanically verify; others take the assertion on trust."
           },
+          "basis": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#basis",
+            "description": "Structured grounding for the claim. Useful when the verifier is citing an external standard, a proof library, or a derived-from earlier verification."
+          },
           "occurredAt": {
             "type": "string",
             "format": "datetime"

@@ -24,6 +24,7 @@
               "refs": [
                 "dev.idiolect.recommendation#conditionSourceIs",
                 "dev.idiolect.recommendation#conditionTargetIs",
+                "dev.idiolect.recommendation#conditionActionSubsumedBy",
                 "dev.idiolect.recommendation#conditionPurposeSubsumedBy",
                 "dev.idiolect.recommendation#conditionDataHas",
                 "dev.idiolect.recommendation#conditionAnd",
@@ -41,6 +42,7 @@
               "refs": [
                 "dev.idiolect.recommendation#conditionSourceIs",
                 "dev.idiolect.recommendation#conditionTargetIs",
+                "dev.idiolect.recommendation#conditionActionSubsumedBy",
                 "dev.idiolect.recommendation#conditionPurposeSubsumedBy",
                 "dev.idiolect.recommendation#conditionDataHas",
                 "dev.idiolect.recommendation#conditionAnd",
@@ -97,6 +99,11 @@
             "format": "at-uri",
             "description": "Prior recommendation this one replaces."
           },
+          "basis": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#basis",
+            "description": "Structured grounding for the endorsement — a community policy, an external standard, a derived record. Omit when the recommendation is self-asserted by the issuing community."
+          },
           "occurredAt": {
             "type": "string",
             "format": "datetime"
@@ -120,12 +127,38 @@
         "schema": { "type": "ref", "ref": "dev.idiolect.defs#schemaRef" }
       }
     },
+    "conditionActionSubsumedBy": {
+      "type": "object",
+      "description": "Atomic predicate: the invocation's use.action is subsumed by the given action under the referenced action-vocabulary. Reuses the same ThUse subsumption machinery that governs any action-based reasoning.",
+      "required": ["action"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Action identifier to check subsumption against."
+        },
+        "vocabulary": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Action vocabulary the identifier resolves against. Omit to match the invocation's own vocabulary."
+        }
+      }
+    },
     "conditionPurposeSubsumedBy": {
       "type": "object",
-      "description": "Atomic predicate: the invocation's purpose.action is subsumed by the given purpose.action under the community vocabulary. Reuses the same subsumption hierarchy that governs data-use permissions.",
+      "description": "Atomic predicate: the invocation's use.purpose is subsumed by the given purpose under the referenced purpose-vocabulary.",
       "required": ["purpose"],
       "properties": {
-        "purpose": { "type": "ref", "ref": "dev.idiolect.defs#purpose" }
+        "purpose": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Purpose identifier to check subsumption against."
+        },
+        "vocabulary": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Purpose vocabulary the identifier resolves against. Omit to match the invocation's own vocabulary."
+        }
       }
     },
     "conditionDataHas": {

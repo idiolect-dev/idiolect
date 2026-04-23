@@ -46,6 +46,16 @@
             "maxGraphemes": 2000,
             "description": "Optional human-readable justification for the correction."
           },
+          "holder": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the party the correction is attributed to. Omit for first-party records; set explicitly when a third party is recording someone else's edit (e.g. a reviewer transcribing an off-network correction)."
+          },
+          "basis": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#basis",
+            "description": "Structured grounding for the edit. Useful when `holder` is a third party and the record must state on what basis the correction is being attributed."
+          },
           "visibility": {
             "type": "ref",
             "ref": "dev.idiolect.defs#visibility"
