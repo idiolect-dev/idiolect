@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.defs",
-  "description": "Shared types for the dev.idiolect.* Lexicon family. Covers (a) cross-cutting reference shapes (lens/schema/encounter refs, tool identity, visibility), and (b) v0.2.0 content-theory types (purpose, lensProperty, evidence, caveat) shared across multiple records. Record-specific combinator trees (condition, eligibility, constraint, convention) live in their respective record lexicons.",
+  "description": "Shared types for the dev.idiolect.* Lexicon family. Covers (a) cross-cutting reference shapes (lens/schema/encounter refs, tool identity, visibility), and (b) content-theory types (purpose, lensProperty, evidence, caveat) shared across multiple records. Record-specific combinator trees (condition, eligibility, constraint, convention) live in their respective record lexicons.",
   "defs": {
     "visibility": {
       "type": "string",

@@ -1,0 +1,85 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.vocab",
+  "description": "A community-published action vocabulary for ThPurpose. Structures the subsumption hierarchy over actions so that `purpose_subsumed_by` and friends have a shared semantics. Communities are expected to fork, extend, and re-publish under their own record. The `world` field pins the intended subsumption discipline so consumers can reason about undeclared actions consistently.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A vocabulary: a set of actions in a subsumption hierarchy, a chosen `world` discipline, and the identity of the publishing DID. Vocabularies are declarative charters over action space; observers/orchestrators resolve `action` identifiers against the referenced vocabulary record.",
+      "record": {
+        "type": "object",
+        "required": ["name", "world", "top", "actions", "occurredAt"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Human-readable vocabulary name, e.g. 'pedagogical-use-v1'."
+          },
+          "description": {
+            "type": "string",
+            "maxGraphemes": 4000,
+            "description": "Narrative description of the vocabulary's intended scope and conventions. Not consumed by machine matchers."
+          },
+          "world": {
+            "type": "string",
+            "enum": [
+              "closed-with-default",
+              "open",
+              "hierarchy-closed"
+            ],
+            "description": "Subsumption world discipline. 'closed-with-default' — every undeclared action is subsumed by `top` and nothing else. 'open' — undeclared actions are incomparable to every declared action; consumers must fall back to string equality. 'hierarchy-closed' — only the declared edges exist; undeclared actions do not subsume anything."
+          },
+          "top": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Identifier of the vocabulary's top action. For 'closed-with-default', every action is transitively subsumed by `top`."
+          },
+          "actions": {
+            "type": "array",
+            "maxLength": 4096,
+            "description": "Every action declared in the vocabulary, with its direct parents (declared subsumers). Edges transitively form the subsumption hierarchy.",
+            "items": {
+              "type": "ref",
+              "ref": "#actionEntry"
+            }
+          },
+          "supersedes": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "Prior vocabulary this one replaces. Consumers that pinned to `supersedes` may continue to resolve against it."
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    },
+    "actionEntry": {
+      "type": "object",
+      "description": "One action in the vocabulary's hierarchy: an identifier plus its direct parents (actions that subsume it).",
+      "required": ["id", "parents"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Stable action identifier (e.g. 'train_model', 'annotate')."
+        },
+        "parents": {
+          "type": "array",
+          "description": "Direct subsumers. The action is transitively subsumed by every ancestor in the hierarchy. Empty for `top`.",
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "description": {
+          "type": "string",
+          "maxGraphemes": 500,
+          "description": "Optional human-readable description. Consumers do not match on this field; it is annotation for readers."
+        }
+      }
+    }
+  }
+}

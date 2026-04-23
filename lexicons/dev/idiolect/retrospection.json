@@ -23,7 +23,7 @@
           },
           "finding": {
             "type": "object",
-            "description": "Finding kind plus structured evidence and narrative detail. v0.2.0 adds `evidence`: for kind=merge-divergence/data-loss/reconciliation-mismatch, evidence is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.",
+            "description": "Finding kind plus structured evidence and narrative detail. For kind=merge-divergence/data-loss/reconciliation-mismatch, `evidence` is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.",
             "required": ["kind", "detail"],
             "properties": {
               "kind": {

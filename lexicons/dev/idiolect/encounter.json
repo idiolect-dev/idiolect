@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.encounter",
-  "description": "A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it. v0.2.0 structures `purpose` as a ThPurpose content theory (see dev.idiolect.theory.purpose); narrative commentary lives in `annotations`.",
+  "description": "A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it. `purpose` is a structured ThPurpose (see dev.idiolect.theory.purpose); narrative commentary lives in `annotations`.",
   "defs": {
     "main": {
       "type": "record",
