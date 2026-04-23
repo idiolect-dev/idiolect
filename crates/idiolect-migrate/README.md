@@ -4,23 +4,49 @@ Schema diff and lens-based record migration.
 
 ## Overview
 
-A thin typed façade over `panproto-check` (diff classification)
-and [`idiolect-lens`](../idiolect-lens) (record translation). The
-crate has no runtime state of its own — it is glue shaped so
-callers can answer three questions about two schema versions in
-one API:
+A thin typed façade over `panproto-check` (diff classification) and
+[`idiolect-lens`](../idiolect-lens) (record translation). The crate has
+no runtime state of its own — it is glue shaped so callers can answer
+three questions about two schema versions in one API.
 
-- **Is the change compatible?** [`classify`] runs
-  `panproto_check::diff` + `classify` and returns a
-  `CompatReport`.
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph api["idiolect-migrate"]
+        CLS["classify(old, new, protocol)"]
+        PLN["plan_auto(old, new, protocol,<br/>old_hash, new_hash)"]
+        MIG["migrate_record(resolver,<br/>loader, protocol, lens_uri, body)"]
+    end
+
+    subgraph out["Outputs"]
+        REP["CompatReport<br/>{ breaking, compatible }"]
+        PLAN["MigrationPlan<br/>{ source_hash, target_hash,<br/>protolens_chain }"]
+        NEW["migrated record body"]
+    end
+
+    PC["panproto_check::diff<br/>+ classify"]
+    PL["panproto_lens::auto_generate"]
+    LENS["idiolect-lens::apply_lens"]
+    PUB["user code → PdsWriter"]
+
+    CLS --> PC --> REP
+    PLN --> PL --> PLAN
+    MIG --> LENS --> NEW
+    PLAN -.serialize into<br/>PanprotoLens.blob.-> PUB
+```
+
+The three questions:
+
+- **Is the change compatible?** [`classify`] runs `panproto_check::diff`
+  + `classify` and returns a `CompatReport`.
 - **Can we auto-derive a migration?** [`plan_auto`] delegates to
-  `panproto_lens::auto_generate` and returns a
-  [`MigrationPlan`] — source/target schema hashes plus a
-  protolens chain ready to publish as a
-  `dev.panproto.schema.lens` record — or an error listing the
+  `panproto_lens::auto_generate` and returns a [`MigrationPlan`] —
+  source/target schema hashes plus a protolens chain ready to publish
+  as a `dev.panproto.schema.lens` record — or an error listing the
   breaking changes the auto-planner declined to synthesize.
-- **How do we migrate one record?** [`migrate_record`] wraps
-  `apply_lens` for the one-shot case.
+- **How do we migrate one record?** [`migrate_record`] wraps `apply_lens`
+  for the one-shot case.
 
 ## Usage
 
@@ -48,14 +74,16 @@ let migrated = migrate_record(
 ).await?;
 ```
 
-## Non-goals
+## Design notes
 
-- Deciding the hashing rule for schemas. Hashes are deployment
-  policy; pass yours into [`MigrationPlan`].
-- Publishing records. [`MigrationPlan`] is a payload shape ready
-  for a `PdsWriter`; this crate does not reach out to a PDS.
-- Batch-rewriting records on disk. Compose `migrate_record` with
-  your own record stream.
+Non-goals:
+
+- Deciding the hashing rule for schemas. Hashes are deployment policy;
+  pass yours into [`MigrationPlan`].
+- Publishing records. [`MigrationPlan`] is a payload shape ready for a
+  `PdsWriter`; this crate does not reach out to a PDS.
+- Batch-rewriting records on disk. Compose `migrate_record` with your
+  own record stream.
 
 ## Related
 

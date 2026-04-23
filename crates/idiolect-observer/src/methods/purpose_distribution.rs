@@ -17,7 +17,6 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::defs::Use;
 use idiolect_records::generated::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
@@ -102,18 +101,18 @@ impl PurposeDistributionMethod {
         self.total
     }
 
-    fn find_vocab(&self, u: &Use) -> Option<&InternalVocab> {
-        u.purpose_vocabulary
-            .as_ref()
-            .and_then(|v| v.uri.as_ref())
-            .and_then(|uri| self.vocabularies.get(uri))
-            .or_else(|| {
-                if self.vocabularies.len() == 1 {
-                    self.vocabularies.values().next()
-                } else {
-                    None
-                }
-            })
+    /// Resolve a purpose-vocabulary by explicit URI, or fall back to
+    /// the sole registered vocabulary when exactly one is known.
+    /// Returns `None` if zero or ≥2 are registered and no URI is
+    /// provided, or if the provided URI isn't registered.
+    fn lookup_vocab(&self, vocab_uri: Option<&str>) -> Option<&InternalVocab> {
+        if let Some(uri) = vocab_uri {
+            return self.vocabularies.get(uri);
+        }
+        if self.vocabularies.len() == 1 {
+            return self.vocabularies.values().next();
+        }
+        None
     }
 }
 
@@ -179,15 +178,11 @@ impl ObservationMethod for PurposeDistributionMethod {
 
         let mut rollup: BTreeMap<String, u64> = BTreeMap::new();
         for (purpose, count) in &self.leaves {
-            let temp = Use {
-                action: String::new(),
-                material: None,
-                actor: None,
-                purpose: Some(purpose.clone()),
-                action_vocabulary: None,
-                purpose_vocabulary: None,
-            };
-            let Some(vocab) = self.find_vocab(&temp) else {
+            // No per-encounter vocabulary is retained past `observe`
+            // — the leaf map is keyed by purpose string alone. Roll
+            // up under the single registered vocabulary when that's
+            // unambiguous; otherwise skip this leaf's rollup.
+            let Some(vocab) = self.lookup_vocab(None) else {
                 continue;
             };
             match vocab.world {
