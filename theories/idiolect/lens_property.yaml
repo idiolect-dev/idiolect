@@ -1,0 +1,22 @@
+id: dev.idiolect.theory.lens_property
+description: >
+  Content theory for what a verification actually asserts. Each
+  verification kind has its own statement shape, unified under a
+  LensProperty sort. Exposed as a theory so it can compose with
+  ThDoxastic to form ThVerificationClaim.
+theory: ThLensProperty
+sorts:
+  - name: LensProperty
+  - name: RoundtripDomain
+  - name: GeneratorSpec
+  - name: Theorem
+  - name: ConformanceStandard
+  - name: StaticCheckerConfig
+  - name: ConvergenceClaim
+ops:
+  - { name: as_roundtrip, input: LensProperty, output: RoundtripDomain }
+  - { name: as_generator, input: LensProperty, output: GeneratorSpec }
+  - { name: as_theorem, input: LensProperty, output: Theorem }
+  - { name: as_standard, input: LensProperty, output: ConformanceStandard }
+  - { name: as_checker, input: LensProperty, output: StaticCheckerConfig }
+  - { name: as_convergence, input: LensProperty, output: ConvergenceClaim }

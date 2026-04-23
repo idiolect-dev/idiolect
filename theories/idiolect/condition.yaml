@@ -1,0 +1,51 @@
+id: dev.idiolect.theory.condition
+description: >
+  Content theory for recommendation conditions. A condition is a
+  predicate over the invocation context. Conditions compose with
+  Boolean operators and can be evaluated against a Context record.
+theory: ThCondition
+sorts:
+  - name: Context
+  - name: Condition
+  - name: Schema
+  - name: Purpose
+  - name: Community
+  - name: Property
+  - name: PropertySet
+ops:
+  # context components
+  - { name: source, input: Context, output: Schema }
+  - { name: target, input: Context, output: Schema }
+  - { name: purpose, input: Context, output: Purpose }
+  - { name: community, input: Context, output: Community }
+  - { name: dataProperties, input: Context, output: PropertySet }
+  # evaluation
+  - { name: holds, inputs: [{ name: c, sort: Condition }, { name: ctx, sort: Context }], output: Bool }
+  # combinators
+  - { name: and_, inputs: [{ sort: Condition }, { sort: Condition }], output: Condition }
+  - { name: or_,  inputs: [{ sort: Condition }, { sort: Condition }], output: Condition }
+  - { name: not_, inputs: [{ sort: Condition }], output: Condition }
+  # atomic predicates
+  - { name: source_is, inputs: [{ sort: Schema }], output: Condition }
+  - { name: target_is, inputs: [{ sort: Schema }], output: Condition }
+  - { name: purpose_subsumed_by, inputs: [{ sort: Purpose }], output: Condition }
+  - { name: data_has, inputs: [{ sort: Property }], output: Condition }
+equations:
+  - name: source_is_holds
+    lhs: "holds(source_is(s), ctx)"
+    rhs: "eq(source(ctx), s)"
+  - name: target_is_holds
+    lhs: "holds(target_is(s), ctx)"
+    rhs: "eq(target(ctx), s)"
+  - name: purpose_subsumed_by_holds
+    lhs: "holds(purpose_subsumed_by(p), ctx)"
+    rhs: "subsumes(p, purpose(ctx))"
+  - name: and_holds
+    lhs: "holds(and_(c1, c2), ctx)"
+    rhs: "and(holds(c1, ctx), holds(c2, ctx))"
+  - name: or_holds
+    lhs: "holds(or_(c1, c2), ctx)"
+    rhs: "or(holds(c1, ctx), holds(c2, ctx))"
+  - name: not_holds
+    lhs: "holds(not_(c), ctx)"
+    rhs: "not(holds(c, ctx))"

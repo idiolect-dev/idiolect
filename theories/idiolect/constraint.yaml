@@ -1,0 +1,20 @@
+id: dev.idiolect.theory.constraint
+description: >
+  Content theory for bounty constraints. A constraint set is an
+  unordered collection of typed constraints; matching is structural.
+theory: ThConstraint
+sorts:
+  - name: ConstraintSet
+  - name: Constraint
+  - name: PerformanceBound
+  - name: ConformanceRequirement
+  - name: LicenseRequirement
+  - name: Deadline
+  - name: Dependency
+ops:
+  - { name: members, input: ConstraintSet, output: List Constraint }
+  - { name: is_performance, input: Constraint, output: Bool }
+  - { name: is_conformance, input: Constraint, output: Bool }
+  - { name: is_license, input: Constraint, output: Bool }
+  - { name: is_deadline, input: Constraint, output: Bool }
+  - { name: is_dependency, input: Constraint, output: Bool }

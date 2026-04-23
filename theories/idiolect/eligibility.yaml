@@ -1,0 +1,20 @@
+id: dev.idiolect.theory.eligibility
+description: >
+  Predicate over claimants for a bounty. Identical combinator
+  machinery as ThCondition; different atoms. v0.3.0 may factor out
+  a ThPredicate<Ctx>; v0.2.0 keeps them separate.
+theory: ThEligibility
+sorts:
+  - name: Claimer
+  - name: Eligibility
+  - name: Community
+  - name: LensProperty
+  - name: Did
+ops:
+  - { name: eligible, inputs: [{ sort: Eligibility }, { sort: Claimer }], output: Bool }
+  - { name: is_member_of, inputs: [{ sort: Community }], output: Eligibility }
+  - { name: has_verification_for, inputs: [{ sort: LensProperty }], output: Eligibility }
+  - { name: is_did, inputs: [{ sort: Did }], output: Eligibility }
+  - { name: and_, inputs: [{ sort: Eligibility }, { sort: Eligibility }], output: Eligibility }
+  - { name: or_,  inputs: [{ sort: Eligibility }, { sort: Eligibility }], output: Eligibility }
+  - { name: not_, inputs: [{ sort: Eligibility }], output: Eligibility }

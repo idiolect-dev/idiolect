@@ -1,0 +1,16 @@
+id: dev.idiolect.theory.finding
+description: >
+  Evidence of a latent issue. Complements the narrative 'detail'
+  field; does not replace it. The kind enum stays; evidence is new.
+  For kind=other, evidence stays optional and the narrative field
+  does the work.
+theory: ThFinding
+sorts:
+  - name: Evidence
+  - name: DivergenceWitness
+  - name: LossWitness
+  - name: MismatchWitness
+ops:
+  - { name: as_divergence, input: Evidence, output: DivergenceWitness }
+  - { name: as_loss, input: Evidence, output: LossWitness }
+  - { name: as_mismatch, input: Evidence, output: MismatchWitness }
