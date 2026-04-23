@@ -1,0 +1,14 @@
+id: dev.idiolect.morphisms.att_to_endorsive
+description: >
+  The inclusion morphism ThAtt ↪ ThEndorsive. An endorsement is an
+  attitude; the holder/content/att sorts map identity-wise.
+morphism:
+  source: ThAtt
+  target: ThEndorsive
+  sort_map:
+    Holder: Holder
+    Content: Content
+    Att: Att
+  op_map:
+    holder: holder
+    content: content

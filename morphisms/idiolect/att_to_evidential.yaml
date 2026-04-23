@@ -1,0 +1,16 @@
+id: dev.idiolect.morphisms.att_to_evidential
+description: >
+  The inclusion morphism ThAtt ↪ ThEvidential. Evidentially
+  grounded attitudes are still attitudes; ThEvidential's `source`
+  and `evidence_type` ops add structure without renaming the
+  underlying holder/content/att sorts.
+morphism:
+  source: ThAtt
+  target: ThEvidential
+  sort_map:
+    Holder: Holder
+    Content: Content
+    Att: Att
+  op_map:
+    holder: holder
+    content: content

@@ -1,0 +1,16 @@
+id: dev.idiolect.morphisms.att_to_illocutionary
+description: >
+  The inclusion morphism ThAtt ↪ ThIllocutionary via ThTarget.
+  Every speech act is a targeted attitude; this morphism sends
+  holder to speaker, target to audience, content to act_content
+  in the derived SpeechAct sort.
+morphism:
+  source: ThAtt
+  target: ThIllocutionary
+  sort_map:
+    Holder: Holder
+    Content: Content
+    Att: Att
+  op_map:
+    holder: holder
+    content: content

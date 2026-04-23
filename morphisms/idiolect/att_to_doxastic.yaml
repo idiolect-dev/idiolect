@@ -1,0 +1,14 @@
+id: dev.idiolect.morphisms.att_to_doxastic
+description: >
+  The inclusion morphism ThAtt ↪ ThDoxastic. A belief is an
+  attitude; the holder/content/att sorts map identity-wise.
+morphism:
+  source: ThAtt
+  target: ThDoxastic
+  sort_map:
+    Holder: Holder
+    Content: Content
+    Att: Att
+  op_map:
+    holder: holder
+    content: content

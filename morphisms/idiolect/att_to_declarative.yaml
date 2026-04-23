@@ -1,0 +1,14 @@
+id: dev.idiolect.morphisms.att_to_declarative
+description: >
+  The inclusion morphism ThAtt ↪ ThDeclarative. A constitutive
+  declaration is an attitude; holder/content/att map identity-wise.
+morphism:
+  source: ThAtt
+  target: ThDeclarative
+  sort_map:
+    Holder: Holder
+    Content: Content
+    Att: Att
+  op_map:
+    holder: holder
+    content: content
