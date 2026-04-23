@@ -20,7 +20,7 @@ import { classifyRecord, isRecord, validateRecord } from "../src/validators.ts";
 const ENCOUNTER: Encounter = {
   lens: { uri: "at://did:plc:example/dev.idiolect.lens/abc" },
   sourceSchema: { uri: "at://did:plc:example/dev.idiolect.schema/src" },
-  purpose: { action: "translate_source_to_target" },
+  use: { action: "translate_source_to_target" },
   kind: "invocation-log",
   visibility: "public-detailed",
   occurredAt: "2026-04-19T00:00:00.000Z",
@@ -106,8 +106,8 @@ describe("validateRecord", () => {
     }
   });
 
-  test("rejects encounter missing required `purpose`", () => {
-    const { purpose: _drop, ...bad } = ENCOUNTER;
+  test("rejects encounter missing required `use`", () => {
+    const { use: _drop, ...bad } = ENCOUNTER;
     expect(validateRecord(NSIDS.encounter, bad).success).toBe(false);
   });
 

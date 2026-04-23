@@ -168,6 +168,7 @@ fn recommendation(path: &[&str]) -> Recommendation {
     use idiolect_records::generated::defs::{LpRoundtrip, LpTheorem};
     Recommendation {
         annotations: None,
+        basis: None,
         caveats: None,
         caveats_text: None,
         conditions: Vec::new(),
@@ -198,6 +199,7 @@ fn verification(
     use idiolect_records::generated::defs::{LpTheorem, Tool};
     use idiolect_records::generated::verification::VerificationProperty;
     Verification {
+        basis: None,
         counterexample: None,
         dependencies: None,
         property: VerificationProperty::LpTheorem(LpTheorem {
@@ -331,23 +333,27 @@ async fn delete_removes_record() {
 #[tokio::test]
 async fn catalog_ignores_non_orchestrator_records() {
     // An encounter shouldn't land in the catalog.
-    use idiolect_records::generated::defs::Purpose;
+    use idiolect_records::generated::defs::Use;
     use idiolect_records::generated::defs::Visibility;
     use idiolect_records::generated::encounter::{Encounter, EncounterKind};
     let handler = CatalogHandler::new();
     let cat = handler.catalog();
     let encounter = Encounter {
         annotations: None,
+        basis: None,
         downstream_result: None,
+        holder: None,
         kind: EncounterKind::InvocationLog,
         lens: l_ref("at://did:plc:x/dev.panproto.schema.lens/l1"),
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
         produced_output: None,
-        purpose: Purpose {
+        r#use: Use {
             action: "t".to_owned(),
             material: None,
             actor: None,
-            vocabulary: None,
+            purpose: None,
+            action_vocabulary: None,
+            purpose_vocabulary: None,
         },
         source_instance: None,
         source_schema: s_ref("at://did:plc:x/dev.panproto.schema.schema/a"),

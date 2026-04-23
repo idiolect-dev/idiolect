@@ -1,13 +1,13 @@
 //! `idiolect encounter record` — compose a `dev.idiolect.encounter`
 //! record from structured prompts.
 //!
-//! The default flow walks the operator through a structured
-//! `ThPurpose`: pick an `action` (either free-typed or from a
-//! vocabulary fetched via `--vocab <at-uri>`), an optional material
-//! scope, and an optional actor. The `--text-only` flag accepts a
-//! single free-text purpose and records it under action=unresolved,
-//! with the text preserved in annotations so future corrections can
-//! fill in the structure.
+//! The default flow walks the operator through a structured `ThUse`:
+//! pick an `action` (either free-typed or from a vocabulary fetched
+//! via `--action-vocab <at-uri>`), an optional material scope, an
+//! optional purpose, and an optional actor. The `--text-only` flag
+//! accepts one free-text line, stamps it into `material.scope`, and
+//! sets the structured `action` to `unresolved` so a later
+//! correction can supply a vocabulary-bound value.
 //!
 //! The subcommand only *emits* the json — it does not publish. Pipe
 //! the output into `idiolect fetch` / an oauth session / any atproto
@@ -19,7 +19,7 @@ use std::io::{self, BufRead, Write};
 use anyhow::{Context, Result, anyhow, bail};
 use idiolect_records::Vocab;
 use idiolect_records::generated::defs::{
-    LensRef, MaterialSpec, Purpose, SchemaRef, Visibility, VocabRef,
+    LensRef, MaterialSpec, SchemaRef, Use, Visibility, VocabRef,
 };
 use idiolect_records::generated::encounter::EncounterKind;
 use std::process::ExitCode;
@@ -47,10 +47,10 @@ pub async fn cmd_encounter_record(args: &[String]) -> Result<ExitCode> {
             .map_or("public-detailed", String::as_str),
     )?;
 
-    let purpose = if text_only {
-        prompt_text_only_purpose()?
+    let use_value = if text_only {
+        prompt_text_only_use()?
     } else {
-        prompt_structured_purpose(flags.get("vocab").cloned()).await?
+        prompt_structured_use(flags.get("action-vocab").cloned()).await?
     };
 
     let now = time::OffsetDateTime::now_utc()
@@ -61,7 +61,7 @@ pub async fn cmd_encounter_record(args: &[String]) -> Result<ExitCode> {
         "lens": LensRef { uri: Some(lens_uri), cid: None, direction: None },
         "sourceSchema": SchemaRef { uri: Some(source_schema_uri), cid: None, language: None },
         "targetSchema": target_schema_uri.map(|u| SchemaRef { uri: Some(u), cid: None, language: None }),
-        "purpose": purpose,
+        "use": use_value,
         "kind": encounter_kind_wire(kind),
         "visibility": visibility_wire(visibility),
         "occurredAt": now,
@@ -134,16 +134,17 @@ const fn visibility_wire(v: Visibility) -> &'static str {
     }
 }
 
-/// Walk the operator through an action/material/actor triple.
-/// `vocab_uri`, if provided, is fetched via `idiolect_lens` and the
-/// action list is presented as a numbered menu.
-async fn prompt_structured_purpose(vocab_uri: Option<String>) -> Result<Purpose> {
-    let vocab_ref = vocab_uri.as_ref().map(|u| VocabRef {
+/// Walk the operator through an action/material/purpose/actor
+/// quadruple. `action_vocab_uri`, if provided, is fetched via
+/// `idiolect_lens` and the action list is presented as a numbered
+/// menu.
+async fn prompt_structured_use(action_vocab_uri: Option<String>) -> Result<Use> {
+    let action_vocab_ref = action_vocab_uri.as_ref().map(|u| VocabRef {
         uri: Some(u.clone()),
         cid: None,
     });
 
-    let action = if let Some(uri) = vocab_uri.as_deref() {
+    let action = if let Some(uri) = action_vocab_uri.as_deref() {
         let vocab = fetch_vocabulary(uri).await?;
         prompt_action_from_vocabulary(&vocab)?
     } else {
@@ -152,32 +153,38 @@ async fn prompt_structured_purpose(vocab_uri: Option<String>) -> Result<Purpose>
 
     let material_scope =
         prompt_optional("material scope (e.g. classroom_materials) [blank to skip]")?;
+    let purpose = prompt_optional("purpose (e.g. academic, commercial) [blank to skip]")?;
     let actor = prompt_optional("actor (e.g. students) [blank to skip]")?;
 
-    Ok(Purpose {
+    Ok(Use {
         action,
         material: material_scope.map(|scope| MaterialSpec {
             scope: Some(scope),
             uri: None,
         }),
+        purpose,
         actor,
-        vocabulary: vocab_ref,
+        action_vocabulary: action_vocab_ref,
+        purpose_vocabulary: None,
     })
 }
 
 /// `--text-only` path: take one free-text line, stash it into
-/// `material.uri` so the text is not lost, and mark the structured
-/// action as `unresolved` for future corrections.
-fn prompt_text_only_purpose() -> Result<Purpose> {
-    let text = prompt_required("purpose (free text)")?;
-    Ok(Purpose {
+/// `material.scope` so the text is preserved, and mark the
+/// structured `action` as `unresolved` so a later correction can
+/// supply a vocabulary-bound value.
+fn prompt_text_only_use() -> Result<Use> {
+    let text = prompt_required("use (free text)")?;
+    Ok(Use {
         action: "unresolved".to_owned(),
         material: Some(MaterialSpec {
             scope: Some(format!("text:{text}")),
             uri: None,
         }),
+        purpose: None,
         actor: None,
-        vocabulary: None,
+        action_vocabulary: None,
+        purpose_vocabulary: None,
     })
 }
 

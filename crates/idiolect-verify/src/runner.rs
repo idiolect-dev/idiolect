@@ -81,6 +81,7 @@ pub fn build_verification<R: VerificationRunner + ?Sized>(
     property: VerificationProperty,
 ) -> Verification {
     Verification {
+        basis: None,
         counterexample,
         dependencies: None,
         property,
