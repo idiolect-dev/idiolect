@@ -1,8 +1,9 @@
 id: dev.idiolect.theory.eligibility
 description: >
   Predicate over claimants for a bounty. Identical combinator
-  machinery as ThCondition; different atoms. v0.3.0 may factor out
-  a ThPredicate<Ctx>; v0.2.0 keeps them separate.
+  machinery as ThCondition; different atoms. A future
+  ThPredicate<Ctx> could factor out the shared shape, but the two
+  are kept separate here to avoid a premature abstraction.
 theory: ThEligibility
 sorts:
   - name: Claimer

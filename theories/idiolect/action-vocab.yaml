@@ -1,7 +1,7 @@
 id: dev.idiolect.vocab.action-v1
 description: >
   Reference action vocabulary for ThPurpose. Ships alongside the
-  v0.2.0 theories so encounter records can carry a structured
+  content theories so encounter records can carry a structured
   purpose without requiring every community to author its own
   hierarchy. Communities are expected to fork, extend, and
   re-publish under their own vocabulary id.

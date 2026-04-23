@@ -1,0 +1,33 @@
+id: dev.idiolect.theory.charter
+description: >
+  Content theory for a community or dialect charter: a constitutive
+  declaration of what schemas/lenses are canonical, what conventions
+  apply, and (for dialects) which idiolects the community endorses as
+  its preferred set.
+
+  Composes with ThDeclarative (shared with dev.attitudes.*) to form
+  ThConstitutiveCharter. The holder of a declarative attitude is
+  saying 'this is what we are' rather than 'this is what we assert
+  about the world' — the declaration is self-constitutive. A
+  community record is the community's own declaration that it
+  exists; a dialect record is the owning community's declaration of
+  its preferred idiolect bundle.
+theory: ThCharter
+sorts:
+  - name: Charter
+  - name: CanonicalSchema
+  - name: CanonicalLens
+  - name: MembershipPolicy
+  - name: ConventionSet
+  - name: IdiolectBundle        # dialect-only; the set of preferred idiolects
+ops:
+  - { name: canonical_schemas, input: Charter, output: List CanonicalSchema }
+  - { name: canonical_lenses, input: Charter, output: List CanonicalLens }
+  - { name: conventions, input: Charter, output: ConventionSet }
+  - { name: membership_policy, input: Charter, output: MembershipPolicy }
+  - { name: endorsed_bundle, input: Charter, output: IdiolectBundle }
+  # a member's claim validates against a charter iff the claim
+  # follows the charter's membership policy. separate op so that
+  # membership semantics are explicit, not read off inline.
+  - { name: admits, inputs: [{ sort: Charter }, { sort: Did }], output: Bool }
+  - name: Did

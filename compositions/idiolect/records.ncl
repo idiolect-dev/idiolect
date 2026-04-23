@@ -1,6 +1,6 @@
 # Attitudinal compositions for dev.idiolect.* records.
 #
-# Each v0.2.0 record is a panproto theory merge: ThAtt supplies the
+# Each record is a panproto theory merge: ThAtt supplies the
 # holder/content backbone, an attitudinal flavour (assertive, doxastic,
 # endorsive, bouletic, commissive) supplies the stance, and an
 # idiolect content theory supplies the subject matter.
@@ -71,7 +71,21 @@
     result = "ThAdapterClaim",
   },
 
-  # community and dialect are constitutive declarations rather than
-  # attitudes about content. v0.2.0 does not compose them here;
-  # ThDeclarative + ThCharter is deferred to v0.3.0.
+  # community: the self-constitutive declaration that a group exists
+  # with these canonical schemas, lenses, and conventions.
+  # ThDeclarative (shared with dev.attitudes.*) plus ThCharter gives
+  # the "this is what we are" stance.
+  community = {
+    bases = ["ThAtt", "ThDeclarative", "ThCharter"],
+    result = "ThConstitutiveCharter",
+  },
+
+  # dialect: the owning community's declarative endorsement of a
+  # preferred idiolect bundle + preferred lenses. Same attitudinal
+  # primitive as community; ThCharter.endorsed_bundle is the load-
+  # bearing op.
+  dialect = {
+    bases = ["ThAtt", "ThDeclarative", "ThCharter"],
+    result = "ThDialectCharter",
+  },
 }
