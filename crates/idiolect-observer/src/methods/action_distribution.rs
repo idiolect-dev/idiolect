@@ -300,16 +300,19 @@ mod tests {
             top: "any_action".into(),
             actions: vec![
                 ActionEntry {
+                    class: None,
                     id: "any_action".into(),
                     parents: vec![],
                     description: None,
                 },
                 ActionEntry {
+                    class: None,
                     id: "train_model".into(),
                     parents: vec!["any_action".into()],
                     description: None,
                 },
                 ActionEntry {
+                    class: None,
                     id: "fine_tune".into(),
                     parents: vec!["train_model".into()],
                     description: None,

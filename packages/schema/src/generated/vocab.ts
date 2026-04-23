@@ -35,9 +35,13 @@ export interface Vocab {
 }
 
 /**
-* One action in the vocabulary's hierarchy: an identifier plus its direct parents (actions that subsume it).
+* One action in the vocabulary's hierarchy: an identifier, its direct parents (actions that subsume it), and optionally the attitudinal composition class it's an instance of.
 */
 export interface ActionEntry {
+  /**
+  * Identifier of the attitudinal composition this action is an instance of (e.g. 'dev.idiolect.asserted_use', 'dev.idiolect.intended_use'). Consumers dispatch on both the action's position in the hierarchy and its attitudinal shape. Omit to inherit the vocabulary's default stance; consumers treat the class as asserted_use when absent.
+  */
+  class?: string;
   /**
   * Optional human-readable description. Consumers do not match on this field; it is annotation for readers.
   */

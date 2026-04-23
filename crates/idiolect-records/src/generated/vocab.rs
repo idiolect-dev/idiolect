@@ -36,10 +36,13 @@ impl crate::Record for Vocab {
     const NSID: &'static str = "dev.idiolect.vocab";
 }
 
-/// One action in the vocabulary's hierarchy: an identifier plus its direct parents (actions that subsume it).
+/// One action in the vocabulary's hierarchy: an identifier, its direct parents (actions that subsume it), and optionally the attitudinal composition class it's an instance of.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActionEntry {
+    /// Identifier of the attitudinal composition this action is an instance of (e.g. 'dev.idiolect.asserted_use', 'dev.idiolect.intended_use'). Consumers dispatch on both the action's position in the hierarchy and its attitudinal shape. Omit to inherit the vocabulary's default stance; consumers treat the class as asserted_use when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub class: Option<String>,
     /// Optional human-readable description. Consumers do not match on this field; it is annotation for readers.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,

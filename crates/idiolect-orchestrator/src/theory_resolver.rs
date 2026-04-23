@@ -280,6 +280,7 @@ mod tests {
 
     fn entry(id: &str, parents: &[&str]) -> ActionEntry {
         ActionEntry {
+            class: None,
             id: id.to_owned(),
             parents: parents.iter().map(|s| (*s).to_owned()).collect(),
             description: None,
