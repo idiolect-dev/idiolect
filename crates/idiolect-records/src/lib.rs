@@ -57,9 +57,9 @@ pub use generated::{
     Adapter, Bounty, Community, Correction, Dialect, Encounter, Observation, PanprotoCommit,
     PanprotoComplement, PanprotoLens, PanprotoLensAttestation, PanprotoProtolens,
     PanprotoProtolensChain, PanprotoRefUpdate, PanprotoRepo, PanprotoSchema, Recommendation,
-    Retrospection, Verification, adapter, bounty, community, correction, defs, dialect, encounter,
-    examples, observation, panproto_commit, panproto_complement, panproto_lens,
+    Retrospection, Verification, Vocab, adapter, bounty, community, correction, defs, dialect,
+    encounter, examples, observation, panproto_commit, panproto_complement, panproto_lens,
     panproto_lens_attestation, panproto_protolens, panproto_protolens_chain, panproto_ref_update,
-    panproto_repo, panproto_schema, recommendation, retrospection, verification,
+    panproto_repo, panproto_schema, recommendation, retrospection, verification, vocab,
 };
 pub use record::{AnyRecord, DecodeError, Record, decode_record};

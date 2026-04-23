@@ -13,6 +13,7 @@ import type { Observation } from "./observation";
 import type { Recommendation } from "./recommendation";
 import type { Retrospection } from "./retrospection";
 import type { Verification } from "./verification";
+import type { Vocab } from "./vocab";
 import type { PanprotoComplement } from "./panproto_complement";
 import type { PanprotoLens } from "./panproto_lens";
 import type { PanprotoLensAttestation } from "./panproto_lens_attestation";
@@ -37,6 +38,7 @@ export const NSID = {
   recommendation: "dev.idiolect.recommendation",
   retrospection: "dev.idiolect.retrospection",
   verification: "dev.idiolect.verification",
+  vocab: "dev.idiolect.vocab",
   panproto_complement: "dev.panproto.schema.complement",
   panproto_lens: "dev.panproto.schema.lens",
   panproto_lens_attestation: "dev.panproto.schema.lensAttestation",
@@ -64,6 +66,7 @@ export type RecordTypes = {
   [NSID.recommendation]: Recommendation;
   [NSID.retrospection]: Retrospection;
   [NSID.verification]: Verification;
+  [NSID.vocab]: Vocab;
   [NSID.panproto_complement]: PanprotoComplement;
   [NSID.panproto_lens]: PanprotoLens;
   [NSID.panproto_lens_attestation]: PanprotoLensAttestation;
@@ -89,6 +92,7 @@ export type AnyRecord =
   | { readonly $nsid: typeof NSID.recommendation; readonly value: Recommendation }
   | { readonly $nsid: typeof NSID.retrospection; readonly value: Retrospection }
   | { readonly $nsid: typeof NSID.verification; readonly value: Verification }
+  | { readonly $nsid: typeof NSID.vocab; readonly value: Vocab }
   | { readonly $nsid: typeof NSID.panproto_complement; readonly value: PanprotoComplement }
   | { readonly $nsid: typeof NSID.panproto_lens; readonly value: PanprotoLens }
   | { readonly $nsid: typeof NSID.panproto_lens_attestation; readonly value: PanprotoLensAttestation }
@@ -155,6 +159,11 @@ export function isRetrospection(r: AnyRecord): r is { readonly $nsid: typeof NSI
 /** True if `r` wraps a `Verification`. */
 export function isVerification(r: AnyRecord): r is { readonly $nsid: typeof NSID.verification; readonly value: Verification } {
   return r.$nsid === NSID.verification;
+}
+
+/** True if `r` wraps a `Vocab`. */
+export function isVocab(r: AnyRecord): r is { readonly $nsid: typeof NSID.vocab; readonly value: Vocab } {
+  return r.$nsid === NSID.vocab;
 }
 
 /** True if `r` wraps a `PanprotoComplement`. */
@@ -224,6 +233,7 @@ export const RECORD_NSIDS = [
   NSID.recommendation,
   NSID.retrospection,
   NSID.verification,
+  NSID.vocab,
   NSID.panproto_complement,
   NSID.panproto_lens,
   NSID.panproto_lens_attestation,

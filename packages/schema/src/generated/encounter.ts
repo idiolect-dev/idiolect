@@ -3,7 +3,7 @@
 
 import type { LensRef, Purpose, SchemaRef, Visibility } from "./defs";
 
-// A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it. v0.2.0 structures `purpose` as a ThPurpose content theory (see dev.idiolect.theory.purpose); narrative commentary lives in `annotations`.
+// A signed record of a single lens invocation. Encounters are the emergent-channel primitive: they record that a translation occurred, with enough context for aggregators (observations) and correctors to reason about it. `purpose` is a structured ThPurpose (see dev.idiolect.theory.purpose); narrative commentary lives in `annotations`.
 
 /**
 * One invocation of a lens on a source, producing an output. The invoker asserts a purposeful invocation: structured `purpose` records the decision-relevant action/material/actor triple, resolvable against a community vocabulary.

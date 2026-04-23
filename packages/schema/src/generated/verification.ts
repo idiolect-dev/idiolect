@@ -3,7 +3,7 @@
 
 import type { LensRef, LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool } from "./defs";
 
-// A signed assertion of a formal property of a lens. Verifications are the formal-channel primitive: they coexist with the emergent channel (encounters, corrections, observations) and neither gates the other. v0.2.0 replaces the free-text inputSpace with a structured `property` (dev.idiolect.defs#lensProperty) so consumers can dispatch on the specific claim — a Theorem for proof checkers, a GeneratorSpec for PBT runners, a ConformanceStandard for conformance runners.
+// A signed assertion of a formal property of a lens. Verifications are the formal-channel primitive: they coexist with the emergent channel (encounters, corrections, observations) and neither gates the other. `property` is a structured ThLensProperty (see dev.idiolect.defs#lensProperty) so consumers can dispatch on the specific claim — a Theorem for proof checkers, a GeneratorSpec for PBT runners, a ConformanceStandard for conformance runners.
 
 /**
 * A verifier asserts that a lens has a named property, established by a named method, with dependencies and an input space the assertion covers.

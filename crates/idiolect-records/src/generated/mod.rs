@@ -26,6 +26,7 @@ pub mod panproto_schema;
 pub mod recommendation;
 pub mod retrospection;
 pub mod verification;
+pub mod vocab;
 
 pub use adapter::Adapter;
 pub use bounty::Bounty;
@@ -46,3 +47,4 @@ pub use panproto_schema::PanprotoSchema;
 pub use recommendation::Recommendation;
 pub use retrospection::Retrospection;
 pub use verification::Verification;
+pub use vocab::Vocab;

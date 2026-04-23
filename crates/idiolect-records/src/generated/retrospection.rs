@@ -25,7 +25,7 @@ pub struct Retrospection {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disputed_attribution: Option<bool>,
     pub encounter: super::defs::EncounterRef,
-    /// Finding kind plus structured evidence and narrative detail. v0.2.0 adds `evidence`: for kind=merge-divergence/data-loss/reconciliation-mismatch, evidence is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
+    /// Finding kind plus structured evidence and narrative detail. For kind=merge-divergence/data-loss/reconciliation-mismatch, `evidence` is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
     pub finding: RetrospectionFinding,
     /// Detection latency in seconds (detectedAt - encounter.occurredAt). Precomputed for easy aggregation; may be omitted for 'other' findings where latency is not meaningful.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -38,7 +38,7 @@ impl crate::Record for Retrospection {
     const NSID: &'static str = "dev.idiolect.retrospection";
 }
 
-/// Finding kind plus structured evidence and narrative detail. v0.2.0 adds `evidence`: for kind=merge-divergence/data-loss/reconciliation-mismatch, evidence is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
+/// Finding kind plus structured evidence and narrative detail. For kind=merge-divergence/data-loss/reconciliation-mismatch, `evidence` is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RetrospectionFinding {

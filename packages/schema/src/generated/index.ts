@@ -25,3 +25,4 @@ export * from "./recommendation";
 export * from "./records";
 export * from "./retrospection";
 export * from "./verification";
+export * from "./vocab";

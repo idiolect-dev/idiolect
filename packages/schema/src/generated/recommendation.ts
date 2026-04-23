@@ -3,7 +3,7 @@
 
 import type { Caveat, LensRef, LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Purpose, SchemaRef } from "./defs";
 
-// A community-published opinionated path with structured applicability conditions and optional verification requirements. v0.2.0 replaces the free-text conditions/preconditions/caveats fields with structured ThCondition combinator trees and a typed caveat list; requiredVerifications upgrades from a verification-kind array to an array of LensProperty so consumers can check specific theorems, not just kinds. Narrative prose moves to `annotations` / `caveatsText`.
+// A community-published opinionated path with structured applicability conditions and optional verification requirements. conditions/preconditions/caveats are structured ThCondition combinator trees and a typed caveat list; requiredVerifications is an array of LensProperty so consumers can check specific theorems, not just kinds. Narrative prose lives in `annotations` / `caveatsText`.
 
 /**
 * A community endorses a lens path under structured conditions. Consumers evaluate the condition tree against their invocation context to decide applicability; the caveats list gives structured failure modes to match on.
@@ -36,7 +36,7 @@ export interface Recommendation {
   */
   preconditions?: RecommendationPreconditions[];
   /**
-  * Verification properties this recommendation assumes are in place. v0.2.0 upgrade: each entry is a specific LensProperty, not just a verification kind, so consumers can check which roundtrip domain / theorem / standard has been established.
+  * Verification properties this recommendation assumes are in place. Each entry is a specific LensProperty, not just a verification kind, so consumers can check which roundtrip domain / theorem / standard has been established.
   */
   requiredVerifications?: RecommendationRequiredVerifications[];
   /**

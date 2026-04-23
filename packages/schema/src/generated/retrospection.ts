@@ -24,7 +24,7 @@ export interface Retrospection {
   disputedAttribution?: boolean;
   encounter: EncounterRef;
   /**
-  * Finding kind plus structured evidence and narrative detail. v0.2.0 adds `evidence`: for kind=merge-divergence/data-loss/reconciliation-mismatch, evidence is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
+  * Finding kind plus structured evidence and narrative detail. For kind=merge-divergence/data-loss/reconciliation-mismatch, `evidence` is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
   */
   finding: RetrospectionFinding;
   /**
@@ -38,7 +38,7 @@ export interface Retrospection {
 }
 
 /**
-* Finding kind plus structured evidence and narrative detail. v0.2.0 adds `evidence`: for kind=merge-divergence/data-loss/reconciliation-mismatch, evidence is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
+* Finding kind plus structured evidence and narrative detail. For kind=merge-divergence/data-loss/reconciliation-mismatch, `evidence` is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
 */
 export interface RetrospectionFinding {
   /**

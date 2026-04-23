@@ -145,6 +145,39 @@ export const VerificationJson: string = `{
 }
 `;
 
+/** Raw json for `dev.idiolect.vocab`. */
+export const VocabJson: string = `{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "pedagogical-use-v1",
+  "description": "Reference action vocabulary so encounter records can carry a structured purpose without requiring every community to author its own hierarchy. Communities are expected to fork, extend, and re-publish.",
+  "world": "closed-with-default",
+  "top": "any_purpose",
+  "actions": [
+    { "id": "any_purpose", "parents": [] },
+    { "id": "research", "parents": ["any_purpose"] },
+    { "id": "scholarly_analysis", "parents": ["research"] },
+    { "id": "corpus_construction", "parents": ["research"] },
+    { "id": "replication_study", "parents": ["research"] },
+    { "id": "pedagogy", "parents": ["any_purpose"] },
+    { "id": "annotate", "parents": ["pedagogy"] },
+    { "id": "illustrate", "parents": ["pedagogy"] },
+    { "id": "assess", "parents": ["pedagogy"] },
+    { "id": "engineering", "parents": ["any_purpose"] },
+    { "id": "interop_test", "parents": ["engineering"] },
+    { "id": "schema_migration", "parents": ["engineering"] },
+    { "id": "data_ingest", "parents": ["engineering"] },
+    { "id": "machine_learning", "parents": ["any_purpose"] },
+    { "id": "train_model", "parents": ["machine_learning"] },
+    { "id": "fine_tune", "parents": ["train_model"] },
+    { "id": "evaluate_model", "parents": ["machine_learning"] },
+    { "id": "curation", "parents": ["any_purpose"] },
+    { "id": "archive", "parents": ["curation"] },
+    { "id": "translate_for_preservation", "parents": ["curation"] }
+  ],
+  "occurredAt": "2026-04-23T00:00:00.000Z"
+}
+`;
+
 /** Raw json for `dev.panproto.schema.lens`. */
 export const PanprotoLensJson: string = `{
   "$nsid": "dev.panproto.schema.lens",

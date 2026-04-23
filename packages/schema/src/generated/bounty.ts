@@ -3,7 +3,7 @@
 
 import type { LensProperty, LensRef, SchemaRef } from "./defs";
 
-// A declaration that a translation, verification, or adapter is wanted, with terms. v0.2.0 structures `constraints` as a ThConstraint tagged-union set and `eligibility` as a ThEligibility combinator tree; reward.summary stays narrative, externalRef stays the machine-actionable hook. Per P5, the project does not intermediate fulfillment: payment, review, and acceptance happen on external rails referenced here.
+// A declaration that a translation, verification, or adapter is wanted, with terms. `constraints` is a structured ThConstraint tagged-union set and `eligibility` is a ThEligibility combinator tree; reward.summary stays narrative, externalRef stays the machine-actionable hook. Per P5, the project does not intermediate fulfillment: payment, review, and acceptance happen on external rails referenced here.
 
 /**
 * A request primitive. Someone states what they want (a lens, a verification, an adapter) and the structured constraints + eligibility they require; fulfillment is resolved off-substrate.
