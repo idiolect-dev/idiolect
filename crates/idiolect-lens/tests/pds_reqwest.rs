@@ -223,7 +223,7 @@ async fn publisher_and_fetcher_round_trip_via_wiremock() {
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "uri": "at://did:plc:alice/dev.idiolect.bounty/3l5",
             "value": {
-                "constraints": "round-trip",
+                "constraints": [],
                 "occurredAt": "2026-04-21T00:00:00Z",
                 "requester": "did:plc:alice",
                 "status": "open",
@@ -241,7 +241,7 @@ async fn publisher_and_fetcher_round_trip_via_wiremock() {
     let fetcher = RecordFetcher::new(client);
 
     let bounty = Bounty {
-        constraints: "round-trip".into(),
+        constraints: None,
         eligibility: None,
         fulfillment: None,
         occurred_at: "2026-04-21T00:00:00Z".into(),

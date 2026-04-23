@@ -93,7 +93,7 @@ fn encounter_event(seq: u64) -> RawEvent {
             "kind": "invocation-log",
             "lens": { "uri": "at://did:plc:x/dev.panproto.schema.lens/l1" },
             "occurredAt": "2026-04-20T10:00:00Z",
-            "purpose": "t",
+            "purpose": { "action": "t" },
             "sourceSchema": { "uri": "at://did:plc:x/dev.panproto.schema.schema/s" },
             "visibility": "public-detailed"
         })),

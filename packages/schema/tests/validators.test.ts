@@ -20,7 +20,7 @@ import { classifyRecord, isRecord, validateRecord } from "../src/validators.ts";
 const ENCOUNTER: Encounter = {
   lens: { uri: "at://did:plc:example/dev.idiolect.lens/abc" },
   sourceSchema: { uri: "at://did:plc:example/dev.idiolect.schema/src" },
-  purpose: "translate source to target",
+  purpose: { action: "translate_source_to_target" },
   kind: "invocation-log",
   visibility: "public-detailed",
   occurredAt: "2026-04-19T00:00:00.000Z",
@@ -39,6 +39,10 @@ const VERIFICATION: Verification = {
   kind: "roundtrip-test",
   verifier: "did:plc:verifier",
   tool: { name: "nextest", version: "0.9.87" },
+  property: {
+    $type: "dev.idiolect.defs#lpRoundtrip",
+    domain: "all valid records",
+  },
   result: "holds",
   occurredAt: "2026-04-19T00:00:00.000Z",
 };
@@ -77,7 +81,7 @@ const BOUNTY: Bounty = {
     source: { language: "postgres-sql" },
     target: { language: "atproto-lexicon" },
   },
-  constraints: "bidirectional, covers all nullable columns",
+  constraints: [],
   occurredAt: "2026-04-19T00:00:00.000Z",
 };
 

@@ -30,7 +30,7 @@
 //! let json: serde_json::Value = serde_json::from_str(r#"{
 //!   "lens":         { "uri": "at://did:plc:x/dev.idiolect.lens/1" },
 //!   "sourceSchema": { "uri": "at://did:plc:x/dev.idiolect.schema/a" },
-//!   "purpose":      "translate source to target",
+//!   "purpose":      { "action": "translate_source_to_target" },
 //!   "kind":         "invocation-log",
 //!   "visibility":   "public-detailed",
 //!   "occurredAt":   "2026-04-19T00:00:00.000Z"

@@ -53,7 +53,12 @@ fn encounter(
         },
         occurred_at: "2026-04-20T10:00:00Z".to_owned(),
         produced_output: None,
-        purpose: "test".to_owned(),
+        purpose: idiolect_records::generated::defs::Purpose {
+            action: "test".to_owned(),
+            material: None,
+            actor: None,
+            vocabulary: None,
+        },
         source_instance: None,
         source_schema: SchemaRef {
             uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".to_owned()),
@@ -90,7 +95,13 @@ fn verification(
     AnyRecord::Verification(Verification {
         counterexample: None,
         dependencies: None,
-        input_space: None,
+        property: idiolect_records::generated::verification::VerificationProperty::LpTheorem(
+            idiolect_records::generated::defs::LpTheorem {
+                statement: "test".to_owned(),
+                system: None,
+                free_variables: None,
+            },
+        ),
         kind,
         lens: LensRef {
             uri: Some(lens.to_owned()),

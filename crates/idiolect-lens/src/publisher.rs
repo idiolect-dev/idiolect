@@ -247,7 +247,7 @@ mod tests {
 
     fn sample_bounty() -> Bounty {
         Bounty {
-            constraints: "x".into(),
+            constraints: None,
             eligibility: None,
             fulfillment: None,
             occurred_at: "2026-04-20T00:00:00Z".into(),

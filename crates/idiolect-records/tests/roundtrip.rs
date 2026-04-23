@@ -45,7 +45,7 @@ fn encounter_minimal() {
     let parsed: Encounter = roundtrip(&json!({
         "lens":         { "uri": "at://did:plc:example/dev.idiolect.lens/abc" },
         "sourceSchema": { "uri": "at://did:plc:example/dev.idiolect.schema/src" },
-        "purpose":      "translate source to target",
+        "purpose":      { "action": "translate_source_to_target" },
         "kind":         "invocation-log",
         "visibility":   "public-detailed",
         "occurredAt":   "2026-04-19T00:00:00.000Z",
@@ -72,6 +72,10 @@ fn verification_minimal() {
         "kind":       "roundtrip-test",
         "verifier":   "did:plc:verifier",
         "tool":       { "name": "nextest", "version": "0.9.87" },
+        "property": {
+            "$type":  "dev.idiolect.defs#lpRoundtrip",
+            "domain": "all valid records",
+        },
         "result":     "holds",
         "occurredAt": "2026-04-19T00:00:00.000Z",
     }));
@@ -99,7 +103,7 @@ fn bounty_with_want_lens_variant() {
             "source": { "language": "postgres-sql" },
             "target": { "language": "atproto-lexicon" },
         },
-        "constraints": "bidirectional, covers all nullable columns",
+        "constraints": [],
         "occurredAt":  "2026-04-19T00:00:00.000Z",
     }));
     match parsed.wants {
@@ -139,7 +143,7 @@ fn unknown_enum_value_rejected() {
     let bad = json!({
         "lens":         { "uri": "at://x/y/z" },
         "sourceSchema": { "uri": "at://x/y/a" },
-        "purpose":      "p",
+        "purpose":      { "action": "p" },
         "kind":         "not-a-real-kind",
         "visibility":   "public-detailed",
         "occurredAt":   "2026-04-19T00:00:00.000Z",

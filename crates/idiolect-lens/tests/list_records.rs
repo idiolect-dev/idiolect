@@ -19,7 +19,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn bounty_body() -> serde_json::Value {
     json!({
-        "constraints": "x",
+        "constraints": [],
         "occurredAt": "2026-04-21T00:00:00Z",
         "requester": "did:plc:alice",
         "status": "open",

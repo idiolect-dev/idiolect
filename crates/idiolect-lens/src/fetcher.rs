@@ -186,7 +186,7 @@ mod tests {
 
     fn sample_bounty_json() -> serde_json::Value {
         serde_json::json!({
-            "constraints": "x",
+            "constraints": [],
             "occurredAt": "2026-04-21T00:00:00Z",
             "requester": "did:plc:alice",
             "status": "open",

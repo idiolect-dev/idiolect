@@ -12,7 +12,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn fixture_bounty() -> Bounty {
     Bounty {
-        constraints: "x".into(),
+        constraints: None,
         eligibility: None,
         fulfillment: None,
         occurred_at: "2026-04-21T00:00:00Z".into(),
@@ -28,7 +28,7 @@ fn fixture_bounty() -> Bounty {
 
 fn fixture_bounty_json() -> serde_json::Value {
     json!({
-        "constraints": "x",
+        "constraints": [],
         "occurredAt": "2026-04-21T00:00:00Z",
         "requester": "did:plc:alice",
         "status": "open",
