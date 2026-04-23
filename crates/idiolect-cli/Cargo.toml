@@ -26,6 +26,7 @@ serde      = { workspace = true }
 serde_json = { workspace = true }
 anyhow     = { workspace = true }
 thiserror  = { workspace = true }
+time       = { workspace = true, features = ["formatting"] }
 
 # async runtime for the binary.
 tokio = { version = "1.48", default-features = false, features = ["rt-multi-thread", "macros"] }

@@ -14,6 +14,9 @@
 //! idiolect orchestrator bounties [--open] [--requester DID] [--url URL]
 //! idiolect orchestrator adapters [--framework NAME] [--url URL]
 //! idiolect orchestrator verifications --lens AT_URI [--kind KIND] [--url URL]
+//! idiolect encounter record --lens AT_URI --source-schema AT_URI
+//!                           [--target-schema AT_URI] [--vocab AT_URI]
+//!                           [--kind KIND] [--visibility V] [--text-only]
 //! idiolect version
 //! idiolect help
 //! ```
@@ -29,6 +32,7 @@ use idiolect_identity::{Did, IdentityResolver, ReqwestIdentityResolver};
 use idiolect_lens::{RecordFetcher, ReqwestPdsClient, fetcher_for_did, parse_at_uri};
 use tracing_subscriber::EnvFilter;
 
+mod encounter;
 mod generated;
 
 const DEFAULT_ORCHESTRATOR_URL: &str = "http://localhost:8787";
@@ -59,6 +63,16 @@ async fn parse_and_run() -> Result<ExitCode> {
         "orchestrator" | "orch" => {
             let nested: Vec<String> = args.collect();
             cmd_orchestrator(&nested).await
+        }
+        "encounter" => {
+            let nested: Vec<String> = args.collect();
+            let Some(sub) = nested.first() else {
+                bail!("usage: idiolect encounter record ...");
+            };
+            match sub.as_str() {
+                "record" => encounter::cmd_encounter_record(&nested[1..]).await,
+                other => bail!("unknown encounter subcommand: {other}"),
+            }
         }
         "version" | "--version" | "-V" => {
             println!("idiolect {}", env!("CARGO_PKG_VERSION"));
@@ -214,6 +228,7 @@ fn print_help() {
          fetch <at-uri>                         fetch a record's body as json\n  \
          orchestrator stats [--url URL]         catalog counts by kind\n  \
          orchestrator <sub> [flags] [--url URL] query a running orchestrator\n  \
+         encounter record [flags]               compose an encounter record from structured prompts\n  \
          version                                print version\n  \
          help                                   show this help\n\
          \n\
