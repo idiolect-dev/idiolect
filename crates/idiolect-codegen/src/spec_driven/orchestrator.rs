@@ -686,7 +686,6 @@ fn register_routes_fn(spec: &QuerySpec) -> TokenStream {
         /// Register every generated route onto the caller-supplied
         /// router. Each query is mounted at both its REST path and
         /// its `/xrpc/<nsid>` path.
-        #[must_use]
         pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
             router #(#routes)*
         }

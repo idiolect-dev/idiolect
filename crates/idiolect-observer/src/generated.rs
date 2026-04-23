@@ -2,7 +2,7 @@
 
 //! Declarative taxonomy of observation methods shipped with the observer. Each entry maps to a hand-written module under crates/idiolect-observer/src/methods/<module>.rs that implements the ObservationMethod trait. The generated module in the same crate re-exports the struct types and provides a METHODS slice + default_methods() constructor for registering the bundled set.
 
-#![allow(missing_docs, clippy::doc_markdown)]
+#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]
 #![allow(unused_imports)]
 /// Whether a method's `observe` receives the raw event (record-form)
 /// or a panproto WInstance (instance-form).

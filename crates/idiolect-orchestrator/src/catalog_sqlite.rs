@@ -203,8 +203,16 @@ impl SqliteCatalogStore {
         let n: i64 = conn
             .query_row("SELECT COUNT(*) FROM records", [], |r| r.get(0))
             .map_err(|e| OrchestratorError::Ingest(format!("count: {e}")))?;
-        #[allow(clippy::cast_sign_loss)]
-        Ok(n.max(0) as usize)
+        Ok(usize::try_from(n.max(0)).unwrap_or(usize::MAX))
+    }
+
+    /// Whether the store holds no records.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OrchestratorError::Ingest`] on sqlite failure.
+    pub fn is_empty(&self) -> OrchestratorResult<bool> {
+        Ok(self.len()? == 0)
     }
 }
 
@@ -238,6 +246,8 @@ const fn kind_tag(record: &AnyRecord) -> &'static str {
         AnyRecord::Correction(_) => "correction",
         AnyRecord::Observation(_) => "observation",
         AnyRecord::Retrospection(_) => "retrospection",
+        AnyRecord::Belief(_) => "belief",
+        AnyRecord::Vocab(_) => "vocab",
     }
 }
 
@@ -254,6 +264,8 @@ fn serialize_record_body(record: &AnyRecord) -> OrchestratorResult<String> {
         AnyRecord::Correction(r) => serde_json::to_string(r),
         AnyRecord::Observation(r) => serde_json::to_string(r),
         AnyRecord::Retrospection(r) => serde_json::to_string(r),
+        AnyRecord::Belief(r) => serde_json::to_string(r),
+        AnyRecord::Vocab(r) => serde_json::to_string(r),
     };
     value.map_err(|e| OrchestratorError::Ingest(format!("serialize: {e}")))
 }
@@ -276,6 +288,8 @@ fn deserialize_record_body(kind: &str, body: &str) -> OrchestratorResult<AnyReco
         "correction" => AnyRecord::Correction(from(body)?),
         "observation" => AnyRecord::Observation(from(body)?),
         "retrospection" => AnyRecord::Retrospection(from(body)?),
+        "belief" => AnyRecord::Belief(from(body)?),
+        "vocab" => AnyRecord::Vocab(from(body)?),
         other => return Err(OrchestratorError::Ingest(format!("unknown kind `{other}`"))),
     })
 }

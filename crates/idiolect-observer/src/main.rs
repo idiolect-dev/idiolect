@@ -117,21 +117,18 @@ async fn main() -> Result<()> {
     // then on the publisher backend (PDS vs in-memory). Both branches
     // are taken at runtime, not compile-time feature flags, because
     // the binary already gates sqlite behind the `daemon` feature.
-    match cursors_path {
-        Some(path) => {
-            info!(cursors_path = %path, "using SqliteCursorStore");
-            let cursors = SqliteCursorStore::open(&path)
-                .with_context(|| format!("open sqlite cursor store at {path}"))?;
-            dispatch_publisher(&mut stream, observer_did, pds_url, &cursors, &ix, schedule).await
-        }
-        None => {
-            info!(
-                "IDIOLECT_OBSERVER_CURSORS unset; using InMemoryCursorStore \
-                 (cursor resets on every restart)"
-            );
-            let cursors = InMemoryCursorStore::new();
-            dispatch_publisher(&mut stream, observer_did, pds_url, &cursors, &ix, schedule).await
-        }
+    if let Some(path) = cursors_path {
+        info!(cursors_path = %path, "using SqliteCursorStore");
+        let cursors = SqliteCursorStore::open(&path)
+            .with_context(|| format!("open sqlite cursor store at {path}"))?;
+        dispatch_publisher(&mut stream, observer_did, pds_url, &cursors, &ix, schedule).await
+    } else {
+        info!(
+            "IDIOLECT_OBSERVER_CURSORS unset; using InMemoryCursorStore \
+             (cursor resets on every restart)"
+        );
+        let cursors = InMemoryCursorStore::new();
+        dispatch_publisher(&mut stream, observer_did, pds_url, &cursors, &ix, schedule).await
     }
 }
 

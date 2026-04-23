@@ -61,7 +61,7 @@ impl RetryPolicy {
         if n == 0 {
             return Duration::ZERO;
         }
-        #[allow(clippy::cast_precision_loss)]
+        #[allow(clippy::cast_precision_loss, clippy::cast_possible_wrap)]
         let secs = self.initial_delay.as_secs_f64() * self.multiplier.powi((n - 1) as i32);
         let capped = secs.min(self.max_delay.as_secs_f64()).max(0.0);
         Duration::from_secs_f64(capped)
@@ -133,10 +133,10 @@ enum CircuitState {
     /// Handler is healthy; every event is dispatched.
     Closed,
     /// Handler is failing; every event short-circuits. Transitions to
-    /// HalfOpen after `cool_off` elapses.
+    /// `HalfOpen` after `cool_off` elapses.
     Open,
-    /// Single trial event is permitted. On success → Closed; on
-    /// failure → Open.
+    /// Single trial event is permitted. On success → `Closed`; on
+    /// failure → `Open`.
     HalfOpen,
 }
 
@@ -183,7 +183,7 @@ impl BreakerState {
         self.failures
             .retain(|t| now.duration_since(*t) < policy.window);
         self.failures.push(now);
-        if self.failures.len() as u32 >= policy.threshold {
+        if u32::try_from(self.failures.len()).unwrap_or(u32::MAX) >= policy.threshold {
             self.state = CircuitState::Open;
             self.opened_at = Some(now);
         }
@@ -196,14 +196,13 @@ impl BreakerState {
     }
 
     /// If the breaker is Open and the cool-off has elapsed, transition
-    /// to HalfOpen. Returns the current state after the check.
+    /// to `HalfOpen`. Returns the current state after the check.
     fn check_and_maybe_half_open(&mut self, policy: &CircuitPolicy) -> CircuitState {
-        if self.state == CircuitState::Open {
-            if let Some(opened_at) = self.opened_at {
-                if opened_at.elapsed() >= policy.cool_off {
-                    self.state = CircuitState::HalfOpen;
-                }
-            }
+        if self.state == CircuitState::Open
+            && let Some(opened_at) = self.opened_at
+            && opened_at.elapsed() >= policy.cool_off
+        {
+            self.state = CircuitState::HalfOpen;
         }
         self.state
     }

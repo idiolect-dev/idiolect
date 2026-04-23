@@ -2,7 +2,7 @@
 
 //! Generated orchestrator surface. See orchestrator-spec/queries.json for the source of truth.
 
-#![allow(missing_docs, clippy::doc_markdown)]
+#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]
 
 #[cfg(feature = "query-http")]
 pub mod http;

@@ -2,7 +2,7 @@
 
 //! Declarative taxonomy of catalog queries. Each entry is transformed by idiolect-codegen into a Rust query fn, an axum HTTP handler, a route registration, and (via cli-spec derivation) an `idiolect orchestrator <sub>` CLI subcommand. Hand-written predicates in crates/idiolect-orchestrator/src/predicates.rs supply the filter semantics; everything else is generated.
 
-#![allow(missing_docs, clippy::doc_markdown)]
+#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]
 #![allow(unused_imports)]
 use crate::catalog::{Catalog, Entry};
 

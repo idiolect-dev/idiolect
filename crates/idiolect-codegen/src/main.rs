@@ -631,8 +631,12 @@ fn walk_lexicons(dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
         let file_type = entry.file_type()?;
         if file_type.is_dir() {
             // fixtures live under `examples/`; skip that subtree on the
-            // schema-discovery pass.
-            if path.file_name().and_then(|s| s.to_str()) == Some("examples") {
+            // schema-discovery pass. Also skip the `query/` subtree —
+            // those are generated XRPC query lexicons consumed by
+            // XRPC clients, not record schemas the record-type
+            // generators know how to emit.
+            let name = path.file_name().and_then(|s| s.to_str());
+            if name == Some("examples") || name == Some("query") {
                 continue;
             }
             walk_lexicons(&path, out)?;

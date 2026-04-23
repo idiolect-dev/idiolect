@@ -2,8 +2,8 @@
 
 //! CLI dispatcher for `idiolect orchestrator …` subcommands.
 
-#![allow(missing_docs, clippy::doc_markdown)]
-#![allow(unused_imports, clippy::too_many_lines)]
+#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]
+#![allow(unused_imports)]
 use anyhow::{Result, anyhow, bail};
 use std::process::ExitCode;
 /// Dispatch an `idiolect orchestrator <path>` invocation.

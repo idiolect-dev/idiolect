@@ -1,6 +1,6 @@
 //! ES256-backed [`DpopProver`](crate::DpopProver).
 //!
-//! Implements DPoP proof construction per RFC 9449: a signed JWT
+//! Implements `DPoP` proof construction per RFC 9449: a signed JWT
 //! whose header declares `typ=dpop+jwt` + `alg=ES256` + the public
 //! key JWK, and whose payload claims `htm` (HTTP method), `htu`
 //! (HTTP URL), `iat`, `jti`, optional `nonce`, and `ath` (base64url
@@ -23,7 +23,7 @@
 //! The public half of the key is serialized as a JWK (`kty=EC`,
 //! `crv=P-256`, `x`, `y`) and embedded in every proof's header so
 //! the server does not need to pre-register the key. Callers that
-//! *do* pre-register (OAuth DPoP with binding) reuse the same
+//! *do* pre-register (OAuth `DPoP` with binding) reuse the same
 //! `jwk()` output for registration.
 
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -39,7 +39,7 @@ use sha2::{Digest, Sha256};
 
 use crate::signing_writer::DpopProver;
 
-/// P-256 ES256 DPoP prover.
+/// P-256 ES256 `DPoP` prover.
 pub struct P256DpopProver {
     signing: SigningKey,
     public_jwk: serde_json::Value,
@@ -85,7 +85,7 @@ impl P256DpopProver {
         })
     }
 
-    /// Public-half JWK (`{kty, crv, x, y}`) suitable for DPoP-binding
+    /// Public-half JWK (`{kty, crv, x, y}`) suitable for `DPoP`-binding
     /// registration at an authorization server.
     #[must_use]
     pub fn public_jwk(&self) -> &serde_json::Value {

@@ -97,7 +97,7 @@ impl BackoffPolicy {
         if self.initial.is_zero() {
             return Duration::ZERO;
         }
-        #[allow(clippy::cast_precision_loss)]
+        #[allow(clippy::cast_precision_loss, clippy::cast_possible_wrap)]
         let secs = self.initial.as_secs_f64() * self.multiplier.powi(attempt as i32);
         let capped = secs.min(self.max.as_secs_f64()).max(0.0);
         Duration::from_secs_f64(capped)
@@ -208,12 +208,12 @@ where
                         "firehose reconnect attempt failed"
                     );
                     attempt = attempt.saturating_add(1);
-                    if let Some(max) = self.backoff.max_attempts {
-                        if attempt >= max {
-                            return Err(IndexerError::Stream(format!(
-                                "reconnect gave up after {max} attempts: {err}"
-                            )));
-                        }
+                    if let Some(max) = self.backoff.max_attempts
+                        && attempt >= max
+                    {
+                        return Err(IndexerError::Stream(format!(
+                            "reconnect gave up after {max} attempts: {err}"
+                        )));
                     }
                 }
             }
@@ -257,7 +257,6 @@ where
                         "firehose closed cleanly, reconnecting"
                     );
                     self.inner = None;
-                    continue;
                 }
                 Err(err) => {
                     tracing::warn!(
@@ -265,8 +264,6 @@ where
                         "firehose stream errored, reconnecting"
                     );
                     self.inner = None;
-                    // Loop back to reconnect.
-                    continue;
                 }
             }
         }

@@ -2,7 +2,7 @@
 
 //! Generated axum handlers for each catalog query. One handler per spec entry; a register_routes helper wires them into a router.
 
-#![allow(missing_docs, clippy::doc_markdown)]
+#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]
 #![allow(unused_imports)]
 use crate::generated::queries as q;
 use crate::http::{ApiError, AppState, EnvelopedEntry, Page, Paged};
@@ -356,7 +356,6 @@ async fn handler_vocabularies_by_name(
 /// Register every generated route onto the caller-supplied
 /// router. Each query is mounted at both its REST path and
 /// its `/xrpc/<nsid>` path.
-#[must_use]
 pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
     router
         .route("/v1/bounties/open", get(handler_open_bounties))

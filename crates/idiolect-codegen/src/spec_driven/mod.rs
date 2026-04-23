@@ -145,7 +145,7 @@ pub fn render_file_with_source(
     // item docstrings are not emitted because every item's meaning
     // is already stated in the spec. Silence the workspace's
     // missing-docs warn for this module.
-    out.push_str("\n#![allow(missing_docs, clippy::doc_markdown)]\n");
+    out.push_str("\n#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]\n");
     out.push('\n');
     out.push_str(&body);
     Ok(crate::rustfmt_source(&out))

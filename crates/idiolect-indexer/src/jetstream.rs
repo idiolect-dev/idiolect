@@ -248,15 +248,14 @@ impl EventStream for JetstreamEventStream {
                     tokio::pin!(sleep);
                     tokio::select! {
                         maybe_msg = reader.next() => match maybe_msg {
-                            Some(Ok(Message::Text(t))) => t.to_string(),
-                            Some(Ok(Message::Binary(b))) => String::from_utf8(b.to_vec())
+                            Some(Ok(Message::Text(t))) => String::from(t.as_str()),
+                            Some(Ok(Message::Binary(b))) => String::from_utf8(b)
                                 .map_err(|e| IndexerError::Stream(format!("jetstream binary: {e}")))?,
                             Some(Ok(Message::Ping(_) | Message::Pong(_) | Message::Frame(_))) => continue,
-                            Some(Ok(Message::Close(_))) => return Ok(None),
+                            Some(Ok(Message::Close(_))) | None => return Ok(None),
                             Some(Err(e)) => {
                                 return Err(IndexerError::Stream(format!("jetstream recv: {e}")));
                             }
-                            None => return Ok(None),
                         },
                         () = &mut sleep => {
                             // No frame within the keepalive window — send
@@ -265,7 +264,7 @@ impl EventStream for JetstreamEventStream {
                             // surface that so the reconnecting wrapper can
                             // drop and reopen.
                             writer
-                                .send(Message::Ping(Vec::new().into()))
+                                .send(Message::Ping(Vec::new()))
                                 .await
                                 .map_err(|e| IndexerError::Stream(format!(
                                     "jetstream keepalive ping send failed: {e}"

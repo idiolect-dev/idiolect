@@ -71,7 +71,7 @@ fn emit_source(spec: &QuerySpec) -> Result<String> {
         .collect();
 
     let items = vec![quote! {
-        #![allow(unused_imports, clippy::too_many_lines)]
+        #![allow(unused_imports)]
 
         use std::process::ExitCode;
 

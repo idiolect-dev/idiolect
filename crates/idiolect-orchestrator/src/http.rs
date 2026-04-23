@@ -74,7 +74,6 @@ impl AppState {
 ///
 /// Pass the result to `axum::serve(listener, router.into_make_service())`
 /// in the binary.
-#[must_use]
 pub fn router(state: AppState) -> Router {
     let mut r = Router::new()
         .route("/healthz", get(healthz))
@@ -274,11 +273,7 @@ async fn metrics(State(s): State<AppState>) -> Result<Response, ApiError> {
         let catalog = s.catalog.lock()?;
         query::catalog_stats(&catalog)
     };
-    let ready = if s.ready.load(std::sync::atomic::Ordering::SeqCst) {
-        1
-    } else {
-        0
-    };
+    let ready = u8::from(s.ready.load(std::sync::atomic::Ordering::SeqCst));
     let body = format!(
         "# HELP idiolect_orchestrator_ready Whether the orchestrator has warmed its catalog and is serving traffic.\n\
          # TYPE idiolect_orchestrator_ready gauge\n\

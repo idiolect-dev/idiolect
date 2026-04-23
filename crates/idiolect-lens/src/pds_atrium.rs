@@ -181,7 +181,7 @@ where
             .repo
             .list_records(params.into())
             .await
-            .map_err(map_list_error)?;
+            .map_err(|e| map_list_error(&e))?;
         // atrium returns typed records; re-serialize to the
         // generic `{uri, cid, value}` shape our abstraction expects.
         let raw = serde_json::to_value(&output.records)
@@ -195,7 +195,7 @@ where
     }
 }
 
-fn map_list_error(err: atrium_xrpc::Error<list_records::Error>) -> LensError {
+fn map_list_error(err: &atrium_xrpc::Error<list_records::Error>) -> LensError {
     // listRecords does not define a RecordNotFound variant; every
     // failure becomes Transport carrying the atrium message.
     LensError::Transport(err.to_string())
