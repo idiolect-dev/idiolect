@@ -1,0 +1,88 @@
+id: dev.idiolect.lens.vocab.action-v1-to-granular-v1
+description: >
+  Example vocabulary-translation lens. Translates uses declared
+  against the reference action vocabulary (dev.idiolect.vocab.action-v1)
+  into a hypothetical "granular" vocabulary that distinguishes
+  sub-actions the reference vocab does not carve out — pre_train,
+  fine_tune, rlhf, rag_retrieve, embedding_generation — each of which
+  the reference vocab collapses into `train_model` or `run_inference`.
+
+  Demonstrates the shape of a vocabulary-translation lens with an
+  honest complement: some source→target mappings are exact (`ingest`
+  to `ingest`, `archive` to `archive`), some expand (train_model to
+  pre_train|fine_tune|rlhf — which one? the complement records that
+  the disambiguation is not in the source), and some contract
+  (several target actions having no source counterpart — the
+  complement records that defaults are required on translation).
+
+  Applying the lens to a specific `Use` instance produces a new Use
+  whose `action` resolves against the target vocabulary, plus a
+  complement witness recording the disambiguation and defaults.
+source: at://did:plc:idiolect/dev.idiolect.vocab/action-v1
+target: at://did:plc:idiolect/dev.idiolect.vocab/granular-v1
+steps:
+  # Pass-through: identical ids on both sides.
+  - rename_action: { from: ingest, to: ingest }
+  - rename_action: { from: transform, to: transform }
+  - rename_action: { from: reuse, to: reuse }
+  - rename_action: { from: archive, to: archive }
+  - rename_action: { from: annotate, to: annotate }
+  - rename_action: { from: evaluate_model, to: evaluate_model }
+  # Expansion: `train_model` in the source splits into three target
+  # actions. The lens cannot pick one automatically; the complement
+  # records that a disambiguation default is required on translation.
+  - expand_action:
+      from: train_model
+      to: [pre_train, fine_tune, rlhf]
+      default: pre_train
+  # fine_tune exists in both with the same name; rename under the
+  # new parent (where its ancestors are [fine_tune, train_model] in
+  # the target, rather than [train_model] in the source).
+  - rename_action: { from: fine_tune, to: fine_tune }
+  # Contraction: run_inference has no source counterpart sub-actions;
+  # the target's rag_retrieve / embedding_generation do not exist in
+  # the source. A Use with action=run_inference translates to a Use
+  # with action=run_inference; the more-specific target actions are
+  # *added* only when the consumer has side-channel information.
+  - rename_action: { from: run_inference, to: run_inference }
+complement:
+  kind: Mixed
+  captured_data:
+    # Nothing from the source is dropped outright — every source
+    # action has at least one target counterpart. But the expansion
+    # of `train_model` leaves a residue: the source said "train" and
+    # the target wants to know *which kind of training*. That lands
+    # in captured_data so consumers can surface "needs disambiguation"
+    # without silently defaulting.
+    - element_name: train_model.disambiguation
+      element_kind: action
+      description: >
+        Source `train_model` uses are forwarded to target `pre_train`
+        by default, but the specific sub-action (pre_train vs
+        fine_tune vs rlhf) is not determined by the source alone.
+        Consumers may fill this with side-channel information or
+        leave it unresolved.
+  forward_defaults:
+    # Three target actions have no source counterpart at all;
+    # translating a source use into a target use leaves these
+    # undetermined unless explicitly supplied.
+    - element_name: rag_retrieve
+      element_kind: action
+      description: >
+        Target-only action. A source Use cannot produce this action
+        without caller-supplied context; defaults to unresolved.
+    - element_name: embedding_generation
+      element_kind: action
+      description: >
+        Target-only action. Same caveat as rag_retrieve.
+    - element_name: rlhf
+      element_kind: action
+      description: >
+        Reachable via the `train_model` expansion. Unless the caller
+        supplies a disambiguation default of rlhf, this target
+        action is not produced.
+  summary: >
+    Mixed: expands train_model into three target actions with a
+    default; adds rag_retrieve, embedding_generation, rlhf as
+    target-only actions requiring defaults; all other source
+    actions pass through identity.
