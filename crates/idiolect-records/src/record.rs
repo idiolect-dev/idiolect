@@ -74,6 +74,9 @@ pub enum AnyRecord {
     /// A `dev.idiolect.belief` record — a second-order doxastic
     /// claim about another record, generic over the subject kind.
     Belief(crate::Belief),
+    /// A `dev.idiolect.vocab` record — a community-published
+    /// action / purpose vocabulary.
+    Vocab(crate::Vocab),
 }
 
 impl AnyRecord {
@@ -92,6 +95,7 @@ impl AnyRecord {
             Self::Adapter(_) => crate::Adapter::NSID,
             Self::Bounty(_) => crate::Bounty::NSID,
             Self::Belief(_) => crate::Belief::NSID,
+            Self::Vocab(_) => crate::Vocab::NSID,
         }
     }
 
@@ -166,6 +170,7 @@ impl AnyRecord {
             Self::Recommendation(r) => serde_json::to_value(r),
             Self::Retrospection(r) => serde_json::to_value(r),
             Self::Verification(r) => serde_json::to_value(r),
+            Self::Vocab(r) => serde_json::to_value(r),
         }
     }
 }
@@ -221,6 +226,7 @@ pub fn decode_record(nsid: &str, value: serde_json::Value) -> Result<AnyRecord, 
         s if s == crate::Adapter::NSID => Ok(AnyRecord::Adapter(from(value)?)),
         s if s == crate::Bounty::NSID => Ok(AnyRecord::Bounty(from(value)?)),
         s if s == crate::Belief::NSID => Ok(AnyRecord::Belief(from(value)?)),
+        s if s == crate::Vocab::NSID => Ok(AnyRecord::Vocab(from(value)?)),
         other => Err(DecodeError::UnknownNsid(other.to_owned())),
     }
 }

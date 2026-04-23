@@ -73,13 +73,21 @@ pub const fn required_kind_to_verification_kind(
     }
 }
 
-/// Decide whether `lens` has verifications covering every kind in
-/// `required`, optionally requiring `result=holds` to count.
+/// Decide whether `lens` has verifications covering every requirement
+/// in `required`, optionally requiring `result=holds` to count.
+///
+/// A requirement is matched by a verification when the verification's
+/// kind corresponds to the requirement's `LensProperty` variant AND the
+/// variant's *discriminating* fields agree where the requirement
+/// pinned specifics. Empty-string / empty-collection fields on the
+/// requirement are treated as "any", so callers get coarse kind-only
+/// matching for free when they haven't pinned a specific
+/// domain/theorem/standard.
 ///
 /// When `require_holds` is `true`, verifications whose result is
 /// `falsified` or `inconclusive` do not count toward coverage even if
-/// the kind matches — the recommendation's precondition is that a
-/// holding verification exists, not that someone checked.
+/// the structural match succeeds — the recommendation's precondition
+/// is that a holding verification exists, not that someone checked.
 #[must_use]
 pub fn sufficient_verifications_for(
     catalog: &Catalog,
@@ -92,12 +100,76 @@ pub fn sufficient_verifications_for(
     }
     let verifications = verifications_for_lens(catalog, lens);
     required.iter().all(|r| {
-        let want = required_kind_to_verification_kind(r);
         verifications.iter().any(|entry| {
-            entry.record.kind == want
+            requirement_matches(r, &entry.record.property)
                 && (!require_holds || entry.record.result == VerificationResult::Holds)
         })
     })
+}
+
+/// Whether a verification's `property` value satisfies the given
+/// `required` specification. Exposed for downstream filters that
+/// need the same structural match without running the full coverage
+/// check.
+#[must_use]
+pub fn requirement_matches(
+    required: &RecommendationRequiredVerifications,
+    property: &idiolect_records::generated::verification::VerificationProperty,
+) -> bool {
+    use idiolect_records::generated::verification::VerificationProperty as V;
+    match (required, property) {
+        (RecommendationRequiredVerifications::LpRoundtrip(req), V::LpRoundtrip(p)) => {
+            str_wildcard_eq(&req.domain, &p.domain)
+        }
+        (RecommendationRequiredVerifications::LpGenerator(req), V::LpGenerator(p)) => {
+            str_wildcard_eq(&req.spec, &p.spec)
+                && opt_str_wildcard_eq(req.runner.as_deref(), p.runner.as_deref())
+        }
+        (RecommendationRequiredVerifications::LpTheorem(req), V::LpTheorem(p)) => {
+            str_wildcard_eq(&req.statement, &p.statement)
+                && opt_str_wildcard_eq(req.system.as_deref(), p.system.as_deref())
+        }
+        (RecommendationRequiredVerifications::LpConformance(req), V::LpConformance(p)) => {
+            str_wildcard_eq(&req.standard, &p.standard)
+                && str_wildcard_eq(&req.version, &p.version)
+                && clauses_covered(req.clauses.as_deref(), p.clauses.as_deref())
+        }
+        (RecommendationRequiredVerifications::LpChecker(req), V::LpChecker(p)) => {
+            str_wildcard_eq(&req.checker, &p.checker)
+                && opt_str_wildcard_eq(req.ruleset.as_deref(), p.ruleset.as_deref())
+        }
+        (RecommendationRequiredVerifications::LpConvergence(req), V::LpConvergence(p)) => {
+            str_wildcard_eq(&req.property, &p.property)
+        }
+        _ => false,
+    }
+}
+
+/// Empty required-value matches any published value; otherwise exact
+/// equality.
+fn str_wildcard_eq(required: &str, published: &str) -> bool {
+    required.is_empty() || required == published
+}
+
+fn opt_str_wildcard_eq(required: Option<&str>, published: Option<&str>) -> bool {
+    match required {
+        None | Some("") => true,
+        Some(r) => published == Some(r),
+    }
+}
+
+/// Every clause named in the requirement must appear in the
+/// published clause list (when published clauses are declared).
+/// Empty / absent required clauses matches any published set.
+fn clauses_covered(required: Option<&[String]>, published: Option<&[String]>) -> bool {
+    let Some(req) = required else { return true };
+    if req.is_empty() {
+        return true;
+    }
+    let Some(pub_clauses) = published else {
+        return false;
+    };
+    req.iter().all(|r| pub_clauses.iter().any(|p| p == r))
 }
 
 /// Aggregate counts of every catalog kind. Useful for a `/stats`

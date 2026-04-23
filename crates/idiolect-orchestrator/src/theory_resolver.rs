@@ -70,6 +70,12 @@ struct ResolvedVocabulary {
     ancestors: BTreeMap<String, BTreeSet<String>>,
     /// Set of all declared ids (for fast membership checks).
     declared: BTreeSet<String>,
+    /// `class[id]` is the attitudinal composition the entry declares
+    /// itself an instance of, when set (e.g.
+    /// `"dev.idiolect.asserted_use"`). Consumers dispatch on this
+    /// when they want to respect both the subsumption hierarchy AND
+    /// the attitudinal shape.
+    class: BTreeMap<String, String>,
 }
 
 impl Resolver {
@@ -85,12 +91,16 @@ impl Resolver {
     pub fn insert_vocab(&mut self, uri: impl Into<String>, vocab: &Vocab) {
         let mut parents: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
         let mut declared: BTreeSet<String> = BTreeSet::new();
+        let mut class: BTreeMap<String, String> = BTreeMap::new();
         for entry in &vocab.actions {
             declared.insert(entry.id.clone());
             parents
                 .entry(entry.id.clone())
                 .or_default()
                 .extend(entry.parents.iter().cloned());
+            if let Some(cls) = entry.class.clone() {
+                class.insert(entry.id.clone(), cls);
+            }
         }
 
         // Transitive closure: BFS from each id through its parents.
@@ -116,8 +126,36 @@ impl Resolver {
                 top: vocab.top.clone(),
                 ancestors,
                 declared,
+                class,
             },
         );
+    }
+
+    /// Register every Vocab record currently in a [`Catalog`]. Call
+    /// this after catalog ingest so subsumption + class queries
+    /// immediately honour the catalog-live vocabularies. Overwrites
+    /// any existing registration at the same URI.
+    pub fn sync_from_catalog(&mut self, catalog: &crate::Catalog) {
+        for entry in catalog.vocabularies() {
+            self.insert_vocab(entry.uri.clone(), &entry.record);
+        }
+    }
+
+    /// Look up the attitudinal class declared for `id` in the named
+    /// vocabulary (or the single registered vocabulary when
+    /// `vocab_uri` is `None`). Returns `None` when the vocabulary
+    /// isn't registered, the id isn't declared, or no class was set.
+    #[must_use]
+    pub fn class_of(&self, vocab_uri: Option<&str>, id: &str) -> Option<&str> {
+        let uri = vocab_uri.map(ToOwned::to_owned).or_else(|| {
+            if self.vocabularies.len() == 1 {
+                self.vocabularies.keys().next().cloned()
+            } else {
+                None
+            }
+        })?;
+        let resolved = self.vocabularies.get(&uri)?;
+        resolved.class.get(id).map(String::as_str)
     }
 
     /// Number of registered vocabularies.

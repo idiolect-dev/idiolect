@@ -24,7 +24,10 @@ use idiolect_records::generated::adapter::AdapterInvocationProtocolKind;
 use idiolect_records::generated::bounty::{BountyStatus, BountyWants};
 use idiolect_records::generated::defs::{LensRef, SchemaRef};
 use idiolect_records::generated::verification::VerificationKind;
-use idiolect_records::{Adapter, Bounty, Community, Dialect, Recommendation, Verification};
+use idiolect_records::generated::vocab::VocabWorld;
+use idiolect_records::{
+    Adapter, Belief, Bounty, Community, Dialect, Recommendation, Verification, Vocab,
+};
 
 // -----------------------------------------------------------------
 // Reference-matching fragments.
@@ -231,5 +234,60 @@ pub const fn lens_ref_from_uri(uri: String) -> LensRef {
         uri: Some(uri),
         cid: None,
         direction: None,
+    }
+}
+
+// -----------------------------------------------------------------
+// Belief predicates.
+// -----------------------------------------------------------------
+
+/// Belief records whose subject's at-uri matches `subject_uri`.
+#[must_use]
+pub fn belief_about_record(b: &Belief, subject_uri: &str) -> bool {
+    b.subject.uri == subject_uri
+}
+
+/// Belief records whose effective holder (explicit `holder` or, if
+/// absent, the repo owner) matches `holder_did`. The repo-owner
+/// fallback isn't visible from a `&Belief` alone, so this predicate
+/// tests the explicit holder only; callers needing the repo-owner
+/// fallback filter over `Entry<Belief>` directly.
+#[must_use]
+pub fn belief_by_explicit_holder(b: &Belief, holder_did: &str) -> bool {
+    b.holder.as_deref() == Some(holder_did)
+}
+
+// -----------------------------------------------------------------
+// Vocabulary predicates.
+// -----------------------------------------------------------------
+
+/// Vocabulary records whose declared `world` matches the given name
+/// (`closed-with-default`, `open`, or `hierarchy-closed`).
+#[must_use]
+pub fn vocab_with_world(v: &Vocab, world: &str) -> bool {
+    let rendered = match v.world {
+        VocabWorld::ClosedWithDefault => "closed-with-default",
+        VocabWorld::Open => "open",
+        VocabWorld::HierarchyClosed => "hierarchy-closed",
+    };
+    rendered == world
+}
+
+/// Vocabulary records whose `name` matches.
+#[must_use]
+pub fn vocab_by_name(v: &Vocab, name: &str) -> bool {
+    v.name == name
+}
+
+/// Parse a `world` query-string token into the typed
+/// [`VocabWorld`]. Unknown tokens surface the raw string.
+///
+/// # Errors
+/// Returns the raw token in an `Err` when it does not match one of
+/// the three declared world disciplines.
+pub fn parse_vocab_world(s: &str) -> Result<String, String> {
+    match s {
+        "closed-with-default" | "open" | "hierarchy-closed" => Ok(s.to_owned()),
+        other => Err(format!("unknown world discipline: {other}")),
     }
 }

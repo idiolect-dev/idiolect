@@ -77,6 +77,7 @@ pub mod generated;
 pub mod handler;
 #[cfg(feature = "query-http")]
 pub mod http;
+pub mod predicate_eval;
 pub mod predicates;
 pub mod query;
 pub mod theory_resolver;
@@ -88,4 +89,8 @@ pub use error::{OrchestratorError, OrchestratorResult};
 pub use handler::CatalogHandler;
 #[cfg(feature = "query-http")]
 pub use http::{AppState, router as http_router};
+pub use predicate_eval::{
+    Claimer, ConditionContext, PredicateError, PredicateResult, eval_condition_tree,
+    eval_eligibility_tree, eval_precondition_tree,
+};
 pub use theory_resolver::{Resolution, Resolver};

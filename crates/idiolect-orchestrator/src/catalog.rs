@@ -14,11 +14,15 @@
 //! Record kinds the catalog tracks:
 //!
 //! - [`Adapter`] — framework wrappers.
+//! - [`Belief`] — doxastic claims attributing attitudes to third parties.
 //! - [`Bounty`] — open / claimed / fulfilled requests.
 //! - [`Community`] — self-constituted groups.
 //! - [`Dialect`] — per-community preferred lens/schema bundles.
 //! - [`Recommendation`] — community-declared lens paths.
 //! - [`Verification`] — signed assertions about a lens's properties.
+//! - [`Vocab`] — published action / purpose vocabularies; the
+//!   theory-resolver registers these on ingest so subsumption
+//!   queries work against catalog-live vocabularies.
 //!
 //! Encounters, corrections, retrospections, and observations do *not*
 //! live in the orchestrator catalog: those are observer territory.
@@ -29,7 +33,7 @@
 use std::collections::HashMap;
 
 use idiolect_records::{
-    Adapter, AnyRecord, Bounty, Community, Dialect, Recommendation, Verification,
+    Adapter, AnyRecord, Belief, Bounty, Community, Dialect, Recommendation, Verification, Vocab,
 };
 
 /// Cataloged record, keyed by at-uri in the parent maps.
@@ -58,11 +62,13 @@ pub struct Entry<R> {
 #[derive(Debug, Default)]
 pub struct Catalog {
     adapters: HashMap<String, Entry<Adapter>>,
+    beliefs: HashMap<String, Entry<Belief>>,
     bounties: HashMap<String, Entry<Bounty>>,
     communities: HashMap<String, Entry<Community>>,
     dialects: HashMap<String, Entry<Dialect>>,
     recommendations: HashMap<String, Entry<Recommendation>>,
     verifications: HashMap<String, Entry<Verification>>,
+    vocabularies: HashMap<String, Entry<Vocab>>,
 }
 
 impl Catalog {
@@ -155,6 +161,28 @@ impl Catalog {
                     },
                 );
             }
+            AnyRecord::Belief(b) => {
+                self.beliefs.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: b,
+                    },
+                );
+            }
+            AnyRecord::Vocab(v) => {
+                self.vocabularies.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: v,
+                    },
+                );
+            }
             _ => {}
         }
     }
@@ -164,11 +192,23 @@ impl Catalog {
     /// single-key lookup per map is cheap.
     pub fn remove(&mut self, uri: &str) {
         self.adapters.remove(uri);
+        self.beliefs.remove(uri);
         self.bounties.remove(uri);
         self.communities.remove(uri);
         self.dialects.remove(uri);
         self.recommendations.remove(uri);
         self.verifications.remove(uri);
+        self.vocabularies.remove(uri);
+    }
+
+    /// Immutable view of all cataloged beliefs.
+    pub fn beliefs(&self) -> impl Iterator<Item = &Entry<Belief>> {
+        self.beliefs.values()
+    }
+
+    /// Immutable view of all cataloged vocabularies.
+    pub fn vocabularies(&self) -> impl Iterator<Item = &Entry<Vocab>> {
+        self.vocabularies.values()
     }
 
     /// Immutable view of all cataloged adapters, in arbitrary order.
@@ -208,6 +248,9 @@ impl Catalog {
         if let Some(e) = self.adapters.get(uri) {
             return Some(CatalogRef::Adapter(e));
         }
+        if let Some(e) = self.beliefs.get(uri) {
+            return Some(CatalogRef::Belief(e));
+        }
         if let Some(e) = self.bounties.get(uri) {
             return Some(CatalogRef::Bounty(e));
         }
@@ -223,6 +266,9 @@ impl Catalog {
         if let Some(e) = self.verifications.get(uri) {
             return Some(CatalogRef::Verification(e));
         }
+        if let Some(e) = self.vocabularies.get(uri) {
+            return Some(CatalogRef::Vocab(e));
+        }
         None
     }
 
@@ -230,11 +276,13 @@ impl Catalog {
     #[must_use]
     pub fn len(&self) -> usize {
         self.adapters.len()
+            + self.beliefs.len()
             + self.bounties.len()
             + self.communities.len()
             + self.dialects.len()
             + self.recommendations.len()
             + self.verifications.len()
+            + self.vocabularies.len()
     }
 
     /// Whether the catalog has no records.
@@ -246,10 +294,13 @@ impl Catalog {
 
 /// Polymorphic borrow over the catalog's per-kind entries. Returned
 /// by [`Catalog::find`] so callers can pattern-match on the kind.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum CatalogRef<'a> {
     /// An [`Adapter`] record.
     Adapter(&'a Entry<Adapter>),
+    /// A [`Belief`] record.
+    Belief(&'a Entry<Belief>),
     /// A [`Bounty`] record.
     Bounty(&'a Entry<Bounty>),
     /// A [`Community`] record.
@@ -260,4 +311,6 @@ pub enum CatalogRef<'a> {
     Recommendation(&'a Entry<Recommendation>),
     /// A [`Verification`] record.
     Verification(&'a Entry<Verification>),
+    /// A [`Vocab`] record.
+    Vocab(&'a Entry<Vocab>),
 }

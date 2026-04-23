@@ -198,17 +198,49 @@ fn verification(
     kind: VerificationKind,
     result: VerificationResult,
 ) -> Verification {
-    use idiolect_records::generated::defs::{LpTheorem, Tool};
+    use idiolect_records::generated::defs::{
+        LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool,
+    };
     use idiolect_records::generated::verification::VerificationProperty;
-    Verification {
-        basis: None,
-        counterexample: None,
-        dependencies: None,
-        property: VerificationProperty::LpTheorem(LpTheorem {
+    // Pair the property variant with the kind so sufficient_verifications_for's
+    // structural match has something to agree with.
+    let property = match kind {
+        VerificationKind::RoundtripTest => VerificationProperty::LpRoundtrip(LpRoundtrip {
+            domain: "any".to_owned(),
+            generator: None,
+        }),
+        VerificationKind::PropertyTest => VerificationProperty::LpGenerator(LpGenerator {
+            spec: "any".to_owned(),
+            runner: None,
+            seed: None,
+        }),
+        VerificationKind::FormalProof => VerificationProperty::LpTheorem(LpTheorem {
             statement: "identity".to_owned(),
             system: Some("coq".to_owned()),
             free_variables: None,
         }),
+        VerificationKind::ConformanceTest => VerificationProperty::LpConformance(LpConformance {
+            standard: "any".to_owned(),
+            version: "1".to_owned(),
+            clauses: None,
+        }),
+        VerificationKind::StaticCheck => VerificationProperty::LpChecker(LpChecker {
+            checker: "any".to_owned(),
+            ruleset: None,
+            version: None,
+        }),
+        VerificationKind::ConvergencePreserving => {
+            VerificationProperty::LpConvergence(LpConvergence {
+                property: "any".to_owned(),
+                bound_steps: None,
+            })
+        }
+    };
+    Verification {
+        basis: None,
+        counterexample: None,
+        dependencies: None,
+        property,
         kind,
         lens: l_ref(lens_uri),
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
