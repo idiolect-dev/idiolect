@@ -1,16 +1,35 @@
 id: dev.idiolect.theory.finding
 description: >
-  Evidence of a latent issue. Complements the narrative 'detail'
-  field; does not replace it. The kind enum stays; evidence is new.
-  For kind=other, evidence stays optional and the narrative field
-  does the work.
+  Structured evidence for a retrospective finding. Divergence
+  witnesses (two paths that should have converged but didn't),
+  loss witnesses (a source field unrepresented in the target),
+  and mismatch witnesses (two records that should reconcile but
+  don't) unify under a single Evidence sort with type-narrowing
+  discriminators.
 theory: ThFinding
+extends: [ThAtt]
 sorts:
+  - name: FindingEnvelope
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
   - name: Evidence
   - name: DivergenceWitness
   - name: LossWitness
   - name: MismatchWitness
 ops:
+  - { name: finding_extract, input: Att, output: FindingEnvelope }
+  - { name: finding_holder, input: FindingEnvelope, output: Holder }
+  - { name: finding_content, input: FindingEnvelope, output: Content }
+  - { name: finding_evidence, input: FindingEnvelope, output: Evidence }
+  # Discriminators.
   - { name: as_divergence, input: Evidence, output: DivergenceWitness }
   - { name: as_loss, input: Evidence, output: LossWitness }
   - { name: as_mismatch, input: Evidence, output: MismatchWitness }
+equations:
+  - name: finding_holder_coherence
+    lhs: "finding_holder(finding_extract(x))"
+    rhs: "holder(x)"
+  - name: finding_content_coherence
+    lhs: "finding_content(finding_extract(x))"
+    rhs: "content(x)"

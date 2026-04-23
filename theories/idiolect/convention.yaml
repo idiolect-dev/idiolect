@@ -2,17 +2,31 @@ id: dev.idiolect.theory.convention
 description: >
   Community convention theory. Structures the decidable subset of
   community norms — review cadence, verification requirements,
-  deprecation policies. Narrative norms (style, tone) stay in a
-  companion conventionsText field.
+  deprecation policies. Narrative norms (style, tone) live in a
+  companion text field on the record.
 theory: ThConvention
+extends: [ThAtt]
 sorts:
   - name: ConventionSet
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
   - name: Convention
   - name: ReviewCadence
   - name: VerificationRequirement
   - name: DeprecationPolicy
 ops:
+  - { name: convention_extract, input: Att, output: ConventionSet }
+  - { name: convention_holder, input: ConventionSet, output: Holder }
+  - { name: convention_content, input: ConventionSet, output: Content }
   - { name: members, input: ConventionSet, output: List Convention }
   - { name: is_cadence, input: Convention, output: Bool }
   - { name: is_verification_req, input: Convention, output: Bool }
   - { name: is_deprecation_policy, input: Convention, output: Bool }
+equations:
+  - name: convention_holder_coherence
+    lhs: "convention_holder(convention_extract(x))"
+    rhs: "holder(x)"
+  - name: convention_content_coherence
+    lhs: "convention_content(convention_extract(x))"
+    rhs: "content(x)"

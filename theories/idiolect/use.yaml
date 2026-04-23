@@ -3,23 +3,36 @@ description: >
   Compound content theory for 'what was done, on what material, for
   what end, by which actor.' A common substrate for any record whose
   structured subject is an action performed, desired, endorsed, or
-  prohibited — encounters, bounties, recommendations, user-intent
-  declarations, labeler assertions. Subsumption is declared on
-  Action so a coarser action covers its finer refinements; community
-  vocabularies supply the action hierarchy.
+  prohibited. Subsumption is declared on Action so a coarser action
+  covers its finer refinements; community vocabularies supply the
+  action hierarchy.
 theory: ThUse
+extends: [ThAtt]
 sorts:
   - name: Use
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
   - name: Action
   - name: Material
   - name: Purpose
   - name: Actor
   - name: Vocabulary
 ops:
+  - { name: use_extract, input: Att, output: Use }
+  - { name: use_holder, input: Use, output: Holder }
+  - { name: use_content, input: Use, output: Content }
   - { name: action, input: Use, output: Action }
   - { name: material, input: Use, output: Material }
   - { name: purpose, input: Use, output: Purpose }
   - { name: actor, input: Use, output: Actor }
   - { name: vocabulary, input: Use, output: Vocabulary }
-  # subsumption over the community-supplied action hierarchy.
+  # Subsumption over the community-supplied action hierarchy.
   - { name: subsumes, inputs: [{ sort: Action }, { sort: Action }], output: Bool }
+equations:
+  - name: use_holder_coherence
+    lhs: "use_holder(use_extract(x))"
+    rhs: "holder(x)"
+  - name: use_content_coherence
+    lhs: "use_content(use_extract(x))"
+    rhs: "content(x)"

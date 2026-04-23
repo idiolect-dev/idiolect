@@ -1,33 +1,44 @@
 id: dev.idiolect.theory.charter
 description: >
   Content theory for a community or dialect charter: a constitutive
-  declaration of what schemas/lenses are canonical, what conventions
-  apply, and (for dialects) which idiolects the community endorses as
-  its preferred set.
+  declaration of what schemas and lenses are canonical, what
+  conventions apply, and (for dialects) which idiolects are
+  endorsed as the preferred set.
 
-  Composes with ThDeclarative (shared with dev.attitudes.*) to form
-  ThConstitutiveCharter. The holder of a declarative attitude is
-  saying 'this is what we are' rather than 'this is what we assert
-  about the world' — the declaration is self-constitutive. A
-  community record is the community's own declaration that it
-  exists; a dialect record is the owning community's declaration of
+  Composes with ThDeclarative to form a constitutive attitude — a
+  holder saying 'this is what we are' rather than 'this is what we
+  claim about the world.' A community record is the community's own
+  charter; a dialect record is the owning community's charter over
   its preferred idiolect bundle.
 theory: ThCharter
+extends: [ThAtt]
 sorts:
   - name: Charter
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
   - name: CanonicalSchema
   - name: CanonicalLens
   - name: MembershipPolicy
   - name: ConventionSet
-  - name: IdiolectBundle        # dialect-only; the set of preferred idiolects
+  - name: IdiolectBundle
+  - name: Did
 ops:
+  - { name: charter_extract, input: Att, output: Charter }
+  - { name: charter_holder, input: Charter, output: Holder }
+  - { name: charter_content, input: Charter, output: Content }
   - { name: canonical_schemas, input: Charter, output: List CanonicalSchema }
   - { name: canonical_lenses, input: Charter, output: List CanonicalLens }
   - { name: conventions, input: Charter, output: ConventionSet }
   - { name: membership_policy, input: Charter, output: MembershipPolicy }
   - { name: endorsed_bundle, input: Charter, output: IdiolectBundle }
-  # a member's claim validates against a charter iff the claim
-  # follows the charter's membership policy. separate op so that
-  # membership semantics are explicit, not read off inline.
+  # A member's claim validates against a charter iff the charter's
+  # membership policy admits them.
   - { name: admits, inputs: [{ sort: Charter }, { sort: Did }], output: Bool }
-  - name: Did
+equations:
+  - name: charter_holder_coherence
+    lhs: "charter_holder(charter_extract(x))"
+    rhs: "holder(x)"
+  - name: charter_content_coherence
+    lhs: "charter_content(charter_extract(x))"
+    rhs: "content(x)"

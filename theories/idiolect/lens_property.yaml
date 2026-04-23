@@ -1,11 +1,17 @@
 id: dev.idiolect.theory.lens_property
 description: >
   Content theory for what a verification actually asserts. Each
-  verification kind has its own statement shape, unified under a
-  LensProperty sort. Exposed as a theory so it can compose with
-  ThDoxastic to form ThVerificationClaim.
+  verification kind has its own statement shape (roundtrip domain,
+  PBT generator, theorem, conformance standard, static checker
+  config, convergence claim), unified under a LensProperty sort.
+  Composes with ThDoxastic to form the verification-claim record.
 theory: ThLensProperty
+extends: [ThAtt]
 sorts:
+  - name: LensPropertyEnvelope
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
   - name: LensProperty
   - name: RoundtripDomain
   - name: GeneratorSpec
@@ -14,9 +20,22 @@ sorts:
   - name: StaticCheckerConfig
   - name: ConvergenceClaim
 ops:
+  - { name: lens_property_extract, input: Att, output: LensPropertyEnvelope }
+  - { name: lens_property_holder, input: LensPropertyEnvelope, output: Holder }
+  - { name: lens_property_content, input: LensPropertyEnvelope, output: Content }
+  - { name: lens_property_value, input: LensPropertyEnvelope, output: LensProperty }
+  # Discriminators — LensProperty is a tagged union across six
+  # statement shapes.
   - { name: as_roundtrip, input: LensProperty, output: RoundtripDomain }
   - { name: as_generator, input: LensProperty, output: GeneratorSpec }
   - { name: as_theorem, input: LensProperty, output: Theorem }
   - { name: as_standard, input: LensProperty, output: ConformanceStandard }
   - { name: as_checker, input: LensProperty, output: StaticCheckerConfig }
   - { name: as_convergence, input: LensProperty, output: ConvergenceClaim }
+equations:
+  - name: lens_property_holder_coherence
+    lhs: "lens_property_holder(lens_property_extract(x))"
+    rhs: "holder(x)"
+  - name: lens_property_content_coherence
+    lhs: "lens_property_content(lens_property_extract(x))"
+    rhs: "content(x)"

@@ -1,10 +1,16 @@
 id: dev.idiolect.theory.constraint
 description: >
-  Content theory for bounty constraints. A constraint set is an
-  unordered collection of typed constraints; matching is structural.
+  Content theory for a structured constraint set: an unordered
+  collection of typed requirements (performance bounds, conformance
+  requirements, licenses, deadlines, dependencies). Matching is
+  structural, not substring.
 theory: ThConstraint
+extends: [ThAtt]
 sorts:
   - name: ConstraintSet
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
   - name: Constraint
   - name: PerformanceBound
   - name: ConformanceRequirement
@@ -12,9 +18,19 @@ sorts:
   - name: Deadline
   - name: Dependency
 ops:
+  - { name: constraint_extract, input: Att, output: ConstraintSet }
+  - { name: constraint_holder, input: ConstraintSet, output: Holder }
+  - { name: constraint_content, input: ConstraintSet, output: Content }
   - { name: members, input: ConstraintSet, output: List Constraint }
   - { name: is_performance, input: Constraint, output: Bool }
   - { name: is_conformance, input: Constraint, output: Bool }
   - { name: is_license, input: Constraint, output: Bool }
   - { name: is_deadline, input: Constraint, output: Bool }
   - { name: is_dependency, input: Constraint, output: Bool }
+equations:
+  - name: constraint_holder_coherence
+    lhs: "constraint_holder(constraint_extract(x))"
+    rhs: "holder(x)"
+  - name: constraint_content_coherence
+    lhs: "constraint_content(constraint_extract(x))"
+    rhs: "content(x)"
