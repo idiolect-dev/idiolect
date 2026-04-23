@@ -57,6 +57,24 @@ pub const METHODS: &[MethodDescriptor] = &[
         description: "Encounter counts grouped by structured use.action, optionally rolled up through a resolved action vocabulary. Enables 'how many encounters invoked an action subsumed by X?' style queries without substring search.",
         form: MethodForm::Record,
     },
+    MethodDescriptor {
+        name: crate::methods::purpose_distribution::METHOD_NAME,
+        version: crate::methods::purpose_distribution::METHOD_VERSION,
+        description: "Encounter counts grouped by structured use.purpose, optionally rolled up through a resolved purpose vocabulary. Parallel to action-distribution; answers 'how many encounters served a purpose subsumed by X?' without substring search.",
+        form: MethodForm::Record,
+    },
+    MethodDescriptor {
+        name: crate::methods::basis_distribution::METHOD_NAME,
+        version: crate::methods::basis_distribution::METHOD_VERSION,
+        description: "Record counts grouped by basis variant (self-asserted / community-policy / external-signal / derived-from-record / absent), bucketed by record kind. Surfaces first-party vs third-party attribution rates.",
+        form: MethodForm::Record,
+    },
+    MethodDescriptor {
+        name: crate::methods::attribution_chains::METHOD_NAME,
+        version: crate::methods::attribution_chains::METHOD_VERSION,
+        description: "Counts of dev.idiolect.belief records by holder DID and by subject at-uri. Surfaces labeler coverage over the firehose and records that attract many third-party attributions.",
+        form: MethodForm::Record,
+    },
 ];
 /// Fresh instances of every bundled record-form method, in spec order.
 ///
@@ -72,5 +90,8 @@ pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
         Box::new(crate::methods::verification_coverage::VerificationCoverageMethod::new()),
         Box::new(crate::methods::lens_adoption::LensAdoptionMethod::new()),
         Box::new(crate::methods::action_distribution::ActionDistributionMethod::new()),
+        Box::new(crate::methods::purpose_distribution::PurposeDistributionMethod::new()),
+        Box::new(crate::methods::basis_distribution::BasisDistributionMethod::new()),
+        Box::new(crate::methods::attribution_chains::AttributionChainsMethod::new()),
     ]
 }
