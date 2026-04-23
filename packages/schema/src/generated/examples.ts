@@ -24,8 +24,17 @@ export const BountyJson: string = `{
     "source": { "language": "postgres-sql" },
     "target": { "language": "atproto-lexicon" }
   },
-  "constraints": "bidirectional, covers all nullable columns",
-  "occurredAt":  "2026-04-19T00:00:00.000Z"
+  "constraints": [
+    {
+      "$type":  "dev.idiolect.bounty#constraintConformance",
+      "kind":   "roundtrip-test"
+    },
+    {
+      "$type":    "dev.idiolect.bounty#constraintLicense",
+      "spdx":     "MIT OR Apache-2.0"
+    }
+  ],
+  "occurredAt": "2026-04-19T00:00:00.000Z"
 }
 `;
 
@@ -63,7 +72,11 @@ export const EncounterJson: string = `{
   "$nsid": "dev.idiolect.encounter",
   "lens":         { "uri": "at://did:plc:example/dev.idiolect.lens/abc123" },
   "sourceSchema": { "uri": "at://did:plc:example/dev.idiolect.schema/src" },
-  "purpose":      "translate source to target",
+  "purpose": {
+    "action":   "annotate",
+    "material": { "scope": "classroom_materials" },
+    "actor":    "students"
+  },
   "kind":         "invocation-log",
   "visibility":   "public-detailed",
   "occurredAt":   "2026-04-19T00:00:00.000Z"
@@ -87,7 +100,17 @@ export const ObservationJson: string = `{
 export const RecommendationJson: string = `{
   "$nsid": "dev.idiolect.recommendation",
   "issuingCommunity": "at://did:plc:example/dev.idiolect.community/syntactic-bootstrappers",
-  "conditions":       "when translating universal-dependencies trees to en-pos tags",
+  "conditions": [
+    {
+      "$type":  "dev.idiolect.recommendation#conditionSourceIs",
+      "schema": { "uri": "at://did:plc:ud/dev.panproto.schema.schema/ud-2.14" }
+    },
+    {
+      "$type":  "dev.idiolect.recommendation#conditionTargetIs",
+      "schema": { "uri": "at://did:plc:en/dev.panproto.schema.schema/en-pos" }
+    },
+    { "$type": "dev.idiolect.recommendation#conditionAnd" }
+  ],
   "lensPath": [
     { "uri": "at://did:plc:example/dev.idiolect.lens/ud-to-en-pos" }
   ],
@@ -113,6 +136,10 @@ export const VerificationJson: string = `{
   "kind":       "roundtrip-test",
   "verifier":   "did:plc:verifier",
   "tool":       { "name": "nextest", "version": "0.9.87" },
+  "property": {
+    "$type":  "dev.idiolect.defs#lpRoundtrip",
+    "domain": "all valid UD-2.14 sentences"
+  },
   "result":     "holds",
   "occurredAt": "2026-04-19T00:00:00.000Z"
 }

@@ -15,9 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Community {
-    /// Community-specific conventions not captured by schemas or lenses (style guides, review expectations, review cadence).
+    /// Structured community conventions the decidable subset. Review cadence, verification requirements, deprecation policies. Style/tone norms live in `conventionsText`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub conventions: Option<String>,
+    pub conventions: Option<Vec<CommunityConventions>>,
+    /// Narrative conventions: style guides, tone, conventions not expressible as a structured predicate. Companion to `conventions`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conventions_text: Option<String>,
     /// Lenses the community treats as canonical.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub core_lenses: Option<Vec<super::defs::LensRef>>,
@@ -42,4 +45,60 @@ pub struct Community {
 
 impl crate::Record for Community {
     const NSID: &'static str = "dev.idiolect.community";
+}
+
+/// How the community handles deprecation: minimum notice, replacement requirements.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConventionDeprecationPolicy {
+    /// Minimum days of advance notice before a deprecated lens is removed.
+    pub notice_period_days: i64,
+    /// Whether deprecations must point at a replacement lens before publication.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub replacement_required: Option<bool>,
+}
+
+/// Expected turnaround for community review of proposed lenses/verifications.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConventionReviewCadence {
+    /// Maximum business-days expected before a review is posted.
+    pub max_days: i64,
+    /// Optional narrowing (e.g. 'lens-review', 'verification-review', 'all').
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+}
+
+/// A verification the community requires before endorsing a lens.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConventionVerificationReq {
+    pub kind: ConventionVerificationReqKind,
+    /// Optional specific property required.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub property: Option<super::defs::LensProperty>,
+}
+
+/// ConventionVerificationReqKind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ConventionVerificationReqKind {
+    RoundtripTest,
+    PropertyTest,
+    FormalProof,
+    ConformanceTest,
+    StaticCheck,
+    ConvergencePreserving,
+}
+
+/// CommunityConventions tagged union.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "$type")]
+pub enum CommunityConventions {
+    #[serde(rename = "dev.idiolect.community#conventionReviewCadence")]
+    ConventionReviewCadence(ConventionReviewCadence),
+    #[serde(rename = "dev.idiolect.community#conventionVerificationReq")]
+    ConventionVerificationReq(ConventionVerificationReq),
+    #[serde(rename = "dev.idiolect.community#conventionDeprecationPolicy")]
+    ConventionDeprecationPolicy(ConventionDeprecationPolicy),
 }

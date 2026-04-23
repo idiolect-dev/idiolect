@@ -112,8 +112,11 @@ enum TsDecl {
     TaggedUnion {
         name: String,
         description: Option<String>,
-        /// `(tag_value, variant_ty_name)`
-        variants: Vec<(String, String)>,
+        /// `(tag_value, variant_ty_name, import_from)`. `import_from`
+        /// is `Some("module")` when the variant type lives in another
+        /// module (triggers a cross-module `import type` at the top of
+        /// the file); `None` for same-module refs.
+        variants: Vec<(String, String, Option<String>)>,
     },
 }
 
@@ -473,7 +476,7 @@ fn build_tagged_union_stmt<'a>(
     next_id: &mut u32,
     name: &str,
     description: Option<&str>,
-    variants: &[(String, String)],
+    variants: &[(String, String, Option<String>)],
 ) -> Statement<'a> {
     let alias_id = fresh_id(next_id);
     if let Some(desc) = description {
@@ -481,7 +484,7 @@ fn build_tagged_union_stmt<'a>(
     }
 
     // one variant: `{ $type: "tag" } & VariantTy`
-    let types = ab.vec_from_iter(variants.iter().map(|(tag, variant_ty)| {
+    let types = ab.vec_from_iter(variants.iter().map(|(tag, variant_ty, _)| {
         // build `{ $type: "tag" }`
         let sig_key = ab.property_key_static_identifier(SPAN, ab.ident("$type"));
         let tag_ty = ab.ts_type_literal_type(SPAN, literal_string(ab, tag));
@@ -631,7 +634,12 @@ fn build_tagged_union(ty_name: &str, current_nsid: &str, def: &UnionDef) -> TsDe
         .map(|v| {
             let tag = format!("{}#{}", v.nsid, v.def_name);
             let variant_ty = ts_ref_name(v, current_nsid);
-            (tag, variant_ty)
+            let import_from = if v.nsid == current_nsid {
+                None
+            } else {
+                Some(module_name_for_nsid(&v.nsid))
+            };
+            (tag, variant_ty, import_from)
         })
         .collect();
 
@@ -802,10 +810,24 @@ fn ts_ref_name(target: &RefTarget, _current_nsid: &str) -> String {
 fn collect_imports(decls: &[TsDecl]) -> BTreeMap<String, BTreeSet<String>> {
     let mut out: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for decl in decls {
-        if let TsDecl::Interface { fields, .. } = decl {
-            for f in fields {
-                collect_import_from_ty(&f.ty, &mut out);
+        match decl {
+            TsDecl::Interface { fields, .. } => {
+                for f in fields {
+                    collect_import_from_ty(&f.ty, &mut out);
+                }
             }
+            TsDecl::TaggedUnion { variants, .. } => {
+                // Variants of a cross-module tagged union need a top-
+                // of-file `import type` pass, same as interface refs.
+                for (_, variant_ty, import_from) in variants {
+                    if let Some(module) = import_from {
+                        out.entry(module.clone())
+                            .or_default()
+                            .insert(variant_ty.clone());
+                    }
+                }
+            }
+            TsDecl::StringLiteralUnion { .. } => {}
         }
     }
     out
