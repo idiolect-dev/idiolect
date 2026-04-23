@@ -79,6 +79,7 @@ pub mod handler;
 pub mod http;
 pub mod predicates;
 pub mod query;
+pub mod theory_resolver;
 
 pub use catalog::{Catalog, CatalogRef, Entry};
 #[cfg(feature = "catalog-sqlite")]
@@ -87,3 +88,4 @@ pub use error::{OrchestratorError, OrchestratorResult};
 pub use handler::CatalogHandler;
 #[cfg(feature = "query-http")]
 pub use http::{AppState, router as http_router};
+pub use theory_resolver::{Resolution, Resolver};
