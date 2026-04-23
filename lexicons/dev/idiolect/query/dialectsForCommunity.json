@@ -1,0 +1,36 @@
+{
+  "defs": {
+    "main": {
+      "description": "Every dialect whose `owning_community` at-uri matches.",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "community_uri": {
+            "type": "string"
+          },
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "community_uri"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `dialects_for_community` catalog query. Mirrors the REST endpoint at `/v1/dialects/for-community`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.dialectsForCommunity",
+  "lexicon": 1
+}

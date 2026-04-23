@@ -1,0 +1,42 @@
+{
+  "defs": {
+    "main": {
+      "description": "Open bounties whose `wants` is a WantLens for the given schema pair.",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "source_uri": {
+            "description": "at-uri of the schema record.",
+            "type": "string"
+          },
+          "target_uri": {
+            "description": "at-uri of the schema record.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_uri",
+          "target_uri"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `bounties_for_want_lens` catalog query. Mirrors the REST endpoint at `/v1/bounties/want-lens`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.bountiesForWantLens",
+  "lexicon": 1
+}

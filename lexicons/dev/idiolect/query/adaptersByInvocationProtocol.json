@@ -1,0 +1,37 @@
+{
+  "defs": {
+    "main": {
+      "description": "Every adapter whose invocation-protocol kind matches (`subprocess`, `http`, `wasm`).",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "one of `subprocess`, `http`, `wasm`.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `adapters_by_invocation_protocol` catalog query. Mirrors the REST endpoint at `/v1/adapters/by-invocation-protocol`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.adaptersByInvocationProtocol",
+  "lexicon": 1
+}

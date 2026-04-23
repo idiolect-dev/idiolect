@@ -290,6 +290,107 @@ pub fn emit_all(spec: &QuerySpec, orchestrator_src: &Path) -> Result<Vec<PathBuf
 
 const SOURCE_PATH: &str = "orchestrator-spec/queries.json";
 
+/// Emit one atproto XRPC lexicon per query under
+/// `<lexicons_root>/dev/idiolect/query/<camelName>.json`. Each lexicon
+/// is `type: "query"` with parameters derived from the query's HTTP
+/// params (plus `cursor` / `limit` for pagination) and an
+/// `application/json` output. Output schemas are not emitted — the
+/// JSON shape is defined by the Rust record types the REST surface
+/// already produces.
+///
+/// # Errors
+///
+/// IO error writing any file, or JSON serialization failure.
+pub fn emit_xrpc_lexicons(spec: &QuerySpec, lexicons_root: &Path) -> Result<Vec<PathBuf>> {
+    let out_dir = lexicons_root.join("dev/idiolect/query");
+    std::fs::create_dir_all(&out_dir).with_context(|| format!("mkdir {}", out_dir.display()))?;
+    let mut written = Vec::new();
+    for q in &spec.queries {
+        let nsid = xrpc_nsid(&q.name);
+        let camel = snake_to_camel(&q.name);
+        let path = out_dir.join(format!("{camel}.json"));
+        let json = build_query_lexicon(&nsid, q);
+        let text = serde_json::to_string_pretty(&json)? + "\n";
+        std::fs::write(&path, text).with_context(|| format!("write {}", path.display()))?;
+        written.push(path);
+    }
+    Ok(written)
+}
+
+fn build_query_lexicon(nsid: &str, q: &QueryDecl) -> serde_json::Value {
+    let mut props = serde_json::Map::new();
+    let mut required: Vec<serde_json::Value> = Vec::new();
+    for p in &q.params {
+        let mut prop = serde_json::Map::new();
+        prop.insert("type".into(), serde_json::Value::String("string".into()));
+        if let Some(hint) = parser_param_description(p.parser) {
+            prop.insert("description".into(), serde_json::Value::String(hint.into()));
+        }
+        props.insert(p.http_query.clone(), serde_json::Value::Object(prop));
+        required.push(serde_json::Value::String(p.http_query.clone()));
+    }
+    // Pagination knobs — kept optional, matching the REST `Page` shape.
+    props.insert(
+        "cursor".into(),
+        serde_json::json!({
+            "type": "string",
+            "description": "Opaque pagination cursor returned by a prior page of results."
+        }),
+    );
+    props.insert(
+        "limit".into(),
+        serde_json::json!({
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "Maximum number of entries to return in one page."
+        }),
+    );
+
+    let mut main = serde_json::Map::new();
+    main.insert("type".into(), serde_json::Value::String("query".into()));
+    if let Some(d) = &q.description {
+        main.insert("description".into(), serde_json::Value::String(d.clone()));
+    }
+    let mut parameters = serde_json::Map::new();
+    parameters.insert("type".into(), serde_json::Value::String("params".into()));
+    if !required.is_empty() {
+        parameters.insert("required".into(), serde_json::Value::Array(required));
+    }
+    parameters.insert("properties".into(), serde_json::Value::Object(props));
+    main.insert("parameters".into(), serde_json::Value::Object(parameters));
+    main.insert(
+        "output".into(),
+        serde_json::json!({
+            "encoding": "application/json",
+            "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query."
+        }),
+    );
+
+    serde_json::json!({
+        "lexicon": 1,
+        "id": nsid,
+        "description": format!(
+            "XRPC facade for the `{}` catalog query. Mirrors the REST endpoint at `{}`; both paths invoke the same handler.",
+            q.name, q.http.path,
+        ),
+        "defs": { "main": serde_json::Value::Object(main) }
+    })
+}
+
+const fn parser_param_description(p: ParserKind) -> Option<&'static str> {
+    match p {
+        ParserKind::String => None,
+        ParserKind::SchemaRefFromUri => Some("at-uri of the schema record."),
+        ParserKind::LensRefFromUri => Some("at-uri of the lens record."),
+        ParserKind::VerificationKind => Some(
+            "one of `roundtrip-test`, `property-test`, `formal-proof`, `conformance-test`, `static-check`, `convergence-preserving`.",
+        ),
+        ParserKind::AdapterInvocationProtocolKind => Some("one of `subprocess`, `http`, `wasm`."),
+        ParserKind::VocabWorld => Some("one of `closed-with-default`, `open`, `hierarchy-closed`."),
+    }
+}
+
 fn render_file(inner_doc: &str, items: Vec<TokenStream>) -> Result<String> {
     super::render_file_with_source(inner_doc, SOURCE_PATH, items)
 }
@@ -563,22 +664,59 @@ fn param_binding(p: &ParamDecl) -> Result<TokenStream> {
 }
 
 fn register_routes_fn(spec: &QuerySpec) -> TokenStream {
+    // Each query is mounted twice: once at the REST `http.path` and
+    // once at the XRPC path `/xrpc/<nsid>`. The handler body is the
+    // same — axum's router dispatches by path, the handler doesn't
+    // care which surface the request came through.
     let routes: Vec<TokenStream> = spec
         .queries
         .iter()
-        .map(|q| {
-            let path = &q.http.path;
+        .flat_map(|q| {
+            let rest_path = q.http.path.clone();
+            let xrpc_path = format!("/xrpc/{}", xrpc_nsid(&q.name));
             let handler = format_ident!("handler_{}", q.name);
-            quote! { .route(#path, get(#handler)) }
+            let h2 = handler.clone();
+            [
+                quote! { .route(#rest_path, get(#handler)) },
+                quote! { .route(#xrpc_path, get(#h2)) },
+            ]
         })
         .collect();
     quote! {
-        /// Register every generated route onto the caller-supplied router.
+        /// Register every generated route onto the caller-supplied
+        /// router. Each query is mounted at both its REST path and
+        /// its `/xrpc/<nsid>` path.
         #[must_use]
         pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
             router #(#routes)*
         }
     }
+}
+
+/// Derive the XRPC NSID from a `snake_case` query name.
+///
+/// The idiolect query surface lives under `dev.idiolect.query.*`; the
+/// final segment is the query name converted to camelCase to match
+/// atproto NSID conventions.
+#[must_use]
+pub fn xrpc_nsid(query_name: &str) -> String {
+    format!("dev.idiolect.query.{}", snake_to_camel(query_name))
+}
+
+fn snake_to_camel(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut upper_next = false;
+    for ch in s.chars() {
+        if ch == '_' {
+            upper_next = true;
+        } else if upper_next {
+            out.push(ch.to_ascii_uppercase());
+            upper_next = false;
+        } else {
+            out.push(ch);
+        }
+    }
+    out
 }
 
 fn to_pascal(s: &str) -> String {

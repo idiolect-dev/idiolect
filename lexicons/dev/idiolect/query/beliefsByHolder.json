@@ -1,0 +1,36 @@
+{
+  "defs": {
+    "main": {
+      "description": "Every belief record whose explicit `holder` matches the given DID. Records with an implicit holder (repo owner) are not returned here — callers needing the repo-owner fallback filter over `Entry<Belief>` directly.",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "holder_did": {
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "holder_did"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `beliefs_by_holder` catalog query. Mirrors the REST endpoint at `/v1/beliefs/by-holder`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.beliefsByHolder",
+  "lexicon": 1
+}

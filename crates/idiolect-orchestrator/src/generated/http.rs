@@ -353,51 +353,117 @@ async fn handler_vocabularies_by_name(
     Ok(axum::Json(Paged::from_collected(items, &p.page)?))
 }
 
-/// Register every generated route onto the caller-supplied router.
+/// Register every generated route onto the caller-supplied
+/// router. Each query is mounted at both its REST path and
+/// its `/xrpc/<nsid>` path.
 #[must_use]
 pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
     router
         .route("/v1/bounties/open", get(handler_open_bounties))
         .route(
+            "/xrpc/dev.idiolect.query.openBounties",
+            get(handler_open_bounties),
+        )
+        .route(
             "/v1/bounties/want-lens",
+            get(handler_bounties_for_want_lens),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.bountiesForWantLens",
             get(handler_bounties_for_want_lens),
         )
         .route(
             "/v1/bounties/by-requester",
             get(handler_bounties_by_requester),
         )
+        .route(
+            "/xrpc/dev.idiolect.query.bountiesByRequester",
+            get(handler_bounties_by_requester),
+        )
         .route("/v1/adapters", get(handler_adapters_for_framework))
         .route(
+            "/xrpc/dev.idiolect.query.adaptersForFramework",
+            get(handler_adapters_for_framework),
+        )
+        .route(
             "/v1/adapters/by-invocation-protocol",
+            get(handler_adapters_by_invocation_protocol),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.adaptersByInvocationProtocol",
             get(handler_adapters_by_invocation_protocol),
         )
         .route(
             "/v1/recommendations",
             get(handler_recommendations_starting_from),
         )
+        .route(
+            "/xrpc/dev.idiolect.query.recommendationsStartingFrom",
+            get(handler_recommendations_starting_from),
+        )
         .route("/v1/verifications", get(handler_verifications_for_lens))
+        .route(
+            "/xrpc/dev.idiolect.query.verificationsForLens",
+            get(handler_verifications_for_lens),
+        )
         .route(
             "/v1/verifications/by-kind",
             get(handler_verifications_by_kind),
         )
+        .route(
+            "/xrpc/dev.idiolect.query.verificationsByKind",
+            get(handler_verifications_by_kind),
+        )
         .route("/v1/communities", get(handler_communities_for_member))
+        .route(
+            "/xrpc/dev.idiolect.query.communitiesForMember",
+            get(handler_communities_for_member),
+        )
         .route("/v1/communities/by-name", get(handler_communities_by_name))
         .route(
+            "/xrpc/dev.idiolect.query.communitiesByName",
+            get(handler_communities_by_name),
+        )
+        .route(
             "/v1/dialects/for-community",
+            get(handler_dialects_for_community),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.dialectsForCommunity",
             get(handler_dialects_for_community),
         )
         .route(
             "/v1/adapters/with-verification",
             get(handler_adapters_with_verification),
         )
+        .route(
+            "/xrpc/dev.idiolect.query.adaptersWithVerification",
+            get(handler_adapters_with_verification),
+        )
         .route("/v1/beliefs/about", get(handler_beliefs_about_record))
+        .route(
+            "/xrpc/dev.idiolect.query.beliefsAboutRecord",
+            get(handler_beliefs_about_record),
+        )
         .route("/v1/beliefs/by-holder", get(handler_beliefs_by_holder))
+        .route(
+            "/xrpc/dev.idiolect.query.beliefsByHolder",
+            get(handler_beliefs_by_holder),
+        )
         .route(
             "/v1/vocabularies/by-world",
             get(handler_vocabularies_with_world),
         )
         .route(
+            "/xrpc/dev.idiolect.query.vocabulariesWithWorld",
+            get(handler_vocabularies_with_world),
+        )
+        .route(
             "/v1/vocabularies/by-name",
+            get(handler_vocabularies_by_name),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.vocabulariesByName",
             get(handler_vocabularies_by_name),
         )
 }

@@ -1,0 +1,36 @@
+{
+  "defs": {
+    "main": {
+      "description": "Every bounty authored by the given requester DID.",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "requester_did": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requester_did"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `bounties_by_requester` catalog query. Mirrors the REST endpoint at `/v1/bounties/by-requester`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.bountiesByRequester",
+  "lexicon": 1
+}

@@ -1,0 +1,30 @@
+{
+  "defs": {
+    "main": {
+      "description": "Adapters that cite a verification record via `verification.uri`. Reference case for the expression predicate form.",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `adapters_with_verification` catalog query. Mirrors the REST endpoint at `/v1/adapters/with-verification`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.adaptersWithVerification",
+  "lexicon": 1
+}

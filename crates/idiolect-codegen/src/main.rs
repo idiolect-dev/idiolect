@@ -126,10 +126,14 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
         let orch_src = repo_root.join("crates/idiolect-orchestrator/src");
         let orch_written = idiolect_codegen::spec_driven::orchestrator::emit_all(&spec, &orch_src)
             .context("orchestrator codegen")?;
+        let lexicons_root = repo_root.join("lexicons");
+        let xrpc_written =
+            idiolect_codegen::spec_driven::orchestrator::emit_xrpc_lexicons(&spec, &lexicons_root)
+                .context("orchestrator xrpc lexicon emission")?;
         let cli_src = repo_root.join("crates/idiolect-cli/src");
         let cli_written =
             idiolect_codegen::spec_driven::cli::emit(&spec, &cli_src).context("cli codegen")?;
-        (orch_written.len(), cli_written.len())
+        (orch_written.len() + xrpc_written.len(), cli_written.len())
     } else {
         (0, 0)
     };
