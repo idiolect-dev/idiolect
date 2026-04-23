@@ -30,17 +30,74 @@ pub const METHOD_NAME: &str = "basis-distribution";
 /// Method version.
 pub const METHOD_VERSION: &str = "1.0.0";
 
-/// Counts by basis variant, broken down by record kind.
+/// Record kinds this method buckets. Closed set — the seven
+/// attitudinal records that carry a `basis` field today.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum RecordKind {
+    Encounter,
+    Correction,
+    Bounty,
+    Recommendation,
+    Verification,
+    Observation,
+    Retrospection,
+}
+
+impl RecordKind {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Encounter => "encounter",
+            Self::Correction => "correction",
+            Self::Bounty => "bounty",
+            Self::Recommendation => "recommendation",
+            Self::Verification => "verification",
+            Self::Observation => "observation",
+            Self::Retrospection => "retrospection",
+        }
+    }
+}
+
+/// Basis bucket. `Absent` is distinct from each concrete variant so
+/// consumers can tell "no basis declared" from "self-asserted."
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum BasisTag {
+    Absent,
+    SelfAsserted,
+    CommunityPolicy,
+    ExternalSignal,
+    DerivedFromRecord,
+}
+
+impl BasisTag {
+    const fn of(basis: Option<&Basis>) -> Self {
+        match basis {
+            None => Self::Absent,
+            Some(Basis::BasisSelfAsserted(_)) => Self::SelfAsserted,
+            Some(Basis::BasisCommunityPolicy(_)) => Self::CommunityPolicy,
+            Some(Basis::BasisExternalSignal(_)) => Self::ExternalSignal,
+            Some(Basis::BasisDerivedFromRecord(_)) => Self::DerivedFromRecord,
+        }
+    }
+
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Absent => "absent",
+            Self::SelfAsserted => "self_asserted",
+            Self::CommunityPolicy => "community_policy",
+            Self::ExternalSignal => "external_signal",
+            Self::DerivedFromRecord => "derived_from_record",
+        }
+    }
+}
+
+/// Counts by basis variant, broken down by record kind. Keys are
+/// typed `(RecordKind, BasisTag)` / `BasisTag` internally; rendering
+/// to JSON-friendly strings happens only at the snapshot boundary.
 #[derive(Debug, Clone, Default)]
 pub struct BasisDistributionMethod {
-    /// Total records observed across the supported kinds.
     total: u64,
-    /// Counts keyed by `<record-kind>/<basis-variant>`, e.g.
-    /// `"encounter/self_asserted"`. Records without a basis increment
-    /// `<kind>/absent`.
-    by_kind_and_basis: BTreeMap<String, u64>,
-    /// Counts keyed by basis variant alone, across all record kinds.
-    by_basis: BTreeMap<String, u64>,
+    by_kind_and_basis: BTreeMap<(RecordKind, BasisTag), u64>,
+    by_basis: BTreeMap<BasisTag, u64>,
 }
 
 impl BasisDistributionMethod {
@@ -56,13 +113,10 @@ impl BasisDistributionMethod {
         self.total
     }
 
-    fn record_bucket(&mut self, kind: &str, basis: &str) {
+    fn record_bucket(&mut self, kind: RecordKind, basis: BasisTag) {
         self.total = self.total.saturating_add(1);
-        *self
-            .by_kind_and_basis
-            .entry(format!("{kind}/{basis}"))
-            .or_insert(0) += 1;
-        *self.by_basis.entry(basis.to_owned()).or_insert(0) += 1;
+        *self.by_kind_and_basis.entry((kind, basis)).or_insert(0) += 1;
+        *self.by_basis.entry(basis).or_insert(0) += 1;
     }
 }
 
@@ -102,18 +156,24 @@ impl ObservationMethod for BasisDistributionMethod {
         let Some(record) = &event.record else {
             return Ok(());
         };
-        let (kind, basis_tag) = match record {
-            AnyRecord::Encounter(r) => ("encounter", tag_of(r.basis.as_ref())),
-            AnyRecord::Correction(r) => ("correction", tag_of(r.basis.as_ref())),
-            AnyRecord::Bounty(r) => ("bounty", tag_of(r.basis.as_ref())),
-            AnyRecord::Recommendation(r) => ("recommendation", tag_of(r.basis.as_ref())),
-            AnyRecord::Verification(r) => ("verification", tag_of(r.basis.as_ref())),
-            AnyRecord::Observation(r) => ("observation", tag_of(r.basis.as_ref())),
-            AnyRecord::Retrospection(r) => ("retrospection", tag_of(r.basis.as_ref())),
+        let (kind, basis) = match record {
+            AnyRecord::Encounter(r) => (RecordKind::Encounter, BasisTag::of(r.basis.as_ref())),
+            AnyRecord::Correction(r) => (RecordKind::Correction, BasisTag::of(r.basis.as_ref())),
+            AnyRecord::Bounty(r) => (RecordKind::Bounty, BasisTag::of(r.basis.as_ref())),
+            AnyRecord::Recommendation(r) => {
+                (RecordKind::Recommendation, BasisTag::of(r.basis.as_ref()))
+            }
+            AnyRecord::Verification(r) => {
+                (RecordKind::Verification, BasisTag::of(r.basis.as_ref()))
+            }
+            AnyRecord::Observation(r) => (RecordKind::Observation, BasisTag::of(r.basis.as_ref())),
+            AnyRecord::Retrospection(r) => {
+                (RecordKind::Retrospection, BasisTag::of(r.basis.as_ref()))
+            }
             // Other record kinds don't carry a basis today.
             _ => return Ok(()),
         };
-        self.record_bucket(kind, basis_tag);
+        self.record_bucket(kind, basis);
         Ok(())
     }
 
@@ -124,28 +184,28 @@ impl ObservationMethod for BasisDistributionMethod {
         let by_basis: serde_json::Map<String, serde_json::Value> = self
             .by_basis
             .iter()
-            .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
+            .map(|(k, v)| {
+                (
+                    k.as_str().to_owned(),
+                    serde_json::Value::Number((*v).into()),
+                )
+            })
             .collect();
         let by_kind_and_basis: serde_json::Map<String, serde_json::Value> = self
             .by_kind_and_basis
             .iter()
-            .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
+            .map(|((kind, basis), v)| {
+                (
+                    format!("{}/{}", kind.as_str(), basis.as_str()),
+                    serde_json::Value::Number((*v).into()),
+                )
+            })
             .collect();
         Ok(Some(serde_json::json!({
             "total": self.total,
             "byBasis": by_basis,
             "byKindAndBasis": by_kind_and_basis,
         })))
-    }
-}
-
-fn tag_of(basis: Option<&Basis>) -> &'static str {
-    match basis {
-        None => "absent",
-        Some(Basis::BasisSelfAsserted(_)) => "self_asserted",
-        Some(Basis::BasisCommunityPolicy(_)) => "community_policy",
-        Some(Basis::BasisExternalSignal(_)) => "external_signal",
-        Some(Basis::BasisDerivedFromRecord(_)) => "derived_from_record",
     }
 }
 

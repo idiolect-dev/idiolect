@@ -18,7 +18,7 @@
 use idiolect_records::generated::bounty::{
     BountyEligibility, EligibilityDid, EligibilityMember, EligibilityVerificationFor,
 };
-use idiolect_records::generated::defs::VocabRef;
+use idiolect_records::generated::defs::{LensProperty, VocabRef};
 use idiolect_records::generated::recommendation::{
     ConditionActionSubsumedBy, ConditionDataHas, ConditionPurposeSubsumedBy, ConditionSourceIs,
     ConditionTargetIs, RecommendationConditions, RecommendationPreconditions,
@@ -80,19 +80,21 @@ pub enum PredicateError {
 }
 
 /// Claimant for eligibility evaluation. DIDs this claimant asserts
-/// membership in and lens properties they hold verifications for
-/// are looked up against the catalog by the caller; here we just
-/// take the resolved lists.
+/// membership in and the typed lens properties they hold
+/// verifications for are looked up against the catalog by the
+/// caller; here we just take the resolved lists.
 #[derive(Debug, Clone, Default)]
 pub struct Claimer {
     /// DID of the claimant.
     pub did: String,
     /// Communities the claimant is currently a member of.
     pub memberships: Vec<String>,
-    /// Lens-property identifiers the claimant has a verification
-    /// for (e.g. `"lpTheorem:identity"` — callers choose their own
-    /// identifier format).
-    pub verified_properties: Vec<String>,
+    /// Typed `LensProperty` values the claimant has a verification
+    /// for. The eligibility evaluator matches these against the
+    /// eligibility node's `property` with the same structural
+    /// semantics as [`crate::query::requirement_matches`] — variant
+    /// must agree, and pinned fields must agree.
+    pub verified_properties: Vec<LensProperty>,
 }
 
 /// Evaluate a `conditions` tree on a recommendation against a
@@ -306,22 +308,52 @@ fn is_member_of(n: &EligibilityMember, claimer: &Claimer) -> PredicateResult {
 }
 
 fn has_verification_for(n: &EligibilityVerificationFor, claimer: &Claimer) -> PredicateResult {
-    // The caller supplies verified_properties as opaque identifiers.
-    // We convert the typed LensProperty variant back into the same
-    // identifier format (kind:tag) the caller would have used.
-    use idiolect_records::generated::defs::LensProperty;
-    let tag = match &n.property {
-        LensProperty::LpRoundtrip(r) => format!("lpRoundtrip:{}", r.domain),
-        LensProperty::LpGenerator(g) => format!("lpGenerator:{}", g.spec),
-        LensProperty::LpTheorem(t) => format!("lpTheorem:{}", t.statement),
-        LensProperty::LpConformance(c) => format!("lpConformance:{}:{}", c.standard, c.version),
-        LensProperty::LpChecker(c) => format!("lpChecker:{}", c.checker),
-        LensProperty::LpConvergence(c) => format!("lpConvergence:{}", c.property),
-    };
-    if claimer.verified_properties.iter().any(|p| p == &tag) {
+    // Structural match on LensProperty variant + pinned fields, same
+    // rules as `query::requirement_matches` (empty string fields on
+    // the requirement match any published value). This lets callers
+    // hand us the claimant's verifications directly as typed values
+    // — no string-tag encoding required.
+    if claimer
+        .verified_properties
+        .iter()
+        .any(|held| lens_property_matches(&n.property, held))
+    {
         PredicateResult::Holds
     } else {
         PredicateResult::DoesNotHold
+    }
+}
+
+/// Whether a claimant's held `LensProperty` satisfies the eligibility
+/// node's required property. Mirrors the requirement/property pairing
+/// in [`crate::query::requirement_matches`] but operates on two
+/// [`LensProperty`] values so callers don't have to route through the
+/// `RecommendationRequiredVerifications` union.
+fn lens_property_matches(required: &LensProperty, held: &LensProperty) -> bool {
+    use crate::query::{opt_str_wildcard_eq, str_wildcard_eq};
+    match (required, held) {
+        (LensProperty::LpRoundtrip(req), LensProperty::LpRoundtrip(h)) => {
+            str_wildcard_eq(&req.domain, &h.domain)
+        }
+        (LensProperty::LpGenerator(req), LensProperty::LpGenerator(h)) => {
+            str_wildcard_eq(&req.spec, &h.spec)
+                && opt_str_wildcard_eq(req.runner.as_deref(), h.runner.as_deref())
+        }
+        (LensProperty::LpTheorem(req), LensProperty::LpTheorem(h)) => {
+            str_wildcard_eq(&req.statement, &h.statement)
+                && opt_str_wildcard_eq(req.system.as_deref(), h.system.as_deref())
+        }
+        (LensProperty::LpConformance(req), LensProperty::LpConformance(h)) => {
+            str_wildcard_eq(&req.standard, &h.standard) && str_wildcard_eq(&req.version, &h.version)
+        }
+        (LensProperty::LpChecker(req), LensProperty::LpChecker(h)) => {
+            str_wildcard_eq(&req.checker, &h.checker)
+                && opt_str_wildcard_eq(req.ruleset.as_deref(), h.ruleset.as_deref())
+        }
+        (LensProperty::LpConvergence(req), LensProperty::LpConvergence(h)) => {
+            str_wildcard_eq(&req.property, &h.property)
+        }
+        _ => false,
     }
 }
 

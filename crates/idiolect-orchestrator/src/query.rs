@@ -124,12 +124,13 @@ pub fn requirement_matches(
 }
 
 /// Empty required-value matches any published value; otherwise exact
-/// equality.
-fn str_wildcard_eq(required: &str, published: &str) -> bool {
+/// equality. Exposed `pub(crate)` so the eligibility evaluator in
+/// [`crate::predicate_eval`] can reuse the same wildcard semantics.
+pub(crate) fn str_wildcard_eq(required: &str, published: &str) -> bool {
     required.is_empty() || required == published
 }
 
-fn opt_str_wildcard_eq(required: Option<&str>, published: Option<&str>) -> bool {
+pub(crate) fn opt_str_wildcard_eq(required: Option<&str>, published: Option<&str>) -> bool {
     match required {
         None | Some("") => true,
         Some(r) => published == Some(r),

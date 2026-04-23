@@ -174,7 +174,7 @@ pub fn beliefs_by_holder<'a>(
 #[must_use]
 pub fn vocabularies_with_world<'a>(
     catalog: &'a Catalog,
-    world: &str,
+    world: &idiolect_records::generated::vocab::VocabWorld,
 ) -> Vec<&'a Entry<idiolect_records::Vocab>> {
     catalog
         .vocabularies()

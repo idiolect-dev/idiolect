@@ -203,7 +203,7 @@
       "params": [
         {
           "name": "world",
-          "rust_kind": "String",
+          "rust_kind": "VocabWorld",
           "http_query": "world",
           "parser": "vocab_world"
         }

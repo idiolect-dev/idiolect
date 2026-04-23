@@ -319,10 +319,11 @@ async fn handler_vocabularies_with_world(
     State(s): State<AppState>,
     Query(p): Query<VocabulariesWithWorldParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Vocab>>>, ApiError> {
-    let world: String = match crate::predicates::parse_vocab_world(&p.raw_world) {
-        Ok(v) => v,
-        Err(e) => return Err(ApiError::invalid_request(e)),
-    };
+    let world: idiolect_records::generated::vocab::VocabWorld =
+        match crate::predicates::parse_vocab_world(&p.raw_world) {
+            Ok(v) => v,
+            Err(e) => return Err(ApiError::invalid_request(e)),
+        };
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::vocabularies_with_world(&catalog, &world)
         .into_iter()

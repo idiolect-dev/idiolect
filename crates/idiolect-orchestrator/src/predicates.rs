@@ -262,16 +262,12 @@ pub fn belief_by_explicit_holder(b: &Belief, holder_did: &str) -> bool {
 // Vocabulary predicates.
 // -----------------------------------------------------------------
 
-/// Vocabulary records whose declared `world` matches the given name
-/// (`closed-with-default`, `open`, or `hierarchy-closed`).
+/// Vocabulary records whose declared `world` matches. Compared by
+/// typed enum equality — callers pass the already-parsed
+/// [`VocabWorld`] rather than a string token.
 #[must_use]
-pub fn vocab_with_world(v: &Vocab, world: &str) -> bool {
-    let rendered = match v.world {
-        VocabWorld::ClosedWithDefault => "closed-with-default",
-        VocabWorld::Open => "open",
-        VocabWorld::HierarchyClosed => "hierarchy-closed",
-    };
-    rendered == world
+pub fn vocab_with_world(v: &Vocab, world: &VocabWorld) -> bool {
+    v.world == *world
 }
 
 /// Vocabulary records whose `name` matches.
@@ -281,14 +277,18 @@ pub fn vocab_by_name(v: &Vocab, name: &str) -> bool {
 }
 
 /// Parse a `world` query-string token into the typed
-/// [`VocabWorld`]. Unknown tokens surface the raw string.
+/// [`VocabWorld`].
 ///
 /// # Errors
-/// Returns the raw token in an `Err` when it does not match one of
-/// the three declared world disciplines.
-pub fn parse_vocab_world(s: &str) -> Result<String, String> {
+///
+/// Returns an operator-friendly message when the string is not one
+/// of the three declared world disciplines; the generated HTTP
+/// handler wraps this into a 400 `invalid_request` response.
+pub fn parse_vocab_world(s: &str) -> Result<VocabWorld, String> {
     match s {
-        "closed-with-default" | "open" | "hierarchy-closed" => Ok(s.to_owned()),
+        "closed-with-default" => Ok(VocabWorld::ClosedWithDefault),
+        "open" => Ok(VocabWorld::Open),
+        "hierarchy-closed" => Ok(VocabWorld::HierarchyClosed),
         other => Err(format!("unknown world discipline: {other}")),
     }
 }

@@ -59,7 +59,8 @@
             "SchemaRef",
             "LensRef",
             "VerificationKind",
-            "AdapterInvocationProtocolKind"
+            "AdapterInvocationProtocolKind",
+            "VocabWorld"
           ]
         },
         "http_query": { "type": "string" },

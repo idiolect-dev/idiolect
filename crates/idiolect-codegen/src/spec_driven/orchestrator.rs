@@ -118,6 +118,7 @@ pub enum RustKind {
     LensRef,
     VerificationKind,
     AdapterInvocationProtocolKind,
+    VocabWorld,
 }
 
 impl RustKind {
@@ -131,6 +132,7 @@ impl RustKind {
             Self::AdapterInvocationProtocolKind => {
                 "idiolect_records::generated::adapter::AdapterInvocationProtocolKind"
             }
+            Self::VocabWorld => "idiolect_records::generated::vocab::VocabWorld",
         }
     }
 
@@ -234,16 +236,15 @@ fn validate_spec(spec: &QuerySpec) -> Result<()> {
         for p in &q.params {
             let consistent = matches!(
                 (p.rust_kind, p.parser),
-                (
-                    RustKind::String,
-                    ParserKind::String | ParserKind::VocabWorld
-                ) | (RustKind::SchemaRef, ParserKind::SchemaRefFromUri)
+                (RustKind::String, ParserKind::String)
+                    | (RustKind::SchemaRef, ParserKind::SchemaRefFromUri)
                     | (RustKind::LensRef, ParserKind::LensRefFromUri)
                     | (RustKind::VerificationKind, ParserKind::VerificationKind)
                     | (
                         RustKind::AdapterInvocationProtocolKind,
                         ParserKind::AdapterInvocationProtocolKind,
                     )
+                    | (RustKind::VocabWorld, ParserKind::VocabWorld)
             );
             if !consistent {
                 bail!(
