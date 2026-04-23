@@ -262,6 +262,97 @@ async fn handler_adapters_with_verification(
     Ok(axum::Json(Paged::from_collected(items, &page)?))
 }
 
+#[derive(Debug, Deserialize)]
+struct BeliefsAboutRecordParams {
+    #[serde(rename = "subject_uri")]
+    raw_subject_uri: String,
+    #[serde(flatten)]
+    page: Page,
+}
+
+///Every belief record whose subject's at-uri matches.
+async fn handler_beliefs_about_record(
+    State(s): State<AppState>,
+    Query(p): Query<BeliefsAboutRecordParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Belief>>>, ApiError> {
+    let subject_uri: String = p.raw_subject_uri.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::beliefs_about_record(&catalog, &subject_uri)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+
+#[derive(Debug, Deserialize)]
+struct BeliefsByHolderParams {
+    #[serde(rename = "holder_did")]
+    raw_holder_did: String,
+    #[serde(flatten)]
+    page: Page,
+}
+
+///Every belief record whose explicit `holder` matches the given DID. Records with an implicit holder (repo owner) are not returned here — callers needing the repo-owner fallback filter over `Entry<Belief>` directly.
+async fn handler_beliefs_by_holder(
+    State(s): State<AppState>,
+    Query(p): Query<BeliefsByHolderParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Belief>>>, ApiError> {
+    let holder_did: String = p.raw_holder_did.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::beliefs_by_holder(&catalog, &holder_did)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+
+#[derive(Debug, Deserialize)]
+struct VocabulariesWithWorldParams {
+    #[serde(rename = "world")]
+    raw_world: String,
+    #[serde(flatten)]
+    page: Page,
+}
+
+///Every vocabulary record whose declared `world` matches (`closed-with-default`, `open`, or `hierarchy-closed`).
+async fn handler_vocabularies_with_world(
+    State(s): State<AppState>,
+    Query(p): Query<VocabulariesWithWorldParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Vocab>>>, ApiError> {
+    let world: String = match crate::predicates::parse_vocab_world(&p.raw_world) {
+        Ok(v) => v,
+        Err(e) => return Err(ApiError::invalid_request(e)),
+    };
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::vocabularies_with_world(&catalog, &world)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+
+#[derive(Debug, Deserialize)]
+struct VocabulariesByNameParams {
+    #[serde(rename = "name")]
+    raw_name: String,
+    #[serde(flatten)]
+    page: Page,
+}
+
+///Every vocabulary record whose `name` field matches exactly.
+async fn handler_vocabularies_by_name(
+    State(s): State<AppState>,
+    Query(p): Query<VocabulariesByNameParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Vocab>>>, ApiError> {
+    let name: String = p.raw_name.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::vocabularies_by_name(&catalog, &name)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+
 /// Register every generated route onto the caller-supplied router.
 #[must_use]
 pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
@@ -298,5 +389,15 @@ pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
         .route(
             "/v1/adapters/with-verification",
             get(handler_adapters_with_verification),
+        )
+        .route("/v1/beliefs/about", get(handler_beliefs_about_record))
+        .route("/v1/beliefs/by-holder", get(handler_beliefs_by_holder))
+        .route(
+            "/v1/vocabularies/by-world",
+            get(handler_vocabularies_with_world),
+        )
+        .route(
+            "/v1/vocabularies/by-name",
+            get(handler_vocabularies_by_name),
         )
 }

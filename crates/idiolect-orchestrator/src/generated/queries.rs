@@ -145,3 +145,51 @@ pub fn adapters_with_verification(catalog: &Catalog) -> Vec<&Entry<idiolect_reco
         })
         .collect()
 }
+
+///Every belief record whose subject's at-uri matches.
+#[must_use]
+pub fn beliefs_about_record<'a>(
+    catalog: &'a Catalog,
+    subject_uri: &str,
+) -> Vec<&'a Entry<idiolect_records::Belief>> {
+    catalog
+        .beliefs()
+        .filter(|entry| crate::predicates::belief_about_record(&entry.record, subject_uri))
+        .collect()
+}
+
+///Every belief record whose explicit `holder` matches the given DID. Records with an implicit holder (repo owner) are not returned here — callers needing the repo-owner fallback filter over `Entry<Belief>` directly.
+#[must_use]
+pub fn beliefs_by_holder<'a>(
+    catalog: &'a Catalog,
+    holder_did: &str,
+) -> Vec<&'a Entry<idiolect_records::Belief>> {
+    catalog
+        .beliefs()
+        .filter(|entry| crate::predicates::belief_by_explicit_holder(&entry.record, holder_did))
+        .collect()
+}
+
+///Every vocabulary record whose declared `world` matches (`closed-with-default`, `open`, or `hierarchy-closed`).
+#[must_use]
+pub fn vocabularies_with_world<'a>(
+    catalog: &'a Catalog,
+    world: &str,
+) -> Vec<&'a Entry<idiolect_records::Vocab>> {
+    catalog
+        .vocabularies()
+        .filter(|entry| crate::predicates::vocab_with_world(&entry.record, world))
+        .collect()
+}
+
+///Every vocabulary record whose `name` field matches exactly.
+#[must_use]
+pub fn vocabularies_by_name<'a>(
+    catalog: &'a Catalog,
+    name: &str,
+) -> Vec<&'a Entry<idiolect_records::Vocab>> {
+    catalog
+        .vocabularies()
+        .filter(|entry| crate::predicates::vocab_by_name(&entry.record, name))
+        .collect()
+}

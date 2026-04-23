@@ -165,6 +165,66 @@
       "expression": "r.verification.uri != \"\"",
       "http": { "path": "/v1/adapters/with-verification" },
       "description": "Adapters that cite a verification record via `verification.uri`. Reference case for the expression predicate form."
+    },
+    {
+      "name": "beliefs_about_record",
+      "entity": "belief",
+      "predicate": "belief_about_record",
+      "params": [
+        {
+          "name": "subject_uri",
+          "rust_kind": "String",
+          "http_query": "subject_uri",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/beliefs/about" },
+      "description": "Every belief record whose subject's at-uri matches."
+    },
+    {
+      "name": "beliefs_by_holder",
+      "entity": "belief",
+      "predicate": "belief_by_explicit_holder",
+      "params": [
+        {
+          "name": "holder_did",
+          "rust_kind": "String",
+          "http_query": "holder_did",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/beliefs/by-holder" },
+      "description": "Every belief record whose explicit `holder` matches the given DID. Records with an implicit holder (repo owner) are not returned here — callers needing the repo-owner fallback filter over `Entry<Belief>` directly."
+    },
+    {
+      "name": "vocabularies_with_world",
+      "entity": "vocab",
+      "predicate": "vocab_with_world",
+      "params": [
+        {
+          "name": "world",
+          "rust_kind": "String",
+          "http_query": "world",
+          "parser": "vocab_world"
+        }
+      ],
+      "http": { "path": "/v1/vocabularies/by-world" },
+      "description": "Every vocabulary record whose declared `world` matches (`closed-with-default`, `open`, or `hierarchy-closed`)."
+    },
+    {
+      "name": "vocabularies_by_name",
+      "entity": "vocab",
+      "predicate": "vocab_by_name",
+      "params": [
+        {
+          "name": "name",
+          "rust_kind": "String",
+          "http_query": "name",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/vocabularies/by-name" },
+      "description": "Every vocabulary record whose `name` field matches exactly."
     }
   ]
 }

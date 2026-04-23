@@ -218,6 +218,7 @@ fn help_line(subcommand: &[String], q: &QueryDecl) -> TokenStream {
             let value_label = match param.parser {
                 ParserKind::SchemaRefFromUri | ParserKind::LensRefFromUri => "AT_URI",
                 ParserKind::VerificationKind | ParserKind::AdapterInvocationProtocolKind => "KIND",
+                ParserKind::VocabWorld => "WORLD",
                 ParserKind::String => "VALUE",
             };
             format!(" --{f} {value_label}")

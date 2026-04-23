@@ -63,11 +63,13 @@ pub struct QueryDecl {
 #[serde(rename_all = "snake_case")]
 pub enum EntityKind {
     Adapter,
+    Belief,
     Bounty,
     Community,
     Dialect,
     Recommendation,
     Verification,
+    Vocab,
 }
 
 impl EntityKind {
@@ -75,11 +77,13 @@ impl EntityKind {
     const fn rust_record_type(self) -> &'static str {
         match self {
             Self::Adapter => "idiolect_records::Adapter",
+            Self::Belief => "idiolect_records::Belief",
             Self::Bounty => "idiolect_records::Bounty",
             Self::Community => "idiolect_records::Community",
             Self::Dialect => "idiolect_records::Dialect",
             Self::Recommendation => "idiolect_records::Recommendation",
             Self::Verification => "idiolect_records::Verification",
+            Self::Vocab => "idiolect_records::Vocab",
         }
     }
 
@@ -88,11 +92,13 @@ impl EntityKind {
     const fn catalog_accessor(self) -> &'static str {
         match self {
             Self::Adapter => "adapters",
+            Self::Belief => "beliefs",
             Self::Bounty => "bounties",
             Self::Community => "communities",
             Self::Dialect => "dialects",
             Self::Recommendation => "recommendations",
             Self::Verification => "verifications",
+            Self::Vocab => "vocabularies",
         }
     }
 }
@@ -153,6 +159,11 @@ pub enum ParserKind {
     /// Parse a string into `AdapterInvocationProtocolKind` via
     /// `predicates::parse_adapter_invocation_protocol_kind`.
     AdapterInvocationProtocolKind,
+    /// Validate a string against the declared `VocabWorld` tokens
+    /// (`closed-with-default`, `open`, `hierarchy-closed`) via
+    /// `predicates::parse_vocab_world`. Produces a `String` so the
+    /// predicate can compare against the rendered form.
+    VocabWorld,
 }
 
 #[derive(Debug, Deserialize)]
@@ -223,8 +234,10 @@ fn validate_spec(spec: &QuerySpec) -> Result<()> {
         for p in &q.params {
             let consistent = matches!(
                 (p.rust_kind, p.parser),
-                (RustKind::String, ParserKind::String)
-                    | (RustKind::SchemaRef, ParserKind::SchemaRefFromUri)
+                (
+                    RustKind::String,
+                    ParserKind::String | ParserKind::VocabWorld
+                ) | (RustKind::SchemaRef, ParserKind::SchemaRefFromUri)
                     | (RustKind::LensRef, ParserKind::LensRefFromUri)
                     | (RustKind::VerificationKind, ParserKind::VerificationKind)
                     | (
@@ -536,6 +549,12 @@ fn param_binding(p: &ParamDecl) -> Result<TokenStream> {
         }),
         ParserKind::AdapterInvocationProtocolKind => Ok(quote! {
             let #typed: #owned_ty = match crate::predicates::parse_adapter_invocation_protocol_kind(&p.#raw) {
+                Ok(v) => v,
+                Err(e) => return Err(ApiError::invalid_request(e)),
+            };
+        }),
+        ParserKind::VocabWorld => Ok(quote! {
+            let #typed: #owned_ty = match crate::predicates::parse_vocab_world(&p.#raw) {
                 Ok(v) => v,
                 Err(e) => return Err(ApiError::invalid_request(e)),
             };
