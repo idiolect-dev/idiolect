@@ -352,16 +352,51 @@ async fn verifications_sufficient(
 fn parse_required_kinds(
     raw: &str,
 ) -> Result<(Vec<RecommendationRequiredVerifications>, Vec<String>), String> {
+    use idiolect_records::generated::defs::{
+        LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem,
+    };
+
     let mut kinds = Vec::new();
     let mut names = Vec::new();
     for token in raw.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+        // `required_kinds` is a convenience HTTP surface that lets an
+        // operator ask "is there any verification of this kind?" using
+        // coarse v0.1-style kind names. We wrap each kind in the
+        // corresponding LensProperty variant with empty details; the
+        // sufficiency check only dispatches on the variant.
         let kind = match token {
-            "roundtrip-test" => RecommendationRequiredVerifications::RoundtripTest,
-            "property-test" => RecommendationRequiredVerifications::PropertyTest,
-            "formal-proof" => RecommendationRequiredVerifications::FormalProof,
-            "conformance-test" => RecommendationRequiredVerifications::ConformanceTest,
-            "static-check" => RecommendationRequiredVerifications::StaticCheck,
-            "convergence-preserving" => RecommendationRequiredVerifications::ConvergencePreserving,
+            "roundtrip-test" => RecommendationRequiredVerifications::LpRoundtrip(LpRoundtrip {
+                domain: String::new(),
+                generator: None,
+            }),
+            "property-test" => RecommendationRequiredVerifications::LpGenerator(LpGenerator {
+                spec: String::new(),
+                runner: None,
+                seed: None,
+            }),
+            "formal-proof" => RecommendationRequiredVerifications::LpTheorem(LpTheorem {
+                statement: String::new(),
+                system: None,
+                free_variables: None,
+            }),
+            "conformance-test" => {
+                RecommendationRequiredVerifications::LpConformance(LpConformance {
+                    standard: String::new(),
+                    version: String::new(),
+                    clauses: None,
+                })
+            }
+            "static-check" => RecommendationRequiredVerifications::LpChecker(LpChecker {
+                checker: String::new(),
+                ruleset: None,
+                version: None,
+            }),
+            "convergence-preserving" => {
+                RecommendationRequiredVerifications::LpConvergence(LpConvergence {
+                    property: String::new(),
+                    bound_steps: None,
+                })
+            }
             other => return Err(format!("unknown verification kind: {other}")),
         };
         kinds.push(kind);

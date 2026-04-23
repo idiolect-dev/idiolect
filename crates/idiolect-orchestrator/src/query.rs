@@ -50,19 +50,24 @@ pub fn preferred_lenses_for_dialect(dialect: &Dialect) -> &[LensRef] {
     dialect.preferred_lenses.as_deref().unwrap_or(&[])
 }
 
-/// Map a [`RecommendationRequiredVerifications`] enum to its
-/// corresponding [`VerificationKind`].
+/// Map a [`RecommendationRequiredVerifications`] tagged-union variant
+/// to the [`VerificationKind`] that satisfies it.
+///
+/// Under v0.2.0, required verifications are `LensProperty` values, not
+/// raw kinds. For this coverage check we still reduce each requirement
+/// to its coarser kind — a future extension can also demand that the
+/// verification's `property` field matches structurally.
 #[must_use]
 pub const fn required_kind_to_verification_kind(
-    kind: RecommendationRequiredVerifications,
+    kind: &RecommendationRequiredVerifications,
 ) -> VerificationKind {
     match kind {
-        RecommendationRequiredVerifications::RoundtripTest => VerificationKind::RoundtripTest,
-        RecommendationRequiredVerifications::PropertyTest => VerificationKind::PropertyTest,
-        RecommendationRequiredVerifications::FormalProof => VerificationKind::FormalProof,
-        RecommendationRequiredVerifications::ConformanceTest => VerificationKind::ConformanceTest,
-        RecommendationRequiredVerifications::StaticCheck => VerificationKind::StaticCheck,
-        RecommendationRequiredVerifications::ConvergencePreserving => {
+        RecommendationRequiredVerifications::LpRoundtrip(_) => VerificationKind::RoundtripTest,
+        RecommendationRequiredVerifications::LpGenerator(_) => VerificationKind::PropertyTest,
+        RecommendationRequiredVerifications::LpTheorem(_) => VerificationKind::FormalProof,
+        RecommendationRequiredVerifications::LpConformance(_) => VerificationKind::ConformanceTest,
+        RecommendationRequiredVerifications::LpChecker(_) => VerificationKind::StaticCheck,
+        RecommendationRequiredVerifications::LpConvergence(_) => {
             VerificationKind::ConvergencePreserving
         }
     }
@@ -87,7 +92,7 @@ pub fn sufficient_verifications_for(
     }
     let verifications = verifications_for_lens(catalog, lens);
     required.iter().all(|r| {
-        let want = required_kind_to_verification_kind(*r);
+        let want = required_kind_to_verification_kind(r);
         verifications.iter().any(|entry| {
             entry.record.kind == want
                 && (!require_holds || entry.record.result == VerificationResult::Holds)

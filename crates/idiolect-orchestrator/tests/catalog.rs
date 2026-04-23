@@ -78,7 +78,7 @@ fn any_to_json(record: &AnyRecord) -> serde_json::Value {
 
 fn bounty_want_lens(status: Option<BountyStatus>, src: &str, tgt: &str) -> Bounty {
     Bounty {
-        constraints: "none".to_owned(),
+        constraints: None,
         eligibility: None,
         fulfillment: None,
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
@@ -95,7 +95,7 @@ fn bounty_want_lens(status: Option<BountyStatus>, src: &str, tgt: &str) -> Bount
 
 fn bounty_want_adapter(fw: &str) -> Bounty {
     Bounty {
-        constraints: "x".to_owned(),
+        constraints: None,
         eligibility: None,
         fulfillment: None,
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
@@ -138,6 +138,7 @@ fn adapter(framework: &str) -> Adapter {
 fn community(members: &[&str]) -> Community {
     Community {
         conventions: None,
+        conventions_text: None,
         core_lenses: None,
         core_schemas: None,
         created_at: "2026-04-20T00:00:00Z".to_owned(),
@@ -164,17 +165,26 @@ fn dialect(preferred: &[&str]) -> Dialect {
 }
 
 fn recommendation(path: &[&str]) -> Recommendation {
+    use idiolect_records::generated::defs::{LpRoundtrip, LpTheorem};
     Recommendation {
         annotations: None,
         caveats: None,
-        conditions: "when x".to_owned(),
+        caveats_text: None,
+        conditions: Vec::new(),
         issuing_community: "at://did:plc:c/dev.idiolect.community/main".to_owned(),
         lens_path: path.iter().map(|u| l_ref(u)).collect(),
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
         preconditions: None,
         required_verifications: Some(vec![
-            RecommendationRequiredVerifications::RoundtripTest,
-            RecommendationRequiredVerifications::FormalProof,
+            RecommendationRequiredVerifications::LpRoundtrip(LpRoundtrip {
+                domain: String::new(),
+                generator: None,
+            }),
+            RecommendationRequiredVerifications::LpTheorem(LpTheorem {
+                statement: String::new(),
+                system: None,
+                free_variables: None,
+            }),
         ]),
         supersedes: None,
     }
@@ -185,11 +195,16 @@ fn verification(
     kind: VerificationKind,
     result: VerificationResult,
 ) -> Verification {
-    use idiolect_records::generated::defs::Tool;
+    use idiolect_records::generated::defs::{LpTheorem, Tool};
+    use idiolect_records::generated::verification::VerificationProperty;
     Verification {
         counterexample: None,
         dependencies: None,
-        input_space: None,
+        property: VerificationProperty::LpTheorem(LpTheorem {
+            statement: "identity".to_owned(),
+            system: Some("coq".to_owned()),
+            free_variables: None,
+        }),
         kind,
         lens: l_ref(lens_uri),
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
@@ -316,6 +331,7 @@ async fn delete_removes_record() {
 #[tokio::test]
 async fn catalog_ignores_non_orchestrator_records() {
     // An encounter shouldn't land in the catalog.
+    use idiolect_records::generated::defs::Purpose;
     use idiolect_records::generated::defs::Visibility;
     use idiolect_records::generated::encounter::{Encounter, EncounterKind};
     let handler = CatalogHandler::new();
@@ -327,7 +343,12 @@ async fn catalog_ignores_non_orchestrator_records() {
         lens: l_ref("at://did:plc:x/dev.panproto.schema.lens/l1"),
         occurred_at: "2026-04-20T00:00:00Z".to_owned(),
         produced_output: None,
-        purpose: "t".to_owned(),
+        purpose: Purpose {
+            action: "t".to_owned(),
+            material: None,
+            actor: None,
+            vocabulary: None,
+        },
         source_instance: None,
         source_schema: s_ref("at://did:plc:x/dev.panproto.schema.schema/a"),
         target_schema: None,
@@ -511,22 +532,35 @@ fn query_preferred_lenses_for_dialect() {
 
 #[test]
 fn query_sufficient_verifications_returns_true_when_all_kinds_hold() {
+    use idiolect_records::generated::defs::{LpGenerator, LpRoundtrip, LpTheorem};
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     let lens = l_ref("at://did:plc:x/dev.panproto.schema.lens/l1");
-    let required = vec![
-        RecommendationRequiredVerifications::RoundtripTest,
-        RecommendationRequiredVerifications::FormalProof,
-    ];
+    let rt = || {
+        RecommendationRequiredVerifications::LpRoundtrip(LpRoundtrip {
+            domain: String::new(),
+            generator: None,
+        })
+    };
+    let fp = || {
+        RecommendationRequiredVerifications::LpTheorem(LpTheorem {
+            statement: String::new(),
+            system: None,
+            free_variables: None,
+        })
+    };
+    let pt = || {
+        RecommendationRequiredVerifications::LpGenerator(LpGenerator {
+            spec: String::new(),
+            runner: None,
+            seed: None,
+        })
+    };
+    let required = vec![rt(), fp()];
     assert!(query::sufficient_verifications_for(
         &catalog, &lens, &required, true
     ));
-    // Missing kind is insufficient.
-    let req_plus = vec![
-        RecommendationRequiredVerifications::RoundtripTest,
-        RecommendationRequiredVerifications::FormalProof,
-        RecommendationRequiredVerifications::PropertyTest,
-    ];
+    let req_plus = vec![rt(), fp(), pt()];
     assert!(!query::sufficient_verifications_for(
         &catalog, &lens, &req_plus, true
     ));
@@ -534,12 +568,16 @@ fn query_sufficient_verifications_returns_true_when_all_kinds_hold() {
 
 #[test]
 fn query_sufficient_verifications_excludes_falsified_when_holding_required() {
+    use idiolect_records::generated::defs::LpRoundtrip;
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     let bad_lens = l_ref("at://did:plc:x/dev.panproto.schema.lens/l-bad");
-    // Only verification for l-bad is falsified. require_holds=true
-    // should reject; require_holds=false should accept.
-    let required = vec![RecommendationRequiredVerifications::RoundtripTest];
+    let required = vec![RecommendationRequiredVerifications::LpRoundtrip(
+        LpRoundtrip {
+            domain: String::new(),
+            generator: None,
+        },
+    )];
     assert!(!query::sufficient_verifications_for(
         &catalog, &bad_lens, &required, true
     ));

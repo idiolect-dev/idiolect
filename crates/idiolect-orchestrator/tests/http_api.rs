@@ -58,7 +58,7 @@ fn adapter_for(framework: &str) -> Adapter {
 
 fn bounty_want_lens(src: &str, tgt: &str) -> Bounty {
     Bounty {
-        constraints: "none".into(),
+        constraints: None,
         eligibility: None,
         fulfillment: None,
         occurred_at: "2026-04-21T00:00:00Z".into(),

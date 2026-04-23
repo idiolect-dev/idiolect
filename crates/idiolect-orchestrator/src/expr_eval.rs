@@ -151,7 +151,7 @@ mod tests {
 
     fn bounty_with_reward(summary: Option<&str>) -> Bounty {
         Bounty {
-            constraints: "x".into(),
+            constraints: None,
             eligibility: None,
             fulfillment: None,
             occurred_at: "2026-04-21T00:00:00Z".into(),
