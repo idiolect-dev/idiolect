@@ -33,3 +33,6 @@ build/
 
 # dev
 notes/
+
+# claude code runtime state
+.claude/
