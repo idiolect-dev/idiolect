@@ -15,11 +15,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Correction {
+    /// Structured grounding for the edit. Useful when `holder` is a third party and the record must state on what basis the correction is being attributed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<super::defs::Basis>,
     /// The value after correction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub corrected_value: Option<serde_json::Value>,
     /// The encounter whose output was edited.
     pub encounter: super::defs::EncounterRef,
+    /// DID of the party the correction is attributed to. Omit for first-party records; set explicitly when a third party is recording someone else's edit (e.g. a reviewer transcribing an off-network correction).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holder: Option<String>,
     pub occurred_at: String,
     /// The value prior to correction. May be elided for visibility reasons.
     #[serde(default, skip_serializing_if = "Option::is_none")]

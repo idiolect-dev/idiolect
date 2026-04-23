@@ -72,9 +72,10 @@ export const EncounterJson: string = `{
   "$nsid": "dev.idiolect.encounter",
   "lens":         { "uri": "at://did:plc:example/dev.idiolect.lens/abc123" },
   "sourceSchema": { "uri": "at://did:plc:example/dev.idiolect.schema/src" },
-  "purpose": {
+  "use": {
     "action":   "annotate",
     "material": { "scope": "classroom_materials" },
+    "purpose":  "academic",
     "actor":    "students"
   },
   "kind":         "invocation-log",

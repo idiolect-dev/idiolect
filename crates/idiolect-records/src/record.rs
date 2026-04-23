@@ -44,6 +44,11 @@ pub trait Record: Serialize + DeserializeOwned + Clone + std::fmt::Debug + 'stat
 /// Produced by [`decode_record`] when an appview receives json whose
 /// nsid is only known at runtime (e.g. firehose traffic). Each variant
 /// carries the strongly-typed record; pattern-match to dispatch.
+// `Clone` on a variant-heavy enum surfaces clippy::large_enum_variant
+// once one variant grows meaningfully larger than its siblings. The
+// tag-dispatch shape is the whole reason this type exists; pay the
+// allocation cost elsewhere if the allocation cost matters.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
 pub enum AnyRecord {
     /// A `dev.idiolect.community` record.

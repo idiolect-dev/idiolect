@@ -18,6 +18,9 @@ pub struct Recommendation {
     /// Why this path, how to use it, known strengths. Narrative; not consumed by machine matchers.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub annotations: Option<String>,
+    /// Structured grounding for the endorsement — a community policy, an external standard, a derived record. Omit when the recommendation is self-asserted by the issuing community.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<super::defs::Basis>,
     /// Structured known-failure-mode list. Consumers match on `mode` / `affects` / `severity` without substring search.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub caveats: Option<Vec<super::defs::Caveat>>,
@@ -45,6 +48,17 @@ impl crate::Record for Recommendation {
     const NSID: &'static str = "dev.idiolect.recommendation";
 }
 
+/// Atomic predicate: the invocation's use.action is subsumed by the given action under the referenced action-vocabulary. Reuses the same ThUse subsumption machinery that governs any action-based reasoning.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConditionActionSubsumedBy {
+    /// Action identifier to check subsumption against.
+    pub action: String,
+    /// Action vocabulary the identifier resolves against. Omit to match the invocation's own vocabulary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vocabulary: Option<super::defs::VocabRef>,
+}
+
 /// Combinator: conjoin the top two predicates on the evaluation stack.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -68,11 +82,15 @@ pub struct ConditionNot {}
 #[serde(rename_all = "camelCase")]
 pub struct ConditionOr {}
 
-/// Atomic predicate: the invocation's purpose.action is subsumed by the given purpose.action under the community vocabulary. Reuses the same subsumption hierarchy that governs data-use permissions.
+/// Atomic predicate: the invocation's use.purpose is subsumed by the given purpose under the referenced purpose-vocabulary.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConditionPurposeSubsumedBy {
-    pub purpose: super::defs::Purpose,
+    /// Purpose identifier to check subsumption against.
+    pub purpose: String,
+    /// Purpose vocabulary the identifier resolves against. Omit to match the invocation's own vocabulary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vocabulary: Option<super::defs::VocabRef>,
 }
 
 /// Atomic predicate: the invocation's source schema is the given schema.
@@ -97,6 +115,8 @@ pub enum RecommendationConditions {
     ConditionSourceIs(ConditionSourceIs),
     #[serde(rename = "dev.idiolect.recommendation#conditionTargetIs")]
     ConditionTargetIs(ConditionTargetIs),
+    #[serde(rename = "dev.idiolect.recommendation#conditionActionSubsumedBy")]
+    ConditionActionSubsumedBy(ConditionActionSubsumedBy),
     #[serde(rename = "dev.idiolect.recommendation#conditionPurposeSubsumedBy")]
     ConditionPurposeSubsumedBy(ConditionPurposeSubsumedBy),
     #[serde(rename = "dev.idiolect.recommendation#conditionDataHas")]
@@ -117,6 +137,8 @@ pub enum RecommendationPreconditions {
     ConditionSourceIs(ConditionSourceIs),
     #[serde(rename = "dev.idiolect.recommendation#conditionTargetIs")]
     ConditionTargetIs(ConditionTargetIs),
+    #[serde(rename = "dev.idiolect.recommendation#conditionActionSubsumedBy")]
+    ConditionActionSubsumedBy(ConditionActionSubsumedBy),
     #[serde(rename = "dev.idiolect.recommendation#conditionPurposeSubsumedBy")]
     ConditionPurposeSubsumedBy(ConditionPurposeSubsumedBy),
     #[serde(rename = "dev.idiolect.recommendation#conditionDataHas")]

@@ -11,6 +11,61 @@
 )]
 use serde::{Deserialize, Serialize};
 
+/// Structured grounding for an attitudinal claim: what the holder's assertion/endorsement/belief rests on. Useful when the record's author is not the holder (third-party attestation) or when the grounds are externally anchored.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "$type")]
+pub enum Basis {
+    #[serde(rename = "dev.idiolect.defs#basisSelfAsserted")]
+    BasisSelfAsserted(BasisSelfAsserted),
+    #[serde(rename = "dev.idiolect.defs#basisCommunityPolicy")]
+    BasisCommunityPolicy(BasisCommunityPolicy),
+    #[serde(rename = "dev.idiolect.defs#basisExternalSignal")]
+    BasisExternalSignal(BasisExternalSignal),
+    #[serde(rename = "dev.idiolect.defs#basisDerivedFromRecord")]
+    BasisDerivedFromRecord(BasisDerivedFromRecord),
+}
+
+/// Grounded in a community's published policy. `community` is the community record; `policyUri` optionally names the specific policy document.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BasisCommunityPolicy {
+    /// AT-URI of the community record whose policy grounds this record.
+    pub community: String,
+    /// Optional pointer to the specific policy document.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub policy_uri: Option<String>,
+}
+
+/// Grounded in another record on ATProto. `source` pins the exact version via strong ref; `inferenceRule` names how this record derives from it (e.g. 'translates', 'aggregates', 'classifies').
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BasisDerivedFromRecord {
+    /// Identifier of the inference rule (e.g. 'classifier:purpose-v1', 'lens:v1-to-v2', 'aggregation:byte-mean').
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inference_rule: Option<String>,
+    /// Strong reference (AT-URI + CID) to the record this claim is derived from.
+    pub source: StrongRecordRef,
+}
+
+/// Grounded in something outside ATProto — a public license, an external policy, a standards document, a statement on another network.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BasisExternalSignal {
+    /// Optional narrative of how the signal grounds the claim.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    /// Short identifier for the signal kind (e.g. 'license:CC-BY-NC-4.0', 'robots.txt', 'policy:iso-8601').
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signal_type: Option<String>,
+    /// Pointer to the external signal.
+    pub url: String,
+}
+
+/// The holder is asserting directly, with no external grounding claimed. This is the default when a record carries no `basis`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BasisSelfAsserted {}
+
 /// Structured caveat on a recommendation: a known failure mode consumers can match on. Paired with `caveatsText` on the record for narrative context.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -205,23 +260,6 @@ pub struct MaterialSpec {
     pub uri: Option<String>,
 }
 
-/// Content theory for why an action was performed: the downstream action it serves, the material it serves it on, and the actor who ultimately benefits. Composes with ThUse from dev.attitudes.intent.use.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Purpose {
-    /// Action identifier, resolved against the community vocabulary (`vocabulary`). Examples: 'train_model', 'annotate', 'corpus_construction'.
-    pub action: String,
-    /// Who ultimately benefits from the action (e.g. 'students', 'researchers', 'production_users').
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub actor: Option<String>,
-    /// What kind of data is being acted on.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub material: Option<MaterialSpec>,
-    /// Community vocabulary the `action` identifier resolves against. Omit to target the default dev.idiolect.vocab.action-v1.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vocabulary: Option<VocabRef>,
-}
-
 /// Reference to a schema. Either an at-uri pointing to a schema record or a content-addressed hash; at least one must be present.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -237,6 +275,14 @@ pub struct SchemaRef {
     pub uri: Option<String>,
 }
 
+/// Strong reference to an ATProto record: AT-URI plus CID. Parallel to com.atproto.repo.strongRef but repeated here so the defs tree is self-contained.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StrongRecordRef {
+    pub cid: String,
+    pub uri: String,
+}
+
 /// Identity and version of a tool used by a verifier or observer.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -248,6 +294,29 @@ pub struct Tool {
     pub name: String,
     /// Tool version string (semver when applicable).
     pub version: String,
+}
+
+/// Compound 'what was done, on what material, for what end, by which actor.' ThUse content-theory shape, reused across records whose structured subject is an action performed, desired, endorsed, or prohibited.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Use {
+    /// Action identifier, resolved against `actionVocabulary` (or the implicit default when omitted). Examples: 'train_model', 'annotate', 'archive'.
+    pub action: String,
+    /// Vocabulary the `action` identifier resolves against. Omit to use a consumer-chosen default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub action_vocabulary: Option<VocabRef>,
+    /// Who ultimately performs or benefits from the action. Examples: 'researchers', 'students', 'production_users'.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actor: Option<String>,
+    /// What is being acted on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub material: Option<MaterialSpec>,
+    /// The end the action serves, resolved against `purposeVocabulary` when present. Examples: 'commercial', 'non_commercial', 'academic', 'any_purpose'.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub purpose: Option<String>,
+    /// Vocabulary the `purpose` identifier resolves against. Omit to use a consumer-chosen default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub purpose_vocabulary: Option<VocabRef>,
 }
 
 /// Visibility scope for a record. community-scoped semantics are reserved but deferred for v1; records with visibility=community-scoped must not be served to parties outside the named community once the substrate supports scope enforcement.

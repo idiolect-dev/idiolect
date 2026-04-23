@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Verification {
+    /// Structured grounding for the claim. Useful when the verifier is citing an external standard, a proof library, or a derived-from earlier verification.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<super::defs::Basis>,
     /// For result=falsified: optional reference to a minimal counterexample.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub counterexample: Option<String>,

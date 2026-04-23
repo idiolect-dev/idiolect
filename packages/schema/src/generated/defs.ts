@@ -4,6 +4,70 @@
 // Shared types for the dev.idiolect.* Lexicon family. Covers (a) cross-cutting reference shapes (lens/schema/encounter refs, tool identity, visibility), and (b) content-theory types (purpose, lensProperty, evidence, caveat) shared across multiple records. Record-specific combinator trees (condition, eligibility, constraint, convention) live in their respective record lexicons.
 
 /**
+* Structured grounding for an attitudinal claim: what the holder's assertion/endorsement/belief rests on. Useful when the record's author is not the holder (third-party attestation) or when the grounds are externally anchored.
+*/
+export type Basis = {
+  $type: "dev.idiolect.defs#basisSelfAsserted";
+} & BasisSelfAsserted | {
+  $type: "dev.idiolect.defs#basisCommunityPolicy";
+} & BasisCommunityPolicy | {
+  $type: "dev.idiolect.defs#basisExternalSignal";
+} & BasisExternalSignal | {
+  $type: "dev.idiolect.defs#basisDerivedFromRecord";
+} & BasisDerivedFromRecord;
+
+/**
+* Grounded in a community's published policy. `community` is the community record; `policyUri` optionally names the specific policy document.
+*/
+export interface BasisCommunityPolicy {
+  /**
+  * AT-URI of the community record whose policy grounds this record.
+  */
+  community: string;
+  /**
+  * Optional pointer to the specific policy document.
+  */
+  policyUri?: string;
+}
+
+/**
+* Grounded in another record on ATProto. `source` pins the exact version via strong ref; `inferenceRule` names how this record derives from it (e.g. 'translates', 'aggregates', 'classifies').
+*/
+export interface BasisDerivedFromRecord {
+  /**
+  * Identifier of the inference rule (e.g. 'classifier:purpose-v1', 'lens:v1-to-v2', 'aggregation:byte-mean').
+  */
+  inferenceRule?: string;
+  /**
+  * Strong reference (AT-URI + CID) to the record this claim is derived from.
+  */
+  source: StrongRecordRef;
+}
+
+/**
+* Grounded in something outside ATProto — a public license, an external policy, a standards document, a statement on another network.
+*/
+export interface BasisExternalSignal {
+  /**
+  * Optional narrative of how the signal grounds the claim.
+  */
+  description?: string;
+  /**
+  * Short identifier for the signal kind (e.g. 'license:CC-BY-NC-4.0', 'robots.txt', 'policy:iso-8601').
+  */
+  signalType?: string;
+  /**
+  * Pointer to the external signal.
+  */
+  url: string;
+}
+
+/**
+* The holder is asserting directly, with no external grounding claimed. This is the default when a record carries no `basis`.
+*/
+export interface BasisSelfAsserted {}
+
+/**
 * Structured caveat on a recommendation: a known failure mode consumers can match on. Paired with `caveatsText` on the record for narrative context.
 */
 export interface Caveat {
@@ -229,28 +293,6 @@ export interface MaterialSpec {
 }
 
 /**
-* Content theory for why an action was performed: the downstream action it serves, the material it serves it on, and the actor who ultimately benefits. Composes with ThUse from dev.attitudes.intent.use.
-*/
-export interface Purpose {
-  /**
-  * Action identifier, resolved against the community vocabulary (`vocabulary`). Examples: 'train_model', 'annotate', 'corpus_construction'.
-  */
-  action: string;
-  /**
-  * Who ultimately benefits from the action (e.g. 'students', 'researchers', 'production_users').
-  */
-  actor?: string;
-  /**
-  * What kind of data is being acted on.
-  */
-  material?: MaterialSpec;
-  /**
-  * Community vocabulary the `action` identifier resolves against. Omit to target the default dev.idiolect.vocab.action-v1.
-  */
-  vocabulary?: VocabRef;
-}
-
-/**
 * Reference to a schema. Either an at-uri pointing to a schema record or a content-addressed hash; at least one must be present.
 */
 export interface SchemaRef {
@@ -269,6 +311,14 @@ export interface SchemaRef {
 }
 
 /**
+* Strong reference to an ATProto record: AT-URI plus CID. Parallel to com.atproto.repo.strongRef but repeated here so the defs tree is self-contained.
+*/
+export interface StrongRecordRef {
+  cid: string;
+  uri: string;
+}
+
+/**
 * Identity and version of a tool used by a verifier or observer.
 */
 export interface Tool {
@@ -284,6 +334,36 @@ export interface Tool {
   * Tool version string (semver when applicable).
   */
   version: string;
+}
+
+/**
+* Compound 'what was done, on what material, for what end, by which actor.' ThUse content-theory shape, reused across records whose structured subject is an action performed, desired, endorsed, or prohibited.
+*/
+export interface Use {
+  /**
+  * Action identifier, resolved against `actionVocabulary` (or the implicit default when omitted). Examples: 'train_model', 'annotate', 'archive'.
+  */
+  action: string;
+  /**
+  * Vocabulary the `action` identifier resolves against. Omit to use a consumer-chosen default.
+  */
+  actionVocabulary?: VocabRef;
+  /**
+  * Who ultimately performs or benefits from the action. Examples: 'researchers', 'students', 'production_users'.
+  */
+  actor?: string;
+  /**
+  * What is being acted on.
+  */
+  material?: MaterialSpec;
+  /**
+  * The end the action serves, resolved against `purposeVocabulary` when present. Examples: 'commercial', 'non_commercial', 'academic', 'any_purpose'.
+  */
+  purpose?: string;
+  /**
+  * Vocabulary the `purpose` identifier resolves against. Omit to use a consumer-chosen default.
+  */
+  purposeVocabulary?: VocabRef;
 }
 
 /**
