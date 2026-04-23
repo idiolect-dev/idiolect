@@ -27,10 +27,10 @@
       "description": "Per-lens encounter count and distinct-invoker DIDs. Signals adoption breadth."
     },
     {
-      "name": "purpose-distribution",
-      "module": "purpose_distribution",
-      "struct": "PurposeDistributionMethod",
-      "description": "Encounter counts grouped by structured purpose.action, optionally rolled up through a resolved vocabulary. Enables 'how many encounters were pedagogical?' style queries without substring search."
+      "name": "action-distribution",
+      "module": "action_distribution",
+      "struct": "ActionDistributionMethod",
+      "description": "Encounter counts grouped by structured use.action, optionally rolled up through a resolved action vocabulary. Enables 'how many encounters invoked an action subsumed by X?' style queries without substring search."
     }
   ]
 }

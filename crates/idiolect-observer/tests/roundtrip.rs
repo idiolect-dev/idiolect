@@ -26,7 +26,7 @@ fn fixture_encounter_body() -> serde_json::Value {
             "uri": "at://did:plc:lens-author/dev.panproto.schema.lens/l1"
         },
         "occurredAt": "2026-04-20T10:00:00Z",
-        "purpose": { "action": "test-encounter" },
+        "use": { "action": "test-encounter" },
         "sourceSchema": {
             "uri": "at://did:plc:lens-author/dev.panproto.schema.schema/s1"
         },

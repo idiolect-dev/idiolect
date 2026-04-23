@@ -52,9 +52,9 @@ pub const METHODS: &[MethodDescriptor] = &[
         form: MethodForm::Record,
     },
     MethodDescriptor {
-        name: crate::methods::purpose_distribution::METHOD_NAME,
-        version: crate::methods::purpose_distribution::METHOD_VERSION,
-        description: "Encounter counts grouped by structured purpose.action, optionally rolled up through a resolved vocabulary. Enables 'how many encounters were pedagogical?' style queries without substring search.",
+        name: crate::methods::action_distribution::METHOD_NAME,
+        version: crate::methods::action_distribution::METHOD_VERSION,
+        description: "Encounter counts grouped by structured use.action, optionally rolled up through a resolved action vocabulary. Enables 'how many encounters invoked an action subsumed by X?' style queries without substring search.",
         form: MethodForm::Record,
     },
 ];
@@ -71,6 +71,6 @@ pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
         Box::new(crate::methods::encounter_throughput::EncounterThroughputMethod::new()),
         Box::new(crate::methods::verification_coverage::VerificationCoverageMethod::new()),
         Box::new(crate::methods::lens_adoption::LensAdoptionMethod::new()),
-        Box::new(crate::methods::purpose_distribution::PurposeDistributionMethod::new()),
+        Box::new(crate::methods::action_distribution::ActionDistributionMethod::new()),
     ]
 }

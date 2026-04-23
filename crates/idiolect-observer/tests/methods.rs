@@ -44,7 +44,9 @@ fn encounter(
 ) -> AnyRecord {
     AnyRecord::Encounter(Encounter {
         annotations: None,
+        basis: None,
         downstream_result: result,
+        holder: None,
         kind,
         lens: LensRef {
             uri: Some(lens.to_owned()),
@@ -53,11 +55,13 @@ fn encounter(
         },
         occurred_at: "2026-04-20T10:00:00Z".to_owned(),
         produced_output: None,
-        purpose: idiolect_records::generated::defs::Purpose {
+        r#use: idiolect_records::generated::defs::Use {
             action: "test".to_owned(),
             material: None,
             actor: None,
-            vocabulary: None,
+            purpose: None,
+            action_vocabulary: None,
+            purpose_vocabulary: None,
         },
         source_instance: None,
         source_schema: SchemaRef {
@@ -72,11 +76,13 @@ fn encounter(
 
 fn correction(encounter_uri: &str) -> AnyRecord {
     AnyRecord::Correction(Correction {
+        basis: None,
         encounter: idiolect_records::generated::defs::EncounterRef {
             uri: encounter_uri.to_owned(),
             cid: None,
         },
         corrected_value: None,
+        holder: None,
         original_value: None,
         occurred_at: "2026-04-20T10:05:00Z".to_owned(),
         path: "/text".to_owned(),
@@ -93,6 +99,7 @@ fn verification(
     result: VerificationResult,
 ) -> AnyRecord {
     AnyRecord::Verification(Verification {
+        basis: None,
         counterexample: None,
         dependencies: None,
         property: idiolect_records::generated::verification::VerificationProperty::LpTheorem(
