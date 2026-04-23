@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Retrospection {
+    /// Grounding for the finding. Omit when self-asserted by the detecting party; set explicitly when a third party is attributing the detection or when the finding rests on an external analysis.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<super::defs::Basis>,
     /// Optional confidence score in [0, 1]. Omit when the finding is unambiguous.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confidence: Option<f64>,

@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Bounty {
+    /// Grounding for the bouletic attitude. Omit when the repo owner is the requester (self-asserted). Set explicitly when a third party is attributing the wanting to another party — the basis records on what grounds the attribution is made (community policy, an off-atproto signal, or derivation from another record).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<super::defs::Basis>,
     /// Structured constraints the deliverable must satisfy. Matching is structural: consumers dispatch on the tagged variant.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constraints: Option<Vec<BountyConstraints>>,

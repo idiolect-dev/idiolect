@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Observation {
+    /// Grounding for the observation. Omit when the repo owner is the observer; set explicitly when a third party is attributing the observation (e.g. caching or relaying another observer's aggregate).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<super::defs::Basis>,
     /// Structured method descriptor (see dev.idiolect.observer for the conformance floor). Enables reproducibility and comparison.
     pub method: ObservationMethod,
     /// DID of the observer publishing this aggregate.

@@ -71,6 +71,9 @@ pub enum AnyRecord {
     Adapter(crate::Adapter),
     /// A `dev.idiolect.bounty` record.
     Bounty(crate::Bounty),
+    /// A `dev.idiolect.belief` record — a second-order doxastic
+    /// claim about another record, generic over the subject kind.
+    Belief(crate::Belief),
 }
 
 impl AnyRecord {
@@ -88,6 +91,7 @@ impl AnyRecord {
             Self::Recommendation(_) => crate::Recommendation::NSID,
             Self::Adapter(_) => crate::Adapter::NSID,
             Self::Bounty(_) => crate::Bounty::NSID,
+            Self::Belief(_) => crate::Belief::NSID,
         }
     }
 
@@ -152,6 +156,7 @@ impl AnyRecord {
     fn inner_to_json(&self) -> Result<serde_json::Value, serde_json::Error> {
         match self {
             Self::Adapter(r) => serde_json::to_value(r),
+            Self::Belief(r) => serde_json::to_value(r),
             Self::Bounty(r) => serde_json::to_value(r),
             Self::Community(r) => serde_json::to_value(r),
             Self::Correction(r) => serde_json::to_value(r),
@@ -215,6 +220,7 @@ pub fn decode_record(nsid: &str, value: serde_json::Value) -> Result<AnyRecord, 
         s if s == crate::Recommendation::NSID => Ok(AnyRecord::Recommendation(from(value)?)),
         s if s == crate::Adapter::NSID => Ok(AnyRecord::Adapter(from(value)?)),
         s if s == crate::Bounty::NSID => Ok(AnyRecord::Bounty(from(value)?)),
+        s if s == crate::Belief::NSID => Ok(AnyRecord::Belief(from(value)?)),
         other => Err(DecodeError::UnknownNsid(other.to_owned())),
     }
 }

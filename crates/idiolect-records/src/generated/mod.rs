@@ -6,6 +6,7 @@
 #![allow(missing_docs)]
 
 pub mod adapter;
+pub mod belief;
 pub mod bounty;
 pub mod community;
 pub mod correction;
@@ -29,6 +30,7 @@ pub mod verification;
 pub mod vocab;
 
 pub use adapter::Adapter;
+pub use belief::Belief;
 pub use bounty::Bounty;
 pub use community::Community;
 pub use correction::Correction;

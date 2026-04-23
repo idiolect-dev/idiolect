@@ -29,6 +29,16 @@
     result = "ThVerificationClaim",
   },
 
+  # belief: a doxastic claim about another record. Generic over the
+  # subject record's kind — the subject's strong-ref pins what the
+  # belief is *about*, while ThDoxastic supplies the stance and
+  # ThAtt the holder/content backbone. Nested attitudes (labeler
+  # attributions, trust chains) live here.
+  belief = {
+    bases = ["ThAtt", "ThDoxastic"],
+    result = "ThNestedBelief",
+  },
+
   # bounty: the only record that pairs two attitudinal primitives —
   # bouletic ("I want a thing") with commissive ("and I commit to
   # these terms"). The pairing is inherent to what a bounty is.

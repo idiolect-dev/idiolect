@@ -4,6 +4,7 @@
 // `dev.panproto.*` tree (see `lexicons/dev/panproto/VENDORED.md`).
 
 export * from "./adapter";
+export * from "./belief";
 export * from "./bounty";
 export * from "./community";
 export * from "./correction";

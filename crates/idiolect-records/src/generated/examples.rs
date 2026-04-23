@@ -28,6 +28,31 @@ pub fn adapter() -> crate::Adapter {
     serde_json::from_str(ADAPTER_JSON).expect("bundled dev.idiolect.adapter fixture deserialises")
 }
 
+/// Raw json for the bundled `dev.idiolect.belief` fixture.
+pub const BELIEF_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.belief",
+  "subject": {
+    "uri": "at://did:plc:labeler/dev.idiolect.encounter/3l5fk7aqcco2m",
+    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
+  },
+  "holder": "did:plc:user123",
+  "basis": {
+    "$type": "dev.idiolect.defs#basisExternalSignal",
+    "url": "https://user.example.com/profile",
+    "signalType": "license:CC-BY-NC-4.0",
+    "description": "User published a CC-BY-NC license on their personal site; this belief records our interpretation that the license extends to the referenced encounter."
+  },
+  "visibility": "public-detailed",
+  "occurredAt": "2026-04-23T00:00:00.000Z"
+}
+"#;
+
+/// Deserialised `dev.idiolect.belief` fixture. Panics if the bundled json is invalid.
+#[must_use]
+pub fn belief() -> crate::Belief {
+    serde_json::from_str(BELIEF_JSON).expect("bundled dev.idiolect.belief fixture deserialises")
+}
+
 /// Raw json for the bundled `dev.idiolect.bounty` fixture.
 pub const BOUNTY_JSON: &str = r#"{
   "$nsid": "dev.idiolect.bounty",

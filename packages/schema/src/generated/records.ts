@@ -4,6 +4,7 @@
 // the vendored dev.panproto.* tree). produced alongside the per-nsid modules.
 
 import type { Adapter } from "./adapter";
+import type { Belief } from "./belief";
 import type { Bounty } from "./bounty";
 import type { Community } from "./community";
 import type { Correction } from "./correction";
@@ -29,6 +30,7 @@ import type { PanprotoRepo } from "./panproto_repo";
  */
 export const NSID = {
   adapter: "dev.idiolect.adapter",
+  belief: "dev.idiolect.belief",
   bounty: "dev.idiolect.bounty",
   community: "dev.idiolect.community",
   correction: "dev.idiolect.correction",
@@ -57,6 +59,7 @@ export type NSID = (typeof NSID)[keyof typeof NSID];
  */
 export type RecordTypes = {
   [NSID.adapter]: Adapter;
+  [NSID.belief]: Belief;
   [NSID.bounty]: Bounty;
   [NSID.community]: Community;
   [NSID.correction]: Correction;
@@ -83,6 +86,7 @@ export type RecordTypes = {
  */
 export type AnyRecord =
   | { readonly $nsid: typeof NSID.adapter; readonly value: Adapter }
+  | { readonly $nsid: typeof NSID.belief; readonly value: Belief }
   | { readonly $nsid: typeof NSID.bounty; readonly value: Bounty }
   | { readonly $nsid: typeof NSID.community; readonly value: Community }
   | { readonly $nsid: typeof NSID.correction; readonly value: Correction }
@@ -114,6 +118,11 @@ export function isKind<K extends NSID>(
 /** True if `r` wraps a `Adapter`. */
 export function isAdapter(r: AnyRecord): r is { readonly $nsid: typeof NSID.adapter; readonly value: Adapter } {
   return r.$nsid === NSID.adapter;
+}
+
+/** True if `r` wraps a `Belief`. */
+export function isBelief(r: AnyRecord): r is { readonly $nsid: typeof NSID.belief; readonly value: Belief } {
+  return r.$nsid === NSID.belief;
 }
 
 /** True if `r` wraps a `Bounty`. */
@@ -224,6 +233,7 @@ export function tagRecord<K extends NSID>(
 /** All record NSIDs in declaration order. */
 export const RECORD_NSIDS = [
   NSID.adapter,
+  NSID.belief,
   NSID.bounty,
   NSID.community,
   NSID.correction,
