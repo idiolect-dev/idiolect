@@ -6,22 +6,44 @@ description: >
   not prescriptive — the framework accommodates any community's
   actions, not this set.
 
+  Each entry carries a `class:` field naming the attitudinal
+  composition it's an instance of (see
+  compositions/idiolect/attitudinal_classes.ncl). That lets a
+  consumer dispatch on both the id's position in the subsumption
+  hierarchy and the attitudinal shape of the action itself.
+
   Subsumption is closed-world-with-default: subsumes(any_action, x)
   holds for every x in the hierarchy.
 world: closed-with-default
 top: any_action
 actions:
-  - { id: any_action, parents: [] }
-  # ingestion / transformation
-  - { id: ingest, parents: [any_action] }
-  - { id: transform, parents: [any_action] }
-  - { id: reuse, parents: [any_action] }
-  # training / evaluation
-  - { id: train_model, parents: [any_action] }
-  - { id: fine_tune, parents: [train_model] }
-  - { id: evaluate_model, parents: [any_action] }
-  # preservation / curation
-  - { id: archive, parents: [any_action] }
-  - { id: annotate, parents: [any_action] }
-  # inference / serving
-  - { id: run_inference, parents: [any_action] }
+  - id: any_action
+    parents: []
+    class: dev.idiolect.asserted_use
+  - id: ingest
+    parents: [any_action]
+    class: dev.idiolect.asserted_use
+  - id: transform
+    parents: [any_action]
+    class: dev.idiolect.asserted_use
+  - id: reuse
+    parents: [any_action]
+    class: dev.idiolect.asserted_use
+  - id: train_model
+    parents: [any_action]
+    class: dev.idiolect.intended_use
+  - id: fine_tune
+    parents: [train_model]
+    class: dev.idiolect.intended_use
+  - id: evaluate_model
+    parents: [any_action]
+    class: dev.idiolect.intended_use
+  - id: archive
+    parents: [any_action]
+    class: dev.idiolect.asserted_use
+  - id: annotate
+    parents: [any_action]
+    class: dev.idiolect.asserted_use
+  - id: run_inference
+    parents: [any_action]
+    class: dev.idiolect.asserted_use
