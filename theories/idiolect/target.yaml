@@ -1,0 +1,13 @@
+id: dev.idiolect.theory.target
+description: >
+  Adds a Target sort to the attitude backbone: many attitudes are
+  directed at someone or something — a speech act has an audience,
+  an endorsement has a beneficiary, a prohibition has a governed
+  party. ThTarget is the primitive that supplies the Target sort;
+  attitudinal theories extend it to pin down the directedness.
+theory: ThTarget
+extends: [ThAtt]
+sorts:
+  - name: Target
+ops:
+  - { name: target_of, input: Att, output: Target }

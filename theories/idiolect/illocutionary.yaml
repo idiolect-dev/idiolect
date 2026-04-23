@@ -1,0 +1,44 @@
+id: dev.idiolect.theory.illocutionary
+description: >
+  Speech-act structure on top of ThAtt + ThTarget: a SpeechAct
+  parameterized by Holder, Target, Content, plus a Force sort
+  naming the Austin/Searle taxonomy (assertive, directive,
+  commissive, expressive, declarative). Gives idiolect records a
+  home for who-said-what-to-whom-and-with-what-force without
+  collapsing into flat attitudinal flavours.
+
+  Coherence equations pin the speaker to the Att's holder and the
+  audience to the target — consumers can read either slot.
+theory: ThIllocutionary
+extends: [ThAtt, ThTarget]
+sorts:
+  - name: Force
+  - name: SpeechAct
+    params:
+      - { name: h, sort: Holder }
+      - { name: t, sort: Target }
+      - { name: c, sort: Content }
+ops:
+  - { name: speaker, input: SpeechAct, output: Holder }
+  - { name: audience, input: SpeechAct, output: Target }
+  - { name: act_content, input: SpeechAct, output: Content }
+  - { name: force, input: SpeechAct, output: Force }
+  - { name: illocutionary_extract, input: Att, output: SpeechAct }
+  # Austin/Searle's five force types — extensible nullary ops, not
+  # a fixed enum. Communities may add additional forces under their
+  # own theory extensions.
+  - { name: assertive, inputs: [], output: Force }
+  - { name: directive, inputs: [], output: Force }
+  - { name: commissive, inputs: [], output: Force }
+  - { name: expressive, inputs: [], output: Force }
+  - { name: declarative, inputs: [], output: Force }
+equations:
+  - name: speaker_is_holder
+    lhs: "speaker(illocutionary_extract(x))"
+    rhs: "holder(x)"
+  - name: audience_is_target
+    lhs: "audience(illocutionary_extract(x))"
+    rhs: "target_of(x)"
+  - name: act_content_coherence
+    lhs: "act_content(illocutionary_extract(x))"
+    rhs: "content(x)"

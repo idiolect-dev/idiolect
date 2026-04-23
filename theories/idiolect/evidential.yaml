@@ -1,0 +1,22 @@
+id: dev.idiolect.theory.evidential
+description: >
+  How an attitude is grounded: the source that produced the claim
+  and the kind of evidence it rests on. The categorical version of
+  the `basis` union carried on records. Evidence types are
+  extensible constants (direct / reported / inferred / derived);
+  communities can publish additional constants against the same
+  theory without forking.
+theory: ThEvidential
+extends: [ThAtt]
+sorts:
+  - name: Source
+  - name: EvidenceType
+ops:
+  - { name: source, input: Att, output: Source }
+  - { name: evidence_type, input: Att, output: EvidenceType }
+  # Evidence-type constants — extensible. Communities may add more
+  # under their own theory extensions; consumers check via equality.
+  - { name: direct, inputs: [], output: EvidenceType }
+  - { name: reported, inputs: [], output: EvidenceType }
+  - { name: inferred, inputs: [], output: EvidenceType }
+  - { name: derived, inputs: [], output: EvidenceType }
