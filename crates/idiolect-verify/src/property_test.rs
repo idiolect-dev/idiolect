@@ -10,15 +10,15 @@
 //! run against an unbounded generated space. A single falsifier
 //! produces a verification with `result = Falsified` plus a
 //! counterexample snippet; running through the full case budget with
-//! no falsifier yields `result = Holds` with `input_space` stamped
-//! to the budget size.
+//! no falsifier yields `result = Holds` with the `LpGenerator.spec`
+//! stamped to the budget size.
 
 use idiolect_lens::{
     ApplyLensInput, ApplyLensPutInput, Resolver, SchemaLoader, apply_lens, apply_lens_put,
 };
-use idiolect_records::generated::defs::Tool;
+use idiolect_records::generated::defs::{LpGenerator, Tool};
 use idiolect_records::generated::verification::{
-    Verification, VerificationKind, VerificationResult,
+    Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 use panproto_schema::Protocol;
 
@@ -103,7 +103,16 @@ where
                 "target.lens has no uri; property-test needs an at-uri to resolve".into(),
             )
         })?;
-        let input_space = Some(format!("budget:{} generated records", self.budget));
+        // PropertyTest asserts a generator-backed LensProperty; we stamp
+        // the runner's identity and budget on the GeneratorSpec so the
+        // published record tells consumers what was sampled.
+        let property = || {
+            VerificationProperty::LpGenerator(LpGenerator {
+                spec: format!("budget:{} generated records", self.budget),
+                runner: Some("idiolect-verify/property-test".to_owned()),
+                seed: None,
+            })
+        };
 
         for i in 0..self.budget {
             let source = (self.generator)(i);
@@ -142,7 +151,7 @@ where
                     self,
                     VerificationResult::Falsified,
                     counterexample,
-                    input_space,
+                    property(),
                 ));
             }
         }
@@ -152,7 +161,7 @@ where
             self,
             VerificationResult::Holds,
             None,
-            input_space,
+            property(),
         ))
     }
 }
@@ -236,7 +245,10 @@ mod tests {
         let v = runner.run(&target(uri)).await.unwrap();
         assert_eq!(v.kind, VerificationKind::PropertyTest);
         assert_eq!(v.result, VerificationResult::Holds);
-        assert!(v.input_space.as_ref().unwrap().contains("budget:50"));
+        let VerificationProperty::LpGenerator(ref g) = v.property else {
+            panic!("expected LpGenerator, got {:?}", v.property);
+        };
+        assert!(g.spec.contains("budget:50"));
     }
 
     #[tokio::test]

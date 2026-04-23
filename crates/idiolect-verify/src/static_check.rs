@@ -12,9 +12,9 @@
 //! runner only validates the static shape of the surrounding graphs.
 
 use idiolect_lens::{Resolver, SchemaLoader, parse_at_uri};
-use idiolect_records::generated::defs::Tool;
+use idiolect_records::generated::defs::{LpChecker, Tool};
 use idiolect_records::generated::verification::{
-    Verification, VerificationKind, VerificationResult,
+    Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 use panproto_schema::{Protocol, validate};
 
@@ -102,10 +102,7 @@ where
                 self,
                 VerificationResult::Falsified,
                 Some(detail),
-                Some(format!(
-                    "panproto::validate against protocol={}",
-                    self.protocol.name
-                )),
+                self.property(),
             ));
         }
 
@@ -114,11 +111,20 @@ where
             self,
             VerificationResult::Holds,
             None,
-            Some(format!(
-                "panproto::validate against protocol={}",
-                self.protocol.name
-            )),
+            self.property(),
         ))
+    }
+}
+
+impl<R, L> StaticCheckRunner<R, L> {
+    /// `StaticCheck` asserts the lens's schemas validate under a named
+    /// checker + protocol pair; encode that as [`LpChecker`].
+    fn property(&self) -> VerificationProperty {
+        VerificationProperty::LpChecker(LpChecker {
+            checker: "panproto::validate".to_owned(),
+            ruleset: Some(self.protocol.name.clone()),
+            version: None,
+        })
     }
 }
 

@@ -11,9 +11,9 @@
 use idiolect_lens::{
     ApplyLensInput, ApplyLensPutInput, Resolver, SchemaLoader, apply_lens, apply_lens_put,
 };
-use idiolect_records::generated::defs::Tool;
+use idiolect_records::generated::defs::{LpRoundtrip, Tool};
 use idiolect_records::generated::verification::{
-    Verification, VerificationKind, VerificationResult,
+    Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 use panproto_schema::Protocol;
 
@@ -92,7 +92,15 @@ where
                 "target.lens has no uri; roundtrip-test needs an at-uri to resolve".into(),
             )
         })?;
-        let input_space = Some(format!("corpus:{} records", self.corpus.len()));
+        // RoundtripTest asserts the identity holds on a caller-supplied
+        // corpus; the LensProperty carries the corpus size as a symbolic
+        // domain descriptor so consumers can tell coverage apart.
+        let property = || {
+            VerificationProperty::LpRoundtrip(LpRoundtrip {
+                domain: format!("corpus:{} records", self.corpus.len()),
+                generator: None,
+            })
+        };
 
         for (i, source) in self.corpus.iter().enumerate() {
             let forward = apply_lens(
@@ -127,7 +135,7 @@ where
                     self,
                     VerificationResult::Falsified,
                     counterexample,
-                    input_space,
+                    property(),
                 ));
             }
         }
@@ -137,7 +145,7 @@ where
             self,
             VerificationResult::Holds,
             None,
-            input_space,
+            property(),
         ))
     }
 }
@@ -223,7 +231,10 @@ mod tests {
         let v = runner.run(&target(uri)).await.unwrap();
         assert_eq!(v.kind, VerificationKind::RoundtripTest);
         assert_eq!(v.result, VerificationResult::Holds);
-        assert!(v.input_space.as_ref().unwrap().contains("2 records"));
+        let VerificationProperty::LpRoundtrip(ref p) = v.property else {
+            panic!("expected LpRoundtrip, got {:?}", v.property);
+        };
+        assert!(p.domain.contains("2 records"));
     }
 
     #[tokio::test]

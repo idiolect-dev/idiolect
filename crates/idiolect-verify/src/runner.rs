@@ -2,7 +2,7 @@
 
 use idiolect_records::generated::defs::{LensRef, Tool};
 use idiolect_records::generated::verification::{
-    Verification, VerificationKind, VerificationResult,
+    Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 
 use crate::error::VerifyResult;
@@ -68,18 +68,22 @@ pub trait VerificationRunner: Send + Sync {
 
 /// Package a runner result into a [`Verification`] record shaped for
 /// direct publication via [`idiolect_lens::RecordPublisher::create`].
+///
+/// `property` is the structured statement of what the verifier is
+/// asserting — a `LensProperty` variant sized to match `runner.kind()`
+/// (see the lexicon for the v0.2.0 shape).
 #[must_use]
 pub fn build_verification<R: VerificationRunner + ?Sized>(
     target: &VerificationTarget,
     runner: &R,
     result: VerificationResult,
     counterexample: Option<String>,
-    input_space: Option<String>,
+    property: VerificationProperty,
 ) -> Verification {
     Verification {
         counterexample,
         dependencies: None,
-        input_space,
+        property,
         kind: runner.kind(),
         lens: target.lens.clone(),
         occurred_at: target.occurred_at.clone(),
