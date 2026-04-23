@@ -1,21 +1,17 @@
 id: dev.idiolect.theory.eligibility
 description: >
-  Predicate over claimants for a bounty. Identical combinator
-  machinery as ThCondition; different atoms. A future
-  ThPredicate<Ctx> could factor out the shared shape, but the two
-  are kept separate here to avoid a premature abstraction.
+  Predicates over claimants. Extends ThPredicate — the boolean
+  combinator machinery is inherited; ThEligibility adds the atomic
+  predicates specific to claimant-typed subjects (is_member_of,
+  has_verification_for, is_did).
 theory: ThEligibility
+extends: [ThPredicate]
 sorts:
-  - name: Claimer
-  - name: Eligibility
   - name: Community
   - name: LensProperty
   - name: Did
 ops:
-  - { name: eligible, inputs: [{ sort: Eligibility }, { sort: Claimer }], output: Bool }
-  - { name: is_member_of, inputs: [{ sort: Community }], output: Eligibility }
-  - { name: has_verification_for, inputs: [{ sort: LensProperty }], output: Eligibility }
-  - { name: is_did, inputs: [{ sort: Did }], output: Eligibility }
-  - { name: and_, inputs: [{ sort: Eligibility }, { sort: Eligibility }], output: Eligibility }
-  - { name: or_,  inputs: [{ sort: Eligibility }, { sort: Eligibility }], output: Eligibility }
-  - { name: not_, inputs: [{ sort: Eligibility }], output: Eligibility }
+  # Atomic predicates. Subject plays the role of the Claimer.
+  - { name: is_member_of, inputs: [{ sort: Community }], output: Predicate }
+  - { name: has_verification_for, inputs: [{ sort: LensProperty }], output: Predicate }
+  - { name: is_did, inputs: [{ sort: Did }], output: Predicate }

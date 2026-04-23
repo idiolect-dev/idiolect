@@ -1,0 +1,44 @@
+id: dev.idiolect.theory.predicate
+description: >
+  The shared predicate substrate for ThCondition and ThEligibility:
+  both carry a combinator tree (and_ / or_ / not_) over atomic
+  predicates that evaluate against some Subject. ThPredicate
+  captures the common machinery so per-domain theories only have
+  to declare the Subject's components and the atoms that produce
+  Predicates. Equations pin boolean combinator semantics once.
+theory: ThPredicate
+extends: [ThAtt]
+sorts:
+  - name: PredicateEnvelope
+    params:
+      - { name: h, sort: Holder }
+      - { name: c, sort: Content }
+  - name: Predicate
+  - name: Subject
+ops:
+  - { name: predicate_extract, input: Att, output: PredicateEnvelope }
+  - { name: predicate_holder, input: PredicateEnvelope, output: Holder }
+  - { name: predicate_content, input: PredicateEnvelope, output: Content }
+  - { name: predicate_tree, input: PredicateEnvelope, output: Predicate }
+  # Evaluation.
+  - { name: holds, inputs: [{ name: p, sort: Predicate }, { name: s, sort: Subject }], output: Bool }
+  # Boolean combinators.
+  - { name: and_, inputs: [{ sort: Predicate }, { sort: Predicate }], output: Predicate }
+  - { name: or_,  inputs: [{ sort: Predicate }, { sort: Predicate }], output: Predicate }
+  - { name: not_, inputs: [{ sort: Predicate }], output: Predicate }
+equations:
+  - name: predicate_holder_coherence
+    lhs: "predicate_holder(predicate_extract(x))"
+    rhs: "holder(x)"
+  - name: predicate_content_coherence
+    lhs: "predicate_content(predicate_extract(x))"
+    rhs: "content(x)"
+  - name: and_holds
+    lhs: "holds(and_(p1, p2), s)"
+    rhs: "and(holds(p1, s), holds(p2, s))"
+  - name: or_holds
+    lhs: "holds(or_(p1, p2), s)"
+    rhs: "or(holds(p1, s), holds(p2, s))"
+  - name: not_holds
+    lhs: "holds(not_(p), s)"
+    rhs: "not(holds(p, s))"
