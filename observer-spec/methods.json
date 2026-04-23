@@ -25,6 +25,12 @@
       "module": "lens_adoption",
       "struct": "LensAdoptionMethod",
       "description": "Per-lens encounter count and distinct-invoker DIDs. Signals adoption breadth."
+    },
+    {
+      "name": "purpose-distribution",
+      "module": "purpose_distribution",
+      "struct": "PurposeDistributionMethod",
+      "description": "Encounter counts grouped by structured purpose.action, optionally rolled up through a resolved vocabulary. Enables 'how many encounters were pedagogical?' style queries without substring search."
     }
   ]
 }

@@ -51,6 +51,12 @@ pub const METHODS: &[MethodDescriptor] = &[
         description: "Per-lens encounter count and distinct-invoker DIDs. Signals adoption breadth.",
         form: MethodForm::Record,
     },
+    MethodDescriptor {
+        name: crate::methods::purpose_distribution::METHOD_NAME,
+        version: crate::methods::purpose_distribution::METHOD_VERSION,
+        description: "Encounter counts grouped by structured purpose.action, optionally rolled up through a resolved vocabulary. Enables 'how many encounters were pedagogical?' style queries without substring search.",
+        form: MethodForm::Record,
+    },
 ];
 /// Fresh instances of every bundled record-form method, in spec order.
 ///
@@ -65,5 +71,6 @@ pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
         Box::new(crate::methods::encounter_throughput::EncounterThroughputMethod::new()),
         Box::new(crate::methods::verification_coverage::VerificationCoverageMethod::new()),
         Box::new(crate::methods::lens_adoption::LensAdoptionMethod::new()),
+        Box::new(crate::methods::purpose_distribution::PurposeDistributionMethod::new()),
     ]
 }
