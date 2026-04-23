@@ -1,7 +1,17 @@
 {
   "$nsid": "dev.idiolect.recommendation",
   "issuingCommunity": "at://did:plc:example/dev.idiolect.community/syntactic-bootstrappers",
-  "conditions":       "when translating universal-dependencies trees to en-pos tags",
+  "conditions": [
+    {
+      "$type":  "dev.idiolect.recommendation#conditionSourceIs",
+      "schema": { "uri": "at://did:plc:ud/dev.panproto.schema.schema/ud-2.14" }
+    },
+    {
+      "$type":  "dev.idiolect.recommendation#conditionTargetIs",
+      "schema": { "uri": "at://did:plc:en/dev.panproto.schema.schema/en-pos" }
+    },
+    { "$type": "dev.idiolect.recommendation#conditionAnd" }
+  ],
   "lensPath": [
     { "uri": "at://did:plc:example/dev.idiolect.lens/ud-to-en-pos" }
   ],

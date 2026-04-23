@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.defs",
-  "description": "Shared types for the dev.idiolect.* Lexicon family. Concerns that recur across record Lexicons (visibility, reference shapes, tool identity) are defined here rather than duplicated.",
+  "description": "Shared types for the dev.idiolect.* Lexicon family. Covers (a) cross-cutting reference shapes (lens/schema/encounter refs, tool identity, visibility), and (b) v0.2.0 content-theory types (purpose, lensProperty, evidence, caveat) shared across multiple records. Record-specific combinator trees (condition, eligibility, constraint, convention) live in their respective record lexicons.",
   "defs": {
     "visibility": {
       "type": "string",
@@ -85,6 +85,266 @@
         "commit": {
           "type": "string",
           "description": "Optional source commit or build identifier."
+        }
+      }
+    },
+    "vocabRef": {
+      "type": "object",
+      "description": "Reference to a community-published action vocabulary. Determines how 'action' identifiers are resolved and subsumed.",
+      "required": [],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT-URI pointing to the vocabulary record."
+        },
+        "cid": {
+          "type": "cid-link",
+          "description": "Content hash pinning a specific vocabulary revision."
+        }
+      }
+    },
+    "purpose": {
+      "type": "object",
+      "description": "Content theory for why an action was performed: the downstream action it serves, the material it serves it on, and the actor who ultimately benefits. Composes with ThUse from dev.attitudes.intent.use.",
+      "required": ["action"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Action identifier, resolved against the community vocabulary (`vocabulary`). Examples: 'train_model', 'annotate', 'corpus_construction'."
+        },
+        "material": {
+          "type": "ref",
+          "ref": "#materialSpec",
+          "description": "What kind of data is being acted on."
+        },
+        "actor": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Who ultimately benefits from the action (e.g. 'students', 'researchers', 'production_users')."
+        },
+        "vocabulary": {
+          "type": "ref",
+          "ref": "#vocabRef",
+          "description": "Community vocabulary the `action` identifier resolves against. Omit to target the default dev.idiolect.vocab.action-v1."
+        }
+      }
+    },
+    "materialSpec": {
+      "type": "object",
+      "description": "Description of the material a purpose operates on. scope is a community-defined tag; uri optionally pins a specific corpus or dataset.",
+      "required": [],
+      "properties": {
+        "scope": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Community-defined material scope (e.g. 'classroom_materials', 'production_logs', 'scraped_corpus')."
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional pointer to the specific dataset or corpus."
+        }
+      }
+    },
+    "lensProperty": {
+      "type": "union",
+      "description": "What a verification actually asserts. Each verification kind has its own statement shape. Consumers (proof checkers, PBT runners, conformance runners) dispatch on the tagged variant.",
+      "refs": [
+        "#lpRoundtrip",
+        "#lpGenerator",
+        "#lpTheorem",
+        "#lpConformance",
+        "#lpChecker",
+        "#lpConvergence"
+      ]
+    },
+    "lpRoundtrip": {
+      "type": "object",
+      "description": "Roundtrip domain: the input set across which lens ∘ unlens is claimed to be the identity.",
+      "required": ["domain"],
+      "properties": {
+        "domain": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Symbolic description of the input set (e.g. 'all valid UD-2.14 sentences', 'records with lengths ≤ 1024')."
+        },
+        "generator": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional pointer to a generator that enumerates the domain."
+        }
+      }
+    },
+    "lpGenerator": {
+      "type": "object",
+      "description": "Property-based test generator spec: what the PBT runner should sample.",
+      "required": ["spec"],
+      "properties": {
+        "spec": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Generator specification. Format is generator-runner-specific; may be a proptest Strategy reference, a Hypothesis strategy, or a QuickCheck Arbitrary."
+        },
+        "runner": {
+          "type": "string",
+          "description": "Name of the PBT runtime (e.g. 'proptest', 'hypothesis', 'quickcheck')."
+        },
+        "seed": {
+          "type": "integer",
+          "description": "Optional seed for reproducibility."
+        }
+      }
+    },
+    "lpTheorem": {
+      "type": "object",
+      "description": "Formal theorem statement: the property expressed in a proof-assistant vocabulary.",
+      "required": ["statement"],
+      "properties": {
+        "statement": {
+          "type": "string",
+          "maxLength": 4000,
+          "description": "The theorem statement, verbatim, in the declared `system` syntax."
+        },
+        "system": {
+          "type": "string",
+          "description": "Proof system (e.g. 'coq', 'lean4', 'agda', 'tlaplus', 'z3')."
+        },
+        "freeVariables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of free variables the statement quantifies over."
+        }
+      }
+    },
+    "lpConformance": {
+      "type": "object",
+      "description": "Conformance standard identifier. A conformance runner matches on name + version, optionally narrowed to named clauses.",
+      "required": ["standard", "version"],
+      "properties": {
+        "standard": {
+          "type": "string",
+          "description": "Standard name or identifier, e.g. 'iso-8601', 'rfc-3339', 'en-pos-v2.1'."
+        },
+        "version": { "type": "string" },
+        "clauses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional subset of the standard's clauses the verification covers."
+        }
+      }
+    },
+    "lpChecker": {
+      "type": "object",
+      "description": "Static-check configuration: which checker and which ruleset the verification covers.",
+      "required": ["checker"],
+      "properties": {
+        "checker": {
+          "type": "string",
+          "description": "Static-checker identifier (e.g. 'panproto-check', 'clippy', 'tsc-strict')."
+        },
+        "ruleset": {
+          "type": "string",
+          "description": "Named ruleset, configuration preset, or lint family."
+        },
+        "version": { "type": "string" }
+      }
+    },
+    "lpConvergence": {
+      "type": "object",
+      "description": "Convergence claim: a property preserved under repeated application of the lens, appropriate for fixed-point or reconciliation lenses.",
+      "required": ["property"],
+      "properties": {
+        "property": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Symbolic name or description of the preserved property."
+        },
+        "boundSteps": {
+          "type": "integer",
+          "description": "Optional bound on steps to reach fixpoint."
+        }
+      }
+    },
+    "evidence": {
+      "type": "union",
+      "description": "Structured evidence for a retrospection finding. Complements the narrative `detail` field on finding; kind=other may omit evidence entirely.",
+      "refs": [
+        "#evidenceDivergence",
+        "#evidenceLoss",
+        "#evidenceMismatch"
+      ]
+    },
+    "evidenceDivergence": {
+      "type": "object",
+      "description": "For kind=merge-divergence: two translation paths that should have converged but produced different outputs.",
+      "required": ["pathA", "pathB"],
+      "properties": {
+        "pathA": {
+          "type": "array",
+          "items": { "type": "ref", "ref": "#lensRef" },
+          "description": "Sequence of lenses composed in path A."
+        },
+        "pathB": {
+          "type": "array",
+          "items": { "type": "ref", "ref": "#lensRef" },
+          "description": "Sequence of lenses composed in path B."
+        },
+        "witnessInput": {
+          "type": "cid-link",
+          "description": "Optional cid of an input where the two paths diverge."
+        }
+      }
+    },
+    "evidenceLoss": {
+      "type": "object",
+      "description": "For kind=data-loss: a source-schema field unrepresented in the target after translation.",
+      "required": ["sourceField"],
+      "properties": {
+        "sourceField": {
+          "type": "string",
+          "description": "Dotted path into the source schema identifying the lost field."
+        },
+        "targetSchema": {
+          "type": "ref",
+          "ref": "#schemaRef",
+          "description": "Target schema under which the loss was observed."
+        },
+        "witnessInput": { "type": "cid-link" }
+      }
+    },
+    "evidenceMismatch": {
+      "type": "object",
+      "description": "For kind=reconciliation-mismatch: two records that should reconcile under the lens but do not.",
+      "required": [],
+      "properties": {
+        "leftRecord": { "type": "cid-link" },
+        "rightRecord": { "type": "cid-link" },
+        "expectedEqualityOn": {
+          "type": "string",
+          "description": "Dotted path or projection under which equality was expected."
+        }
+      }
+    },
+    "caveat": {
+      "type": "object",
+      "description": "Structured caveat on a recommendation: a known failure mode consumers can match on. Paired with `caveatsText` on the record for narrative context.",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Short failure-mode identifier (e.g. 'loses-dialect-markers', 'degrades-on-long-inputs', 'requires-closed-world')."
+        },
+        "affects": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Dotted paths or field names the caveat applies to."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warn", "error"],
+          "description": "Advisory severity."
         }
       }
     }

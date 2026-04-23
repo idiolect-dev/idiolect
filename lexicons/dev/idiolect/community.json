@@ -60,14 +60,80 @@
             }
           },
           "conventions": {
+            "type": "array",
+            "maxLength": 64,
+            "description": "Structured community conventions the decidable subset. Review cadence, verification requirements, deprecation policies. Style/tone norms live in `conventionsText`.",
+            "items": {
+              "type": "union",
+              "refs": [
+                "dev.idiolect.community#conventionReviewCadence",
+                "dev.idiolect.community#conventionVerificationReq",
+                "dev.idiolect.community#conventionDeprecationPolicy"
+              ]
+            }
+          },
+          "conventionsText": {
             "type": "string",
             "maxGraphemes": 10000,
-            "description": "Community-specific conventions not captured by schemas or lenses (style guides, review expectations, review cadence)."
+            "description": "Narrative conventions: style guides, tone, conventions not expressible as a structured predicate. Companion to `conventions`."
           },
           "createdAt": {
             "type": "string",
             "format": "datetime"
           }
+        }
+      }
+    },
+    "conventionReviewCadence": {
+      "type": "object",
+      "description": "Expected turnaround for community review of proposed lenses/verifications.",
+      "required": ["maxDays"],
+      "properties": {
+        "maxDays": {
+          "type": "integer",
+          "description": "Maximum business-days expected before a review is posted."
+        },
+        "scope": {
+          "type": "string",
+          "description": "Optional narrowing (e.g. 'lens-review', 'verification-review', 'all')."
+        }
+      }
+    },
+    "conventionVerificationReq": {
+      "type": "object",
+      "description": "A verification the community requires before endorsing a lens.",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "roundtrip-test",
+            "property-test",
+            "formal-proof",
+            "conformance-test",
+            "static-check",
+            "convergence-preserving"
+          ]
+        },
+        "property": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#lensProperty",
+          "description": "Optional specific property required."
+        }
+      }
+    },
+    "conventionDeprecationPolicy": {
+      "type": "object",
+      "description": "How the community handles deprecation: minimum notice, replacement requirements.",
+      "required": ["noticePeriodDays"],
+      "properties": {
+        "noticePeriodDays": {
+          "type": "integer",
+          "description": "Minimum days of advance notice before a deprecated lens is removed."
+        },
+        "replacementRequired": {
+          "type": "boolean",
+          "description": "Whether deprecations must point at a replacement lens before publication."
         }
       }
     }

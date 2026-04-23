@@ -1,12 +1,12 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.recommendation",
-  "description": "A community-published opinionated path with optional verification requirements. Recommendations are declarative guidance; orchestrators do not enforce them.",
+  "description": "A community-published opinionated path with structured applicability conditions and optional verification requirements. v0.2.0 replaces the free-text conditions/preconditions/caveats fields with structured ThCondition combinator trees and a typed caveat list; requiredVerifications upgrades from a verification-kind array to an array of LensProperty so consumers can check specific theorems, not just kinds. Narrative prose moves to `annotations` / `caveatsText`.",
   "defs": {
     "main": {
       "type": "record",
       "key": "tid",
-      "description": "A community states: for this situation, we recommend this lens path, subject to these preconditions and caveats. Consumers adopt or ignore.",
+      "description": "A community endorses a lens path under structured conditions. Consumers evaluate the condition tree against their invocation context to decide applicability; the caveats list gives structured failure modes to match on.",
       "record": {
         "type": "object",
         "required": ["issuingCommunity", "conditions", "lensPath", "occurredAt"],
@@ -16,9 +16,38 @@
             "format": "at-uri"
           },
           "conditions": {
-            "type": "string",
-            "maxGraphemes": 4000,
-            "description": "Free-text description of when this recommendation applies. Matching is community judgment, not machine logic."
+            "type": "array",
+            "maxLength": 128,
+            "description": "Structured applicability predicate in postfix-operator form: each item is either an atomic predicate over the invocation context or a combinator (and/or/not) that pops operands from the running stack. An empty array means 'always applies'. See dev.idiolect.theory.condition.",
+            "items": {
+              "type": "union",
+              "refs": [
+                "dev.idiolect.recommendation#conditionSourceIs",
+                "dev.idiolect.recommendation#conditionTargetIs",
+                "dev.idiolect.recommendation#conditionPurposeSubsumedBy",
+                "dev.idiolect.recommendation#conditionDataHas",
+                "dev.idiolect.recommendation#conditionAnd",
+                "dev.idiolect.recommendation#conditionOr",
+                "dev.idiolect.recommendation#conditionNot"
+              ]
+            }
+          },
+          "preconditions": {
+            "type": "array",
+            "maxLength": 128,
+            "description": "Additional structured assumptions the consumer must verify before adopting (same combinator shape as `conditions`). Empty array means no explicit preconditions.",
+            "items": {
+              "type": "union",
+              "refs": [
+                "dev.idiolect.recommendation#conditionSourceIs",
+                "dev.idiolect.recommendation#conditionTargetIs",
+                "dev.idiolect.recommendation#conditionPurposeSubsumedBy",
+                "dev.idiolect.recommendation#conditionDataHas",
+                "dev.idiolect.recommendation#conditionAnd",
+                "dev.idiolect.recommendation#conditionOr",
+                "dev.idiolect.recommendation#conditionNot"
+              ]
+            }
           },
           "lensPath": {
             "type": "array",
@@ -32,32 +61,36 @@
           "annotations": {
             "type": "string",
             "maxGraphemes": 8000,
-            "description": "Why this path, how to use it, known strengths."
+            "description": "Why this path, how to use it, known strengths. Narrative; not consumed by machine matchers."
           },
           "requiredVerifications": {
             "type": "array",
-            "description": "Verification kinds this recommendation assumes are in place.",
+            "description": "Verification properties this recommendation assumes are in place. v0.2.0 upgrade: each entry is a specific LensProperty, not just a verification kind, so consumers can check which roundtrip domain / theorem / standard has been established.",
             "items": {
-              "type": "string",
-              "enum": [
-                "roundtrip-test",
-                "property-test",
-                "formal-proof",
-                "conformance-test",
-                "static-check",
-                "convergence-preserving"
+              "type": "union",
+              "refs": [
+                "dev.idiolect.defs#lpRoundtrip",
+                "dev.idiolect.defs#lpGenerator",
+                "dev.idiolect.defs#lpTheorem",
+                "dev.idiolect.defs#lpConformance",
+                "dev.idiolect.defs#lpChecker",
+                "dev.idiolect.defs#lpConvergence"
               ]
             }
           },
-          "preconditions": {
-            "type": "string",
-            "maxGraphemes": 4000,
-            "description": "Assumptions the consumer must check before adopting."
-          },
           "caveats": {
+            "type": "array",
+            "maxLength": 32,
+            "description": "Structured known-failure-mode list. Consumers match on `mode` / `affects` / `severity` without substring search.",
+            "items": {
+              "type": "ref",
+              "ref": "dev.idiolect.defs#caveat"
+            }
+          },
+          "caveatsText": {
             "type": "string",
             "maxGraphemes": 4000,
-            "description": "Known limitations and failure modes."
+            "description": "Narrative commentary on the caveats. Companion to the structured `caveats` list, not a replacement."
           },
           "supersedes": {
             "type": "string",
@@ -70,6 +103,57 @@
           }
         }
       }
+    },
+    "conditionSourceIs": {
+      "type": "object",
+      "description": "Atomic predicate: the invocation's source schema is the given schema.",
+      "required": ["schema"],
+      "properties": {
+        "schema": { "type": "ref", "ref": "dev.idiolect.defs#schemaRef" }
+      }
+    },
+    "conditionTargetIs": {
+      "type": "object",
+      "description": "Atomic predicate: the invocation's target schema is the given schema.",
+      "required": ["schema"],
+      "properties": {
+        "schema": { "type": "ref", "ref": "dev.idiolect.defs#schemaRef" }
+      }
+    },
+    "conditionPurposeSubsumedBy": {
+      "type": "object",
+      "description": "Atomic predicate: the invocation's purpose.action is subsumed by the given purpose.action under the community vocabulary. Reuses the same subsumption hierarchy that governs data-use permissions.",
+      "required": ["purpose"],
+      "properties": {
+        "purpose": { "type": "ref", "ref": "dev.idiolect.defs#purpose" }
+      }
+    },
+    "conditionDataHas": {
+      "type": "object",
+      "description": "Atomic predicate: the invocation's data has the named property.",
+      "required": ["property"],
+      "properties": {
+        "property": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Community-defined property identifier (e.g. 'length>1024', 'contains-pii', 'multilingual')."
+        }
+      }
+    },
+    "conditionAnd": {
+      "type": "object",
+      "description": "Combinator: conjoin the top two predicates on the evaluation stack.",
+      "properties": {}
+    },
+    "conditionOr": {
+      "type": "object",
+      "description": "Combinator: disjoin the top two predicates on the evaluation stack.",
+      "properties": {}
+    },
+    "conditionNot": {
+      "type": "object",
+      "description": "Combinator: negate the top predicate on the evaluation stack.",
+      "properties": {}
     }
   }
 }

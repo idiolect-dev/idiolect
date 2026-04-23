@@ -1,15 +1,15 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.bounty",
-  "description": "A declaration that a translation, verification, or adapter is wanted, with terms. Per P5, the project does not intermediate fulfillment: payment, review, and acceptance happen on external rails referenced here.",
+  "description": "A declaration that a translation, verification, or adapter is wanted, with terms. v0.2.0 structures `constraints` as a ThConstraint tagged-union set and `eligibility` as a ThEligibility combinator tree; reward.summary stays narrative, externalRef stays the machine-actionable hook. Per P5, the project does not intermediate fulfillment: payment, review, and acceptance happen on external rails referenced here.",
   "defs": {
     "main": {
       "type": "record",
       "key": "tid",
-      "description": "A request primitive. Someone states what they want (a lens, a verification, an adapter) and the terms under which they will consider it delivered; fulfillment is resolved off-substrate.",
+      "description": "A request primitive. Someone states what they want (a lens, a verification, an adapter) and the structured constraints + eligibility they require; fulfillment is resolved off-substrate.",
       "record": {
         "type": "object",
-        "required": ["requester", "wants", "constraints", "occurredAt"],
+        "required": ["requester", "wants", "occurredAt"],
         "properties": {
           "requester": {
             "type": "string",
@@ -25,13 +25,23 @@
             ]
           },
           "constraints": {
-            "type": "string",
-            "maxGraphemes": 8000,
-            "description": "Free-text constraints: performance targets, conformance requirements, licensing, deadlines."
+            "type": "array",
+            "maxLength": 64,
+            "description": "Structured constraints the deliverable must satisfy. Matching is structural: consumers dispatch on the tagged variant.",
+            "items": {
+              "type": "union",
+              "refs": [
+                "dev.idiolect.bounty#constraintPerformance",
+                "dev.idiolect.bounty#constraintConformance",
+                "dev.idiolect.bounty#constraintLicense",
+                "dev.idiolect.bounty#constraintDeadline",
+                "dev.idiolect.bounty#constraintDependency"
+              ]
+            }
           },
           "reward": {
             "type": "object",
-            "description": "Free-form reward terms. The bounty record does not transact; it references external rails.",
+            "description": "Reward terms. The bounty record does not transact; `externalRef` is the machine-actionable hook; `summary` is narrative.",
             "properties": {
               "summary": {
                 "type": "string",
@@ -45,9 +55,20 @@
             }
           },
           "eligibility": {
-            "type": "string",
-            "maxGraphemes": 2000,
-            "description": "Who may claim this bounty. Free text; enforcement is off-substrate."
+            "type": "array",
+            "maxLength": 128,
+            "description": "Structured eligibility predicate in postfix-operator form: each item is either an atomic predicate or a combinator (and/or/not) that pops its operands from the running stack. An empty array means 'no eligibility restriction'. A single atomic item is the lone predicate.",
+            "items": {
+              "type": "union",
+              "refs": [
+                "dev.idiolect.bounty#eligibilityMember",
+                "dev.idiolect.bounty#eligibilityVerificationFor",
+                "dev.idiolect.bounty#eligibilityDid",
+                "dev.idiolect.bounty#eligibilityAnd",
+                "dev.idiolect.bounty#eligibilityOr",
+                "dev.idiolect.bounty#eligibilityNot"
+              ]
+            }
           },
           "fulfillment": {
             "type": "string",
@@ -70,14 +91,8 @@
       "type": "object",
       "required": ["source", "target"],
       "properties": {
-        "source": {
-          "type": "ref",
-          "ref": "dev.idiolect.defs#schemaRef"
-        },
-        "target": {
-          "type": "ref",
-          "ref": "dev.idiolect.defs#schemaRef"
-        },
+        "source": { "type": "ref", "ref": "dev.idiolect.defs#schemaRef" },
+        "target": { "type": "ref", "ref": "dev.idiolect.defs#schemaRef" },
         "bidirectional": {
           "type": "boolean",
           "description": "Whether the requested lens must be invertible."
@@ -88,10 +103,7 @@
       "type": "object",
       "required": ["lens", "kind"],
       "properties": {
-        "lens": {
-          "type": "ref",
-          "ref": "dev.idiolect.defs#lensRef"
-        },
+        "lens": { "type": "ref", "ref": "dev.idiolect.defs#lensRef" },
         "kind": {
           "type": "string",
           "enum": [
@@ -109,14 +121,130 @@
       "type": "object",
       "required": ["framework"],
       "properties": {
-        "framework": {
+        "framework": { "type": "string", "maxLength": 128 },
+        "versionRange": { "type": "string" }
+      }
+    },
+    "constraintPerformance": {
+      "type": "object",
+      "description": "Quantitative performance bound (latency, throughput, error rate) the deliverable must meet.",
+      "required": ["metric", "threshold"],
+      "properties": {
+        "metric": {
           "type": "string",
-          "maxLength": 128
+          "description": "Metric identifier (e.g. 'p99-latency-ms', 'throughput-rps', 'error-rate')."
         },
-        "versionRange": {
-          "type": "string"
+        "threshold": {
+          "type": "number",
+          "description": "Numeric threshold. Comparison direction is carried by `cmp`."
+        },
+        "cmp": {
+          "type": "string",
+          "enum": ["lt", "le", "eq", "ge", "gt"],
+          "description": "How `metric` relates to `threshold`. Default 'le' if omitted."
+        },
+        "sampleSize": { "type": "integer" }
+      }
+    },
+    "constraintConformance": {
+      "type": "object",
+      "description": "A verification kind (and optionally a specific property) the deliverable must pass.",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "roundtrip-test",
+            "property-test",
+            "formal-proof",
+            "conformance-test",
+            "static-check",
+            "convergence-preserving"
+          ]
+        },
+        "property": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#lensProperty",
+          "description": "Optional specific property the verification must establish."
         }
       }
+    },
+    "constraintLicense": {
+      "type": "object",
+      "description": "License requirement expressed as an SPDX expression plus optional allow/deny lists.",
+      "required": ["spdx"],
+      "properties": {
+        "spdx": {
+          "type": "string",
+          "description": "SPDX expression the deliverable must satisfy (e.g. 'MIT OR Apache-2.0')."
+        },
+        "allow": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit allowlist of SPDX identifiers."
+        },
+        "deny": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit denylist of SPDX identifiers."
+        }
+      }
+    },
+    "constraintDeadline": {
+      "type": "object",
+      "description": "Datetime deadline with optional grace window.",
+      "required": ["deadline"],
+      "properties": {
+        "deadline": { "type": "string", "format": "datetime" },
+        "graceSeconds": { "type": "integer" }
+      }
+    },
+    "constraintDependency": {
+      "type": "object",
+      "description": "Another bounty this one waits on. Claims are ineligible until the dependency's status is `fulfilled`.",
+      "required": ["bounty"],
+      "properties": {
+        "bounty": { "type": "string", "format": "at-uri" }
+      }
+    },
+    "eligibilityMember": {
+      "type": "object",
+      "description": "Atomic predicate: claimer is a member of the named community.",
+      "required": ["community"],
+      "properties": {
+        "community": { "type": "string", "format": "at-uri" }
+      }
+    },
+    "eligibilityVerificationFor": {
+      "type": "object",
+      "description": "Atomic predicate: claimer has published a verification for the named lens property.",
+      "required": ["property"],
+      "properties": {
+        "property": { "type": "ref", "ref": "dev.idiolect.defs#lensProperty" }
+      }
+    },
+    "eligibilityDid": {
+      "type": "object",
+      "description": "Atomic predicate: claimer's DID matches exactly.",
+      "required": ["did"],
+      "properties": {
+        "did": { "type": "string", "format": "did" }
+      }
+    },
+    "eligibilityAnd": {
+      "type": "object",
+      "description": "Combinator: conjoin the top two predicates on the evaluation stack.",
+      "properties": {}
+    },
+    "eligibilityOr": {
+      "type": "object",
+      "description": "Combinator: disjoin the top two predicates on the evaluation stack.",
+      "properties": {}
+    },
+    "eligibilityNot": {
+      "type": "object",
+      "description": "Combinator: negate the top predicate on the evaluation stack.",
+      "properties": {}
     }
   }
 }

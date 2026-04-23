@@ -1,7 +1,7 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.verification",
-  "description": "A signed assertion of a formal property of a lens. Verifications are the formal-channel primitive: they coexist with the emergent channel (encounters, corrections, observations) and neither gates the other.",
+  "description": "A signed assertion of a formal property of a lens. Verifications are the formal-channel primitive: they coexist with the emergent channel (encounters, corrections, observations) and neither gates the other. v0.2.0 replaces the free-text inputSpace with a structured `property` (dev.idiolect.defs#lensProperty) so consumers can dispatch on the specific claim — a Theorem for proof checkers, a GeneratorSpec for PBT runners, a ConformanceStandard for conformance runners.",
   "defs": {
     "main": {
       "type": "record",
@@ -9,7 +9,7 @@
       "description": "A verifier asserts that a lens has a named property, established by a named method, with dependencies and an input space the assertion covers.",
       "record": {
         "type": "object",
-        "required": ["lens", "kind", "verifier", "tool", "result", "occurredAt"],
+        "required": ["lens", "kind", "verifier", "tool", "property", "result", "occurredAt"],
         "properties": {
           "lens": {
             "type": "ref",
@@ -38,10 +38,17 @@
             "ref": "dev.idiolect.defs#tool",
             "description": "Tool and version used to establish the verification."
           },
-          "inputSpace": {
-            "type": "string",
-            "maxGraphemes": 4000,
-            "description": "Description of the input space covered: for property-tests, the generator; for formal-proofs, the domain over which the theorem is stated; for conformance-tests, the standard name and version."
+          "property": {
+            "type": "union",
+            "description": "Structured statement of what the verification asserts, dispatched on the variant: RoundtripDomain for roundtrip-test, GeneratorSpec for property-test, Theorem for formal-proof, ConformanceStandard for conformance-test, StaticCheckerConfig for static-check, ConvergenceClaim for convergence-preserving. See dev.idiolect.theory.lens_property.",
+            "refs": [
+              "dev.idiolect.defs#lpRoundtrip",
+              "dev.idiolect.defs#lpGenerator",
+              "dev.idiolect.defs#lpTheorem",
+              "dev.idiolect.defs#lpConformance",
+              "dev.idiolect.defs#lpChecker",
+              "dev.idiolect.defs#lpConvergence"
+            ]
           },
           "result": {
             "type": "string",
