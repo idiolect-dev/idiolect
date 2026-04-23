@@ -80,6 +80,11 @@
             "enum": ["open", "claimed", "fulfilled", "withdrawn"],
             "description": "Current lifecycle state as declared by the requester."
           },
+          "basis": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#basis",
+            "description": "Grounding for the bouletic attitude. Omit when the repo owner is the requester (self-asserted). Set explicitly when a third party is attributing the wanting to another party — the basis records on what grounds the attribution is made (community policy, an off-atproto signal, or derivation from another record)."
+          },
           "occurredAt": {
             "type": "string",
             "format": "datetime"

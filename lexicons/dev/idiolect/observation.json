@@ -95,6 +95,11 @@
             "type": "string",
             "description": "Version of this observation method; different versions may produce non-comparable outputs."
           },
+          "basis": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#basis",
+            "description": "Grounding for the observation. Omit when the repo owner is the observer; set explicitly when a third party is attributing the observation (e.g. caching or relaying another observer's aggregate)."
+          },
           "visibility": {
             "type": "ref",
             "ref": "dev.idiolect.defs#visibility"
