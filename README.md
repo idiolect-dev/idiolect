@@ -33,6 +33,79 @@ project ships reference runtimes, including a CLI, an orchestrator daemon, an ob
 daemon, a verification runtime, and a migration library, on top of a small,
 set of ten `dev.idiolect.*` lexicons.
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph sources["Source of truth"]
+        LEX["lexicons/dev/idiolect/*.json"]
+        SPEC["*-spec/ (orchestrator, observer, verify, cli)"]
+    end
+
+    subgraph codegen["Codegen (idiolect-codegen)"]
+        CG{{"emit · check · check-compat"}}
+    end
+
+    subgraph emitted["Emitted surfaces"]
+        RECS["idiolect-records (Rust)"]
+        NPM["@idiolect-dev/schema (TS)"]
+        WIRE["generated/ wire-up in<br/>orchestrator · observer · verify · cli"]
+    end
+
+    subgraph runtime["Runtime"]
+        PDS[("ATProto PDS<br/>+ firehose")]
+        IDX["idiolect-indexer<br/>(EventStream · CursorStore · RecordHandler)"]
+        ORC["idiolect-orchestrator<br/>(Catalog + HTTP query API)"]
+        OBS["idiolect-observer<br/>(fold encounters → observation records)"]
+        VER["idiolect-verify<br/>(roundtrip · property · static check)"]
+        MIG["idiolect-migrate<br/>(diff + lens migration)"]
+        LENS["idiolect-lens<br/>(resolve + apply panproto lenses)"]
+        ID["idiolect-identity<br/>(did:plc · did:web)"]
+        OAUTH["idiolect-oauth<br/>(session store)"]
+    end
+
+    CLI["idiolect CLI"]
+
+    LEX --> CG
+    SPEC --> CG
+    CG --> RECS
+    CG --> NPM
+    CG --> WIRE
+
+    PDS -->|commits| IDX
+    IDX --> ORC
+    IDX --> OBS
+    OBS -->|observation records| PDS
+    LENS -->|records| PDS
+    ID --> LENS
+    OAUTH --> LENS
+    ORC -->|HTTP| CLI
+    LENS --> MIG
+    LENS --> VER
+
+    RECS -.used by.-> IDX
+    RECS -.used by.-> ORC
+    RECS -.used by.-> OBS
+    WIRE -.used by.-> ORC
+    WIRE -.used by.-> OBS
+    WIRE -.used by.-> VER
+    WIRE -.used by.-> CLI
+```
+
+Lexicons under `lexicons/dev/` are the single source of truth. Rust types
+(`idiolect-records`) and TypeScript validators (`@idiolect-dev/schema`) are
+derived via `idiolect-codegen`; CI rejects any PR whose generated output
+disagrees with the lexicons. Four crates that carry a taxonomy of
+similarly-shaped items — the orchestrator's queries, the observer's methods,
+the verifier's runners, and the CLI's subcommands — each live behind a
+declarative JSON spec (`<crate>-spec/`) validated against its own
+atproto-shaped lexicon. Codegen emits the wire-up; hand-written predicates
+and semantics supply the business logic.
+
+Runtime state that must not federate — firehose cursors, OAuth tokens — rides
+the same panproto schema apparatus as everything else, flagged under
+`dev.idiolect.internal.*` so conformant firehose consumers skip it.
+
 ## Quickstart
 
 ```sh
@@ -87,25 +160,6 @@ if (isRecord(NSIDS.encounter, payload)) {
 [mig]: crates/idiolect-migrate
 [cli]: crates/idiolect-cli
 [npm]: packages/schema
-
-## Architecture in one paragraph
-
-The lexicons under `lexicons/dev/` are the single source of truth. Rust types
-(`idiolect-records`) and TypeScript validators (`@idiolect-dev/schema`) are
-derived via `idiolect-codegen`. CI rejects any PR whose generated output
-disagrees with the lexicons. 
-
-Four crates with a taxonomy of similarly-shaped items–the orchestrator's queries, 
-the observer's methods, the verifier's
-runners, and the CLI's subcommands–each live behind a declarative JSON
-spec (`<crate>-spec/`) validated against its own atproto-shaped lexicon.
-Codegen emits the wire-up while hand-written predicates and semantics supply
-the business logic. 
-
-Runtime state that must not federate (firehose cursors,
-OAuth tokens) rides the same panproto schema apparatus as everything else,
-flagged under `dev.idiolect.internal.*` so conformant firehose consumers
-skip it.
 
 ## Install
 

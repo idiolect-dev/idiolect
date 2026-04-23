@@ -50,7 +50,8 @@ use panproto_inst::parse::parse_json;
 use panproto_protocols::web_document::atproto::parse_lexicon;
 use panproto_schema::Schema;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{TokenStreamExt, quote};
+use syn::parse_str;
 
 /// Validate a spec instance against its lexicon.
 ///
@@ -104,49 +105,166 @@ pub fn validate_spec_through_panproto(
     Ok((schema, spec_json))
 }
 
-/// Render a list of top-level token streams as a Rust source file,
-/// formatted via `prettyplease` and prefaced with an
-/// `@generated`/source banner plus inner doc lines.
+/// Structured description of a generated Rust source file. Callers
+/// build this up with typed helpers (doc lines, allow-lints, items,
+/// extra inner attrs) instead of concatenating strings, then hand the
+/// result to [`render_generated_file`].
 ///
-/// Shared by the per-crate emitters so the generated-file preamble
-/// is identical across the spec-driven outputs.
+/// The only piece that remains a raw string is the single
+/// `// @generated ...` banner line — plain `//` line comments don't
+/// round-trip through `syn` / `prettyplease` and that's precisely
+/// what we want at the top of every generated file (it's tooling
+/// metadata, not Rust prose).
+pub struct GeneratedFile<'a> {
+    /// Path (relative to the repo root) of the spec that generated
+    /// this file. Stamped into the `@generated` banner and into parse
+    /// error context.
+    pub source_rel_path: &'a str,
+    /// Module-level documentation, rendered as `//!` lines. May be
+    /// multi-line; each line becomes its own `//!` in the output.
+    pub inner_doc: &'a str,
+    /// Lint names to silence at file scope, emitted as one
+    /// `#![allow(a, b, c)]`. Pass full paths for clippy lints
+    /// (`clippy::doc_markdown`) — the strings are parsed as syn paths,
+    /// not interpolated into source.
+    pub allow_lints: &'a [&'a str],
+    /// Any additional inner attributes the caller wants on the file
+    /// (e.g. `#![feature(...)]` — not used today but reserved so
+    /// extending the header doesn't require editing this type).
+    pub extra_inner_attrs: Vec<TokenStream>,
+    /// Top-level items in file order.
+    pub items: Vec<TokenStream>,
+}
+
+impl<'a> GeneratedFile<'a> {
+    /// Constructor with just the required fields. Fills the optional
+    /// lists with sensible empty defaults.
+    #[must_use]
+    pub const fn new(source_rel_path: &'a str, inner_doc: &'a str) -> Self {
+        Self {
+            source_rel_path,
+            inner_doc,
+            allow_lints: &[],
+            extra_inner_attrs: Vec::new(),
+            items: Vec::new(),
+        }
+    }
+
+    /// Replace the `allow_lints` slice (builder style).
+    #[must_use]
+    pub const fn with_allow_lints(mut self, lints: &'a [&'a str]) -> Self {
+        self.allow_lints = lints;
+        self
+    }
+
+    /// Replace the items list (builder style).
+    #[must_use]
+    pub fn with_items(mut self, items: Vec<TokenStream>) -> Self {
+        self.items = items;
+        self
+    }
+}
+
+/// Common set of lint allows shared across every spec-driven file
+/// today. Offered as a reasonable default — callers that need
+/// different lint surfaces pass their own slice to
+/// [`GeneratedFile::with_allow_lints`] instead of mutating a global.
+pub const DEFAULT_GENERATED_ALLOW_LINTS: &[&str] = &[
+    "missing_docs",
+    "clippy::doc_markdown",
+    "clippy::too_many_lines",
+];
+
+/// Build the `#![allow(...)]` inner attribute `TokenStream` from a
+/// list of lint paths. Each string is parsed as a `syn::Path`, so invalid
+/// paths fail loudly at codegen time rather than producing malformed
+/// Rust that the downstream rustc run has to diagnose.
 ///
 /// # Errors
 ///
-/// Returns an error when any token stream fails to parse as a
-/// `syn::File` — a programmer error in the emitter, not a spec
-/// issue.
+/// Returns an error if any lint name fails to parse as a
+/// `syn::Path` — programmer error in the caller.
+pub fn allow_lints_attr(lints: &[&str]) -> Result<TokenStream> {
+    if lints.is_empty() {
+        return Ok(TokenStream::new());
+    }
+    let mut paths: Vec<TokenStream> = Vec::with_capacity(lints.len());
+    for lint in lints {
+        let path: syn::Path =
+            parse_str(lint).with_context(|| format!("parse lint path `{lint}` as syn::Path"))?;
+        paths.push(quote! { #path });
+    }
+    Ok(quote! { #![allow(#(#paths),*)] })
+}
+
+/// Render a [`GeneratedFile`] to a formatted Rust source string.
+///
+/// Every non-banner component is built as `TokenStream` and parsed
+/// through `syn::File` / `prettyplease`, so there is no string
+/// concatenation of Rust source. The `//!` module doc lines are
+/// emitted as `#![doc = "…"]` inner attributes — `prettyplease`
+/// prints them back as real `//!` comments in the output.
+///
+/// # Errors
+///
+/// Returns an error when the assembled token stream fails to parse
+/// as a `syn::File`, or when an allow-lint name isn't a valid syn
+/// path.
+pub fn render_generated_file(file: GeneratedFile<'_>) -> Result<String> {
+    let GeneratedFile {
+        source_rel_path,
+        inner_doc,
+        allow_lints,
+        extra_inner_attrs,
+        items,
+    } = file;
+
+    let mut inner_attrs: Vec<TokenStream> = Vec::new();
+    for line in inner_doc.lines() {
+        // Prepend a space so prettyplease emits `//! text` with the
+        // conventional separator instead of `//!text`. An already
+        // leading-space'd line is left alone.
+        let padded = if line.starts_with(' ') || line.is_empty() {
+            line.to_owned()
+        } else {
+            format!(" {line}")
+        };
+        inner_attrs.push(quote! { #![doc = #padded] });
+    }
+    let allow_attr = allow_lints_attr(allow_lints)?;
+    if !allow_attr.is_empty() {
+        inner_attrs.push(allow_attr);
+    }
+    inner_attrs.extend(extra_inner_attrs);
+
+    let mut file_tokens = TokenStream::new();
+    file_tokens.append_all(inner_attrs);
+    file_tokens.append_all(items);
+
+    let syn_file: syn::File = syn::parse2(file_tokens)
+        .with_context(|| format!("parse generated tokens ({source_rel_path})"))?;
+    let body = prettyplease::unparse(&syn_file);
+
+    let banner =
+        format!("// @generated by idiolect-codegen from {source_rel_path}. do not edit.\n\n");
+    Ok(crate::rustfmt_source(&format!("{banner}{body}")))
+}
+
+/// Backward-compatible wrapper used by emitters that haven't yet
+/// moved to [`render_generated_file`]. Applies
+/// [`DEFAULT_GENERATED_ALLOW_LINTS`] to the file.
+///
+/// # Errors
+///
+/// Same conditions as [`render_generated_file`].
 pub fn render_file_with_source(
     inner_doc: &str,
     source_rel_path: &str,
     items: Vec<TokenStream>,
 ) -> Result<String> {
-    let mut rendered = Vec::with_capacity(items.len());
-    for item in items {
-        let file: syn::File = syn::parse2(quote! { #item })
-            .with_context(|| format!("parse generated token stream ({source_rel_path})"))?;
-        rendered.push(prettyplease::unparse(&file));
-    }
-    let body = rendered.join("\n");
-
-    let mut out = String::with_capacity(body.len() + inner_doc.len() + 256);
-    use std::fmt::Write as _;
-    writeln!(
-        out,
-        "// @generated by idiolect-codegen from {source_rel_path}. do not edit.\n"
+    render_generated_file(
+        GeneratedFile::new(source_rel_path, inner_doc)
+            .with_allow_lints(DEFAULT_GENERATED_ALLOW_LINTS)
+            .with_items(items),
     )
-    .expect("write to String");
-    for line in inner_doc.lines() {
-        out.push_str("//! ");
-        out.push_str(line);
-        out.push('\n');
-    }
-    // Generated code inherits the spec file's documentation; per-
-    // item docstrings are not emitted because every item's meaning
-    // is already stated in the spec. Silence the workspace's
-    // missing-docs warn for this module.
-    out.push_str("\n#![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]\n");
-    out.push('\n');
-    out.push_str(&body);
-    Ok(crate::rustfmt_source(&out))
 }

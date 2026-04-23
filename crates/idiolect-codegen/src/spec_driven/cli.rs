@@ -71,8 +71,6 @@ fn emit_source(spec: &QuerySpec) -> Result<String> {
         .collect();
 
     let items = vec![quote! {
-        #![allow(unused_imports)]
-
         use std::process::ExitCode;
 
         use anyhow::{Result, anyhow, bail};
@@ -122,10 +120,15 @@ fn emit_source(spec: &QuerySpec) -> Result<String> {
         }
     }];
 
-    super::render_file_with_source(
-        "CLI dispatcher for `idiolect orchestrator …` subcommands.",
-        "orchestrator-spec/queries.json",
-        items,
+    let mut lints: Vec<&str> = super::DEFAULT_GENERATED_ALLOW_LINTS.to_vec();
+    lints.push("unused_imports");
+    super::render_generated_file(
+        super::GeneratedFile::new(
+            "orchestrator-spec/queries.json",
+            "CLI dispatcher for `idiolect orchestrator …` subcommands.",
+        )
+        .with_allow_lints(&lints)
+        .with_items(items),
     )
 }
 

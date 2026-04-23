@@ -115,8 +115,6 @@ fn emit_source(spec: &MethodSpec) -> Result<String> {
         .collect();
 
     let items: Vec<TokenStream> = vec![quote! {
-        #![allow(unused_imports)]
-
         /// Whether a method's `observe` receives the raw event (record-form)
         /// or a panproto WInstance (instance-form).
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -161,5 +159,11 @@ fn emit_source(spec: &MethodSpec) -> Result<String> {
         .description
         .as_deref()
         .unwrap_or("Observer method registry.");
-    super::render_file_with_source(inner_doc, "observer-spec/methods.json", items)
+    let mut lints: Vec<&str> = super::DEFAULT_GENERATED_ALLOW_LINTS.to_vec();
+    lints.push("unused_imports");
+    super::render_generated_file(
+        super::GeneratedFile::new("observer-spec/methods.json", inner_doc)
+            .with_allow_lints(&lints)
+            .with_items(items),
+    )
 }

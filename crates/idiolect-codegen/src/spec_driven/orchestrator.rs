@@ -423,7 +423,25 @@ const fn parser_known_values(p: ParserKind) -> Option<&'static [&'static str]> {
 }
 
 fn render_file(inner_doc: &str, items: Vec<TokenStream>) -> Result<String> {
-    super::render_file_with_source(inner_doc, SOURCE_PATH, items)
+    render_file_with_extras(inner_doc, items, &[])
+}
+
+/// Render an orchestrator-generated file with caller-supplied extra
+/// lint allows. `extra_lints` is merged with
+/// [`super::DEFAULT_GENERATED_ALLOW_LINTS`] so every file keeps the
+/// baseline silencers.
+fn render_file_with_extras(
+    inner_doc: &str,
+    items: Vec<TokenStream>,
+    extra_lints: &[&str],
+) -> Result<String> {
+    let mut lints: Vec<&str> = super::DEFAULT_GENERATED_ALLOW_LINTS.to_vec();
+    lints.extend_from_slice(extra_lints);
+    super::render_generated_file(
+        super::GeneratedFile::new(SOURCE_PATH, inner_doc)
+            .with_allow_lints(&lints)
+            .with_items(items),
+    )
 }
 
 fn emit_mod_rs() -> Result<String> {
@@ -445,7 +463,6 @@ fn emit_mod_rs() -> Result<String> {
 
 fn emit_queries_rs(spec: &QuerySpec) -> Result<String> {
     let mut items: Vec<TokenStream> = vec![quote! {
-        #![allow(unused_imports)]
         use crate::catalog::{Catalog, Entry};
     }];
     for q in &spec.queries {
@@ -455,7 +472,7 @@ fn emit_queries_rs(spec: &QuerySpec) -> Result<String> {
         .description
         .as_deref()
         .unwrap_or("Generated catalog queries. One `pub fn` per spec entry.");
-    render_file(inner_doc, items)
+    render_file_with_extras(inner_doc, items, &["unused_imports"])
 }
 
 /// Build the `pub fn <name>(…) -> Vec<&Entry<R>> { … }` item for one
@@ -535,7 +552,6 @@ fn query_fn_item(q: &QueryDecl) -> Result<TokenStream> {
 
 fn emit_http_rs(spec: &QuerySpec) -> Result<String> {
     let mut items: Vec<TokenStream> = vec![quote! {
-        #![allow(unused_imports)]
         use axum::Router;
         use axum::extract::{Query, State};
         use axum::routing::get;
@@ -553,9 +569,10 @@ fn emit_http_rs(spec: &QuerySpec) -> Result<String> {
 
     items.push(register_routes_fn(spec));
 
-    render_file(
+    render_file_with_extras(
         "Generated axum handlers for each catalog query. One handler per spec entry; a register_routes helper wires them into a router.",
         items,
+        &["unused_imports"],
     )
 }
 
