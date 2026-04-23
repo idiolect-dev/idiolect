@@ -77,6 +77,7 @@ fn bounty_want_lens(src: &str, tgt: &str) -> Bounty {
 fn community(members: &[&str]) -> Community {
     Community {
         conventions: None,
+        conventions_text: None,
         core_lenses: None,
         core_schemas: None,
         created_at: "2026-04-21T00:00:00Z".into(),
@@ -91,8 +92,10 @@ fn community(members: &[&str]) -> Community {
 fn recommendation_for(lens: &str) -> Recommendation {
     Recommendation {
         annotations: None,
+        basis: None,
         caveats: None,
-        conditions: "x".into(),
+        caveats_text: None,
+        conditions: vec![],
         issuing_community: "at://did:plc:c/dev.idiolect.community/main".into(),
         lens_path: vec![l_ref(lens)],
         occurred_at: "2026-04-21T00:00:00Z".into(),
@@ -103,15 +106,51 @@ fn recommendation_for(lens: &str) -> Recommendation {
 }
 
 fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
-    use idiolect_records::generated::defs::Tool;
+    use idiolect_records::generated::defs::{
+        LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool,
+    };
+    use idiolect_records::generated::verification::VerificationProperty;
+    let property = match kind {
+        VerificationKind::RoundtripTest => VerificationProperty::LpRoundtrip(LpRoundtrip {
+            domain: "any".into(),
+            generator: None,
+        }),
+        VerificationKind::PropertyTest => VerificationProperty::LpGenerator(LpGenerator {
+            spec: "any".into(),
+            runner: None,
+            seed: None,
+        }),
+        VerificationKind::FormalProof => VerificationProperty::LpTheorem(LpTheorem {
+            statement: "identity".into(),
+            system: Some("coq".into()),
+            free_variables: None,
+        }),
+        VerificationKind::ConformanceTest => VerificationProperty::LpConformance(LpConformance {
+            standard: "any".into(),
+            version: "1".into(),
+            clauses: None,
+        }),
+        VerificationKind::StaticCheck => VerificationProperty::LpChecker(LpChecker {
+            checker: "any".into(),
+            ruleset: None,
+            version: None,
+        }),
+        VerificationKind::ConvergencePreserving => {
+            VerificationProperty::LpConvergence(LpConvergence {
+                property: "any".into(),
+                bound_steps: None,
+            })
+        }
+    };
     Verification {
+        basis: None,
         counterexample: None,
         dependencies: None,
-        input_space: None,
         kind,
         lens: l_ref(lens_uri),
         occurred_at: "2026-04-21T00:00:00Z".into(),
         proof_artifact: None,
+        property,
         result: VerificationResult::Holds,
         tool: Tool {
             commit: None,
@@ -206,6 +245,25 @@ async fn open_bounties_returns_seeded_bounty() {
         .unwrap();
     assert_eq!(body["items"].as_array().unwrap().len(), 1);
     assert_eq!(body["items"][0]["uri"], "at://x/dev.idiolect.bounty/b1");
+}
+
+#[tokio::test]
+async fn xrpc_route_matches_rest_route() {
+    let base = serve_app(seed_catalog()).await;
+    let rest: serde_json::Value = reqwest::get(format!("{base}/v1/bounties/open"))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let xrpc: serde_json::Value =
+        reqwest::get(format!("{base}/xrpc/dev.idiolect.query.openBounties"))
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+    assert_eq!(rest, xrpc);
 }
 
 #[tokio::test]
