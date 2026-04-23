@@ -9,9 +9,10 @@
 //! - Shared reference-comparison helpers ([`schema_refs_match`],
 //!   [`lens_refs_match`]) used across multiple predicates.
 //! - Enum parsers ([`parse_verification_kind`],
-//!   [`parse_adapter_invocation_protocol_kind`]) that the generated
-//!   HTTP handlers invoke to convert query-string tokens into typed
-//!   parameters. Signature: `fn(&str) -> Result<T, String>`.
+//!   [`parse_adapter_invocation_protocol_kind`], [`parse_vocab_world`])
+//!   that the generated HTTP handlers invoke to convert query-string
+//!   tokens into typed parameters. Signature:
+//!   `fn(&str) -> Result<T, String>`.
 //!
 //! Conventions:
 //!

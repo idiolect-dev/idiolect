@@ -13,7 +13,15 @@
             "type": "string"
           },
           "kind": {
-            "description": "one of `roundtrip-test`, `property-test`, `formal-proof`, `conformance-test`, `static-check`, `convergence-preserving`.",
+            "description": "Verification-kind token.",
+            "knownValues": [
+              "roundtrip-test",
+              "property-test",
+              "formal-proof",
+              "conformance-test",
+              "static-check",
+              "convergence-preserving"
+            ],
             "type": "string"
           },
           "limit": {

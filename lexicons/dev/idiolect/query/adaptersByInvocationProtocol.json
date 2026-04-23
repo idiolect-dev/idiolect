@@ -13,7 +13,12 @@
             "type": "string"
           },
           "kind": {
-            "description": "one of `subprocess`, `http`, `wasm`.",
+            "description": "Adapter invocation-protocol kind token.",
+            "knownValues": [
+              "subprocess",
+              "http",
+              "wasm"
+            ],
             "type": "string"
           },
           "limit": {

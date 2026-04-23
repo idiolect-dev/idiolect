@@ -326,6 +326,17 @@ fn build_query_lexicon(nsid: &str, q: &QueryDecl) -> serde_json::Value {
         if let Some(hint) = parser_param_description(p.parser) {
             prop.insert("description".into(), serde_json::Value::String(hint.into()));
         }
+        if let Some(values) = parser_known_values(p.parser) {
+            prop.insert(
+                "knownValues".into(),
+                serde_json::Value::Array(
+                    values
+                        .iter()
+                        .map(|v| serde_json::Value::String((*v).into()))
+                        .collect(),
+                ),
+            );
+        }
         props.insert(p.http_query.clone(), serde_json::Value::Object(prop));
         required.push(serde_json::Value::String(p.http_query.clone()));
     }
@@ -383,11 +394,30 @@ const fn parser_param_description(p: ParserKind) -> Option<&'static str> {
         ParserKind::String => None,
         ParserKind::SchemaRefFromUri => Some("at-uri of the schema record."),
         ParserKind::LensRefFromUri => Some("at-uri of the lens record."),
-        ParserKind::VerificationKind => Some(
-            "one of `roundtrip-test`, `property-test`, `formal-proof`, `conformance-test`, `static-check`, `convergence-preserving`.",
-        ),
-        ParserKind::AdapterInvocationProtocolKind => Some("one of `subprocess`, `http`, `wasm`."),
-        ParserKind::VocabWorld => Some("one of `closed-with-default`, `open`, `hierarchy-closed`."),
+        ParserKind::VerificationKind => Some("Verification-kind token."),
+        ParserKind::AdapterInvocationProtocolKind => {
+            Some("Adapter invocation-protocol kind token.")
+        }
+        ParserKind::VocabWorld => Some("Vocabulary subsumption-world token."),
+    }
+}
+
+/// For enum-shaped parsers, return the set of accepted tokens so
+/// emitted XRPC lexicons can declare `knownValues`. `None` means the
+/// param is an unbounded string and no `knownValues` should be set.
+const fn parser_known_values(p: ParserKind) -> Option<&'static [&'static str]> {
+    match p {
+        ParserKind::String | ParserKind::SchemaRefFromUri | ParserKind::LensRefFromUri => None,
+        ParserKind::VerificationKind => Some(&[
+            "roundtrip-test",
+            "property-test",
+            "formal-proof",
+            "conformance-test",
+            "static-check",
+            "convergence-preserving",
+        ]),
+        ParserKind::AdapterInvocationProtocolKind => Some(&["subprocess", "http", "wasm"]),
+        ParserKind::VocabWorld => Some(&["closed-with-default", "open", "hierarchy-closed"]),
     }
 }
 

@@ -19,7 +19,12 @@
             "type": "integer"
           },
           "world": {
-            "description": "one of `closed-with-default`, `open`, `hierarchy-closed`.",
+            "description": "Vocabulary subsumption-world token.",
+            "knownValues": [
+              "closed-with-default",
+              "open",
+              "hierarchy-closed"
+            ],
             "type": "string"
           }
         },

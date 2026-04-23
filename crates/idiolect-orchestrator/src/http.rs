@@ -281,20 +281,24 @@ async fn metrics(State(s): State<AppState>) -> Result<Response, ApiError> {
          # HELP idiolect_orchestrator_catalog_records Number of cataloged records by kind.\n\
          # TYPE idiolect_orchestrator_catalog_records gauge\n\
          idiolect_orchestrator_catalog_records{{kind=\"adapter\"}} {}\n\
+         idiolect_orchestrator_catalog_records{{kind=\"belief\"}} {}\n\
          idiolect_orchestrator_catalog_records{{kind=\"bounty\"}} {}\n\
          idiolect_orchestrator_catalog_records{{kind=\"community\"}} {}\n\
          idiolect_orchestrator_catalog_records{{kind=\"dialect\"}} {}\n\
          idiolect_orchestrator_catalog_records{{kind=\"recommendation\"}} {}\n\
          idiolect_orchestrator_catalog_records{{kind=\"verification\"}} {}\n\
+         idiolect_orchestrator_catalog_records{{kind=\"vocab\"}} {}\n\
          # HELP idiolect_orchestrator_catalog_total Sum of records across every kind.\n\
          # TYPE idiolect_orchestrator_catalog_total gauge\n\
          idiolect_orchestrator_catalog_total {}\n",
         stats.adapters,
+        stats.beliefs,
         stats.bounties,
         stats.communities,
         stats.dialects,
         stats.recommendations,
         stats.verifications,
+        stats.vocabularies,
         stats.total(),
     );
     Ok((

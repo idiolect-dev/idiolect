@@ -20,7 +20,7 @@
 use idiolect_records::Dialect;
 use idiolect_records::generated::defs::LensRef;
 use idiolect_records::generated::recommendation::RecommendationRequiredVerifications;
-use idiolect_records::generated::verification::{VerificationKind, VerificationResult};
+use idiolect_records::generated::verification::VerificationResult;
 
 use crate::catalog::Catalog;
 
@@ -29,9 +29,10 @@ use crate::catalog::Catalog;
 // -----------------------------------------------------------------
 
 pub use crate::generated::queries::{
-    adapters_by_invocation_protocol, adapters_for_framework, bounties_by_requester,
-    bounties_for_want_lens, communities_by_name, communities_for_member, dialects_for_community,
-    open_bounties, recommendations_starting_from, verifications_by_kind, verifications_for_lens,
+    adapters_by_invocation_protocol, adapters_for_framework, beliefs_about_record,
+    beliefs_by_holder, bounties_by_requester, bounties_for_want_lens, communities_by_name,
+    communities_for_member, dialects_for_community, open_bounties, recommendations_starting_from,
+    verifications_by_kind, verifications_for_lens, vocabularies_by_name, vocabularies_with_world,
 };
 
 // Reference-matching helpers stay public on the query module too so
@@ -48,29 +49,6 @@ pub use crate::predicates::{lens_refs_match, schema_refs_match};
 #[must_use]
 pub fn preferred_lenses_for_dialect(dialect: &Dialect) -> &[LensRef] {
     dialect.preferred_lenses.as_deref().unwrap_or(&[])
-}
-
-/// Map a [`RecommendationRequiredVerifications`] tagged-union variant
-/// to the [`VerificationKind`] that satisfies it.
-///
-/// Under v0.2.0, required verifications are `LensProperty` values, not
-/// raw kinds. For this coverage check we still reduce each requirement
-/// to its coarser kind — a future extension can also demand that the
-/// verification's `property` field matches structurally.
-#[must_use]
-pub const fn required_kind_to_verification_kind(
-    kind: &RecommendationRequiredVerifications,
-) -> VerificationKind {
-    match kind {
-        RecommendationRequiredVerifications::LpRoundtrip(_) => VerificationKind::RoundtripTest,
-        RecommendationRequiredVerifications::LpGenerator(_) => VerificationKind::PropertyTest,
-        RecommendationRequiredVerifications::LpTheorem(_) => VerificationKind::FormalProof,
-        RecommendationRequiredVerifications::LpConformance(_) => VerificationKind::ConformanceTest,
-        RecommendationRequiredVerifications::LpChecker(_) => VerificationKind::StaticCheck,
-        RecommendationRequiredVerifications::LpConvergence(_) => {
-            VerificationKind::ConvergencePreserving
-        }
-    }
 }
 
 /// Decide whether `lens` has verifications covering every requirement
@@ -178,20 +156,25 @@ fn clauses_covered(required: Option<&[String]>, published: Option<&[String]>) ->
 pub fn catalog_stats(catalog: &Catalog) -> CatalogStats {
     CatalogStats {
         adapters: catalog.adapters().count(),
+        beliefs: catalog.beliefs().count(),
         bounties: catalog.bounties().count(),
         communities: catalog.communities().count(),
         dialects: catalog.dialects().count(),
         recommendations: catalog.recommendations().count(),
         verifications: catalog.verifications().count(),
+        vocabularies: catalog.vocabularies().count(),
     }
 }
 
 /// Return value of [`catalog_stats`]. Each field is the count of
 /// records of that kind currently in the catalog.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CatalogStats {
     /// Count of `Adapter` records.
     pub adapters: usize,
+    /// Count of `Belief` records.
+    pub beliefs: usize,
     /// Count of `Bounty` records.
     pub bounties: usize,
     /// Count of `Community` records.
@@ -202,6 +185,8 @@ pub struct CatalogStats {
     pub recommendations: usize,
     /// Count of `Verification` records.
     pub verifications: usize,
+    /// Count of `Vocab` records.
+    pub vocabularies: usize,
 }
 
 impl CatalogStats {
@@ -209,10 +194,12 @@ impl CatalogStats {
     #[must_use]
     pub const fn total(&self) -> usize {
         self.adapters
+            + self.beliefs
             + self.bounties
             + self.communities
             + self.dialects
             + self.recommendations
             + self.verifications
+            + self.vocabularies
     }
 }
