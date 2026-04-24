@@ -45,12 +45,15 @@ lines into the new versioned section.
   attribution and grounding the assertion in a structured basis
   variant (self-asserted / community-policy / external-signal /
   derived-from-record).
-- `ThTarget`, `ThEvidential`, `ThIllocutionary` content theories; a
-  factored-out `ThPredicate` shared substrate for `ThCondition` and
-  `ThEligibility`; `extends` + `_extract` + coherence equations on
-  every theory YAML.
+- `ThTarget`, `ThEvidential`, `ThIllocutionary`, and `ThCharter`
+  content theories; a factored-out `ThPredicate` shared substrate
+  for `ThCondition` and `ThEligibility`; `extends` + `_extract` +
+  coherence equations on every theory YAML.
 - `morphisms/idiolect/` directory for inter-theory functors, split
   from the lens-as-data-transformation directory.
+- `lenses/vocab/` — worked vocabulary-translation lens example with a
+  dedicated README, illustrating the action / purpose translation
+  pattern end-to-end.
 - Orchestrator: catalog tracks `Belief` + `Vocab`; theory-resolver
   gained `sync_from_catalog` and `class_of`; new `predicate_eval`
   module evaluates recommendation condition/precondition/bounty
@@ -69,6 +72,11 @@ lines into the new versioned section.
 
 ### Changed
 
+- Free-text decision fields across the attitudinal records replaced
+  with structured content-theory references. Narrative prose moves
+  to companion `*_text` fields where it's still useful; the
+  machine-actionable shape is now a tagged-union of theory
+  primitives that consumers dispatch on.
 - `dev.idiolect.encounter` structured content theory renamed from
   `ThPurpose` to `ThUse`, splitting the previous single `purpose`
   string into `use.action` + `use.purpose` with separate
@@ -100,9 +108,17 @@ lines into the new versioned section.
 - Generated HTTP handlers validate `world`, `verification kind`, and
   `adapter invocation protocol` query-string tokens at the boundary
   via dedicated parsers.
+- Codegen now collects imports for tagged-union variant payloads
+  emitted under nested `defs`, fixing a missing-import regression
+  that surfaced when theory primitives grew union-of-union shapes.
 
 ### Removed
 
 - Dead `required_kind_to_verification_kind` helper (superseded by
   structural `requirement_matches`).
+
+### Security
+
+- Bumped `rustls-webpki` to 0.103.13 to pick up the fix for
+  [RUSTSEC-2026-0104](https://rustsec.org/advisories/RUSTSEC-2026-0104).
 
