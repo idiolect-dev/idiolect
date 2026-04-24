@@ -1,17 +1,47 @@
 # idiolect-identity
 
-DID resolution for idiolect: `did:plc` via plc.directory, `did:web`
-via `/.well-known/did.json`.
+DID resolution for idiolect: `did:plc` via plc.directory, `did:web` via
+`/.well-known/did.json`.
 
 ## Overview
 
 Maps DID identifiers to their W3C DID documents and, by way of
 `DidDocument::pds_url`, the repo's PDS base URL. The core is
-transport-agnostic — an `InMemoryIdentityResolver` ships for tests
-and a reqwest-backed `ReqwestIdentityResolver` is available behind
-a feature flag. A `CachingIdentityResolver<R>` wraps any resolver
-with a TTL cache, matching the P1-era "resolve-then-cache" pattern
-every live appview uses.
+transport-agnostic — an `InMemoryIdentityResolver` ships for tests and a
+reqwest-backed `ReqwestIdentityResolver` sits behind a feature flag. A
+`CachingIdentityResolver<R>` wraps any resolver with a TTL cache,
+matching the resolve-then-cache pattern every live appview uses.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph input["Input"]
+        DID["Did::parse"]
+        HND["handle string"]
+    end
+    subgraph resolvers["IdentityResolver"]
+        MEM["InMemoryIdentityResolver<br/>(tests)"]
+        REQ["ReqwestIdentityResolver"]
+        CACHE["CachingIdentityResolver&lt;R&gt;<br/>(TTL)"]
+    end
+    subgraph sources["Upstream"]
+        PLC[("plc.directory")]
+        WEB[("/.well-known/did.json")]
+    end
+    DOC["DidDocument<br/>{ id, pds_url, extras }"]
+    CONS["idiolect-lens<br/>idiolect-cli"]
+
+    DID --> MEM
+    DID --> REQ
+    HND --> REQ
+    CACHE -.wraps.-> REQ
+    REQ -->|did:plc| PLC
+    REQ -->|did:web| WEB
+    MEM --> DOC
+    REQ --> DOC
+    DOC --> CONS
+```
 
 ## Usage
 
@@ -37,16 +67,16 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
 
 ## Design notes
 
-- `Did::parse` accepts `did:plc:*` and `did:web:*`; other methods
-  are rejected as out-of-scope.
+- `Did::parse` accepts `did:plc:*` and `did:web:*`; other methods are
+  rejected as out-of-scope.
 - `DidDocument` carries only the atproto-relevant subset of the W3C
-  spec; unknown fields survive via an `extras: BTreeMap<String,
-  Value>` so round-trip through the struct preserves what the PLC
-  directory or the `/.well-known/did.json` endpoint returned.
+  spec; unknown fields survive via an `extras: BTreeMap<String, Value>`
+  so round-trip through the struct preserves what the PLC directory or
+  the `/.well-known/did.json` endpoint returned.
 
 ## Related
 
 - [`idiolect-lens`](../idiolect-lens) — the `pds-resolve` helpers
   compose this crate with `ReqwestPdsClient`.
-- [`idiolect-cli`](../idiolect-cli) — `idiolect resolve <did>`
-  surfaces this crate's resolution at the command line.
+- [`idiolect-cli`](../idiolect-cli) — `idiolect resolve <did>` surfaces
+  this crate's resolution at the command line.

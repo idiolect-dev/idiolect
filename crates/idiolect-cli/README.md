@@ -5,12 +5,39 @@ Command-line tool wrapping the library crates.
 ## Overview
 
 Single binary named `idiolect`. Subcommands cover the three common
-operations: resolve a DID, fetch a record from its home PDS, and
-query a running local orchestrator. The orchestrator subcommand
-dispatcher is **generated** from
+operations: resolve a DID, fetch a record from its home PDS, and query
+a running local orchestrator. The orchestrator subcommand dispatcher is
+**generated** from
 [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json)
-so the CLI never drifts out of sync with the HTTP API it's
-targeting.
+so the CLI never drifts out of sync with the HTTP API it's targeting.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    USER["user shell"]
+    subgraph cli["idiolect"]
+        CLAP["clap parser"]
+        RES["resolve"]
+        FET["fetch"]
+        ORCSUB["orchestrator (generated)"]
+    end
+    OSPEC["orchestrator-spec/queries.json"]
+    CG["idiolect-codegen"]
+
+    ID["idiolect-identity"]
+    LENSP["idiolect-lens<br/>(ReqwestPdsClient · fetcher_for_did)"]
+    ORCHTTP["orchestrator HTTP API"]
+
+    USER --> CLAP
+    CLAP --> RES --> ID
+    CLAP --> FET --> LENSP
+    CLAP --> ORCSUB --> ORCHTTP
+    OSPEC --> CG -.emits subcommands.-> ORCSUB
+```
+
+Every command prints pretty-printed JSON to stdout — pipe through `jq`
+for further filtering.
 
 ## Install
 
@@ -21,8 +48,8 @@ cargo install idiolect-cli
 ```
 
 Binary archives for every release ship on the
-[releases page](https://github.com/idiolect-dev/idiolect/releases)
-for Linux (x86_64, aarch64) and macOS (x86_64, aarch64).
+[releases page](https://github.com/idiolect-dev/idiolect/releases) for
+Linux (x86_64, aarch64) and macOS (x86_64, aarch64).
 
 ## Usage
 
@@ -45,25 +72,21 @@ idiolect orchestrator verifications --lens at://did:plc:x/dev.panproto.schema.le
 idiolect orchestrator stats --url https://orch.example.com
 ```
 
-Every command prints pretty-printed JSON to stdout — pipe through
-`jq` for further filtering.
-
 ## Design notes
 
 - The `orchestrator` subcommand dispatcher is emitted from the
-  orchestrator's query spec; adding a query to the spec produces a
-  new CLI subcommand automatically on the next codegen run.
+  orchestrator's query spec; adding a query to the spec produces a new
+  CLI subcommand automatically on the next codegen run.
 - Authentication is not wired: `resolve` and `fetch` hit public
-  endpoints; the orchestrator API is read-only and public by
-  design. Authenticated writes are
-  [`idiolect-lens::SigningPdsWriter`](../idiolect-lens)'s
-  responsibility.
+  endpoints; the orchestrator API is read-only and public by design.
+  Authenticated writes are
+  [`idiolect-lens::SigningPdsWriter`](../idiolect-lens)'s responsibility.
 
 ## Related
 
-- [`idiolect-identity`](../idiolect-identity) — `resolve` backs
-  onto this crate.
-- [`idiolect-lens`](../idiolect-lens) — `fetch` uses
-  `ReqwestPdsClient` via `fetcher_for_did`.
-- [`idiolect-orchestrator`](../idiolect-orchestrator) — the HTTP
-  API the `orchestrator` subcommands query.
+- [`idiolect-identity`](../idiolect-identity) — `resolve` backs onto
+  this crate.
+- [`idiolect-lens`](../idiolect-lens) — `fetch` uses `ReqwestPdsClient`
+  via `fetcher_for_did`.
+- [`idiolect-orchestrator`](../idiolect-orchestrator) — the HTTP API
+  the `orchestrator` subcommands query.
