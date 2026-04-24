@@ -465,7 +465,12 @@ jobs:
           generate_release_notes: true
 
   # ---------------------------------------------------------------
-  # Publish @idiolect-dev/schema to npm. Runs only if NPM_TOKEN is set.
+  # Publish @idiolect-dev/schema to npm via Trusted Publishers (OIDC).
+  # No long-lived NPM_TOKEN — npm is configured at
+  # npmjs.com/package/@idiolect-dev/schema/access to trust this
+  # repo + workflow filename, and the npm CLI exchanges the job's
+  # OIDC token for short-lived publish credentials automatically
+  # when `--provenance` is set.
   # ---------------------------------------------------------------
   publish-npm:
     name: publish @idiolect-dev/schema
@@ -475,7 +480,7 @@ jobs:
     if: ${{ !contains(needs.verify-version.outputs.version, '-') }}
     permissions:
       contents: read
-      id-token: write
+      id-token: write     # OIDC token for npm Trusted Publishers
     steps:
       - uses: actions/checkout@v4
 
@@ -496,14 +501,7 @@ jobs:
 
       - name: publish
         working-directory: packages/schema
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::warning::NPM_TOKEN not set; skipping npm publish"
-            exit 0
-          fi
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
 
   # ---------------------------------------------------------------
   # Publish the publishable crates to crates.io in topological
