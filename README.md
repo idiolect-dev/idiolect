@@ -21,9 +21,13 @@
 ---
 
 Idiolect turns the linguistic distinction between *idiolects*, *dialects*, and *languages* into an
-operating model. An idiolect is one party's choice of schemas, lenses, and
-conventions; a dialect is the bundle of idiolects a community treats as
-canonical; and a language is the federated substrate over which idiolects and
+operating model.
+
+1. An idiolect is one party's choice of schemas, lenses, and
+conventions.
+2. A dialect is the bundle of idiolects a community treats as
+canonical.
+3. A language is the federated substrate over which idiolects and
 dialects meet, disagree, and slowly converge without a central arbiter.
 
 Architectural primitives are signed, content-addressed records on
@@ -94,15 +98,16 @@ flowchart TB
 
 Lexicons under `lexicons/dev/` are the single source of truth. Rust types
 (`idiolect-records`) and TypeScript validators (`@idiolect-dev/schema`) are
-derived via `idiolect-codegen`; CI rejects any PR whose generated output
-disagrees with the lexicons. Four crates that carry a taxonomy of
-similarly-shaped items — the orchestrator's queries, the observer's methods,
-the verifier's runners, and the CLI's subcommands — each live behind a
+derived via `idiolect-codegen`. 
+
+Four crates that carry a taxonomy of
+similarly-shaped items—the orchestrator's queries, the observer's methods,
+the verifier's runners, and the CLI's subcommands—each live behind a
 declarative JSON spec (`<crate>-spec/`) validated against its own
 atproto-shaped lexicon. Codegen emits the wire-up; hand-written predicates
 and semantics supply the business logic.
 
-Runtime state that must not federate — firehose cursors, OAuth tokens — rides
+Runtime state that must not federate—e.g. firehose cursors and OAuth tokens—uses
 the same panproto schema apparatus as everything else, flagged under
 `dev.idiolect.internal.*` so conformant firehose consumers skip it.
 
@@ -203,6 +208,10 @@ Issue templates and the PR template under `.github/` are the canonical route
 for reports and proposals. The project holds opinionated architectural
 commitments; consult the [feature-request template](.github/ISSUE_TEMPLATE/feature.yml)
 if you are unsure whether a capability fits before opening.
+
+## Acknowledgments
+
+idiolect was architected and implemented with substantial assistance from Claude Code.
 
 ## License
 
