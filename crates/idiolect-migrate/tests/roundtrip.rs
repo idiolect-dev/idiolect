@@ -1,6 +1,6 @@
 //! End-to-end migration tests.
 
-use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader, parse_at_uri};
+use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader, };
 use idiolect_migrate::error::PlannerError;
 use idiolect_migrate::{MigrateError, classify, migrate_record, plan_auto};
 use idiolect_records::PanprotoLens;
@@ -36,7 +36,7 @@ async fn migrate_record_translates_through_identity_lens() {
     loader.insert(src_hash.clone(), src);
     loader.insert(tgt_hash.clone(), tgt);
 
-    let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/id").unwrap();
+    let uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/id").unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
         created_at: "2026-04-21T00:00:00.000Z".into(),

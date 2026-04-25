@@ -111,7 +111,7 @@ where
 
     // 1. prefix filter. skip commits outside the observer's
     // configured family.
-    if !config.nsid_prefix.is_empty() && !raw.collection.starts_with(&config.nsid_prefix) {
+    if !config.nsid_prefix.is_empty() && !raw.collection.starts_with_authority(&config.nsid_prefix) {
         return Ok(());
     }
 

@@ -27,7 +27,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use crate::did::Did;
+use crate::Did;
 use crate::document::DidDocument;
 use crate::error::IdentityError;
 use crate::resolver::IdentityResolver;

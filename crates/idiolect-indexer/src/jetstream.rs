@@ -116,12 +116,19 @@ pub fn parse_frame(line: &str) -> Result<Option<RawEvent>, IndexerError> {
         }
     };
 
+    let collection = idiolect_records::Nsid::parse(&commit.collection).map_err(|e| {
+        IndexerError::Stream(format!(
+            "jetstream commit carries invalid NSID collection {:?}: {e}",
+            commit.collection,
+        ))
+    })?;
+
     Ok(Some(RawEvent {
         seq: frame.time_us,
         live: true,
         did: frame.did,
         rev: commit.rev,
-        collection: commit.collection,
+        collection,
         rkey: commit.rkey,
         action,
         cid: commit.cid,

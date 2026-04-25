@@ -454,7 +454,7 @@ mod tests {
         let resp = writer
             .create_record(CreateRecordRequest {
                 repo: "did:plc:alice".into(),
-                collection: "dev.idiolect.observation".into(),
+                collection: "dev.idiolect.observation".to_owned(),
                 rkey: None,
                 record: json!({ "$type": "dev.idiolect.observation" }),
                 validate: None,
@@ -490,7 +490,7 @@ mod tests {
         writer
             .put_record(PutRecordRequest {
                 repo: "did:plc:alice".into(),
-                collection: "dev.idiolect.observation".into(),
+                collection: "dev.idiolect.observation".to_owned(),
                 rkey: "3l5".into(),
                 record: json!({}),
                 validate: None,
@@ -541,7 +541,7 @@ mod tests {
         let resp = writer
             .create_record(CreateRecordRequest {
                 repo: "did:plc:alice".into(),
-                collection: "dev.idiolect.observation".into(),
+                collection: "dev.idiolect.observation".to_owned(),
                 rkey: None,
                 record: json!({ "$type": "dev.idiolect.observation" }),
                 validate: None,
@@ -579,7 +579,7 @@ mod tests {
         let err = writer
             .delete_record(DeleteRecordRequest {
                 repo: "did:plc:alice".into(),
-                collection: "dev.idiolect.observation".into(),
+                collection: "dev.idiolect.observation".to_owned(),
                 rkey: "3l5".into(),
                 swap_record: Some("bafyrei-stale".into()),
             })

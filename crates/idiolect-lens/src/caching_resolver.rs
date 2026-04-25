@@ -27,7 +27,7 @@ use std::time::{Duration, Instant};
 
 use idiolect_records::PanprotoLens;
 
-use crate::at_uri::AtUri;
+use crate::AtUri;
 use crate::error::LensError;
 use crate::resolver::Resolver;
 
@@ -131,7 +131,6 @@ impl<R: Resolver> Resolver for CachingResolver<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::at_uri::parse_at_uri;
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -181,7 +180,7 @@ mod tests {
         };
         let caching = CachingResolver::new(inner, Duration::from_secs(60));
 
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         caching.resolve(&uri).await.unwrap();
         caching.resolve(&uri).await.unwrap();
         caching.resolve(&uri).await.unwrap();
@@ -198,7 +197,7 @@ mod tests {
         };
         let caching = CachingResolver::new(inner, Duration::ZERO);
 
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         caching.resolve(&uri).await.unwrap();
         caching.resolve(&uri).await.unwrap();
         assert_eq!(calls.load(Ordering::SeqCst), 2);
@@ -214,8 +213,8 @@ mod tests {
         };
         let caching = CachingResolver::new(inner, Duration::from_secs(60));
 
-        let u1 = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
-        let u2 = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l2").unwrap();
+        let u1 = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let u2 = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l2").unwrap();
         caching.resolve(&u1).await.unwrap();
         caching.resolve(&u2).await.unwrap();
         caching.resolve(&u1).await.unwrap();
@@ -231,7 +230,7 @@ mod tests {
         };
         let caching = CachingResolver::new(inner, Duration::from_secs(60));
 
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/absent").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/absent").unwrap();
         caching.resolve(&uri).await.unwrap_err();
         caching.resolve(&uri).await.unwrap_err();
         assert_eq!(calls.load(Ordering::SeqCst), 2);
@@ -246,7 +245,7 @@ mod tests {
             response: sample_lens(),
         };
         let caching = CachingResolver::new(inner, Duration::from_secs(60));
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         caching.resolve(&uri).await.unwrap();
         caching.clear();
         caching.resolve(&uri).await.unwrap();
@@ -262,7 +261,7 @@ mod tests {
         };
         // 1ms TTL — we can sleep past it cheaply.
         let caching = CachingResolver::new(inner, Duration::from_millis(1));
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         caching.resolve(&uri).await.unwrap();
         tokio::time::sleep(Duration::from_millis(5)).await;
         caching.resolve(&uri).await.unwrap();

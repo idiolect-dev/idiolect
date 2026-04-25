@@ -1299,6 +1299,7 @@ dependencies = [
 name = "idiolect-identity"
 version = "0.2.0"
 dependencies = [
+ "idiolect-records",
  "reqwest",
  "serde",
  "serde_json",

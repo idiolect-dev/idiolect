@@ -252,7 +252,7 @@ mod tests {
             live: true,
             did: "did:plc:a".into(),
             rev: "r1".into(),
-            collection: "dev.idiolect.encounter".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.encounter").expect("valid nsid"),
             rkey: "e1".into(),
             action: IndexerAction::Create,
             cid: None,

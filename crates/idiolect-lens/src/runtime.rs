@@ -44,7 +44,6 @@ use panproto_lens::{Complement, EditLens, Lens, SymmetricLens};
 use panproto_schema::{Protocol, Schema, primary_entry};
 use serde::{Deserialize, Serialize};
 
-use crate::at_uri::parse_at_uri;
 use crate::error::LensError;
 use crate::resolver::Resolver;
 use crate::schema_loader::SchemaLoader;
@@ -312,7 +311,7 @@ where
     R: Resolver,
     S: SchemaLoader,
 {
-    let lens_record_uri = parse_at_uri(&input.lens_uri)?;
+    let lens_record_uri = crate::AtUri::parse(&input.lens_uri)?;
     let lens_record = resolver.resolve(&lens_record_uri).await?;
     let body = decode_lens_body(&lens_record, &input.lens_uri)?;
     let src_schema = schema_loader.load(&lens_record.source_schema).await?;
@@ -461,8 +460,8 @@ where
 {
     // resolve both records; both must reference the same source-schema
     // hash (the middle of the span).
-    let left_record_uri = parse_at_uri(&input.left_lens_uri)?;
-    let right_record_uri = parse_at_uri(&input.right_lens_uri)?;
+    let left_record_uri = crate::AtUri::parse(&input.left_lens_uri)?;
+    let right_record_uri = crate::AtUri::parse(&input.right_lens_uri)?;
     let left_record = resolver.resolve(&left_record_uri).await?;
     let right_record = resolver.resolve(&right_record_uri).await?;
 
@@ -539,7 +538,7 @@ where
     R: Resolver,
     S: SchemaLoader,
 {
-    let uri = parse_at_uri(lens_uri)?;
+    let uri = crate::AtUri::parse(lens_uri)?;
     let lens_record = resolver.resolve(&uri).await?;
 
     let body = decode_lens_body(&lens_record, lens_uri)?;
@@ -677,7 +676,7 @@ mod tests {
 
     #[tokio::test]
     async fn forward_errors_when_blob_missing() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let mut resolver = InMemoryResolver::new();
         resolver.insert(&uri, fixture_lens_record(None));
 
@@ -701,7 +700,7 @@ mod tests {
 
     #[tokio::test]
     async fn forward_errors_when_blob_decode_fails() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let mut resolver = InMemoryResolver::new();
         // not a valid protolens or chain shape
         resolver.insert(
@@ -734,7 +733,7 @@ mod tests {
         let protolens = elementary::rename_sort("a", "b");
         let blob = serde_json::to_value(&protolens).unwrap();
 
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let mut resolver = InMemoryResolver::new();
         resolver.insert(&uri, fixture_lens_record(Some(blob)));
 

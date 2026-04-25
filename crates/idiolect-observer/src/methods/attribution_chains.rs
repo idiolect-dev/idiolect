@@ -142,7 +142,7 @@ mod tests {
             live: true,
             did: repo.to_owned(),
             rev: "r".into(),
-            collection: "dev.idiolect.belief".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.belief").expect("valid nsid"),
             rkey: "b1".into(),
             action: IndexerAction::Create,
             cid: None,

@@ -232,7 +232,7 @@ mod tests {
             live: true,
             did: did.to_owned(),
             rev: "r".into(),
-            collection: "dev.idiolect.dialect".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.dialect").expect("valid nsid"),
             rkey: rkey.to_owned(),
             action: IndexerAction::Create,
             cid: None,

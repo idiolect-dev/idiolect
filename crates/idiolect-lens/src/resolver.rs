@@ -32,7 +32,7 @@ use std::collections::HashMap;
 
 use idiolect_records::PanprotoLens;
 
-use crate::at_uri::AtUri;
+use crate::AtUri;
 use crate::error::LensError;
 
 // -----------------------------------------------------------------
@@ -259,7 +259,7 @@ impl<C: PdsClient> Resolver for PdsResolver<C> {
     async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
         let body = self
             .client
-            .get_record(uri.did(), uri.collection(), uri.rkey())
+            .get_record(uri.did().as_str(), uri.collection().as_str(), uri.rkey())
             .await?;
 
         serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
@@ -558,7 +558,6 @@ impl<T: PanprotoVcsClient + ?Sized> PanprotoVcsClient for std::sync::Arc<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::at_uri::parse_at_uri;
 
     fn fixture_lens() -> PanprotoLens {
         PanprotoLens {
@@ -574,7 +573,7 @@ mod tests {
 
     #[tokio::test]
     async fn in_memory_resolver_hit() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let mut r = InMemoryResolver::new();
         r.insert(&uri, fixture_lens());
 
@@ -584,7 +583,7 @@ mod tests {
 
     #[tokio::test]
     async fn in_memory_resolver_miss() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/missing").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/missing").unwrap();
         let r = InMemoryResolver::new();
 
         let err = r.resolve(&uri).await.unwrap_err();
@@ -606,7 +605,7 @@ mod tests {
 
     #[tokio::test]
     async fn pds_resolver_decodes_client_response() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let body = serde_json::to_value(fixture_lens()).unwrap();
 
         let r = PdsResolver::new(StaticPdsClient(body));
@@ -629,7 +628,7 @@ mod tests {
             }
         }
 
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let r = PdsResolver::new(FailingClient);
 
         let err = r.resolve(&uri).await.unwrap_err();
@@ -638,7 +637,7 @@ mod tests {
 
     #[tokio::test]
     async fn vcs_resolver_follows_ref_to_object() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
         let lens = fixture_lens();
 
         let mut client = InMemoryVcsClient::new();
@@ -656,7 +655,7 @@ mod tests {
 
     #[tokio::test]
     async fn vcs_resolver_missing_ref() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/unknown").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/unknown").unwrap();
         let r = PanprotoVcsResolver::new(InMemoryVcsClient::new());
 
         let err = r.resolve(&uri).await.unwrap_err();
@@ -665,7 +664,7 @@ mod tests {
 
     #[tokio::test]
     async fn vcs_resolver_missing_object() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
         let mut r = PanprotoVcsResolver::new(InMemoryVcsClient::new());
         r.set_ref(&uri, "sha256:absent".to_owned());
 

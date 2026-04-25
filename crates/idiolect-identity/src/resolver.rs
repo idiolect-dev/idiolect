@@ -5,7 +5,7 @@
 //! the returned [`DidDocument`] themselves; a second crate-level
 //! helper [`IdentityResolver::resolve_pds_url`] is the common case.
 
-use crate::did::Did;
+use crate::Did;
 use crate::document::DidDocument;
 use crate::error::IdentityError;
 

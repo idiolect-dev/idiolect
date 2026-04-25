@@ -6,7 +6,7 @@
 
 use std::time::Duration;
 
-use idiolect_lens::{CachingResolver, PdsResolver, ReqwestPdsClient, Resolver, parse_at_uri};
+use idiolect_lens::{CachingResolver, PdsResolver, ReqwestPdsClient, Resolver, };
 use serde_json::json;
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -42,7 +42,7 @@ async fn caching_resolver_collapses_repeat_resolves() {
     let resolver = PdsResolver::new(client);
     let caching = CachingResolver::new(resolver, Duration::from_secs(60));
 
-    let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+    let uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
     for _ in 0..100 {
         caching.resolve(&uri).await.unwrap();
     }

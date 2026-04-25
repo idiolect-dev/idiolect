@@ -23,10 +23,10 @@
 //! ```
 //!
 //! When the nsid is only known at runtime (e.g. firehose traffic),
-//! use [`decode_record`] to decode into the [`AnyRecord`] variant:
+//! parse it into [`Nsid`] and dispatch via [`decode_record`]:
 //!
 //! ```
-//! use idiolect_records::{AnyRecord, decode_record, Record, Encounter};
+//! use idiolect_records::{AnyRecord, decode_record, Encounter, Nsid, Record};
 //! let json: serde_json::Value = serde_json::from_str(r#"{
 //!   "lens":         { "uri": "at://did:plc:x/dev.idiolect.lens/1" },
 //!   "sourceSchema": { "uri": "at://did:plc:x/dev.idiolect.schema/a" },
@@ -35,7 +35,8 @@
 //!   "visibility":   "public-detailed",
 //!   "occurredAt":   "2026-04-19T00:00:00.000Z"
 //! }"#).unwrap();
-//! let rec = decode_record(Encounter::NSID, json).unwrap();
+//! let nsid = Encounter::nsid();
+//! let rec = decode_record(&nsid, json).unwrap();
 //! match rec {
 //!     AnyRecord::Encounter(_) => {}
 //!     _ => panic!("expected encounter"),
@@ -45,9 +46,15 @@
 //! Fixtures for every record kind are exported from [`examples`] for
 //! use in downstream tests without reinventing minimally-valid json.
 
+pub mod at_uri;
+pub mod did;
 pub mod generated;
 pub mod nsid;
 pub mod record;
+
+pub use at_uri::{AtUri, AtUriError};
+pub use did::{Did, DidError, DidMethod};
+pub use nsid::{Nsid, NsidError};
 
 // re-export every generated module at the crate root, plus each
 // lexicon's main record type, so callers can write

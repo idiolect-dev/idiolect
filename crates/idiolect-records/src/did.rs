@@ -10,6 +10,9 @@
 //! Other methods parse but return [`DidError::UnsupportedMethod`].
 
 use std::fmt;
+use std::str::FromStr;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// A parsed and validated atproto DID.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -104,6 +107,33 @@ impl fmt::Display for Did {
     }
 }
 
+impl FromStr for Did {
+    type Err = DidError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
+
+impl AsRef<str> for Did {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl Serialize for Did {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.canonical.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Did {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -125,7 +155,6 @@ mod tests {
 
     #[test]
     fn parse_web_with_path() {
-        // did:web supports colons-as-path-separators: did:web:host:path.
         let d = Did::parse("did:web:example.com:users:alice").unwrap();
         assert_eq!(d.method(), DidMethod::Web);
         assert_eq!(d.identifier(), "example.com:users:alice");
@@ -153,5 +182,13 @@ mod tests {
             Did::parse("did:plc:"),
             Err(DidError::InvalidIdentifier(_))
         ));
+    }
+
+    #[test]
+    fn fromstr_and_serde_roundtrip() {
+        let d: Did = "did:plc:abc123".parse().unwrap();
+        let s = serde_json::to_string(&d).unwrap();
+        let d2: Did = serde_json::from_str(&s).unwrap();
+        assert_eq!(d, d2);
     }
 }

@@ -40,10 +40,10 @@
 //! # Quickstart
 //!
 //! ```
-//! use idiolect_lens::{InMemoryResolver, Resolver, parse_at_uri};
+//! use idiolect_lens::{InMemoryResolver, Resolver, };
 //! use idiolect_records::PanprotoLens;
 //!
-//! let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+//! let uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
 //! let lens = PanprotoLens {
 //!     blob: None,
 //!     created_at: "2026-04-19T00:00:00.000Z".to_owned(),
@@ -62,7 +62,8 @@
 //! assert_eq!(got.object_hash, "sha256:deadbeef");
 //! ```
 
-pub mod at_uri;
+// `AtUri` lives in idiolect-records (the foundational types crate).
+// Re-exported below for callers that want the lens-crate path.
 pub mod caching_resolver;
 #[cfg(feature = "dpop-p256")]
 pub mod dpop_p256;
@@ -82,7 +83,7 @@ pub mod schema_loader;
 pub mod signing_writer;
 pub mod verifying_resolver;
 
-pub use at_uri::{AtUri, parse_at_uri};
+pub use idiolect_records::{AtUri, AtUriError};
 pub use caching_resolver::CachingResolver;
 #[cfg(feature = "dpop-p256")]
 pub use dpop_p256::P256DpopProver;

@@ -45,7 +45,6 @@
 //! ```
 
 pub mod caching;
-pub mod did;
 pub mod document;
 pub mod error;
 #[cfg(feature = "resolver-reqwest")]
@@ -53,7 +52,10 @@ pub mod reqwest_resolver;
 pub mod resolver;
 
 pub use caching::CachingIdentityResolver;
-pub use did::{Did, DidError, DidMethod};
+// `Did`, `DidError`, `DidMethod` live in idiolect-records (the
+// foundational types crate). Re-exported here for back-compat-free
+// access via the identity crate's namespace.
+pub use idiolect_records::{Did, DidError, DidMethod};
 pub use document::{DidDocument, Service};
 pub use error::IdentityError;
 pub use resolver::{IdentityResolver, InMemoryIdentityResolver};

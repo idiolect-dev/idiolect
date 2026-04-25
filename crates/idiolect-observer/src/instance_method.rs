@@ -216,7 +216,7 @@ where
     }
 
     fn observe(&mut self, event: &IndexerEvent) -> ObserverResult<()> {
-        let Some((schema, root)) = self.lookup(&event.collection)? else {
+        let Some((schema, root)) = self.lookup(event.collection.as_str())? else {
             // Out of scope for this adapter; silently drop.
             return Ok(());
         };
@@ -238,7 +238,7 @@ where
                 event.collection,
             ))
         })?;
-        self.inner.observe(&instance, &event.collection)
+        self.inner.observe(&instance, event.collection.as_str())
     }
 
     fn snapshot(&self) -> ObserverResult<Option<serde_json::Value>> {
@@ -313,7 +313,7 @@ mod tests {
             live: true,
             did: "did:plc:x".into(),
             rev: "r".into(),
-            collection: "dev.idiolect.bounty".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.bounty").expect("valid nsid"),
             rkey: "k".into(),
             action: IndexerAction::Create,
             cid: None,
@@ -327,7 +327,7 @@ mod tests {
             live: true,
             did: "did:plc:x".into(),
             rev: "r".into(),
-            collection: "dev.idiolect.bounty".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.bounty").expect("valid nsid"),
             rkey: "k".into(),
             action: IndexerAction::Delete,
             cid: None,

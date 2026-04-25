@@ -11,7 +11,7 @@
 //! [`RoundtripTestRunner`](crate::RoundtripTestRunner)'s job. This
 //! runner only validates the static shape of the surrounding graphs.
 
-use idiolect_lens::{Resolver, SchemaLoader, parse_at_uri};
+use idiolect_lens::{Resolver, SchemaLoader, };
 use idiolect_records::generated::defs::{LpChecker, Tool};
 use idiolect_records::generated::verification::{
     Verification, VerificationKind, VerificationProperty, VerificationResult,
@@ -66,7 +66,7 @@ where
         })?;
 
         // Resolve the lens record so we can pull source+target schema hashes.
-        let parsed = parse_at_uri(&lens_uri)?;
+        let parsed = idiolect_lens::AtUri::parse(&lens_uri)?;
         let lens_record = self.resolver.resolve(&parsed).await?;
 
         // Load both schemas and validate each.
@@ -180,7 +180,7 @@ mod tests {
         }
 
         let uri =
-            idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/sc").unwrap();
+            idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/sc").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
             created_at: "2026-04-21T00:00:00.000Z".into(),

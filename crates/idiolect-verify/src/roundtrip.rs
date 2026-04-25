@@ -187,7 +187,7 @@ mod tests {
         loader.insert(tgt_hash.clone(), tgt);
 
         let uri =
-            idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/rt").unwrap();
+            idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/rt").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
             created_at: "2026-04-21T00:00:00.000Z".into(),

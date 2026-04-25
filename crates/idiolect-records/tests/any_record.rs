@@ -34,7 +34,7 @@ fn sample_adapter() -> Adapter {
 fn nsid_matches_record_trait() {
     use idiolect_records::Record;
     let r = AnyRecord::Adapter(sample_adapter());
-    assert_eq!(r.nsid(), Adapter::NSID);
+    assert_eq!(r.nsid_str(), Adapter::NSID);
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn from_typed_json_round_trips() {
     let original = AnyRecord::Adapter(sample_adapter());
     let body = original.to_typed_json().unwrap();
     let decoded = AnyRecord::from_typed_json(body).unwrap();
-    assert_eq!(decoded.nsid(), "dev.idiolect.adapter");
+    assert_eq!(decoded.nsid_str(), "dev.idiolect.adapter");
     match decoded {
         AnyRecord::Adapter(a) => {
             assert_eq!(a.framework, "hasura");

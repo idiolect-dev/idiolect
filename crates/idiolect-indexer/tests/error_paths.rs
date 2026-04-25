@@ -85,7 +85,7 @@ fn encounter_event(seq: u64) -> RawEvent {
         live: true,
         did: "did:plc:alice".to_owned(),
         rev: "3l5".to_owned(),
-        collection: "dev.idiolect.encounter".to_owned(),
+        collection: idiolect_records::Nsid::parse("dev.idiolect.encounter").expect("nsid"),
         rkey: "r1".to_owned(),
         action: IndexerAction::Create,
         cid: Some("bafyrei".to_owned()),
@@ -158,7 +158,7 @@ async fn unknown_idiolect_nsid_surfaces_decode_error() {
     // type -> DecodeError::UnknownNsid -> IndexerError::Decode.
     use idiolect_indexer::InMemoryCursorStore;
     let mut evt = encounter_event(1);
-    evt.collection = "dev.idiolect.notARealRecord".to_owned();
+    evt.collection = idiolect_records::Nsid::parse("dev.idiolect.notARealRecord").expect("valid nsid");
     let mut stream = preloaded(vec![evt]);
     let handler = OkHandler;
     let cursors = InMemoryCursorStore::new();

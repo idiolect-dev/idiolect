@@ -6,6 +6,7 @@
 //! appropriate `LensError` case, so downstream callers only pattern-
 //! match one enum regardless of backend.
 
+use idiolect_records::AtUriError;
 use thiserror::Error;
 
 /// Errors produced by the lens runtime.
@@ -71,4 +72,10 @@ pub enum LensError {
     /// layer.
     #[error("lens apply failed: {0}")]
     Translate(String),
+}
+
+impl From<AtUriError> for LensError {
+    fn from(err: AtUriError) -> Self {
+        Self::InvalidUri(err.to_string())
+    }
 }

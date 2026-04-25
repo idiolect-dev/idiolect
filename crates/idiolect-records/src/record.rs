@@ -13,6 +13,8 @@
 
 use serde::{Serialize, Serializer, de::DeserializeOwned};
 
+use crate::nsid::Nsid;
+
 /// Every `dev.idiolect.*` record type implements this trait.
 ///
 /// The generated `impl` block supplies the [`NSID`][Record::NSID]
@@ -27,11 +29,29 @@ use serde::{Serialize, Serializer, de::DeserializeOwned};
 /// assert_eq!(Encounter::NSID, "dev.idiolect.encounter");
 /// ```
 pub trait Record: Serialize + DeserializeOwned + Clone + std::fmt::Debug + 'static {
-    /// Fully-qualified lexicon nsid, e.g. `"dev.idiolect.encounter"`.
+    /// Fully-qualified lexicon nsid as a string, e.g.
+    /// `"dev.idiolect.encounter"`. Kept as `&'static str` because the
+    /// typed [`Nsid`] cannot be constructed in `const` context;
+    /// callers wanting the typed form should use [`Self::nsid()`].
     const NSID: &'static str;
 
+    /// The fully-qualified lexicon NSID as a typed value. The default
+    /// impl parses [`Self::NSID`] on each call; this is cheap (no
+    /// allocation beyond what `Nsid` itself needs) but if hot, cache
+    /// the result locally.
+    ///
+    /// # Panics
+    ///
+    /// Panics if [`Self::NSID`] is not a valid atproto NSID. Codegen
+    /// emits a unit test per record that proves this never panics in
+    /// practice.
+    #[must_use]
+    fn nsid() -> Nsid {
+        Nsid::parse(Self::NSID).expect("Record::NSID must be a valid atproto NSID")
+    }
+
     /// Human-readable short name of the record kind, e.g.
-    /// `"encounter"`. Derived from the nsid's last segment.
+    /// `"encounter"`. Equivalent to `Self::nsid().name()`.
     #[must_use]
     fn kind() -> &'static str {
         let n = Self::NSID;
@@ -80,9 +100,11 @@ pub enum AnyRecord {
 }
 
 impl AnyRecord {
-    /// Nsid of the contained record.
+    /// Canonical NSID string of the contained record. Cheap to call
+    /// (returns a `&'static str` from the underlying record's
+    /// `Record::NSID`); use [`Self::nsid`] for the typed form.
     #[must_use]
-    pub const fn nsid(&self) -> &'static str {
+    pub const fn nsid_str(&self) -> &'static str {
         match self {
             Self::Community(_) => crate::Community::NSID,
             Self::Dialect(_) => crate::Dialect::NSID,
@@ -97,6 +119,19 @@ impl AnyRecord {
             Self::Belief(_) => crate::Belief::NSID,
             Self::Vocab(_) => crate::Vocab::NSID,
         }
+    }
+
+    /// Typed NSID of the contained record. Parses [`Self::nsid_str`]
+    /// each call.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the underlying record's `Record::NSID` constant is
+    /// not a valid atproto NSID. Codegen emits per-record unit tests
+    /// that prove this never panics in practice.
+    #[must_use]
+    pub fn nsid(&self) -> Nsid {
+        Nsid::parse(self.nsid_str()).expect("Record::NSID must be a valid atproto NSID")
     }
 
     /// Serialize the inner record into a [`serde_json::Value`] and
@@ -119,7 +154,7 @@ impl AnyRecord {
         if let Some(obj) = value.as_object_mut() {
             obj.insert(
                 "$type".to_owned(),
-                serde_json::Value::String(self.nsid().to_owned()),
+                serde_json::Value::String(self.nsid_str().to_owned()),
             );
             Ok(value)
         } else {
@@ -147,11 +182,12 @@ impl AnyRecord {
     /// [`DecodeError::Serde`] when the body fails to match the
     /// variant its `$type` selects.
     pub fn from_typed_json(mut value: serde_json::Value) -> Result<Self, DecodeError> {
-        let Some(serde_json::Value::String(nsid)) =
+        let Some(serde_json::Value::String(nsid_str)) =
             value.as_object_mut().and_then(|o| o.remove("$type"))
         else {
             return Err(DecodeError::UnknownNsid("<missing $type field>".to_owned()));
         };
+        let nsid = Nsid::parse(&nsid_str).map_err(|_| DecodeError::UnknownNsid(nsid_str))?;
         decode_record(&nsid, value)
     }
 
@@ -192,7 +228,7 @@ impl std::fmt::Display for AnyRecord {
         // "AnyRecord(dev.idiolect.encounter)" — concise and operator-
         // friendly. The full body is not rendered; callers who want it
         // go through serde_json directly.
-        write!(f, "AnyRecord({})", self.nsid())
+        write!(f, "AnyRecord({})", self.nsid_str())
     }
 }
 
@@ -200,9 +236,9 @@ impl std::fmt::Display for AnyRecord {
 /// `nsid`.
 ///
 /// Appviews use this when consuming the firehose: each commit arrives
-/// with a `collection` string identifying the nsid, and the raw cbor
-/// blob decodes into whichever record type matches. Unknown nsids
-/// return [`DecodeError::UnknownNsid`] without touching the json.
+/// with a typed `collection` NSID, and the raw cbor blob decodes into
+/// whichever record type matches. Unknown nsids return
+/// [`DecodeError::UnknownNsid`] without touching the json.
 ///
 /// # Errors
 ///
@@ -210,11 +246,12 @@ impl std::fmt::Display for AnyRecord {
 ///   `dev.idiolect.*` records.
 /// - [`DecodeError::Serde`] if `value` does not deserialize into the
 ///   record type selected by `nsid`.
-pub fn decode_record(nsid: &str, value: serde_json::Value) -> Result<AnyRecord, DecodeError> {
+pub fn decode_record(nsid: &Nsid, value: serde_json::Value) -> Result<AnyRecord, DecodeError> {
     fn from<R: Record>(value: serde_json::Value) -> Result<R, DecodeError> {
         serde_json::from_value(value).map_err(DecodeError::Serde)
     }
-    match nsid {
+    let s = nsid.as_str();
+    match s {
         s if s == crate::Community::NSID => Ok(AnyRecord::Community(from(value)?)),
         s if s == crate::Dialect::NSID => Ok(AnyRecord::Dialect(from(value)?)),
         s if s == crate::Encounter::NSID => Ok(AnyRecord::Encounter(from(value)?)),

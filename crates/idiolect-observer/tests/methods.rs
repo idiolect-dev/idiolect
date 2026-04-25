@@ -24,12 +24,12 @@ fn ix_event(seq: u64, did: &str, record: AnyRecord) -> IndexerEvent {
         live: true,
         did: did.to_owned(),
         rev: format!("3l{seq}"),
-        collection: match &record {
+        collection: idiolect_records::Nsid::parse(match &record {
             AnyRecord::Correction(_) => "dev.idiolect.correction",
             AnyRecord::Verification(_) => "dev.idiolect.verification",
             _ => "dev.idiolect.encounter",
-        }
-        .to_owned(),
+        })
+        .expect("valid nsid"),
         rkey: format!("k{seq}"),
         action: IndexerAction::Create,
         cid: Some(format!("bafyrei{seq}")),

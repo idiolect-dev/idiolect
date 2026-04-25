@@ -15,7 +15,7 @@
 //!
 //! Feature-gated under `resolver-reqwest`.
 
-use crate::did::{Did, DidMethod};
+use crate::{Did, DidMethod};
 use crate::document::DidDocument;
 use crate::error::IdentityError;
 use crate::resolver::IdentityResolver;

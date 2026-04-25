@@ -30,7 +30,7 @@ fn create_event(seq: u64, live: bool, collection: &str, body_json: &str) -> RawE
         live,
         did: "did:plc:alice".to_owned(),
         rev: format!("rev-{seq}"),
-        collection: collection.to_owned(),
+        collection: idiolect_records::Nsid::parse(collection).expect("valid nsid"),
         rkey: format!("rkey-{seq}"),
         action: IndexerAction::Create,
         cid: Some(format!("bafy-{seq}")),
@@ -45,7 +45,7 @@ fn delete_event(seq: u64, live: bool, collection: &str) -> RawEvent {
         live,
         did: "did:plc:alice".to_owned(),
         rev: format!("rev-{seq}"),
-        collection: collection.to_owned(),
+        collection: idiolect_records::Nsid::parse(collection).expect("valid nsid"),
         rkey: format!("rkey-{seq}"),
         action: IndexerAction::Delete,
         cid: None,
@@ -79,7 +79,7 @@ impl RecordHandler for RecordingHandler {
         let label = event
             .record
             .as_ref()
-            .map_or_else(|| "<delete>".to_owned(), |record| record.nsid().to_owned());
+            .map_or_else(|| "<delete>".to_owned(), |record| record.nsid_str().to_owned());
 
         self.observed
             .lock()
@@ -292,7 +292,7 @@ async fn drive_indexer_surfaces_missing_body_on_create_without_body() {
         live: true,
         did: "did:plc:alice".to_owned(),
         rev: "rev-1".to_owned(),
-        collection: "dev.idiolect.encounter".to_owned(),
+        collection: idiolect_records::Nsid::parse("dev.idiolect.encounter").expect("nsid"),
         rkey: "rkey-1".to_owned(),
         action: IndexerAction::Create,
         cid: Some("bafy-1".to_owned()),

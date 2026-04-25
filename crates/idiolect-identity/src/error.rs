@@ -1,6 +1,6 @@
 //! Errors raised by identity resolvers.
 
-use crate::did::DidError;
+use crate::DidError;
 
 /// Errors raised by an [`IdentityResolver`](crate::IdentityResolver)
 /// during DID resolution.
