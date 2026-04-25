@@ -29,6 +29,76 @@ subsection under `[Unreleased]`, and the release cut moves these
 lines into the new versioned section.
 -->
 
+## [0.3.0] — 2026-04-25
+
+### Added
+
+- Typed `Nsid`, `AtUri`, and `Did` in `idiolect-records`. The atproto
+  NSID spec (authority + name segments, ASCII rules, length cap) is
+  enforced at parse time so malformed identifiers cannot reach the
+  firehose decoder, indexer, observer, codegen, or orchestrator.
+  `AtUri` and `Did` compose the typed `Nsid` and move out of
+  `idiolect-lens` and `idiolect-identity` respectively, with
+  re-exports keeping the familiar import path on each crate.
+- `coercion-law` verification kind plus the `CoercionLawRunner` that
+  drives `dev.panproto.translate.verifyCoercionLaws` and folds the
+  returned violation list into a `Holds` / `Falsified` `Verification`
+  record. The runner is generic over a `CoercionLawClient` so unit
+  tests stub the xrpc while deployments wire up an http-backed client.
+- New vendored panproto lexicons: `dev.panproto.schema.theory` and
+  `dev.panproto.schema.protocol`.
+
+### Changed
+
+- Generated Rust and TypeScript trees mirror the `lexicons/`
+  directory layout 1:1: `lexicons/dev/panproto/schema/lens.json`
+  emits `crates/idiolect-records/src/generated/dev/panproto/schema/lens.rs`
+  and `packages/schema/src/generated/dev/panproto/schema/lens.ts`.
+  Per-directory `mod.rs` (Rust) and `index.ts` (TypeScript) barrels
+  stitch the tree into compilable module graphs. The change unblocks
+  consumers with non-flat namespace trees that previously collided
+  on a flat last-segment filename (issue #21).
+- `PanprotoVcsClient` broadens from a single `fetch_object` to the
+  full `dev.panproto.sync.*` xrpc surface: `get_object`, `get_ref`,
+  `set_ref`, `list_refs`, `list_commits`, `get_head`,
+  `get_schema_tree`, `list_theories`, `list_alignments`. The mutable
+  ref table moves out of `PanprotoVcsResolver` and into the client.
+- Vendored `dev.panproto.*` lexicons re-vendored against the upstream
+  pin recorded in `lexicons/dev/panproto/VENDORED.md`. `commit.json`
+  picks up `protocolHash`, `theoryIds`, `dataHashes`,
+  `complementHashes`, `editLogHashes`, `cstComplementHashes`,
+  `timestamp`, and the `#namedHash` def; `protolens.json` adds the
+  `droppedEdge` constructor.
+- Workspace `Cargo.toml` pins the `panproto-*` crates to the matching
+  upstream release.
+- `IndexerEvent::collection` is now `Nsid` (was `String`); jetstream
+  and other adapters parse-and-validate at the stream-decode boundary.
+- `idiolect-records::generated` no longer flat-re-exports per-lexicon
+  modules. Submodules are reached via the nested tree path
+  (`idiolect_records::generated::dev::idiolect::adapter` etc.); the
+  per-record-type re-exports (`idiolect_records::Encounter`,
+  `idiolect_records::PanprotoLens`, …) at the crate root are
+  preserved and now generated rather than hand-edited.
+- `SchemaLoader::load`'s contract is documented as scope-agnostic:
+  the loader returns whatever panproto `Schema` is content-addressed
+  by `object_hash` regardless of whether it came from a single source
+  file or a project-scope union.
+
+### Removed
+
+- `PanprotoVcsClient::fetch_object` (replaced by `get_object` plus
+  the broader xrpc surface).
+- The flat module re-exports at `idiolect_records::adapter`,
+  `idiolect_records::encounter`, … (consumers move to the nested
+  `idiolect_records::generated::dev::*` paths).
+
+### Fixed
+
+- Codegen file-name collisions for NSIDs that share their last
+  segment across distinct authority chains (closes #21).
+- Outdated panproto pin and missing xrpc surface that blocked the
+  coercion-law runner (closes #22).
+
 ## [0.2.0] — 2026-04-23
 
 ### Added

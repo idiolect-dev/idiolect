@@ -1,7 +1,7 @@
 {
   "name": "idiolect-workspace",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Idiolect — a principle-first metaframework for schema-shaped cultures of practice.",
   "repository": {
     "type": "git",
