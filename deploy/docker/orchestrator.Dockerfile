@@ -19,7 +19,7 @@
 #     -e IDIOLECT_HTTP_ADDR=0.0.0.0:8787 \
 #     idiolect-orchestrator:local
 
-FROM rust:1.85-slim-bookworm AS builder
+FROM rust:1.95-slim-bookworm AS builder
 WORKDIR /src
 
 RUN apt-get update \
