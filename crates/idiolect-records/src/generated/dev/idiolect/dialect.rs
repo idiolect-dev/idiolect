@@ -24,14 +24,14 @@ pub struct Dialect {
     pub description: Option<String>,
     /// The schemas that constitute this dialect's idiolect set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub idiolects: Option<Vec<super::defs::SchemaRef>>,
+    pub idiolects: Option<Vec<crate::generated::dev::idiolect::defs::SchemaRef>>,
     /// Human-readable dialect name.
     pub name: String,
     /// The community that owns this dialect.
     pub owning_community: String,
     /// Translations the community prefers when mapping between its idiolects and external schemas.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub preferred_lenses: Option<Vec<super::defs::LensRef>>,
+    pub preferred_lenses: Option<Vec<crate::generated::dev::idiolect::defs::LensRef>>,
     /// AT-URI of the immediately preceding dialect revision, forming a version chain.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub previous_version: Option<String>,

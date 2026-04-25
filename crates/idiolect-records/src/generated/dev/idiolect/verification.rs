@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub struct Verification {
     /// Structured grounding for the claim. Useful when the verifier is citing an external standard, a proof library, or a derived-from earlier verification.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// For result=falsified: optional reference to a minimal counterexample.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub counterexample: Option<String>,
@@ -27,7 +27,7 @@ pub struct Verification {
     /// Fixed taxonomy at the Lexicon level. Each kind has its own trust semantics.
     pub kind: VerificationKind,
     /// The lens whose property is being asserted.
-    pub lens: super::defs::LensRef,
+    pub lens: crate::generated::dev::idiolect::defs::LensRef,
     pub occurred_at: String,
     /// For kind=formal-proof: reference to the checkable proof artifact (e.g. Coq/Lean/Agda term). Orchestrators that have the checker may mechanically verify; others take the assertion on trust.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -37,7 +37,7 @@ pub struct Verification {
     /// Assertion outcome. Falsified verifications are first-class records; they are how the community learns a lens is wrong.
     pub result: VerificationResult,
     /// Tool and version used to establish the verification.
-    pub tool: super::defs::Tool,
+    pub tool: crate::generated::dev::idiolect::defs::Tool,
     /// DID of the party asserting the verification.
     pub verifier: String,
 }
@@ -51,17 +51,17 @@ impl crate::Record for Verification {
 #[serde(tag = "$type")]
 pub enum VerificationProperty {
     #[serde(rename = "dev.idiolect.defs#lpRoundtrip")]
-    LpRoundtrip(super::defs::LpRoundtrip),
+    LpRoundtrip(crate::generated::dev::idiolect::defs::LpRoundtrip),
     #[serde(rename = "dev.idiolect.defs#lpGenerator")]
-    LpGenerator(super::defs::LpGenerator),
+    LpGenerator(crate::generated::dev::idiolect::defs::LpGenerator),
     #[serde(rename = "dev.idiolect.defs#lpTheorem")]
-    LpTheorem(super::defs::LpTheorem),
+    LpTheorem(crate::generated::dev::idiolect::defs::LpTheorem),
     #[serde(rename = "dev.idiolect.defs#lpConformance")]
-    LpConformance(super::defs::LpConformance),
+    LpConformance(crate::generated::dev::idiolect::defs::LpConformance),
     #[serde(rename = "dev.idiolect.defs#lpChecker")]
-    LpChecker(super::defs::LpChecker),
+    LpChecker(crate::generated::dev::idiolect::defs::LpChecker),
     #[serde(rename = "dev.idiolect.defs#lpConvergence")]
-    LpConvergence(super::defs::LpConvergence),
+    LpConvergence(crate::generated::dev::idiolect::defs::LpConvergence),
 }
 
 /// VerificationKind.

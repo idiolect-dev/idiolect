@@ -21,11 +21,11 @@
 //! - Predicates are `pub fn` so downstream tests and custom
 //!   orchestrator frontends can call them directly.
 
-use idiolect_records::generated::adapter::AdapterInvocationProtocolKind;
-use idiolect_records::generated::bounty::{BountyStatus, BountyWants};
-use idiolect_records::generated::defs::{LensRef, SchemaRef};
-use idiolect_records::generated::verification::VerificationKind;
-use idiolect_records::generated::vocab::VocabWorld;
+use idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind;
+use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants};
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
+use idiolect_records::generated::dev::idiolect::verification::VerificationKind;
+use idiolect_records::generated::dev::idiolect::vocab::VocabWorld;
 use idiolect_records::{
     Adapter, Belief, Bounty, Community, Dialect, Recommendation, Verification, Vocab,
 };

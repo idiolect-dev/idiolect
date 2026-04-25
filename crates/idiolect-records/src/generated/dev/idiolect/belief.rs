@@ -20,15 +20,15 @@ pub struct Belief {
     pub annotations: Option<String>,
     /// Grounding for the belief: selfAsserted, communityPolicy, externalSignal, or derivedFromRecord. Especially load-bearing when `holder` differs from the repo owner, since consumers need to know what warrant the record has.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// DID of the party whose attitude is being represented. Omit when the repo owner holds the belief themselves; set explicitly when a third party (a labeler, a reviewer, a researcher) is attributing a belief to someone else.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub holder: Option<String>,
     pub occurred_at: String,
     /// Strong reference (AT-URI + CID) to the record the belief is about. Pinning via CID means a later revision of that record does not silently change what this belief asserts.
-    pub subject: super::defs::StrongRecordRef,
+    pub subject: crate::generated::dev::idiolect::defs::StrongRecordRef,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub visibility: Option<super::defs::Visibility>,
+    pub visibility: Option<crate::generated::dev::idiolect::defs::Visibility>,
 }
 
 impl crate::Record for Belief {

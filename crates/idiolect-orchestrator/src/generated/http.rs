@@ -39,9 +39,9 @@ async fn handler_bounties_for_want_lens(
     State(s): State<AppState>,
     Query(p): Query<BountiesForWantLensParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Bounty>>>, ApiError> {
-    let source: idiolect_records::generated::defs::SchemaRef =
+    let source: idiolect_records::generated::dev::idiolect::defs::SchemaRef =
         crate::predicates::schema_ref_from_uri(p.raw_source.clone());
-    let target: idiolect_records::generated::defs::SchemaRef =
+    let target: idiolect_records::generated::dev::idiolect::defs::SchemaRef =
         crate::predicates::schema_ref_from_uri(p.raw_target.clone());
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::bounties_for_want_lens(&catalog, &source, &target)
@@ -102,7 +102,7 @@ async fn handler_adapters_by_invocation_protocol(
     State(s): State<AppState>,
     Query(p): Query<AdaptersByInvocationProtocolParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Adapter>>>, ApiError> {
-    let kind: idiolect_records::generated::adapter::AdapterInvocationProtocolKind =
+    let kind: idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind =
         match crate::predicates::parse_adapter_invocation_protocol_kind(&p.raw_kind) {
             Ok(v) => v,
             Err(e) => return Err(ApiError::invalid_request(e)),
@@ -138,7 +138,7 @@ async fn handler_verifications_for_lens(
     State(s): State<AppState>,
     Query(p): Query<VerificationsForLensParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>, ApiError> {
-    let lens: idiolect_records::generated::defs::LensRef =
+    let lens: idiolect_records::generated::dev::idiolect::defs::LensRef =
         crate::predicates::lens_ref_from_uri(p.raw_lens.clone());
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::verifications_for_lens(&catalog, &lens)
@@ -159,7 +159,7 @@ async fn handler_verifications_by_kind(
     State(s): State<AppState>,
     Query(p): Query<VerificationsByKindParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>, ApiError> {
-    let kind: idiolect_records::generated::verification::VerificationKind =
+    let kind: idiolect_records::generated::dev::idiolect::verification::VerificationKind =
         match crate::predicates::parse_verification_kind(&p.raw_kind) {
             Ok(v) => v,
             Err(e) => return Err(ApiError::invalid_request(e)),
@@ -295,7 +295,7 @@ async fn handler_vocabularies_with_world(
     State(s): State<AppState>,
     Query(p): Query<VocabulariesWithWorldParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Vocab>>>, ApiError> {
-    let world: idiolect_records::generated::vocab::VocabWorld =
+    let world: idiolect_records::generated::dev::idiolect::vocab::VocabWorld =
         match crate::predicates::parse_vocab_world(&p.raw_world) {
             Ok(v) => v,
             Err(e) => return Err(ApiError::invalid_request(e)),

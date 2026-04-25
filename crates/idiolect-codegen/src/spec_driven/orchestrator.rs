@@ -126,13 +126,13 @@ impl RustKind {
     const fn owned_type(self) -> &'static str {
         match self {
             Self::String => "String",
-            Self::SchemaRef => "idiolect_records::generated::defs::SchemaRef",
-            Self::LensRef => "idiolect_records::generated::defs::LensRef",
-            Self::VerificationKind => "idiolect_records::generated::verification::VerificationKind",
+            Self::SchemaRef => "idiolect_records::generated::dev::idiolect::defs::SchemaRef",
+            Self::LensRef => "idiolect_records::generated::dev::idiolect::defs::LensRef",
+            Self::VerificationKind => "idiolect_records::generated::dev::idiolect::verification::VerificationKind",
             Self::AdapterInvocationProtocolKind => {
-                "idiolect_records::generated::adapter::AdapterInvocationProtocolKind"
+                "idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind"
             }
-            Self::VocabWorld => "idiolect_records::generated::vocab::VocabWorld",
+            Self::VocabWorld => "idiolect_records::generated::dev::idiolect::vocab::VocabWorld",
         }
     }
 

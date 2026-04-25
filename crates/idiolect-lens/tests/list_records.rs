@@ -12,7 +12,7 @@
 
 use idiolect_lens::{LensError, RecordFetcher, ReqwestPdsClient};
 use idiolect_records::Bounty;
-use idiolect_records::generated::bounty::{BountyStatus, BountyWants, WantAdapter};
+use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants, WantAdapter};
 use serde_json::json;
 use wiremock::matchers::{method, path, query_param, query_param_is_missing};
 use wiremock::{Mock, MockServer, ResponseTemplate};

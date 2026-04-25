@@ -29,8 +29,8 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use serde::{Deserialize, Serialize};
 
-use idiolect_records::generated::defs::LensRef;
-use idiolect_records::generated::recommendation::RecommendationRequiredVerifications;
+use idiolect_records::generated::dev::idiolect::defs::LensRef;
+use idiolect_records::generated::dev::idiolect::recommendation::RecommendationRequiredVerifications;
 
 use crate::catalog::{Catalog, Entry};
 use crate::query;
@@ -351,7 +351,7 @@ async fn verifications_sufficient(
 fn parse_required_kinds(
     raw: &str,
 ) -> Result<(Vec<RecommendationRequiredVerifications>, Vec<String>), String> {
-    use idiolect_records::generated::defs::{
+    use idiolect_records::generated::dev::idiolect::defs::{
         LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem,
     };
 

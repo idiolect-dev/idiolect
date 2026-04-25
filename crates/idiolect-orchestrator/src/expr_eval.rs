@@ -145,7 +145,7 @@ pub fn eval_bool_against_record<R: serde::Serialize>(expression: &str, record: &
 mod tests {
     use super::*;
     use idiolect_records::Bounty;
-    use idiolect_records::generated::bounty::{
+    use idiolect_records::generated::dev::idiolect::bounty::{
         BountyReward, BountyStatus, BountyWants, WantAdapter,
     };
 

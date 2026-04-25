@@ -360,28 +360,63 @@ pub fn resolve_ref(current_nsid: &str, raw: &str) -> RefTarget {
     }
 }
 
-/// Derive a stable module / file-name token from an nsid.
+/// Derive the dotted-path module location for an nsid.
 ///
-/// Keeps the existing `dev.idiolect.*` → `<last-segment>` mapping so
-/// the checked-in Rust and TypeScript output continues to use
-/// `encounter.rs`, `observation.ts`, etc. without rename churn. Any
-/// other family gets prefixed with its family segment so vendored
-/// records from `dev.panproto.*` land as `panproto_lens.rs`,
-/// `panproto_ref_update.rs`, and so on — distinguishable from
-/// same-named idiolect modules at a glance.
+/// Returns each NSID segment, snake-cased and Rust-keyword-escaped
+/// where necessary (raw-identifier prefix for segments like `pub` or
+/// `crate`). The path mirrors the lexicon's position under
+/// `lexicons/`, so `dev.idiolect.encounter` becomes
+/// `["dev", "idiolect", "encounter"]` and emits
+/// `dev/idiolect/encounter.rs`; `dev.panproto.schema.lens` becomes
+/// `["dev", "panproto", "schema", "lens"]` and emits
+/// `dev/panproto/schema/lens.rs`.
 ///
-/// Examples
-/// --------
+/// The last element is the file stem (no `.rs` extension); preceding
+/// elements are directory components. An empty input returns an empty
+/// vec — callers should reject before reaching emit.
+#[must_use]
+pub fn module_path_for_nsid(nsid: &str) -> Vec<String> {
+    // Snake-case each segment for filesystem and module-name use. Do
+    // not raw-identifier-escape here: the path also serves as a
+    // cross-language file location (`dev/idiolect/encounter.ts` etc.),
+    // and `r#pub` is not a valid filename. Callers that need the Rust
+    // `r#` form (the `pub mod ...` declaration in `mod.rs`) reach for
+    // `is_rust_keyword` and add the prefix at the use site.
+    nsid.split('.')
+        .filter(|s| !s.is_empty())
+        .map(to_snake)
+        .collect()
+}
+
+/// True if `s` (already snake-cased) is a Rust strict keyword that
+/// would collide with module / identifier syntax. Use to decide
+/// whether a `pub mod` declaration needs the `r#` raw-identifier
+/// prefix; the path itself stays plain so it works as a filename.
+#[must_use]
+pub fn is_rust_keyword(s: &str) -> bool {
+    is_rust_reserved(s)
+}
+
+/// Convenience: the leaf module name (file stem) for an nsid. Useful
+/// for type-name derivation: `pascal_case` of the result yields the
+/// main record/def type for the lexicon.
+#[must_use]
+pub fn leaf_module_name_for_nsid(nsid: &str) -> String {
+    module_path_for_nsid(nsid).pop().unwrap_or_default()
+}
+
+/// Stable type-name token for an nsid.
 ///
-/// ```ignore
-/// # use idiolect_codegen::lexicon::module_name_for_nsid;
-/// assert_eq!(module_name_for_nsid("dev.idiolect.encounter"), "encounter");
-/// assert_eq!(module_name_for_nsid("dev.panproto.schema.lens"), "panproto_lens");
-/// assert_eq!(module_name_for_nsid("dev.panproto.vcs.refUpdate"), "panproto_ref_update");
-/// ```
+/// Idiolect's generated types have historically disambiguated cross
+/// -family modules with a family prefix: `dev.panproto.schema.lens`
+/// becomes `PanprotoLens`, not `Lens`. The lexicon-tree file layout
+/// (see `module_path_for_nsid`) is enough to disambiguate at the
+/// path level, but the type names are part of every consumer's
+/// import surface, so we keep the prefix to avoid a workspace-wide
+/// rename. `dev.idiolect.*` still maps to the bare leaf segment.
 #[must_use]
 pub fn module_name_for_nsid(nsid: &str) -> String {
-    let parts: Vec<&str> = nsid.split('.').collect();
+    let parts: Vec<&str> = nsid.split('.').filter(|s| !s.is_empty()).collect();
     let last = parts.last().copied().unwrap_or(nsid);
     let last_snake = to_snake(last);
     if parts.len() >= 3 && parts[0] == "dev" && parts[1] == "idiolect" {
@@ -391,6 +426,62 @@ pub fn module_name_for_nsid(nsid: &str) -> String {
     } else {
         last_snake
     }
+}
+
+fn is_rust_reserved(s: &str) -> bool {
+    matches!(
+        s,
+        "as" | "break"
+            | "const"
+            | "continue"
+            | "crate"
+            | "else"
+            | "enum"
+            | "extern"
+            | "false"
+            | "fn"
+            | "for"
+            | "if"
+            | "impl"
+            | "in"
+            | "let"
+            | "loop"
+            | "match"
+            | "mod"
+            | "move"
+            | "mut"
+            | "pub"
+            | "ref"
+            | "return"
+            | "self"
+            | "Self"
+            | "static"
+            | "struct"
+            | "super"
+            | "trait"
+            | "true"
+            | "type"
+            | "unsafe"
+            | "use"
+            | "where"
+            | "while"
+            | "async"
+            | "await"
+            | "dyn"
+            | "abstract"
+            | "become"
+            | "box"
+            | "do"
+            | "final"
+            | "macro"
+            | "override"
+            | "priv"
+            | "typeof"
+            | "unsized"
+            | "virtual"
+            | "yield"
+            | "try"
+    )
 }
 
 /// Derive the atproto family an nsid belongs to — the second dotted segment.
@@ -429,28 +520,65 @@ fn to_snake(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{family_of_nsid, module_name_for_nsid};
+    use super::{family_of_nsid, leaf_module_name_for_nsid, module_path_for_nsid};
 
     #[test]
-    fn idiolect_nsid_keeps_last_segment() {
-        assert_eq!(module_name_for_nsid("dev.idiolect.encounter"), "encounter");
-        assert_eq!(module_name_for_nsid("dev.idiolect.defs"), "defs");
+    fn module_path_mirrors_nsid_segments() {
+        assert_eq!(
+            module_path_for_nsid("dev.idiolect.encounter"),
+            vec!["dev", "idiolect", "encounter"],
+        );
+        assert_eq!(
+            module_path_for_nsid("dev.panproto.schema.lens"),
+            vec!["dev", "panproto", "schema", "lens"],
+        );
     }
 
     #[test]
-    fn panproto_nsid_gets_family_prefix_and_snake_case() {
+    fn module_path_snake_cases_camel_segments() {
         assert_eq!(
-            module_name_for_nsid("dev.panproto.schema.lens"),
-            "panproto_lens"
+            module_path_for_nsid("dev.panproto.vcs.refUpdate"),
+            vec!["dev", "panproto", "vcs", "ref_update"],
         );
         assert_eq!(
-            module_name_for_nsid("dev.panproto.vcs.refUpdate"),
-            "panproto_ref_update",
+            module_path_for_nsid("dev.panproto.schema.lensAttestation"),
+            vec!["dev", "panproto", "schema", "lens_attestation"],
+        );
+    }
+
+    #[test]
+    fn module_path_keeps_keyword_segments_plain() {
+        // Path segments stay plain so they double as filenames.
+        // Callers that need the Rust `pub mod r#pub;` form check
+        // `is_rust_keyword(seg)` and add the prefix at the use site.
+        let path = module_path_for_nsid("pub.layers.annotation.defs");
+        assert_eq!(path, vec!["pub", "layers", "annotation", "defs"]);
+        assert!(super::is_rust_keyword(&path[0]));
+        assert!(!super::is_rust_keyword(&path[1]));
+    }
+
+    #[test]
+    fn leaf_module_name_returns_last_segment() {
+        assert_eq!(
+            leaf_module_name_for_nsid("dev.idiolect.encounter"),
+            "encounter",
         );
         assert_eq!(
-            module_name_for_nsid("dev.panproto.schema.lensAttestation"),
-            "panproto_lens_attestation",
+            leaf_module_name_for_nsid("dev.panproto.schema.lens"),
+            "lens",
         );
+    }
+
+    #[test]
+    fn shared_last_segment_does_not_collide() {
+        // Issue #21: two NSIDs with identical last segments must not
+        // both want to write `defs.rs`. Under the lexicon-tree layout
+        // they land in distinct parent directories, which is exactly
+        // what the codegen needs to avoid the collision.
+        let a = module_path_for_nsid("pub.layers.annotation.defs");
+        let b = module_path_for_nsid("pub.layers.corpus.defs");
+        assert_ne!(a, b);
+        assert_eq!(a.last(), b.last());
     }
 
     #[test]

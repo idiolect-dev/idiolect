@@ -56,17 +56,9 @@ pub use at_uri::{AtUri, AtUriError};
 pub use did::{Did, DidError, DidMethod};
 pub use nsid::{Nsid, NsidError};
 
-// re-export every generated module at the crate root, plus each
-// lexicon's main record type, so callers can write
-// `idiolect_records::Encounter` instead of
-// `idiolect_records::generated::encounter::Encounter`.
-pub use generated::{
-    Adapter, Belief, Bounty, Community, Correction, Dialect, Encounter, Observation,
-    PanprotoCommit, PanprotoComplement, PanprotoLens, PanprotoLensAttestation, PanprotoProtolens,
-    PanprotoProtolensChain, PanprotoRefUpdate, PanprotoRepo, PanprotoSchema, Recommendation,
-    Retrospection, Verification, Vocab, adapter, belief, bounty, community, correction, defs,
-    dialect, encounter, examples, observation, panproto_commit, panproto_complement, panproto_lens,
-    panproto_lens_attestation, panproto_protolens, panproto_protolens_chain, panproto_ref_update,
-    panproto_repo, panproto_schema, recommendation, retrospection, verification, vocab,
-};
+// Forward every type and sub-module exposed by `generated::` to the
+// crate root. The list of record-type aliases lives in the generated
+// `mod.rs` (one `pub use dev::...::T` per lexicon main record) so it
+// stays in sync with the lexicon set without a hand-edit step.
+pub use generated::*;
 pub use record::{AnyRecord, DecodeError, Record, decode_record};

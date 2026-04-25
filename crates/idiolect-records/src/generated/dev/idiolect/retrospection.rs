@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub struct Retrospection {
     /// Grounding for the finding. Omit when self-asserted by the detecting party; set explicitly when a third party is attributing the detection or when the finding rests on an external analysis.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// Optional confidence score in [0, 1]. Omit when the finding is unambiguous.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confidence: Option<f64>,
@@ -27,7 +27,7 @@ pub struct Retrospection {
     /// True if the detecting party anticipates the causal attribution will be contested. A hint, not a fact; contest records are separate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disputed_attribution: Option<bool>,
-    pub encounter: super::defs::EncounterRef,
+    pub encounter: crate::generated::dev::idiolect::defs::EncounterRef,
     /// Finding kind plus structured evidence and narrative detail. For kind=merge-divergence/data-loss/reconciliation-mismatch, `evidence` is the structured witness consumers can match on; for kind=other, evidence is optional and `detail` carries the whole finding.
     pub finding: RetrospectionFinding,
     /// Detection latency in seconds (detectedAt - encounter.occurredAt). Precomputed for easy aggregation; may be omitted for 'other' findings where latency is not meaningful.
@@ -57,11 +57,11 @@ pub struct RetrospectionFinding {
 #[serde(tag = "$type")]
 pub enum RetrospectionFindingEvidence {
     #[serde(rename = "dev.idiolect.defs#evidenceDivergence")]
-    EvidenceDivergence(super::defs::EvidenceDivergence),
+    EvidenceDivergence(crate::generated::dev::idiolect::defs::EvidenceDivergence),
     #[serde(rename = "dev.idiolect.defs#evidenceLoss")]
-    EvidenceLoss(super::defs::EvidenceLoss),
+    EvidenceLoss(crate::generated::dev::idiolect::defs::EvidenceLoss),
     #[serde(rename = "dev.idiolect.defs#evidenceMismatch")]
-    EvidenceMismatch(super::defs::EvidenceMismatch),
+    EvidenceMismatch(crate::generated::dev::idiolect::defs::EvidenceMismatch),
 }
 /// RetrospectionFindingKind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

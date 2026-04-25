@@ -2,7 +2,7 @@
 //! `nsid`, `Display`, `Serialize` (typed-json wire form with `$type`),
 //! and `from_typed_json`.
 
-use idiolect_records::generated::adapter::{
+use idiolect_records::generated::dev::idiolect::adapter::{
     AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
     AdapterIsolationKind,
 };

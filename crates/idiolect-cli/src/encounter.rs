@@ -18,10 +18,10 @@ use std::io::{self, BufRead, Write};
 
 use anyhow::{Context, Result, anyhow, bail};
 use idiolect_records::Vocab;
-use idiolect_records::generated::defs::{
+use idiolect_records::generated::dev::idiolect::defs::{
     LensRef, MaterialSpec, SchemaRef, Use, Visibility, VocabRef,
 };
-use idiolect_records::generated::encounter::EncounterKind;
+use idiolect_records::generated::dev::idiolect::encounter::EncounterKind;
 use std::process::ExitCode;
 
 /// Entry point: `idiolect encounter record [--lens URI] [--source-schema URI]

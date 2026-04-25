@@ -23,10 +23,10 @@ pub struct Community {
     pub conventions_text: Option<String>,
     /// Lenses the community treats as canonical.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub core_lenses: Option<Vec<super::defs::LensRef>>,
+    pub core_lenses: Option<Vec<crate::generated::dev::idiolect::defs::LensRef>>,
     /// Schemas the community treats as canonical for its purposes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub core_schemas: Option<Vec<super::defs::SchemaRef>>,
+    pub core_schemas: Option<Vec<crate::generated::dev::idiolect::defs::SchemaRef>>,
     pub created_at: String,
     /// Purpose, norms, and scope of the community. Narrative, not machine-interpreted.
     pub description: String,
@@ -76,7 +76,7 @@ pub struct ConventionVerificationReq {
     pub kind: ConventionVerificationReqKind,
     /// Optional specific property required.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub property: Option<super::defs::LensProperty>,
+    pub property: Option<crate::generated::dev::idiolect::defs::LensProperty>,
 }
 
 /// ConventionVerificationReqKind.

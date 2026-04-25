@@ -29,11 +29,11 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::defs::Use;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::defs::Use;
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
-use idiolect_records::generated::vocab::{Vocab, VocabWorld};
+use idiolect_records::generated::dev::idiolect::vocab::{Vocab, VocabWorld};
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;
@@ -242,9 +242,9 @@ mod tests {
     use super::*;
     use idiolect_indexer::{IndexerAction, IndexerEvent};
     use idiolect_records::Encounter;
-    use idiolect_records::generated::defs::{LensRef, SchemaRef, Use, VocabRef};
-    use idiolect_records::generated::encounter::EncounterKind;
-    use idiolect_records::generated::vocab::ActionEntry;
+    use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef, Use, VocabRef};
+    use idiolect_records::generated::dev::idiolect::encounter::EncounterKind;
+    use idiolect_records::generated::dev::idiolect::vocab::ActionEntry;
 
     fn encounter(action: &str, vocab_uri: Option<&str>) -> IndexerEvent {
         IndexerEvent {
@@ -287,7 +287,7 @@ mod tests {
                     uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".into()),
                 },
                 target_schema: None,
-                visibility: idiolect_records::generated::defs::Visibility::PublicDetailed,
+                visibility: idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
             })),
         }
     }

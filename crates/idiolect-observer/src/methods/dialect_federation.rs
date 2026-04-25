@@ -22,7 +22,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 
@@ -200,8 +200,8 @@ impl ObservationMethod for DialectFederationMethod {
 mod tests {
     use super::*;
     use idiolect_indexer::IndexerAction;
-    use idiolect_records::generated::defs::LensRef;
-    use idiolect_records::generated::dialect::Dialect;
+    use idiolect_records::generated::dev::idiolect::defs::LensRef;
+    use idiolect_records::generated::dev::idiolect::dialect::Dialect;
 
     fn dialect(created_at: &str, lens_uris: &[&str]) -> Dialect {
         Dialect {

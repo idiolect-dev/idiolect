@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub struct Bounty {
     /// Grounding for the bouletic attitude. Omit when the repo owner is the requester (self-asserted). Set explicitly when a third party is attributing the wanting to another party — the basis records on what grounds the attribution is made (community policy, an off-atproto signal, or derivation from another record).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// Structured constraints the deliverable must satisfy. Matching is structural: consumers dispatch on the tagged variant.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constraints: Option<Vec<BountyConstraints>>,
@@ -50,7 +50,7 @@ pub struct ConstraintConformance {
     pub kind: ConstraintConformanceKind,
     /// Optional specific property the verification must establish.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub property: Option<super::defs::LensProperty>,
+    pub property: Option<crate::generated::dev::idiolect::defs::LensProperty>,
 }
 
 /// Datetime deadline with optional grace window.
@@ -131,7 +131,7 @@ pub struct EligibilityOr {}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EligibilityVerificationFor {
-    pub property: super::defs::LensProperty,
+    pub property: crate::generated::dev::idiolect::defs::LensProperty,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -148,15 +148,15 @@ pub struct WantLens {
     /// Whether the requested lens must be invertible.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bidirectional: Option<bool>,
-    pub source: super::defs::SchemaRef,
-    pub target: super::defs::SchemaRef,
+    pub source: crate::generated::dev::idiolect::defs::SchemaRef,
+    pub target: crate::generated::dev::idiolect::defs::SchemaRef,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WantVerification {
     pub kind: WantVerificationKind,
-    pub lens: super::defs::LensRef,
+    pub lens: crate::generated::dev::idiolect::defs::LensRef,
 }
 
 /// ConstraintConformanceKind.

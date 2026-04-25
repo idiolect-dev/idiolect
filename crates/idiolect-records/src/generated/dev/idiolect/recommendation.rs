@@ -20,10 +20,10 @@ pub struct Recommendation {
     pub annotations: Option<String>,
     /// Structured grounding for the endorsement — a community policy, an external standard, a derived record. Omit when the recommendation is self-asserted by the issuing community.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// Structured known-failure-mode list. Consumers match on `mode` / `affects` / `severity` without substring search.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub caveats: Option<Vec<super::defs::Caveat>>,
+    pub caveats: Option<Vec<crate::generated::dev::idiolect::defs::Caveat>>,
     /// Narrative commentary on the caveats. Companion to the structured `caveats` list, not a replacement.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub caveats_text: Option<String>,
@@ -31,7 +31,7 @@ pub struct Recommendation {
     pub conditions: Vec<RecommendationConditions>,
     pub issuing_community: String,
     /// Ordered sequence of lenses to compose. Length 1 means a single recommended lens.
-    pub lens_path: Vec<super::defs::LensRef>,
+    pub lens_path: Vec<crate::generated::dev::idiolect::defs::LensRef>,
     pub occurred_at: String,
     /// Additional structured assumptions the consumer must verify before adopting (same combinator shape as `conditions`). Empty array means no explicit preconditions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -56,7 +56,7 @@ pub struct ConditionActionSubsumedBy {
     pub action: String,
     /// Action vocabulary the identifier resolves against. Omit to match the invocation's own vocabulary.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vocabulary: Option<super::defs::VocabRef>,
+    pub vocabulary: Option<crate::generated::dev::idiolect::defs::VocabRef>,
 }
 
 /// Combinator: conjoin the top two predicates on the evaluation stack.
@@ -90,21 +90,21 @@ pub struct ConditionPurposeSubsumedBy {
     pub purpose: String,
     /// Purpose vocabulary the identifier resolves against. Omit to match the invocation's own vocabulary.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vocabulary: Option<super::defs::VocabRef>,
+    pub vocabulary: Option<crate::generated::dev::idiolect::defs::VocabRef>,
 }
 
 /// Atomic predicate: the invocation's source schema is the given schema.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConditionSourceIs {
-    pub schema: super::defs::SchemaRef,
+    pub schema: crate::generated::dev::idiolect::defs::SchemaRef,
 }
 
 /// Atomic predicate: the invocation's target schema is the given schema.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConditionTargetIs {
-    pub schema: super::defs::SchemaRef,
+    pub schema: crate::generated::dev::idiolect::defs::SchemaRef,
 }
 
 /// RecommendationConditions tagged union.
@@ -156,15 +156,15 @@ pub enum RecommendationPreconditions {
 #[serde(tag = "$type")]
 pub enum RecommendationRequiredVerifications {
     #[serde(rename = "dev.idiolect.defs#lpRoundtrip")]
-    LpRoundtrip(super::defs::LpRoundtrip),
+    LpRoundtrip(crate::generated::dev::idiolect::defs::LpRoundtrip),
     #[serde(rename = "dev.idiolect.defs#lpGenerator")]
-    LpGenerator(super::defs::LpGenerator),
+    LpGenerator(crate::generated::dev::idiolect::defs::LpGenerator),
     #[serde(rename = "dev.idiolect.defs#lpTheorem")]
-    LpTheorem(super::defs::LpTheorem),
+    LpTheorem(crate::generated::dev::idiolect::defs::LpTheorem),
     #[serde(rename = "dev.idiolect.defs#lpConformance")]
-    LpConformance(super::defs::LpConformance),
+    LpConformance(crate::generated::dev::idiolect::defs::LpConformance),
     #[serde(rename = "dev.idiolect.defs#lpChecker")]
-    LpChecker(super::defs::LpChecker),
+    LpChecker(crate::generated::dev::idiolect::defs::LpChecker),
     #[serde(rename = "dev.idiolect.defs#lpConvergence")]
-    LpConvergence(super::defs::LpConvergence),
+    LpConvergence(crate::generated::dev::idiolect::defs::LpConvergence),
 }

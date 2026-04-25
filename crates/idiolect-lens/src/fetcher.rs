@@ -154,7 +154,7 @@ pub struct ListedEntry<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use idiolect_records::generated::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+    use idiolect_records::generated::dev::idiolect::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
     use std::sync::Mutex;
 
     #[derive(Default)]

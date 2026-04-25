@@ -12,8 +12,8 @@
 //! runner only validates the static shape of the surrounding graphs.
 
 use idiolect_lens::{Resolver, SchemaLoader, };
-use idiolect_records::generated::defs::{LpChecker, Tool};
-use idiolect_records::generated::verification::{
+use idiolect_records::generated::dev::idiolect::defs::{LpChecker, Tool};
+use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 use panproto_schema::{Protocol, validate};
@@ -133,7 +133,7 @@ mod tests {
     use super::*;
     use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader};
     use idiolect_records::PanprotoLens;
-    use idiolect_records::generated::defs::LensRef;
+    use idiolect_records::generated::dev::idiolect::defs::LensRef;
     use panproto_lens::protolens::elementary;
     use panproto_schema::{Schema, SchemaBuilder};
 

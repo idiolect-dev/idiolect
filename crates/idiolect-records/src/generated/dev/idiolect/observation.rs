@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub struct Observation {
     /// Grounding for the observation. Omit when the repo owner is the observer; set explicitly when a third party is attributing the observation (e.g. caching or relaying another observer's aggregate).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// Structured method descriptor (see dev.idiolect.observer for the conformance floor). Enables reproducibility and comparison.
     pub method: ObservationMethod,
     /// DID of the observer publishing this aggregate.
@@ -29,7 +29,7 @@ pub struct Observation {
     pub scope: ObservationScope,
     /// Version of this observation method; different versions may produce non-comparable outputs.
     pub version: String,
-    pub visibility: super::defs::Visibility,
+    pub visibility: crate::generated::dev::idiolect::defs::Visibility,
 }
 
 impl crate::Record for Observation {
@@ -64,7 +64,7 @@ pub struct ObservationScope {
     pub encounter_kinds: Option<Vec<ObservationScopeEncounterKinds>>,
     /// Lenses included in scope. Empty array or omitted means 'all'.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub lenses: Option<Vec<super::defs::LensRef>>,
+    pub lenses: Option<Vec<crate::generated::dev::idiolect::defs::LensRef>>,
     /// Time window covered by the aggregation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub window: Option<ObservationScopeWindow>,

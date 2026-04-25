@@ -20,7 +20,7 @@ pub struct Encounter {
     pub annotations: Option<String>,
     /// Structured grounding for the assertion. Useful when `holder` is a third party and the record must state on what basis the invocation is being attributed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// Outcome as assessed by the invoking party at record time. 'corrected' signals a follow-up correction record is expected or exists.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub downstream_result: Option<EncounterDownstreamResult>,
@@ -30,7 +30,7 @@ pub struct Encounter {
     /// Fixed taxonomy at the Lexicon level. Observers declare how they weight each kind.
     pub kind: EncounterKind,
     /// The lens that was invoked.
-    pub lens: super::defs::LensRef,
+    pub lens: crate::generated::dev::idiolect::defs::LensRef,
     /// When the lens invocation occurred. Distinct from the record's createdAt, which may be later.
     pub occurred_at: String,
     /// Optional content-addressed reference to the produced output.
@@ -40,13 +40,13 @@ pub struct Encounter {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_instance: Option<String>,
     /// The source schema the lens translated from.
-    pub source_schema: super::defs::SchemaRef,
+    pub source_schema: crate::generated::dev::idiolect::defs::SchemaRef,
     /// The target schema produced by the lens. Often implied by the lens; may be elided when unambiguous.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_schema: Option<super::defs::SchemaRef>,
+    pub target_schema: Option<crate::generated::dev::idiolect::defs::SchemaRef>,
     /// Structured record of the action performed, its material, its purpose, and its actor. Consumers match on action subsumption against the referenced vocabularies, not substring.
-    pub r#use: super::defs::Use,
-    pub visibility: super::defs::Visibility,
+    pub r#use: crate::generated::dev::idiolect::defs::Use,
+    pub visibility: crate::generated::dev::idiolect::defs::Visibility,
 }
 
 impl crate::Record for Encounter {

@@ -2,7 +2,7 @@
 
 //! Declarative taxonomy of verification runners. Each entry maps to a hand-written module under crates/idiolect-verify/src/<module>.rs implementing the VerificationRunner trait. The generated module in the same crate exposes a RUNNERS slice of descriptors for enumeration; runner instantiation stays caller-supplied because constructors take different configuration (corpus, budget, generator closure) per kind.
 #![allow(missing_docs, clippy::doc_markdown, clippy::too_many_lines)]
-use idiolect_records::generated::verification::VerificationKind;
+use idiolect_records::generated::dev::idiolect::verification::VerificationKind;
 /// Static descriptor for a shipped verification runner.
 #[derive(Debug, Clone, Copy)]
 pub struct RunnerDescriptor {

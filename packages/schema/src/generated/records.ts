@@ -3,27 +3,27 @@
 // appview-facing helpers over every generated record (dev.idiolect.* plus
 // the vendored dev.panproto.* tree). produced alongside the per-nsid modules.
 
-import type { Adapter } from "./adapter";
-import type { Belief } from "./belief";
-import type { Bounty } from "./bounty";
-import type { Community } from "./community";
-import type { Correction } from "./correction";
-import type { Dialect } from "./dialect";
-import type { Encounter } from "./encounter";
-import type { Observation } from "./observation";
-import type { Recommendation } from "./recommendation";
-import type { Retrospection } from "./retrospection";
-import type { Verification } from "./verification";
-import type { Vocab } from "./vocab";
-import type { PanprotoComplement } from "./panproto_complement";
-import type { PanprotoLens } from "./panproto_lens";
-import type { PanprotoLensAttestation } from "./panproto_lens_attestation";
-import type { PanprotoProtolens } from "./panproto_protolens";
-import type { PanprotoProtolensChain } from "./panproto_protolens_chain";
-import type { PanprotoSchema } from "./panproto_schema";
-import type { PanprotoCommit } from "./panproto_commit";
-import type { PanprotoRefUpdate } from "./panproto_ref_update";
-import type { PanprotoRepo } from "./panproto_repo";
+import type { Adapter } from "./dev/idiolect/adapter";
+import type { Belief } from "./dev/idiolect/belief";
+import type { Bounty } from "./dev/idiolect/bounty";
+import type { Community } from "./dev/idiolect/community";
+import type { Correction } from "./dev/idiolect/correction";
+import type { Dialect } from "./dev/idiolect/dialect";
+import type { Encounter } from "./dev/idiolect/encounter";
+import type { Observation } from "./dev/idiolect/observation";
+import type { Recommendation } from "./dev/idiolect/recommendation";
+import type { Retrospection } from "./dev/idiolect/retrospection";
+import type { Verification } from "./dev/idiolect/verification";
+import type { Vocab } from "./dev/idiolect/vocab";
+import type { PanprotoComplement } from "./dev/panproto/schema/complement";
+import type { PanprotoLens } from "./dev/panproto/schema/lens";
+import type { PanprotoLensAttestation } from "./dev/panproto/schema/lens_attestation";
+import type { PanprotoProtolens } from "./dev/panproto/schema/protolens";
+import type { PanprotoProtolensChain } from "./dev/panproto/schema/protolens_chain";
+import type { PanprotoSchema } from "./dev/panproto/schema/schema";
+import type { PanprotoCommit } from "./dev/panproto/vcs/commit";
+import type { PanprotoRefUpdate } from "./dev/panproto/vcs/ref_update";
+import type { PanprotoRepo } from "./dev/panproto/vcs/repo";
 
 /**
  * Canonical NSIDs, keyed by record kind for ergonomic call sites.

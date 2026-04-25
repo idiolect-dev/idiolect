@@ -88,7 +88,7 @@ fn emit_source(spec: &RunnerSpec) -> Result<String> {
         .collect();
 
     let items = vec![quote! {
-        use idiolect_records::generated::verification::VerificationKind;
+        use idiolect_records::generated::dev::idiolect::verification::VerificationKind;
 
         /// Static descriptor for a shipped verification runner.
         #[derive(Debug, Clone, Copy)]

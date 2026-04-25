@@ -44,12 +44,12 @@ pub struct AdapterInvocationProtocol {
     pub entry_point: Option<String>,
     /// Schema of the adapter's input.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub input_schema: Option<super::defs::SchemaRef>,
+    pub input_schema: Option<crate::generated::dev::idiolect::defs::SchemaRef>,
     /// Transport protocol.
     pub kind: AdapterInvocationProtocolKind,
     /// Schema of the adapter's output.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub output_schema: Option<super::defs::SchemaRef>,
+    pub output_schema: Option<crate::generated::dev::idiolect::defs::SchemaRef>,
 }
 /// AdapterInvocationProtocolKind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

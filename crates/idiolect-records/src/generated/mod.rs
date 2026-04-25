@@ -2,51 +2,36 @@
 
 //! Rust types generated from the `dev.idiolect.*` lexicons plus the vendored
 //! `dev.panproto.*` tree (see `lexicons/dev/panproto/VENDORED.md`).
+//!
+//! The on-disk layout mirrors the lexicon directory tree under
+//! `lexicons/`: each lexicon `dev/<authority>/<...>/<name>.json`
+//! emits a corresponding `dev/<authority>/<...>/<name>.rs`.
+//! Record types are re-exported at the crate root so existing
+//! callers keep using `idiolect_records::Encounter` etc.
 
 #![allow(missing_docs)]
 
-pub mod adapter;
-pub mod belief;
-pub mod bounty;
-pub mod community;
-pub mod correction;
-pub mod defs;
-pub mod dialect;
-pub mod encounter;
+pub mod dev;
 pub mod examples;
-pub mod observation;
-pub mod panproto_commit;
-pub mod panproto_complement;
-pub mod panproto_lens;
-pub mod panproto_lens_attestation;
-pub mod panproto_protolens;
-pub mod panproto_protolens_chain;
-pub mod panproto_ref_update;
-pub mod panproto_repo;
-pub mod panproto_schema;
-pub mod recommendation;
-pub mod retrospection;
-pub mod verification;
-pub mod vocab;
 
-pub use adapter::Adapter;
-pub use belief::Belief;
-pub use bounty::Bounty;
-pub use community::Community;
-pub use correction::Correction;
-pub use dialect::Dialect;
-pub use encounter::Encounter;
-pub use observation::Observation;
-pub use panproto_commit::PanprotoCommit;
-pub use panproto_complement::PanprotoComplement;
-pub use panproto_lens::PanprotoLens;
-pub use panproto_lens_attestation::PanprotoLensAttestation;
-pub use panproto_protolens::PanprotoProtolens;
-pub use panproto_protolens_chain::PanprotoProtolensChain;
-pub use panproto_ref_update::PanprotoRefUpdate;
-pub use panproto_repo::PanprotoRepo;
-pub use panproto_schema::PanprotoSchema;
-pub use recommendation::Recommendation;
-pub use retrospection::Retrospection;
-pub use verification::Verification;
-pub use vocab::Vocab;
+pub use dev::idiolect::adapter::Adapter;
+pub use dev::idiolect::belief::Belief;
+pub use dev::idiolect::bounty::Bounty;
+pub use dev::idiolect::community::Community;
+pub use dev::idiolect::correction::Correction;
+pub use dev::idiolect::dialect::Dialect;
+pub use dev::idiolect::encounter::Encounter;
+pub use dev::idiolect::observation::Observation;
+pub use dev::idiolect::recommendation::Recommendation;
+pub use dev::idiolect::retrospection::Retrospection;
+pub use dev::idiolect::verification::Verification;
+pub use dev::idiolect::vocab::Vocab;
+pub use dev::panproto::schema::complement::PanprotoComplement;
+pub use dev::panproto::schema::lens::PanprotoLens;
+pub use dev::panproto::schema::lens_attestation::PanprotoLensAttestation;
+pub use dev::panproto::schema::protolens::PanprotoProtolens;
+pub use dev::panproto::schema::protolens_chain::PanprotoProtolensChain;
+pub use dev::panproto::schema::schema::PanprotoSchema;
+pub use dev::panproto::vcs::commit::PanprotoCommit;
+pub use dev::panproto::vcs::ref_update::PanprotoRefUpdate;
+pub use dev::panproto::vcs::repo::PanprotoRepo;

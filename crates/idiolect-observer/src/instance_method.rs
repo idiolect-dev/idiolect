@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use idiolect_indexer::IndexerEvent;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 use panproto_inst::WInstance;
@@ -293,7 +293,7 @@ mod tests {
 
     fn real_bounty_event() -> IndexerEvent {
         use idiolect_records::AnyRecord;
-        use idiolect_records::generated::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+        use idiolect_records::generated::dev::idiolect::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
         let bounty = Bounty {
             basis: None,
             constraints: None,

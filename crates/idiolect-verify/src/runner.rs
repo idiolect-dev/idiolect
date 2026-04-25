@@ -1,7 +1,7 @@
 //! Core [`VerificationRunner`] trait + supporting types.
 
-use idiolect_records::generated::defs::{LensRef, Tool};
-use idiolect_records::generated::verification::{
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, Tool};
+use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 

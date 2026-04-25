@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use idiolect_indexer::{IndexerAction, IndexerEvent, RecordHandler};
 use idiolect_orchestrator::{CatalogHandler, SqliteCatalogStore, handler::CatalogPersist, query};
-use idiolect_records::generated::adapter::{
+use idiolect_records::generated::dev::idiolect::adapter::{
     AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
     AdapterIsolationKind,
 };

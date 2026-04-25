@@ -18,9 +18,9 @@
 //! `cargo run -p idiolect-codegen -- generate`.
 
 use idiolect_records::Dialect;
-use idiolect_records::generated::defs::LensRef;
-use idiolect_records::generated::recommendation::RecommendationRequiredVerifications;
-use idiolect_records::generated::verification::VerificationResult;
+use idiolect_records::generated::dev::idiolect::defs::LensRef;
+use idiolect_records::generated::dev::idiolect::recommendation::RecommendationRequiredVerifications;
+use idiolect_records::generated::dev::idiolect::verification::VerificationResult;
 
 use crate::catalog::Catalog;
 
@@ -92,9 +92,9 @@ pub fn sufficient_verifications_for(
 #[must_use]
 pub fn requirement_matches(
     required: &RecommendationRequiredVerifications,
-    property: &idiolect_records::generated::verification::VerificationProperty,
+    property: &idiolect_records::generated::dev::idiolect::verification::VerificationProperty,
 ) -> bool {
-    use idiolect_records::generated::verification::VerificationProperty as V;
+    use idiolect_records::generated::dev::idiolect::verification::VerificationProperty as V;
     match (required, property) {
         (RecommendationRequiredVerifications::LpRoundtrip(req), V::LpRoundtrip(p)) => {
             str_wildcard_eq(&req.domain, &p.domain)

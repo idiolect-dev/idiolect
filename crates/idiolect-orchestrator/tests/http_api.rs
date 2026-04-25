@@ -9,13 +9,13 @@
 use std::sync::{Arc, Mutex};
 
 use idiolect_orchestrator::{AppState, Catalog, http_router};
-use idiolect_records::generated::adapter::{
+use idiolect_records::generated::dev::idiolect::adapter::{
     AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
     AdapterIsolationKind,
 };
-use idiolect_records::generated::bounty::{BountyStatus, BountyWants, WantLens};
-use idiolect_records::generated::defs::{LensRef, SchemaRef};
-use idiolect_records::generated::verification::{VerificationKind, VerificationResult};
+use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants, WantLens};
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
+use idiolect_records::generated::dev::idiolect::verification::{VerificationKind, VerificationResult};
 use idiolect_records::{Adapter, AnyRecord, Bounty, Community, Recommendation, Verification};
 
 fn s_ref(uri: &str) -> SchemaRef {
@@ -106,10 +106,10 @@ fn recommendation_for(lens: &str) -> Recommendation {
 }
 
 fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
-    use idiolect_records::generated::defs::{
+    use idiolect_records::generated::dev::idiolect::defs::{
         LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool,
     };
-    use idiolect_records::generated::verification::VerificationProperty;
+    use idiolect_records::generated::dev::idiolect::verification::VerificationProperty;
     let property = match kind {
         VerificationKind::RoundtripTest => VerificationProperty::LpRoundtrip(LpRoundtrip {
             domain: "any".into(),

@@ -17,12 +17,12 @@ use serde::{Deserialize, Serialize};
 pub struct Correction {
     /// Structured grounding for the edit. Useful when `holder` is a third party and the record must state on what basis the correction is being attributed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub basis: Option<super::defs::Basis>,
+    pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// The value after correction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub corrected_value: Option<serde_json::Value>,
     /// The encounter whose output was edited.
-    pub encounter: super::defs::EncounterRef,
+    pub encounter: crate::generated::dev::idiolect::defs::EncounterRef,
     /// DID of the party the correction is attributed to. Omit for first-party records; set explicitly when a third party is recording someone else's edit (e.g. a reviewer transcribing an off-network correction).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub holder: Option<String>,
@@ -37,7 +37,7 @@ pub struct Correction {
     pub rationale: Option<String>,
     /// Fixed taxonomy at the Lexicon level. Aggregators filter or weight by reason; corrections of different reasons signal different things about a lens.
     pub reason: CorrectionReason,
-    pub visibility: super::defs::Visibility,
+    pub visibility: crate::generated::dev::idiolect::defs::Visibility,
 }
 
 impl crate::Record for Correction {

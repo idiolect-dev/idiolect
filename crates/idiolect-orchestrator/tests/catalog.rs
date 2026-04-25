@@ -12,10 +12,10 @@ use idiolect_indexer::{
     IndexerEvent, RawEvent, RecordHandler, drive_indexer,
 };
 use idiolect_orchestrator::{CatalogHandler, query};
-use idiolect_records::generated::bounty::{BountyStatus, BountyWants, WantAdapter, WantLens};
-use idiolect_records::generated::defs::{LensRef, SchemaRef};
-use idiolect_records::generated::recommendation::RecommendationRequiredVerifications;
-use idiolect_records::generated::verification::{VerificationKind, VerificationResult};
+use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants, WantAdapter, WantLens};
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
+use idiolect_records::generated::dev::idiolect::recommendation::RecommendationRequiredVerifications;
+use idiolect_records::generated::dev::idiolect::verification::{VerificationKind, VerificationResult};
 use idiolect_records::{
     Adapter, AnyRecord, Bounty, Community, Dialect, Recommendation, Verification,
 };
@@ -112,7 +112,7 @@ fn bounty_want_adapter(fw: &str) -> Bounty {
 }
 
 fn adapter(framework: &str) -> Adapter {
-    use idiolect_records::generated::adapter::{
+    use idiolect_records::generated::dev::idiolect::adapter::{
         AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
         AdapterIsolationKind,
     };
@@ -167,7 +167,7 @@ fn dialect(preferred: &[&str]) -> Dialect {
 }
 
 fn recommendation(path: &[&str]) -> Recommendation {
-    use idiolect_records::generated::defs::{LpRoundtrip, LpTheorem};
+    use idiolect_records::generated::dev::idiolect::defs::{LpRoundtrip, LpTheorem};
     Recommendation {
         annotations: None,
         basis: None,
@@ -198,10 +198,10 @@ fn verification(
     kind: VerificationKind,
     result: VerificationResult,
 ) -> Verification {
-    use idiolect_records::generated::defs::{
+    use idiolect_records::generated::dev::idiolect::defs::{
         LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool,
     };
-    use idiolect_records::generated::verification::VerificationProperty;
+    use idiolect_records::generated::dev::idiolect::verification::VerificationProperty;
     // Pair the property variant with the kind so sufficient_verifications_for's
     // structural match has something to agree with.
     let property = match kind {
@@ -367,9 +367,9 @@ async fn delete_removes_record() {
 #[tokio::test]
 async fn catalog_ignores_non_orchestrator_records() {
     // An encounter shouldn't land in the catalog.
-    use idiolect_records::generated::defs::Use;
-    use idiolect_records::generated::defs::Visibility;
-    use idiolect_records::generated::encounter::{Encounter, EncounterKind};
+    use idiolect_records::generated::dev::idiolect::defs::Use;
+    use idiolect_records::generated::dev::idiolect::defs::Visibility;
+    use idiolect_records::generated::dev::idiolect::encounter::{Encounter, EncounterKind};
     let handler = CatalogHandler::new();
     let cat = handler.catalog();
     let encounter = Encounter {
@@ -572,7 +572,7 @@ fn query_preferred_lenses_for_dialect() {
 
 #[test]
 fn query_sufficient_verifications_returns_true_when_all_kinds_hold() {
-    use idiolect_records::generated::defs::{LpGenerator, LpRoundtrip, LpTheorem};
+    use idiolect_records::generated::dev::idiolect::defs::{LpGenerator, LpRoundtrip, LpTheorem};
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     let lens = l_ref("at://did:plc:x/dev.panproto.schema.lens/l1");
@@ -608,7 +608,7 @@ fn query_sufficient_verifications_returns_true_when_all_kinds_hold() {
 
 #[test]
 fn query_sufficient_verifications_excludes_falsified_when_holding_required() {
-    use idiolect_records::generated::defs::LpRoundtrip;
+    use idiolect_records::generated::dev::idiolect::defs::LpRoundtrip;
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     let bad_lens = l_ref("at://did:plc:x/dev.panproto.schema.lens/l-bad");
@@ -692,7 +692,7 @@ fn catalog_len_matches_per_kind_counts() {
 #[test]
 #[allow(clippy::many_single_char_names)]
 fn schema_refs_match_prefers_cid_over_uri() {
-    use idiolect_records::generated::defs::SchemaRef;
+    use idiolect_records::generated::dev::idiolect::defs::SchemaRef;
     let a = SchemaRef {
         cid: Some("cid-a".into()),
         language: None,
@@ -800,7 +800,7 @@ fn query_bounties_by_requester_ignores_status() {
 
 #[test]
 fn query_adapters_by_invocation_protocol() {
-    use idiolect_records::generated::adapter::AdapterInvocationProtocolKind;
+    use idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind;
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     let subprocess = query::adapters_by_invocation_protocol(
@@ -825,7 +825,7 @@ fn query_communities_by_name() {
 
 #[test]
 fn query_verifications_by_kind() {
-    use idiolect_records::generated::verification::VerificationKind;
+    use idiolect_records::generated::dev::idiolect::verification::VerificationKind;
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
     // Seeded verifications: one roundtrip-test (holds) + one formal-proof (holds) + one roundtrip-test (falsified).
