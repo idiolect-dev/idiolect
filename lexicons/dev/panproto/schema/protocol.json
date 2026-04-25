@@ -1,0 +1,93 @@
+{
+  "lexicon": 1,
+  "id": "dev.panproto.schema.protocol",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["name", "createdAt"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 128 },
+          "category": {
+            "type": "string",
+            "knownValues": [
+              "schemaLanguage",
+              "programmingLanguage",
+              "serialization",
+              "dataScience",
+              "api",
+              "database",
+              "config",
+              "domain",
+              "annotation",
+              "rawFile"
+            ]
+          },
+          "schemaTheory": { "type": "string", "maxLength": 128 },
+          "instanceTheory": { "type": "string", "maxLength": 128 },
+          "objKinds": {
+            "type": "array",
+            "items": { "type": "string", "maxLength": 64 },
+            "maxLength": 100
+          },
+          "constraintSorts": {
+            "type": "array",
+            "items": { "type": "string", "maxLength": 64 },
+            "maxLength": 100
+          },
+          "hasOrder": { "type": "boolean" },
+          "hasCoproducts": { "type": "boolean" },
+          "hasRecursion": { "type": "boolean" },
+          "hasCausal": { "type": "boolean" },
+          "nominalIdentity": { "type": "boolean" },
+          "hasDefaults": { "type": "boolean" },
+          "hasCoercions": { "type": "boolean" },
+          "hasMergers": { "type": "boolean" },
+          "edgeRules": {
+            "type": "array",
+            "items": { "type": "ref", "ref": "#edgeRule" },
+            "maxLength": 100
+          },
+          "schemaComposition": { "type": "ref", "ref": "#compositionSpec" },
+          "instanceComposition": { "type": "ref", "ref": "#compositionSpec" },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "edgeRule": {
+      "type": "object",
+      "required": ["edgeKind"],
+      "properties": {
+        "edgeKind": { "type": "string", "maxLength": 64 },
+        "srcKinds": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 64 },
+          "maxLength": 50
+        },
+        "tgtKinds": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 64 },
+          "maxLength": 50
+        }
+      }
+    },
+    "compositionSpec": {
+      "type": "object",
+      "required": ["theories"],
+      "properties": {
+        "theories": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 128 },
+          "maxLength": 20
+        },
+        "sharedSorts": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 128 },
+          "maxLength": 50
+        }
+      }
+    }
+  }
+}

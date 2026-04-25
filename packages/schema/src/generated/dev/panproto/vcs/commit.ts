@@ -3,15 +3,27 @@
 
 export interface PanprotoCommit {
   author: string;
+  complementHashes?: string[];
   createdAt: string;
+  cstComplementHashes?: string[];
+  dataHashes?: string[];
+  editLogHashes?: string[];
   message: string;
   migrationHash?: string;
   objectHash: string;
   parentHashes?: string[];
   protocol: string;
+  protocolHash?: string;
   renames?: SiteRename[];
   repo: string;
   schemaHash: string;
+  theoryIds?: NamedHash[];
+  timestamp?: number;
+}
+
+export interface NamedHash {
+  name: string;
+  objectHash: string;
 }
 
 export interface SiteRename {

@@ -6,8 +6,8 @@ Do not edit them in place — update the pin below and re-vendor.
 | field           | value                                      |
 |-----------------|--------------------------------------------|
 | upstream        | `panproto/panproto` (git)                  |
-| commit          | `c3880731588e50c142dd693d8108f0f16456c929` |
-| workspace ver.  | `0.35.0`                                   |
+| commit          | `02158abb80252378a21bb1a9bee839d053a21795` |
+| workspace ver.  | `0.39.0`                                   |
 | source path     | `lexicons/dev/panproto/`                   |
 
 ## Vendored set
@@ -22,6 +22,8 @@ resolve and apply lenses end-to-end, plus the vcs records the
 - `schema/protolensChain.json` — a multi-hop composition
 - `schema/complement.json` — the residual from an asymmetric get
 - `schema/lensAttestation.json` — governance stance toward a lens
+- `schema/theory.json` — a logical theory the protocol is parametric in
+- `schema/protocol.json` — a panproto protocol (signature + axioms)
 - `vcs/commit.json` — a panproto vcs commit
 - `vcs/repo.json` — a panproto vcs repository
 - `vcs/refUpdate.json` — a ref-update envelope

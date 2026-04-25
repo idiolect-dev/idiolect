@@ -15,7 +15,15 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct PanprotoCommit {
     pub author: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub complement_hashes: Option<Vec<String>>,
     pub created_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cst_complement_hashes: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_hashes: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub edit_log_hashes: Option<Vec<String>>,
     pub message: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub migration_hash: Option<String>,
@@ -24,13 +32,26 @@ pub struct PanprotoCommit {
     pub parent_hashes: Option<Vec<String>>,
     pub protocol: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub protocol_hash: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub renames: Option<Vec<SiteRename>>,
     pub repo: String,
     pub schema_hash: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub theory_ids: Option<Vec<NamedHash>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<i64>,
 }
 
 impl crate::Record for PanprotoCommit {
     const NSID: &'static str = "dev.panproto.vcs.commit";
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NamedHash {
+    pub name: String,
+    pub object_hash: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

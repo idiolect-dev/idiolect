@@ -5,7 +5,9 @@
 pub mod complement;
 pub mod lens;
 pub mod lens_attestation;
+pub mod protocol;
 pub mod protolens;
 pub mod protolens_chain;
 #[allow(clippy::module_inception)]
 pub mod schema;
+pub mod theory;
