@@ -196,7 +196,9 @@ async fn delete_record_surfaces_error() {
 #[tokio::test]
 async fn publisher_and_fetcher_round_trip_via_wiremock() {
     use idiolect_lens::{RecordFetcher, RecordPublisher};
-    use idiolect_records::generated::dev::idiolect::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+    use idiolect_records::generated::dev::idiolect::bounty::{
+        Bounty, BountyStatus, BountyWants, WantAdapter,
+    };
 
     let server = MockServer::start().await;
 

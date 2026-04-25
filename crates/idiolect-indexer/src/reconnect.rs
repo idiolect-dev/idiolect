@@ -284,7 +284,8 @@ mod tests {
             live,
             did: "did:plc:x".into(),
             rev: format!("r{seq}"),
-            collection: idiolect_records::Nsid::parse("dev.idiolect.encounter").expect("valid nsid"),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.encounter")
+                .expect("valid nsid"),
             rkey: format!("r{seq}"),
             action: IndexerAction::Create,
             cid: None,

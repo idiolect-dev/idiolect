@@ -29,7 +29,7 @@ use std::process::ExitCode;
 
 use anyhow::{Context, Result, anyhow, bail};
 use idiolect_identity::{Did, IdentityResolver, ReqwestIdentityResolver};
-use idiolect_lens::{RecordFetcher, ReqwestPdsClient, fetcher_for_did, };
+use idiolect_lens::{RecordFetcher, ReqwestPdsClient, fetcher_for_did};
 use tracing_subscriber::EnvFilter;
 
 mod encounter;

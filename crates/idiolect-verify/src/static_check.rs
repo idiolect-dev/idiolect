@@ -11,7 +11,7 @@
 //! [`RoundtripTestRunner`](crate::RoundtripTestRunner)'s job. This
 //! runner only validates the static shape of the surrounding graphs.
 
-use idiolect_lens::{Resolver, SchemaLoader, };
+use idiolect_lens::{Resolver, SchemaLoader};
 use idiolect_records::generated::dev::idiolect::defs::{LpChecker, Tool};
 use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationProperty, VerificationResult,

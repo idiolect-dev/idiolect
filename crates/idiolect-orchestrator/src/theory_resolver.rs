@@ -443,7 +443,8 @@ mod tests {
             basis: None,
             downstream_result: None,
             holder: None,
-            kind: idiolect_records::generated::dev::idiolect::encounter::EncounterKind::InvocationLog,
+            kind:
+                idiolect_records::generated::dev::idiolect::encounter::EncounterKind::InvocationLog,
             lens: idiolect_records::generated::dev::idiolect::defs::LensRef {
                 cid: None,
                 direction: None,
@@ -459,7 +460,8 @@ mod tests {
                 uri: Some("at://x/dev.panproto.schema.schema/s".to_owned()),
             },
             target_schema: None,
-            visibility: idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
+            visibility:
+                idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
         };
         let record = idiolect_records::AnyRecord::Encounter(encounter);
         match r.resolution_of(&record) {

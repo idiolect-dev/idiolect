@@ -2,12 +2,11 @@
 //!
 //! The `Verification` lexicon defines a fixed taxonomy of property
 //! kinds (`roundtrip-test`, `property-test`, `formal-proof`,
-//! `conformance-test`, `static-check`, `convergence-preserving`) and
-//! an `observer`-published record per assertion. Before this crate,
-//! verifications were *counted* by the observer but never *run*:
-//! anyone could publish a "holds" verification for any lens, and the
-//! orchestrator's `sufficient_verifications_for` query was strictly
-//! gullible.
+//! `conformance-test`, `static-check`, `convergence-preserving`,
+//! `coercion-law`) and an `observer`-published record per assertion.
+//! This crate runs the property a verification claims, so the
+//! orchestrator's `sufficient_verifications_for` query is grounded
+//! in checked results rather than self-reported "holds" assertions.
 //!
 //! A [`VerificationRunner`] takes a lens record and the
 //! [`PanprotoLens`] body's already-compiled runtime artifacts,

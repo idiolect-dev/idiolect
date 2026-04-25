@@ -287,7 +287,7 @@ fn emit_struct(
             inlines.push(inline);
         }
         let snake = snake_case(prop_name);
-        let field_ident = if is_rust_reserved(&snake) {
+        let field_ident = if is_rust_keyword(&snake) {
             format_ident!("r#{}", snake)
         } else {
             format_ident!("{}", snake)
@@ -528,7 +528,7 @@ fn ref_target_tokens(target: &RefTarget, current_nsid: &str) -> TokenStream {
     // inside `dev.idiolect`. Absolute paths sidestep that entirely.
     let segments: Vec<Ident> = module_path_for_nsid(&target.nsid)
         .into_iter()
-        .map(|s| format_ident!("{}", s))
+        .map(|s| rust_path_ident(&s))
         .collect();
     let ty = if target.def_name == "main" {
         format_ident!("{}", pascal_case(&module_name_for_nsid(&target.nsid)))
@@ -536,6 +536,18 @@ fn ref_target_tokens(target: &RefTarget, current_nsid: &str) -> TokenStream {
         format_ident!("{}", pascal_case(&target.def_name))
     };
     quote! { crate::generated::#(#segments)::*::#ty }
+}
+
+/// Build a Rust `Ident` for a path segment, raw-prefixing it when the
+/// segment is a Rust keyword. Keyword segments are legal in NSIDs (a
+/// lexicon under `pub.layers.*` is the running example) and surface
+/// in cross-lexicon ref paths whenever those NSIDs appear.
+fn rust_path_ident(seg: &str) -> Ident {
+    if is_rust_keyword(seg) {
+        Ident::new_raw(seg, proc_macro2::Span::call_site())
+    } else {
+        format_ident!("{}", seg)
+    }
 }
 
 // ---------- aggregating files ----------
@@ -584,7 +596,13 @@ fn render_mod_rs(docs: &[LexiconDoc]) -> String {
     for doc in records {
         let path: Vec<String> = module_path_for_nsid(&doc.nsid)
             .into_iter()
-            .map(|s| if is_rust_keyword(&s) { format!("r#{s}") } else { s })
+            .map(|s| {
+                if is_rust_keyword(&s) {
+                    format!("r#{s}")
+                } else {
+                    s
+                }
+            })
             .collect();
         let ty = pascal_case(&module_name_for_nsid(&doc.nsid));
         out.push_str(&format!("pub use {}::{ty};\n", path.join("::")));
@@ -742,54 +760,6 @@ fn fence_for(s: &str) -> usize {
 fn doc_attr(text: &str) -> TokenStream {
     let padded = format!(" {text}");
     quote! { #[doc = #padded] }
-}
-
-/// Strict-keyword list used to decide when a field ident needs the
-/// raw prefix. Non-exhaustive; covers everything we actually hit in
-/// the `dev.idiolect.*` lexicons.
-fn is_rust_reserved(s: &str) -> bool {
-    matches!(
-        s,
-        "type"
-            | "match"
-            | "move"
-            | "ref"
-            | "self"
-            | "crate"
-            | "super"
-            | "where"
-            | "async"
-            | "await"
-            | "dyn"
-            | "fn"
-            | "impl"
-            | "loop"
-            | "for"
-            | "if"
-            | "else"
-            | "return"
-            | "mod"
-            | "pub"
-            | "use"
-            | "let"
-            | "mut"
-            | "const"
-            | "static"
-            | "struct"
-            | "enum"
-            | "union"
-            | "trait"
-            | "in"
-            | "as"
-            | "box"
-            | "break"
-            | "continue"
-            | "false"
-            | "true"
-            | "extern"
-            | "unsafe"
-            | "while"
-    )
 }
 
 fn pascal_case(s: &str) -> String {

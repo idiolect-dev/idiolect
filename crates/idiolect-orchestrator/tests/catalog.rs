@@ -12,10 +12,14 @@ use idiolect_indexer::{
     IndexerEvent, RawEvent, RecordHandler, drive_indexer,
 };
 use idiolect_orchestrator::{CatalogHandler, query};
-use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants, WantAdapter, WantLens};
+use idiolect_records::generated::dev::idiolect::bounty::{
+    BountyStatus, BountyWants, WantAdapter, WantLens,
+};
 use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
 use idiolect_records::generated::dev::idiolect::recommendation::RecommendationRequiredVerifications;
-use idiolect_records::generated::dev::idiolect::verification::{VerificationKind, VerificationResult};
+use idiolect_records::generated::dev::idiolect::verification::{
+    VerificationKind, VerificationResult,
+};
 use idiolect_records::{
     Adapter, AnyRecord, Bounty, Community, Dialect, Recommendation, Verification,
 };
@@ -199,8 +203,8 @@ fn verification(
     result: VerificationResult,
 ) -> Verification {
     use idiolect_records::generated::dev::idiolect::defs::{
-        LpChecker, LpCoercionLaw, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem,
-        Tool,
+        LpChecker, LpCoercionLaw, LpConformance, LpConvergence, LpGenerator, LpRoundtrip,
+        LpTheorem, Tool,
     };
     use idiolect_records::generated::dev::idiolect::verification::VerificationProperty;
     // Pair the property variant with the kind so sufficient_verifications_for's

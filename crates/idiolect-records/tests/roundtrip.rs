@@ -8,7 +8,9 @@
 use idiolect_records::generated::dev::idiolect::{
     bounty, defs::Visibility, encounter::EncounterKind,
 };
-use idiolect_records::{Adapter, Bounty, Correction, Encounter, Observation, Retrospection, Verification};
+use idiolect_records::{
+    Adapter, Bounty, Correction, Encounter, Observation, Retrospection, Verification,
+};
 use serde_json::json;
 
 fn roundtrip<T: serde::Serialize + serde::de::DeserializeOwned>(value: &serde_json::Value) -> T {

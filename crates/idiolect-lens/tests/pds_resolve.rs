@@ -5,7 +5,9 @@
 
 use idiolect_identity::{Did, DidDocument, InMemoryIdentityResolver, Service};
 use idiolect_lens::{fetcher_for_did, publisher_for_did};
-use idiolect_records::generated::dev::idiolect::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+use idiolect_records::generated::dev::idiolect::bounty::{
+    Bounty, BountyStatus, BountyWants, WantAdapter,
+};
 use serde_json::json;
 use wiremock::matchers::{body_partial_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};

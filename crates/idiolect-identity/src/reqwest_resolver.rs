@@ -15,10 +15,10 @@
 //!
 //! Feature-gated under `resolver-reqwest`.
 
-use crate::{Did, DidMethod};
 use crate::document::DidDocument;
 use crate::error::IdentityError;
 use crate::resolver::IdentityResolver;
+use crate::{Did, DidMethod};
 
 /// Live resolver over reqwest.
 #[derive(Debug, Clone)]

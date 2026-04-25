@@ -293,7 +293,9 @@ mod tests {
 
     fn real_bounty_event() -> IndexerEvent {
         use idiolect_records::AnyRecord;
-        use idiolect_records::generated::dev::idiolect::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+        use idiolect_records::generated::dev::idiolect::bounty::{
+            Bounty, BountyStatus, BountyWants, WantAdapter,
+        };
         let bounty = Bounty {
             basis: None,
             constraints: None,

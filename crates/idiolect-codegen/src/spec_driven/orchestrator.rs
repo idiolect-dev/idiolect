@@ -128,7 +128,9 @@ impl RustKind {
             Self::String => "String",
             Self::SchemaRef => "idiolect_records::generated::dev::idiolect::defs::SchemaRef",
             Self::LensRef => "idiolect_records::generated::dev::idiolect::defs::LensRef",
-            Self::VerificationKind => "idiolect_records::generated::dev::idiolect::verification::VerificationKind",
+            Self::VerificationKind => {
+                "idiolect_records::generated::dev::idiolect::verification::VerificationKind"
+            }
             Self::AdapterInvocationProtocolKind => {
                 "idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind"
             }
@@ -416,6 +418,7 @@ const fn parser_known_values(p: ParserKind) -> Option<&'static [&'static str]> {
             "conformance-test",
             "static-check",
             "convergence-preserving",
+            "coercion-law",
         ]),
         ParserKind::AdapterInvocationProtocolKind => Some(&["subprocess", "http", "wasm"]),
         ParserKind::VocabWorld => Some(&["closed-with-default", "open", "hierarchy-closed"]),

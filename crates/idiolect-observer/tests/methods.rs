@@ -13,7 +13,9 @@ use idiolect_observer::{
 use idiolect_records::AnyRecord;
 use idiolect_records::generated::dev::idiolect::correction::{Correction, CorrectionReason};
 use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef, Visibility};
-use idiolect_records::generated::dev::idiolect::encounter::{Encounter, EncounterDownstreamResult, EncounterKind};
+use idiolect_records::generated::dev::idiolect::encounter::{
+    Encounter, EncounterDownstreamResult, EncounterKind,
+};
 use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationResult,
 };

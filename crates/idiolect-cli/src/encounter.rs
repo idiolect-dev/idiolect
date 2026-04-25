@@ -190,7 +190,7 @@ fn prompt_text_only_use() -> Result<Use> {
 
 async fn fetch_vocabulary(uri: &str) -> Result<Vocab> {
     use idiolect_identity::ReqwestIdentityResolver;
-    use idiolect_lens::{PdsClient, fetcher_for_did, };
+    use idiolect_lens::{PdsClient, fetcher_for_did};
 
     let parsed = idiolect_lens::AtUri::parse(uri).context("parse vocabulary at-uri")?;
     let resolver = ReqwestIdentityResolver::new();

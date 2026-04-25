@@ -318,8 +318,7 @@ mod tests {
 
     #[tokio::test]
     async fn verifier_rejects_mismatched_hash() {
-        let uri =
-            crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/bad").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/bad").unwrap();
         let mut lens = valid_lens(serde_json::json!({ "step": "rename_sort" }));
         // Corrupt the hash to something random.
         lens.object_hash =

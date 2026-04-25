@@ -194,6 +194,7 @@ pub fn parse_verification_kind(s: &str) -> Result<VerificationKind, String> {
         "conformance-test" => VerificationKind::ConformanceTest,
         "static-check" => VerificationKind::StaticCheck,
         "convergence-preserving" => VerificationKind::ConvergencePreserving,
+        "coercion-law" => VerificationKind::CoercionLaw,
         other => return Err(format!("unknown verification kind: {other}")),
     })
 }

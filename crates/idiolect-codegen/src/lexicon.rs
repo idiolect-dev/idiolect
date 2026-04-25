@@ -362,10 +362,9 @@ pub fn resolve_ref(current_nsid: &str, raw: &str) -> RefTarget {
 
 /// Derive the dotted-path module location for an nsid.
 ///
-/// Returns each NSID segment, snake-cased and Rust-keyword-escaped
-/// where necessary (raw-identifier prefix for segments like `pub` or
-/// `crate`). The path mirrors the lexicon's position under
-/// `lexicons/`, so `dev.idiolect.encounter` becomes
+/// Returns each NSID segment snake-cased. Segments stay plain (no
+/// `r#` raw-identifier prefix) so the same vec doubles as a
+/// filesystem path: `dev.idiolect.encounter` becomes
 /// `["dev", "idiolect", "encounter"]` and emits
 /// `dev/idiolect/encounter.rs`; `dev.panproto.schema.lens` becomes
 /// `["dev", "panproto", "schema", "lens"]` and emits
@@ -374,6 +373,10 @@ pub fn resolve_ref(current_nsid: &str, raw: &str) -> RefTarget {
 /// The last element is the file stem (no `.rs` extension); preceding
 /// elements are directory components. An empty input returns an empty
 /// vec — callers should reject before reaching emit.
+///
+/// Callers that need the Rust-side `r#` form (a `pub mod ...`
+/// declaration on a keyword segment, or a `use` path through one)
+/// reach for [`is_rust_keyword`] and add the prefix at the use site.
 #[must_use]
 pub fn module_path_for_nsid(nsid: &str) -> Vec<String> {
     // Snake-case each segment for filesystem and module-name use. Do

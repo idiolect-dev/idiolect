@@ -158,7 +158,8 @@ async fn unknown_idiolect_nsid_surfaces_decode_error() {
     // type -> DecodeError::UnknownNsid -> IndexerError::Decode.
     use idiolect_indexer::InMemoryCursorStore;
     let mut evt = encounter_event(1);
-    evt.collection = idiolect_records::Nsid::parse("dev.idiolect.notARealRecord").expect("valid nsid");
+    evt.collection =
+        idiolect_records::Nsid::parse("dev.idiolect.notARealRecord").expect("valid nsid");
     let mut stream = preloaded(vec![evt]);
     let handler = OkHandler;
     let cursors = InMemoryCursorStore::new();

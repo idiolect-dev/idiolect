@@ -83,6 +83,24 @@ impl EventStream for TappedEventStream {
                 }
             };
 
+            // Parse the tapped collection string into a typed Nsid at
+            // the stream-decode boundary. Same warn-and-skip policy as
+            // the jetstream adapter: a single malformed event must not
+            // bring down the firehose.
+            let collection = match idiolect_records::Nsid::parse(&record.collection) {
+                Ok(n) => n,
+                Err(e) => {
+                    tracing::warn!(
+                        did = %record.did,
+                        rkey = %record.rkey,
+                        collection = %record.collection,
+                        error = %e,
+                        "skipping tapped commit with invalid NSID collection",
+                    );
+                    continue;
+                }
+            };
+
             // materialize the body into an owned serde_json::Value so
             // the indexer does not hold a reference into the tapped
             // receive buffer across the handler await.
@@ -99,7 +117,7 @@ impl EventStream for TappedEventStream {
                 live: record.live,
                 did: record.did.clone(),
                 rev: record.rev.clone(),
-                collection: record.collection.clone(),
+                collection,
                 rkey: record.rkey.clone(),
                 action,
                 cid: record.cid.clone(),

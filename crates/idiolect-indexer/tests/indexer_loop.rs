@@ -76,10 +76,10 @@ impl RecordingHandler {
 
 impl RecordHandler for RecordingHandler {
     async fn handle(&self, event: &idiolect_indexer::IndexerEvent) -> Result<(), IndexerError> {
-        let label = event
-            .record
-            .as_ref()
-            .map_or_else(|| "<delete>".to_owned(), |record| record.nsid_str().to_owned());
+        let label = event.record.as_ref().map_or_else(
+            || "<delete>".to_owned(),
+            |record| record.nsid_str().to_owned(),
+        );
 
         self.observed
             .lock()

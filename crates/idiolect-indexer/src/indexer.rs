@@ -99,9 +99,8 @@ where
 {
     // 1. prefix filter. commits outside the configured nsid prefix
     // are not our business; skip without decoding. The prefix is
-    // matched against the collection's authority on segment
-    // boundaries via `Nsid::starts_with_authority`, so a
-    // configured prefix of `dev.idiolect` matches
+    // matched on segment boundaries via `Nsid::starts_with_authority`,
+    // so a configured prefix of `dev.idiolect` matches
     // `dev.idiolect.encounter` but never `dev.idiolectx.foo`.
     if !config.nsid_prefix.is_empty() && !raw.collection.starts_with_authority(&config.nsid_prefix)
     {

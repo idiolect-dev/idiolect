@@ -27,13 +27,11 @@
 //!    breaking-change detection. This keeps panproto on the hot
 //!    path and anchors idiolect's version-control story.
 //!
-//! As of panproto v0.35.0, `parse_lexicon` preserves atproto string
-//! refinements (`format`, `knownValues`) as constraints on the string
-//! vertex — the codegen's in-house parser originally existed to
-//! recover those refinements, but that recovery is no longer panproto's
-//! responsibility to miss. The in-house parser is retained because it
-//! is still more ergonomic for emitter shape (inline object defs, field
-//! order), not because of a fidelity gap. See
+//! Panproto's `parse_lexicon` preserves atproto string refinements
+//! (`format`, `knownValues`) as constraints on the string vertex, so
+//! the codegen's in-house parser is not making up for a fidelity
+//! gap. It is retained because it is more ergonomic for emitter
+//! shape (inline object defs, field order). See
 //! `tests/panproto_fidelity.rs` for the pinned upstream contract.
 //!
 //! Downstream binaries combine the two: `idiolect-codegen` walks

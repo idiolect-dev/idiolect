@@ -49,7 +49,7 @@ flowchart LR
     PDS --> ORC
 ```
 
-Three runners ship:
+Four runners ship:
 
 - **`RoundtripTestRunner`** — applies the lens forward then backward on
   a corpus of source records and checks `put(get(src)) == src` for every
@@ -60,8 +60,13 @@ Three runners ship:
 - **`StaticCheckRunner`** — runs `panproto::validate` on the lens's
   source and target schemas against a configured protocol. Validates
   the graph shape, not the lens body itself.
+- **`CoercionLawRunner`** — dispatches the lens to panproto's
+  `dev.panproto.translate.verifyCoercionLaws` xrpc and reports any
+  returned `coercionLawViolation` entries as a falsified verification.
+  Generic over a `CoercionLawClient` so deployments can plug an
+  http-backed client while tests stub the xrpc.
 
-All three implement the `VerificationRunner` trait; adding a kind
+All four implement the `VerificationRunner` trait; adding a kind
 (`formal-proof`, `conformance-test`, `convergence-preserving`) is a
 new runner module following the same shape.
 
@@ -69,7 +74,7 @@ new runner module following the same shape.
 
 ```rust
 use idiolect_verify::{RoundtripTestRunner, VerificationRunner, VerificationTarget};
-use idiolect_records::generated::defs::LensRef;
+use idiolect_records::generated::dev::idiolect::defs::LensRef;
 
 let runner = RoundtripTestRunner::new(
     resolver,

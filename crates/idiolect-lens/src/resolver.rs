@@ -16,11 +16,13 @@
 //!   inject reqwest, ureq, hyper, or a test double without any feature
 //!   flag gymnastics.
 //! - [`PanprotoVcsResolver`] — generic over a [`PanprotoVcsClient`].
-//!   The resolver consults a ref table to turn an at-uri into an
-//!   object-hash, then asks the client for the content-addressed lens
-//!   object. An [`InMemoryVcsClient`] is included so tests and
-//!   fixtures can stand up a content-addressed store without an
-//!   external panproto-vcs dependency.
+//!   The resolver asks the client for the at-uri's current ref hash
+//!   and then for the content-addressed lens object. The mutable ref
+//!   table and the immutable object store both live behind the
+//!   client; the resolver itself is stateless. An
+//!   [`InMemoryVcsClient`] is included so tests and fixtures can
+//!   stand up a content-addressed store without an external
+//!   panproto-vcs dependency.
 //!
 //! The write side of a PDS — creating, updating, and deleting records —
 //! lives behind the separate [`PdsWriter`] trait so callers that only
@@ -496,8 +498,7 @@ pub trait PanprotoVcsClient: Send + Sync {
     ///
     /// [`LensError::NotFound`] when the tree is missing,
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn get_schema_tree(&self, object_hash: &str)
-    -> Result<serde_json::Value, LensError>;
+    async fn get_schema_tree(&self, object_hash: &str) -> Result<serde_json::Value, LensError>;
 
     /// List every theory id the store recognises (registry view).
     ///
@@ -699,10 +700,7 @@ impl PanprotoVcsClient for InMemoryVcsClient {
         Ok(self.lock().refs.get(ref_name).cloned())
     }
 
-    async fn get_schema_tree(
-        &self,
-        object_hash: &str,
-    ) -> Result<serde_json::Value, LensError> {
+    async fn get_schema_tree(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
         self.lock()
             .schema_trees
             .get(object_hash)
@@ -912,10 +910,7 @@ mod tests {
         let client = InMemoryVcsClient::new();
         client.set_theories(vec!["t.first-order".to_owned()]);
         client.set_alignments(vec!["a.coq.peano".to_owned()]);
-        client.insert_schema_tree(
-            "sha256:tree".to_owned(),
-            serde_json::json!({"root": "S"}),
-        );
+        client.insert_schema_tree("sha256:tree".to_owned(), serde_json::json!({"root": "S"}));
 
         assert_eq!(
             client.list_theories().await.unwrap(),

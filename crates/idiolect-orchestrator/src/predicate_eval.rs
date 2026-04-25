@@ -447,7 +447,9 @@ fn vocab_uri_from<'a>(
 mod tests {
     use super::*;
     use idiolect_records::generated::dev::idiolect::defs::SchemaRef;
-    use idiolect_records::generated::dev::idiolect::recommendation::{ConditionAnd, ConditionNot, ConditionOr};
+    use idiolect_records::generated::dev::idiolect::recommendation::{
+        ConditionAnd, ConditionNot, ConditionOr,
+    };
 
     fn ctx_with_schemas(src: &str, tgt: &str) -> ConditionContext {
         ConditionContext {

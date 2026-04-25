@@ -352,7 +352,7 @@ fn parse_required_kinds(
     raw: &str,
 ) -> Result<(Vec<RecommendationRequiredVerifications>, Vec<String>), String> {
     use idiolect_records::generated::dev::idiolect::defs::{
-        LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem,
+        LpChecker, LpCoercionLaw, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem,
     };
 
     let mut kinds = Vec::new();
@@ -360,9 +360,9 @@ fn parse_required_kinds(
     for token in raw.split(',').map(str::trim).filter(|s| !s.is_empty()) {
         // `required_kinds` is a convenience HTTP surface that lets an
         // operator ask "is there any verification of this kind?" using
-        // coarse v0.1-style kind names. We wrap each kind in the
-        // corresponding LensProperty variant with empty details; the
-        // sufficiency check only dispatches on the variant.
+        // bare kind names. Each token wraps as the corresponding
+        // LensProperty variant with empty details; the sufficiency
+        // check only dispatches on the variant.
         let kind = match token {
             "roundtrip-test" => RecommendationRequiredVerifications::LpRoundtrip(LpRoundtrip {
                 domain: String::new(),
@@ -396,6 +396,11 @@ fn parse_required_kinds(
                     bound_steps: None,
                 })
             }
+            "coercion-law" => RecommendationRequiredVerifications::LpCoercionLaw(LpCoercionLaw {
+                standard: String::new(),
+                version: None,
+                violation_threshold: None,
+            }),
             other => return Err(format!("unknown verification kind: {other}")),
         };
         kinds.push(kind);

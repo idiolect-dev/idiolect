@@ -177,33 +177,38 @@ impl Nsid {
         self.canonical.split('.').collect()
     }
 
-    /// Whether this NSID's authority equals or is a sub-authority of
-    /// `prefix`. `prefix` should itself be parseable as an authority
-    /// (it does not need to be a full NSID).
+    /// Whether this NSID is `prefix` itself or a descendant of it,
+    /// matched on segment boundaries.
     ///
-    /// Compares segment-by-segment, so `dev.idiolect.encounter`
-    /// matches the prefix `dev.idiolect` but not the prefix
-    /// `dev.idio`.
+    /// `prefix` is a dotted string that does not need to be a full
+    /// NSID — `dev`, `dev.idiolect`, and `dev.idiolect.encounter`
+    /// are all valid prefixes. A trailing `.` is tolerated
+    /// (`dev.idiolect.` and `dev.idiolect` behave identically). An
+    /// empty prefix matches everything.
+    ///
+    /// Examples:
+    /// - `dev.idiolect.encounter` matches prefix `dev`
+    /// - `dev.idiolect.encounter` matches prefix `dev.idiolect`
+    /// - `dev.idiolect.encounter` matches prefix `dev.idiolect.encounter`
+    /// - `dev.idiolect.encounter` does NOT match prefix `dev.idio`
+    ///   (no segment boundary at byte index 7)
     #[must_use]
     pub fn starts_with_authority(&self, prefix: &str) -> bool {
         let prefix = prefix.strip_suffix('.').unwrap_or(prefix);
         if prefix.is_empty() {
             return true;
         }
-        let auth = self.authority();
-        if auth == prefix {
+        if self.canonical == prefix {
             return true;
         }
-        // Match on a `.` boundary so `dev.idio` doesn't match `dev.idiolect`.
-        auth.starts_with(prefix) && auth.as_bytes().get(prefix.len()) == Some(&b'.')
+        // Match on a `.` boundary so `dev.idio` doesn't match
+        // `dev.idiolect.encounter`.
+        self.canonical.starts_with(prefix)
+            && self.canonical.as_bytes().get(prefix.len()) == Some(&b'.')
     }
 }
 
-fn validate_authority_segment(
-    seg: &str,
-    input: &str,
-    idx: usize,
-) -> Result<(), NsidError> {
+fn validate_authority_segment(seg: &str, input: &str, idx: usize) -> Result<(), NsidError> {
     if seg.is_empty() {
         return Err(NsidError::InvalidAuthoritySegment {
             segment: seg.to_owned(),
@@ -361,10 +366,7 @@ mod tests {
     #[test]
     fn rejects_too_long() {
         let long = format!("a.b.{}", "c".repeat(MAX_TOTAL_LEN));
-        assert!(matches!(
-            Nsid::parse(long),
-            Err(NsidError::TooLong { .. })
-        ));
+        assert!(matches!(Nsid::parse(long), Err(NsidError::TooLong { .. })));
     }
 
     #[test]
@@ -416,9 +418,17 @@ mod tests {
         let n = Nsid::parse("dev.idiolect.encounter").unwrap();
         assert!(n.starts_with_authority("dev"));
         assert!(n.starts_with_authority("dev.idiolect"));
-        // The authority itself counts as a match.
+        // The full NSID itself matches: a filter pinned to a single
+        // collection should accept records of that exact collection.
+        assert!(n.starts_with_authority("dev.idiolect.encounter"));
+        // Sub-name matches without a segment boundary are rejected.
         assert!(!n.starts_with_authority("dev.idio"));
-        assert!(!n.starts_with_authority("dev.idiolect.encounter"));
+        // Trailing dot tolerated for legacy prefix strings.
+        assert!(n.starts_with_authority("dev.idiolect."));
+        // A prefix beyond the NSID's depth never matches.
+        assert!(!n.starts_with_authority("dev.idiolect.encounter.deeper"));
+        // Empty matches everything.
+        assert!(n.starts_with_authority(""));
     }
 
     #[test]

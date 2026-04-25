@@ -18,7 +18,7 @@
 
 use idiolect_lens::{
     ApplyLensInput, AtriumPdsClient, InMemorySchemaLoader, LensError, PdsResolver, apply_lens,
-    };
+};
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::elementary;
 use panproto_schema::{Protocol, Schema, SchemaBuilder};

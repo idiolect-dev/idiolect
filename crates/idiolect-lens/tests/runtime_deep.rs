@@ -13,7 +13,8 @@
 use idiolect_lens::{
     ApplyLensEditInput, ApplyLensInput, ApplyLensPutInput, ApplyLensSymmetricInput,
     InMemoryResolver, InMemorySchemaLoader, LensError, SymmetricDirection, apply_lens,
-    apply_lens_get_edit, apply_lens_put, apply_lens_put_edit, apply_lens_symmetric, };
+    apply_lens_get_edit, apply_lens_put, apply_lens_put_edit, apply_lens_symmetric,
+};
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::elementary;
 use panproto_schema::{Protocol, Schema, SchemaBuilder};
@@ -122,7 +123,8 @@ async fn apply_lens_missing_source_schema_surfaces_not_found() {
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(tgt_hash.clone(), tgt);
 
-    let lens_uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
+    let lens_uri =
+        idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
         created_at: "2026-04-19T00:00:00.000Z".into(),
@@ -252,8 +254,10 @@ async fn apply_lens_symmetric_returns_a_value_for_both_directions() {
     loader.insert(right_tgt_hash.clone(), right_tgt);
 
     let blob = serde_json::to_value(&protolens).unwrap();
-    let left_uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/left").unwrap();
-    let right_uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/right").unwrap();
+    let left_uri =
+        idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/left").unwrap();
+    let right_uri =
+        idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/right").unwrap();
     let left_record = PanprotoLens {
         blob: Some(blob.clone()),
         created_at: "2026-04-19T00:00:00.000Z".into(),
@@ -334,8 +338,10 @@ async fn apply_lens_symmetric_mismatched_middle_surfaces_translate_error() {
     loader.insert(left_tgt_hash.clone(), left_tgt);
     loader.insert(right_tgt_hash.clone(), right_tgt);
 
-    let left_uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/left").unwrap();
-    let right_uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/right").unwrap();
+    let left_uri =
+        idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/left").unwrap();
+    let right_uri =
+        idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/right").unwrap();
     let left_record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
         created_at: "2026-04-19T00:00:00.000Z".into(),
@@ -395,7 +401,8 @@ async fn apply_lens_put_with_mismatched_complement_surfaces_error() {
     loader.insert(src_hash.clone(), src);
     loader.insert(tgt_hash.clone(), tgt);
 
-    let lens_uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/mismatch").unwrap();
+    let lens_uri =
+        idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/mismatch").unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
         created_at: "2026-04-19T00:00:00.000Z".into(),

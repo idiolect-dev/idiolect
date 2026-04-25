@@ -6,7 +6,7 @@
 
 use std::time::Duration;
 
-use idiolect_lens::{CachingResolver, PdsResolver, ReqwestPdsClient, Resolver, };
+use idiolect_lens::{CachingResolver, PdsResolver, ReqwestPdsClient, Resolver};
 use serde_json::json;
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};

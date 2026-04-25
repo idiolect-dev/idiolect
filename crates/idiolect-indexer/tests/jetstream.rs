@@ -36,7 +36,7 @@ fn parse_create_frame() {
     let event = parse_jetstream_frame(&line).unwrap().unwrap();
     assert_eq!(event.did, "did:plc:alice");
     assert_eq!(event.action, IndexerAction::Create);
-    assert_eq!(event.collection, "dev.idiolect.encounter");
+    assert_eq!(event.collection.as_str(), "dev.idiolect.encounter");
     assert_eq!(event.rkey, "3l5");
     assert_eq!(event.seq, 1_730_000_000_000_000);
     assert!(event.body.is_some());
@@ -110,6 +110,28 @@ async fn from_lines_drives_like_in_memory() {
     assert_eq!(e2.action, IndexerAction::Update);
 
     assert!(stream.next_event().await.unwrap().is_none());
+}
+
+#[test]
+fn invalid_nsid_in_collection_is_skipped_not_fatal() {
+    // A jetstream commit with a malformed NSID is the upstream
+    // publisher's bug; skip the frame and warn rather than dropping
+    // the websocket and missing every subsequent good event.
+    let line = serde_json::json!({
+        "did": "did:plc:alice",
+        "time_us": 5_u64,
+        "kind": "commit",
+        "commit": {
+            "rev": "3l8",
+            "operation": "create",
+            "collection": "not_a_real_nsid",
+            "rkey": "r1",
+            "record": { "x": 1 },
+            "cid": "bafy",
+        }
+    })
+    .to_string();
+    assert!(parse_jetstream_frame(&line).unwrap().is_none());
 }
 
 #[tokio::test]

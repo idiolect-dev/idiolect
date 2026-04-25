@@ -83,12 +83,12 @@ pub mod schema_loader;
 pub mod signing_writer;
 pub mod verifying_resolver;
 
-pub use idiolect_records::{AtUri, AtUriError};
 pub use caching_resolver::CachingResolver;
 #[cfg(feature = "dpop-p256")]
 pub use dpop_p256::P256DpopProver;
 pub use error::LensError;
 pub use fetcher::{ListedEntry, ListedPage, RecordFetcher};
+pub use idiolect_records::{AtUri, AtUriError};
 #[cfg(feature = "pds-atrium")]
 pub use pds_atrium::AtriumPdsClient;
 #[cfg(feature = "pds-reqwest")]

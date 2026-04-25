@@ -55,9 +55,9 @@ pub use caching::CachingIdentityResolver;
 // `Did`, `DidError`, `DidMethod` live in idiolect-records (the
 // foundational types crate). Re-exported here for back-compat-free
 // access via the identity crate's namespace.
-pub use idiolect_records::{Did, DidError, DidMethod};
 pub use document::{DidDocument, Service};
 pub use error::IdentityError;
+pub use idiolect_records::{Did, DidError, DidMethod};
 pub use resolver::{IdentityResolver, InMemoryIdentityResolver};
 
 #[cfg(feature = "resolver-reqwest")]

@@ -225,7 +225,8 @@ mod tests {
             live: true,
             did: "did:plc:a".into(),
             rev: "r".into(),
-            collection: idiolect_records::Nsid::parse("dev.idiolect.encounter").expect("valid nsid"),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.encounter")
+                .expect("valid nsid"),
             rkey: "e1".into(),
             action: IndexerAction::Create,
             cid: None,
@@ -257,7 +258,8 @@ mod tests {
                     uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".into()),
                 },
                 target_schema: None,
-                visibility: idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
+                visibility:
+                    idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
             })),
         }
     }

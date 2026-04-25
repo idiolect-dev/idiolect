@@ -19,7 +19,8 @@
 
 use idiolect_lens::{
     ApplyLensInput, ApplyLensPutInput, InMemoryResolver, InMemorySchemaLoader, apply_lens,
-    apply_lens_put, };
+    apply_lens_put,
+};
 use idiolect_oauth::{OAuthSession, SESSION_NSID, session_body_vertex, session_schema};
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::elementary;
@@ -103,7 +104,8 @@ async fn identity_lens_round_trips_oauth_session_body() {
 
     let blob = serde_json::to_value(&protolens).expect("serialize protolens");
     let lens_uri =
-        idiolect_lens::AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/oauth-id").expect("parse lens uri");
+        idiolect_lens::AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/oauth-id")
+            .expect("parse lens uri");
     let lens_record = PanprotoLens {
         blob: Some(blob),
         created_at: "2026-04-19T00:00:00.000Z".to_owned(),

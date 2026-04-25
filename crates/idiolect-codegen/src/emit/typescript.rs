@@ -107,8 +107,16 @@ impl TargetEmitter for TypeScriptTarget {
 fn relative_ts_import(from_nsid: &str, to_nsid: &str) -> String {
     let from = module_path_for_nsid(from_nsid);
     let to = module_path_for_nsid(to_nsid);
-    let from_dir = if from.is_empty() { &[][..] } else { &from[..from.len() - 1] };
-    let to_dir = if to.is_empty() { &[][..] } else { &to[..to.len() - 1] };
+    let from_dir = if from.is_empty() {
+        &[][..]
+    } else {
+        &from[..from.len() - 1]
+    };
+    let to_dir = if to.is_empty() {
+        &[][..]
+    } else {
+        &to[..to.len() - 1]
+    };
     let to_leaf = to.last().cloned().unwrap_or_default();
 
     let mut common = 0usize;
@@ -1115,5 +1123,50 @@ fn camel_case(s: &str) -> String {
             out
         }
         None => String::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn relative_import_same_directory() {
+        assert_eq!(
+            relative_ts_import("dev.idiolect.encounter", "dev.idiolect.defs"),
+            "./defs",
+        );
+    }
+
+    #[test]
+    fn relative_import_up_then_down() {
+        assert_eq!(
+            relative_ts_import("dev.idiolect.encounter", "dev.panproto.schema.lens"),
+            "../panproto/schema/lens",
+        );
+    }
+
+    #[test]
+    fn relative_import_deeper_to_shallower() {
+        assert_eq!(
+            relative_ts_import("dev.panproto.schema.lens", "dev.idiolect.defs"),
+            "../../idiolect/defs",
+        );
+    }
+
+    #[test]
+    fn relative_import_within_nested_dir() {
+        assert_eq!(
+            relative_ts_import("dev.panproto.schema.lens", "dev.panproto.schema.complement"),
+            "./complement",
+        );
+    }
+
+    #[test]
+    fn relative_import_across_sibling_subdirs() {
+        assert_eq!(
+            relative_ts_import("dev.panproto.schema.lens", "dev.panproto.vcs.commit"),
+            "../vcs/commit",
+        );
     }
 }

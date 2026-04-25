@@ -15,7 +15,9 @@ use idiolect_records::generated::dev::idiolect::adapter::{
 };
 use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants, WantLens};
 use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
-use idiolect_records::generated::dev::idiolect::verification::{VerificationKind, VerificationResult};
+use idiolect_records::generated::dev::idiolect::verification::{
+    VerificationKind, VerificationResult,
+};
 use idiolect_records::{Adapter, AnyRecord, Bounty, Community, Recommendation, Verification};
 
 fn s_ref(uri: &str) -> SchemaRef {
@@ -107,7 +109,8 @@ fn recommendation_for(lens: &str) -> Recommendation {
 
 fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
     use idiolect_records::generated::dev::idiolect::defs::{
-        LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool,
+        LpChecker, LpCoercionLaw, LpConformance, LpConvergence, LpGenerator, LpRoundtrip,
+        LpTheorem, Tool,
     };
     use idiolect_records::generated::dev::idiolect::verification::VerificationProperty;
     let property = match kind {
@@ -141,6 +144,11 @@ fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
                 bound_steps: None,
             })
         }
+        VerificationKind::CoercionLaw => VerificationProperty::LpCoercionLaw(LpCoercionLaw {
+            standard: "any".into(),
+            version: None,
+            violation_threshold: None,
+        }),
     };
     Verification {
         basis: None,

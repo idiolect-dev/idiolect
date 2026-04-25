@@ -68,7 +68,13 @@ impl AtUri {
         let body = input
             .strip_prefix("at://")
             .ok_or_else(|| AtUriError::NotAtUri(input.to_owned()))?;
-        let mut parts = body.splitn(3, '/');
+        // Reject query / fragment forms outright: idiolect's
+        // record-pointing at-uris never carry them, and accepting one
+        // would silently fold it into rkey.
+        if body.contains('?') || body.contains('#') {
+            return Err(AtUriError::InvalidShape(input.to_owned()));
+        }
+        let mut parts = body.split('/');
         let did_str = parts
             .next()
             .filter(|s| !s.is_empty())
@@ -79,8 +85,15 @@ impl AtUri {
             .ok_or_else(|| AtUriError::InvalidShape(input.to_owned()))?;
         let rkey = parts
             .next()
-            .filter(|s| !s.is_empty())
             .ok_or_else(|| AtUriError::EmptyRkey(input.to_owned()))?;
+        if rkey.is_empty() {
+            return Err(AtUriError::EmptyRkey(input.to_owned()));
+        }
+        // Anything past the rkey segment (extra slashes, trailing
+        // slash, sub-path) is not part of idiolect's at-uri shape.
+        if parts.next().is_some() {
+            return Err(AtUriError::InvalidShape(input.to_owned()));
+        }
 
         let did = Did::parse(did_str).map_err(AtUriError::InvalidDid)?;
         let collection = Nsid::parse(collection_str).map_err(AtUriError::InvalidNsid)?;
@@ -189,6 +202,38 @@ mod tests {
         assert!(matches!(
             AtUri::parse("at://notadid/dev.panproto.schema.lens/abc"),
             Err(AtUriError::InvalidDid(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_trailing_slash() {
+        assert!(matches!(
+            AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/abc/"),
+            Err(AtUriError::InvalidShape(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_extra_path_component() {
+        assert!(matches!(
+            AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/abc/extra"),
+            Err(AtUriError::InvalidShape(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_fragment() {
+        assert!(matches!(
+            AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/abc#frag"),
+            Err(AtUriError::InvalidShape(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_query_string() {
+        assert!(matches!(
+            AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/abc?q=1"),
+            Err(AtUriError::InvalidShape(_))
         ));
     }
 

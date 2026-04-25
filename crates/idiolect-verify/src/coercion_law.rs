@@ -59,9 +59,11 @@ pub struct CoercionLawViolation {
 /// Holds the panproto translate client and the standard the lens is
 /// being checked against. The runner reports `Holds` when the client
 /// returns no violations, `Falsified` when it returns at least one.
-/// `violationThreshold` (when set) caps how many violations the
-/// runner reads before falsifying — useful when a budget-bounded
-/// runner only needs the first counterexample.
+/// `violationThreshold` is stamped onto the emitted property as
+/// metadata only — it documents the budget the verifier ran under
+/// (so a `Holds` from a low-threshold run can be distinguished from
+/// a `Holds` from an exhaustive one) and is not consumed by the
+/// runner's own holds/falsified decision.
 pub struct CoercionLawRunner<C> {
     client: C,
     standard: String,
@@ -132,13 +134,12 @@ where
             ));
         }
 
-        let cap = self
-            .violation_threshold
-            .map_or(violations.len(), |n| (n as usize).min(violations.len()));
-        let head = &violations[..cap.max(1).min(violations.len())];
-        // Counterexample pointer: identify the first violation so
-        // consumers can chase a single concrete failure.
-        let first = &head[0];
+        // Pick the first violation as the counterexample so consumers
+        // can chase a single concrete failure. `violationThreshold`
+        // is a runtime parameter (how many violations the upstream
+        // runner produced), not part of the holds/falsified decision:
+        // any violation at all falsifies the claim.
+        let first = &violations[0];
         let counterexample = Some(format!("{}: {}", first.law, first.detail));
 
         Ok(build_verification(
@@ -222,12 +223,8 @@ mod tests {
             },
         ];
 
-        let runner = CoercionLawRunner::new(
-            client,
-            "panproto-core".into(),
-            Some("1.0".into()),
-            Some(1),
-        );
+        let runner =
+            CoercionLawRunner::new(client, "panproto-core".into(), Some("1.0".into()), Some(1));
         let v = runner.run(&target()).await.unwrap();
         assert!(matches!(v.result, VerificationResult::Falsified));
         let cx = v.counterexample.unwrap();

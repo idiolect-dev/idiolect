@@ -1,6 +1,6 @@
 //! End-to-end migration tests.
 
-use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader, };
+use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader};
 use idiolect_migrate::error::PlannerError;
 use idiolect_migrate::{MigrateError, classify, migrate_record, plan_auto};
 use idiolect_records::PanprotoLens;
