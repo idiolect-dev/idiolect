@@ -67,12 +67,23 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
 
 ## Design notes
 
-- `Did::parse` accepts `did:plc:*` and `did:web:*`; other methods are
-  rejected as out-of-scope.
+- `Did` is the typed identifier from
+  [`idiolect-records`](../idiolect-records); this crate re-exports it
+  so callers do not need a second import for the same type. `Did::parse`
+  accepts `did:plc:*` and `did:web:*`; other methods are rejected as
+  out-of-scope.
 - `DidDocument` carries only the atproto-relevant subset of the W3C
   spec; unknown fields survive via an `extras: BTreeMap<String, Value>`
   so round-trip through the struct preserves what the PLC directory or
   the `/.well-known/did.json` endpoint returned.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 

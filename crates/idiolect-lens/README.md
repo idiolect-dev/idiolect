@@ -72,15 +72,22 @@ Three resolver shapes ship, all behind the narrow `Resolver` trait:
 - **`PdsResolver<C>`** — generic over a `PdsClient`; turns an at-uri
   into `(did, collection, rkey)` and delegates to the injected client.
 - **`PanprotoVcsResolver<C>`** — generic over a `PanprotoVcsClient`;
-  treats an at-uri as a ref, resolves to an object-hash, fetches the
-  object body.
+  asks the client for the at-uri's current ref hash and then for the
+  content-addressed lens object. The resolver itself is stateless;
+  the ref table and object store both live behind the client.
 
-Two shipped PDS clients: `AtriumPdsClient` (typed XRPC via atrium) and
-`ReqwestPdsClient` (raw reqwest). `VerifyingResolver<R, H>` wraps any
-resolver and re-hashes the returned body against the lens record's
-`object_hash` to reject content-hash mismatches. `CachingResolver<R>`
-adds a TTL cache. `SigningPdsWriter<P>` layers DPoP / Bearer auth over
-`ReqwestPdsClient` for authenticated writes.
+`PanprotoVcsClient` covers the full `dev.panproto.sync.*` xrpc
+surface: object reads, ref reads / writes / lists, commit-graph
+traversal, the schema-tree view, and registry listings for theories
+and alignments. An `InMemoryVcsClient` implements the whole surface
+for tests and offline fixtures.
+
+Two shipped PDS clients: `AtriumPdsClient` (typed XRPC via atrium)
+and `ReqwestPdsClient` (raw reqwest). `VerifyingResolver<R, H>`
+wraps any resolver and re-hashes the returned body against the lens
+record's `object_hash` to reject content-hash mismatches.
+`CachingResolver<R>` adds a TTL cache. `SigningPdsWriter<P>` layers
+DPoP / Bearer auth over `ReqwestPdsClient` for authenticated writes.
 
 ## Usage
 
@@ -120,6 +127,30 @@ from DID to typed writes in one call.
 | `pds-resolve` | off | `fetcher_for_did` / `publisher_for_did` composition helpers. Implies `pds-reqwest`. |
 | `dpop-p256` | off | `P256DpopProver` (ES256 DPoP via the `p256` crate). Implies `pds-reqwest`. |
 | `pds-smoke-test` | off | Live-network test against a public PDS. Intentionally off in CI. |
+
+## Design notes
+
+- Resolver, client, and writer are three separate traits even
+  though atrium happens to ship a single client that does all
+  three. Splitting them keeps read-only consumers free of write
+  capabilities and lets fixtures plug a single side at a time.
+- `SchemaLoader::load` returns whatever panproto `Schema` is
+  content-addressed by the requested hash regardless of scope —
+  single-file or project-scope unioned. Dialects routinely span
+  several source schemas, so the runtime intentionally avoids
+  assuming a particular shape and asks for "the schema at this
+  hash."
+- Trait objects are not dyn-compatible because the traits use
+  native `async fn`; the crate ships Arc blanket impls so consumers
+  share state via `Arc<ConcreteImpl>` instead.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 

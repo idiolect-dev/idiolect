@@ -85,6 +85,14 @@ Non-goals:
 - Batch-rewriting records on disk. Compose `migrate_record` with your
   own record stream.
 
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+
 ## Related
 
 - [`idiolect-lens`](../idiolect-lens) — runtime that `migrate_record`

@@ -22,12 +22,14 @@ flowchart LR
         R1["RoundtripTestRunner<br/>put(get(x)) == x"]
         R2["PropertyTestRunner<br/>generator-driven"]
         R3["StaticCheckRunner<br/>panproto::validate"]
+        R4["CoercionLawRunner<br/>verifyCoercionLaws xrpc"]
         TGT["VerificationTarget<br/>(lens · verifier · time)"]
-        OUT["Verification record<br/>{ result: Passed / Falsified,<br/>counterexample? }"]
+        OUT["Verification record<br/>{ result: Holds / Falsified / Inconclusive,<br/>counterexample? }"]
     end
 
     LENS["idiolect-lens<br/>(apply_lens · apply_lens_put)"]
     PROTO["panproto::validate"]
+    PPT["panproto translate xrpc"]
     ORC["orchestrator's<br/>sufficient_verifications_for"]
     PDS[("PDS")]
 
@@ -36,15 +38,19 @@ flowchart LR
     R1 -.implements.-> TRAIT
     R2 -.implements.-> TRAIT
     R3 -.implements.-> TRAIT
+    R4 -.implements.-> TRAIT
     TGT --> R1
     TGT --> R2
     TGT --> R3
+    TGT --> R4
     R1 --> LENS
     R2 --> LENS
     R3 --> PROTO
+    R4 --> PPT
     R1 --> OUT
     R2 --> OUT
     R3 --> OUT
+    R4 --> OUT
     OUT --> PDS
     PDS --> ORC
 ```
@@ -111,6 +117,14 @@ let verification = runner.run(&target).await?;
   [`verify-spec/runners.json`](../../verify-spec/runners.json) with its
   matching atproto-shaped lexicon; codegen emits `generated.rs` carrying
   descriptors for every shipped runner.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 

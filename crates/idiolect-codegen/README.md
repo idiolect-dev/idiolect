@@ -2,15 +2,19 @@
 
 Lexicon-driven code generator: emits Rust record types, TypeScript
 validators, and spec-driven wire-up for the `dev.idiolect.*` lexicon
-family.
+family plus the vendored `dev.panproto.*` tree.
 
 ## Overview
 
-A single binary and library exposing four deterministic emit targets and a
-CI compatibility gate. Inputs are JSON on disk (lexicons + specs); outputs
-are formatted Rust and TypeScript committed to the repository. The drift
-gate in CI recomputes the emit and fails the build if the committed output
-disagrees.
+A single binary and library exposing four deterministic emit targets
+and a CI compatibility gate. Inputs are JSON on disk (lexicons +
+specs); outputs are formatted Rust and TypeScript committed to the
+repository. The on-disk emit layout mirrors the lexicon directory
+tree 1:1 — `lexicons/dev/panproto/schema/lens.json` becomes
+`generated/dev/panproto/schema/lens.rs` (and `.ts`), with
+per-directory `mod.rs` / `index.ts` barrels stitching the tree. The
+drift gate in CI recomputes the emit and fails the build if the
+committed output disagrees.
 
 ## Architecture
 
@@ -107,6 +111,14 @@ cargo run -p idiolect-codegen -- doctor
   `dev.idiolect.internal.spec.*` namespace. Loading a spec always
   round-trips it through `parse_lexicon` + `parse_json` first, so a spec
   that drifts from its lexicon surfaces at load time, not at emit time.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 

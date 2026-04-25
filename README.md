@@ -202,6 +202,14 @@ Before opening a PR, confirm `cargo fmt --all`, `cargo clippy --workspace
 && bun run typecheck && bun run test` all pass. CI runs the same commands
 plus a lexicon breaking-change gate against the PR's merge base.
 
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, daemon HTTP routes, and CLI surfaces
+are all in scope. Pin to an exact version if you depend on this
+project, and read [CHANGELOG.md](CHANGELOG.md) before bumping.
+
 ## Contributing
 
 Issue templates and the PR template under `.github/` are the canonical route

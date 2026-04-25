@@ -4,9 +4,10 @@ Command-line tool wrapping the library crates.
 
 ## Overview
 
-Single binary named `idiolect`. Subcommands cover the three common
-operations: resolve a DID, fetch a record from its home PDS, and query
-a running local orchestrator. The orchestrator subcommand dispatcher is
+Single binary named `idiolect`. Subcommands cover the common
+operations: resolve a DID, fetch a record from its home PDS, query
+a running local orchestrator, and compose an encounter record from
+structured prompts. The orchestrator subcommand dispatcher is
 **generated** from
 [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json)
 so the CLI never drifts out of sync with the HTTP API it's targeting.
@@ -70,6 +71,12 @@ idiolect orchestrator verifications --lens at://did:plc:x/dev.panproto.schema.le
 
 # Point at a non-default orchestrator.
 idiolect orchestrator stats --url https://orch.example.com
+
+# Compose an encounter record interactively. The output is JSON on
+# stdout; pipe into a record creator to publish.
+idiolect encounter record \
+  --lens at://did:plc:x/dev.panproto.schema.lens/l1 \
+  --source-schema at://did:plc:x/dev.panproto.schema.schema/s1
 ```
 
 ## Design notes
@@ -81,6 +88,14 @@ idiolect orchestrator stats --url https://orch.example.com
   endpoints; the orchestrator API is read-only and public by design.
   Authenticated writes are
   [`idiolect-lens::SigningPdsWriter`](../idiolect-lens)'s responsibility.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 

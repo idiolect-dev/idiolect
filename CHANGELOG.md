@@ -4,8 +4,10 @@ All notable changes to this project are recorded in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-Breaking lexicon changes take a minimum six-month deprecation window
-per the project's stewardship process.
+idiolect is pre-1.0: the `0.x` series may include arbitrary breaking
+changes between minor releases — Rust APIs, lexicon shapes, wire
+formats, and CLI surfaces are all in scope. Pin to an exact version
+if you depend on this project, and read this file before bumping.
 
 ## [Unreleased]
 

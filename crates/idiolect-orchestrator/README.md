@@ -22,7 +22,7 @@ flowchart LR
         CH["CatalogHandler<br/>(impl RecordHandler)"]
         CAT[("Catalog<br/>at-uri → slot")]
         SQL[("SqliteCatalogStore<br/>(optional)")]
-        QUERY["query::*<br/>(11 generated + stats)"]
+        QUERY["query::*<br/>(generated + stats)"]
         PRED["predicates +<br/>panproto-expr"]
         HTTP["axum router<br/>(v1/bounties, /adapters, …)"]
     end
@@ -56,11 +56,11 @@ Three parts:
   generated module. Adding a query is a spec edit, not a code edit; see
   [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json).
 
-Eleven list queries are generated from the spec, plus hand-written
-`catalog_stats` and `sufficient_verifications_for`. List queries support
-two predicate forms: a named Rust fn in `crate::predicates`, or a
-panproto-expr expression evaluated against each record's JSON body. The
-spec picks per-query.
+Every list query is generated from the spec, plus hand-written
+`catalog_stats` and `sufficient_verifications_for`. List queries
+support two predicate forms: a named Rust fn in `crate::predicates`,
+or a panproto-expr expression evaluated against each record's JSON
+body. The spec picks per-query.
 
 ## Usage
 
@@ -126,6 +126,30 @@ cargo run -p idiolect-orchestrator --features daemon
 ```
 
 Graceful shutdown on SIGINT / SIGTERM.
+
+## Design notes
+
+- The catalog is one slot per at-uri across record kinds; a re-upsert
+  to a different kind evicts the prior slot. Adoption is a caller
+  decision, never the orchestrator's: every query is read-only and
+  surfaces what is recorded, not what should win.
+- List queries are generated from
+  [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json)
+  with its matching atproto-shaped lexicon. Adding a query is a spec
+  edit; codegen emits the Rust fn, the HTTP handler, the CLI
+  subcommand, and the xrpc lexicon in one pass.
+- Predicate evaluation runs through `crate::predicates` for hand-
+  written logic and a panproto-expr engine for spec-driven boolean
+  conditions on record bodies. Both forms see the same `Catalog`
+  borrow.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 
