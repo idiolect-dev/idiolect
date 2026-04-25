@@ -30,6 +30,11 @@ pub const RUNNERS: &[RunnerDescriptor] = &[
         module: "static_check",
         description: "Run panproto's schema validator on the lens's source and target schemas. Does not invoke the lens itself.",
     },
+    RunnerDescriptor {
+        kind: "coercion-law",
+        module: "coercion_law",
+        description: "Call dev.panproto.translate.verifyCoercionLaws on the lens and report any returned coercionLawViolation entries as a falsified verification.",
+    },
 ];
 /// Return the `VerificationKind` values the crate has shipped runners for.
 #[must_use]
@@ -38,5 +43,6 @@ pub fn runner_kinds() -> Vec<VerificationKind> {
         VerificationKind::RoundtripTest,
         VerificationKind::PropertyTest,
         VerificationKind::StaticCheck,
+        VerificationKind::CoercionLaw,
     ]
 }

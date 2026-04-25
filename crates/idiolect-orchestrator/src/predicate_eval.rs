@@ -353,6 +353,10 @@ fn lens_property_matches(required: &LensProperty, held: &LensProperty) -> bool {
         (LensProperty::LpConvergence(req), LensProperty::LpConvergence(h)) => {
             str_wildcard_eq(&req.property, &h.property)
         }
+        (LensProperty::LpCoercionLaw(req), LensProperty::LpCoercionLaw(h)) => {
+            str_wildcard_eq(&req.standard, &h.standard)
+                && opt_str_wildcard_eq(req.version.as_deref(), h.version.as_deref())
+        }
         _ => false,
     }
 }

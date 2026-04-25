@@ -76,7 +76,8 @@
                 "dev.idiolect.defs#lpTheorem",
                 "dev.idiolect.defs#lpConformance",
                 "dev.idiolect.defs#lpChecker",
-                "dev.idiolect.defs#lpConvergence"
+                "dev.idiolect.defs#lpConvergence",
+                "dev.idiolect.defs#lpCoercionLaw"
               ]
             }
           },

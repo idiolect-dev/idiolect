@@ -164,7 +164,9 @@ export type LensProperty = {
   $type: "dev.idiolect.defs#lpChecker";
 } & LpChecker | {
   $type: "dev.idiolect.defs#lpConvergence";
-} & LpConvergence;
+} & LpConvergence | {
+  $type: "dev.idiolect.defs#lpCoercionLaw";
+} & LpCoercionLaw;
 
 /**
 * Reference to a lens (translation). Either an at-uri or a content-addressed hash; at least one must be present.
@@ -197,6 +199,24 @@ export interface LpChecker {
   */
   ruleset?: string;
   version?: string;
+}
+
+/**
+* Coercion-law claim: every theory inhabitant the lens carries across a translation must satisfy the named standard's coercion laws (e.g. signature preservation, axiom soundness). Surfaced from panproto's verifyCoercionLaws xrpc; violations turn the verification falsified.
+*/
+export interface LpCoercionLaw {
+  /**
+  * Identifier of the coercion-law standard the lens is being checked against.
+  */
+  standard: string;
+  /**
+  * Optional version of the standard, useful when a standard evolves and the verification pins to a specific revision.
+  */
+  version?: string;
+  /**
+  * Optional cap on the number of violations a runner may report before falsifying the claim. Acts as a runtime parameter, not a property assertion.
+  */
+  violationThreshold?: number;
 }
 
 /**

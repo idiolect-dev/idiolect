@@ -25,6 +25,16 @@ use crate::error::LensError;
 pub trait SchemaLoader: Send + Sync {
     /// Load the schema whose content-addressed hash is `object_hash`.
     ///
+    /// The contract is opaque to the kind of schema the loader hands
+    /// back: a single-file schema (the kind panproto's
+    /// `dev.panproto.node.getFileSchema` returns), a project-scope
+    /// schema unioned across many files (`getProjectSchema`), or
+    /// anything content-addressed and deserialisable as a panproto
+    /// `Schema`. Dialects routinely span several source schemas, so
+    /// the runtime intentionally avoids assuming a particular scope —
+    /// it asks the loader for "the schema at this hash" and instantiates
+    /// against whatever it gets back.
+    ///
     /// # Errors
     ///
     /// See [`LensError`] variants. `NotFound` when the hash is

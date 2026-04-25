@@ -167,4 +167,6 @@ pub enum RecommendationRequiredVerifications {
     LpChecker(crate::generated::dev::idiolect::defs::LpChecker),
     #[serde(rename = "dev.idiolect.defs#lpConvergence")]
     LpConvergence(crate::generated::dev::idiolect::defs::LpConvergence),
+    #[serde(rename = "dev.idiolect.defs#lpCoercionLaw")]
+    LpCoercionLaw(crate::generated::dev::idiolect::defs::LpCoercionLaw),
 }

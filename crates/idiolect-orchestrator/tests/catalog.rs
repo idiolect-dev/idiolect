@@ -199,7 +199,8 @@ fn verification(
     result: VerificationResult,
 ) -> Verification {
     use idiolect_records::generated::dev::idiolect::defs::{
-        LpChecker, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem, Tool,
+        LpChecker, LpCoercionLaw, LpConformance, LpConvergence, LpGenerator, LpRoundtrip, LpTheorem,
+        Tool,
     };
     use idiolect_records::generated::dev::idiolect::verification::VerificationProperty;
     // Pair the property variant with the kind so sufficient_verifications_for's
@@ -235,6 +236,11 @@ fn verification(
                 bound_steps: None,
             })
         }
+        VerificationKind::CoercionLaw => VerificationProperty::LpCoercionLaw(LpCoercionLaw {
+            standard: "any".to_owned(),
+            version: None,
+            violation_threshold: None,
+        }),
     };
     Verification {
         basis: None,

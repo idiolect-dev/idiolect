@@ -71,7 +71,8 @@ pub trait VerificationRunner: Send + Sync {
 ///
 /// `property` is the structured statement of what the verifier is
 /// asserting — a `LensProperty` variant sized to match `runner.kind()`
-/// (see the lexicon for the v0.2.0 shape).
+/// (see `dev.idiolect.defs#lensProperty` in the lexicons for the
+/// authoritative shape).
 #[must_use]
 pub fn build_verification<R: VerificationRunner + ?Sized>(
     target: &VerificationTarget,

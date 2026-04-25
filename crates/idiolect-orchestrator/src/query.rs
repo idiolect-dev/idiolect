@@ -119,6 +119,10 @@ pub fn requirement_matches(
         (RecommendationRequiredVerifications::LpConvergence(req), V::LpConvergence(p)) => {
             str_wildcard_eq(&req.property, &p.property)
         }
+        (RecommendationRequiredVerifications::LpCoercionLaw(req), V::LpCoercionLaw(p)) => {
+            str_wildcard_eq(&req.standard, &p.standard)
+                && opt_str_wildcard_eq(req.version.as_deref(), p.version.as_deref())
+        }
         _ => false,
     }
 }

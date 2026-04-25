@@ -156,6 +156,8 @@ pub enum LensProperty {
     LpChecker(LpChecker),
     #[serde(rename = "dev.idiolect.defs#lpConvergence")]
     LpConvergence(LpConvergence),
+    #[serde(rename = "dev.idiolect.defs#lpCoercionLaw")]
+    LpCoercionLaw(LpCoercionLaw),
 }
 
 /// Reference to a lens (translation). Either an at-uri or a content-addressed hash; at least one must be present.
@@ -184,6 +186,20 @@ pub struct LpChecker {
     pub ruleset: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
+}
+
+/// Coercion-law claim: every theory inhabitant the lens carries across a translation must satisfy the named standard's coercion laws (e.g. signature preservation, axiom soundness). Surfaced from panproto's verifyCoercionLaws xrpc; violations turn the verification falsified.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LpCoercionLaw {
+    /// Identifier of the coercion-law standard the lens is being checked against.
+    pub standard: String,
+    /// Optional version of the standard, useful when a standard evolves and the verification pins to a specific revision.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    /// Optional cap on the number of violations a runner may report before falsifying the claim. Acts as a runtime parameter, not a property assertion.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub violation_threshold: Option<i64>,
 }
 
 /// Conformance standard identifier. A conformance runner matches on name + version, optionally narrowed to named clauses.

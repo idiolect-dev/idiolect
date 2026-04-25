@@ -70,6 +70,7 @@ impl VerificationCoverageMethod {
             VerificationKind::ConformanceTest => "conformance-test",
             VerificationKind::StaticCheck => "static-check",
             VerificationKind::ConvergencePreserving => "convergence-preserving",
+            VerificationKind::CoercionLaw => "coercion-law",
         }
     }
 
