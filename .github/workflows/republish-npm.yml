@@ -49,19 +49,23 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: install npm 11 via corepack
-        # The runner image's bundled npm is missing `promise-retry`
-        # and can't even invoke `install` to self-upgrade. corepack
-        # ships a fresh npm tarball into the path. We pin a concrete
-        # version: corepack's `npm@latest` resolves against its own
-        # snapshot rather than the live npm dist-tag and currently
-        # returns 10.x, which is below the Trusted Publishers OIDC
-        # handshake floor (≥ 11.5.1).
+      - name: fetch a recent npm into a private directory
+        # The runner image's bundled npm is two issues at once:
+        # its tree is missing `promise-retry` (so it can't run
+        # `install` to upgrade itself even with `--force`), and
+        # corepack-managed npm shims sit behind it in PATH. Trusted
+        # Publishers' OIDC handshake landed in npm 11.5.1, so the
+        # only reliable path is downloading a fresh npm tarball
+        # straight from the registry and invoking it directly via
+        # `node`.
         run: |
-          corepack enable
-          corepack prepare npm@11.13.0 --activate
-          npm --version
+          mkdir -p "$RUNNER_TEMP/npm-bin"
+          curl -fsSL https://registry.npmjs.org/npm/-/npm-11.13.0.tgz \
+            | tar -xz -C "$RUNNER_TEMP/npm-bin" --strip-components=1
+          node "$RUNNER_TEMP/npm-bin/bin/npm-cli.js" --version
 
       - name: publish
         working-directory: packages/schema
-        run: npm publish --provenance --access public
+        run: |
+          node "$RUNNER_TEMP/npm-bin/bin/npm-cli.js" \
+            publish --provenance --access public
