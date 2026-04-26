@@ -16,8 +16,8 @@ fn lens_body() -> serde_json::Value {
     json!({
         "createdAt": "2026-04-19T00:00:00.000Z",
         "objectHash": "sha256:deadbeef",
-        "sourceSchema": "sha256:aaa",
-        "targetSchema": "sha256:bbb"
+        "sourceSchema": "at://did:plc:x/dev.panproto.schema.schema/aaa",
+        "targetSchema": "at://did:plc:x/dev.panproto.schema.schema/bbb"
     })
 }
 
@@ -247,8 +247,9 @@ async fn publisher_and_fetcher_round_trip_via_wiremock() {
         constraints: None,
         eligibility: None,
         fulfillment: None,
-        occurred_at: "2026-04-21T00:00:00Z".into(),
-        requester: "did:plc:alice".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
+        requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
         wants: BountyWants::WantAdapter(WantAdapter {

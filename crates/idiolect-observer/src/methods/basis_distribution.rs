@@ -239,9 +239,13 @@ mod tests {
                 lens: LensRef {
                     cid: None,
                     direction: None,
-                    uri: Some("at://did:plc:x/dev.panproto.schema.lens/l".into()),
+                    uri: Some(
+                        idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l")
+                            .expect("valid at-uri"),
+                    ),
                 },
-                occurred_at: "2026-04-23T00:00:00Z".into(),
+                occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                    .expect("valid datetime"),
                 produced_output: None,
                 r#use: Use {
                     action: "x".into(),
@@ -255,7 +259,12 @@ mod tests {
                 source_schema: SchemaRef {
                     cid: None,
                     language: None,
-                    uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".into()),
+                    uri: Some(
+                        idiolect_records::AtUri::parse(
+                            "at://did:plc:x/dev.panproto.schema.schema/s",
+                        )
+                        .expect("valid at-uri"),
+                    ),
                 },
                 target_schema: None,
                 visibility:
@@ -274,7 +283,7 @@ mod tests {
         .unwrap();
         m.observe(&encounter_with_basis(Some(Basis::BasisExternalSignal(
             BasisExternalSignal {
-                url: "https://x".into(),
+                url: idiolect_records::Uri::parse("https://x").expect("valid uri"),
                 signal_type: None,
                 description: None,
             },

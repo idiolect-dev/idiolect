@@ -22,7 +22,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 /// Always conforms to <https://atproto.com/specs/nsid>: at least
 /// three segments, ASCII only, total length ≤ 317 bytes, last
 /// segment is camelCase (no hyphens, no leading digit, ≤ 63 chars).
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Nsid {
     /// Canonical string form. Always equals `format!("{}.{}", authority, name)`.
     canonical: String,
@@ -302,6 +302,20 @@ impl FromStr for Nsid {
 impl AsRef<str> for Nsid {
     fn as_ref(&self) -> &str {
         self.as_str()
+    }
+}
+
+impl std::ops::Deref for Nsid {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.canonical
+    }
+}
+
+impl std::borrow::Borrow<str> for Nsid {
+    fn borrow(&self) -> &str {
+        &self.canonical
     }
 }
 

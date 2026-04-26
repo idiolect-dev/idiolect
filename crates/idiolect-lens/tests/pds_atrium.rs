@@ -82,8 +82,8 @@ async fn apply_lens_reads_lens_record_from_mock_pds() {
         .target_schema(&src_schema, &protocol)
         .expect("derive target schema");
 
-    let src_hash = "sha256:src".to_owned();
-    let tgt_hash = "sha256:tgt".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt".to_owned();
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.clone(), src_schema.clone());
@@ -117,7 +117,7 @@ async fn apply_lens_reads_lens_record_from_mock_pds() {
         &loader,
         &protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: source_record.clone(),
             source_root_vertex: None,
         },

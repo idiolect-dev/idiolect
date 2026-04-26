@@ -18,7 +18,7 @@ pub struct PanprotoProtolens {
     pub blob: Option<serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub complement_constructor: Option<String>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

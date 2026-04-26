@@ -17,7 +17,7 @@ pub struct PanprotoCommit {
     pub author: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub complement_hashes: Option<Vec<String>>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cst_complement_hashes: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -35,7 +35,7 @@ pub struct PanprotoCommit {
     pub protocol_hash: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub renames: Option<Vec<SiteRename>>,
-    pub repo: String,
+    pub repo: idiolect_records::AtUri,
     pub schema_hash: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub theory_ids: Option<Vec<NamedHash>>,

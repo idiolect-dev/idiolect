@@ -97,7 +97,7 @@ pub fn bounty_for_want_lens(b: &Bounty, source: &SchemaRef, target: &SchemaRef) 
 /// Bounty authored by the given requester DID.
 #[must_use]
 pub fn bounty_by_requester(b: &Bounty, requester_did: &str) -> bool {
-    b.requester == requester_did
+    b.requester.as_str() == requester_did
 }
 
 // -----------------------------------------------------------------
@@ -126,7 +126,7 @@ pub fn adapter_by_invocation_protocol(a: &Adapter, kind: &AdapterInvocationProto
 pub fn community_has_member(c: &Community, member_did: &str) -> bool {
     c.members
         .as_ref()
-        .is_some_and(|list| list.iter().any(|m| m == member_did))
+        .is_some_and(|list| list.iter().any(|m| m.as_str() == member_did))
 }
 
 /// Community whose name matches (case-insensitive).
@@ -142,7 +142,7 @@ pub fn community_by_name(c: &Community, name: &str) -> bool {
 /// Dialect whose `owning_community` at-uri matches.
 #[must_use]
 pub fn dialect_for_community(d: &Dialect, community_uri: &str) -> bool {
-    d.owning_community == community_uri
+    d.owning_community.as_str() == community_uri
 }
 
 // -----------------------------------------------------------------
@@ -219,24 +219,32 @@ pub fn parse_adapter_invocation_protocol_kind(
 /// Build a [`SchemaRef`] from a plain at-uri. The cid and language
 /// fields are left unset — the orchestrator's match semantics
 /// (`schema_refs_match`) accept uri-only refs as a weaker identity.
-#[must_use]
-pub const fn schema_ref_from_uri(uri: String) -> SchemaRef {
-    SchemaRef {
-        uri: Some(uri),
+///
+/// # Errors
+///
+/// Returns an [`AtUriError`](idiolect_records::AtUriError) when
+/// the input does not parse as an at-uri.
+pub fn schema_ref_from_uri(uri: &str) -> Result<SchemaRef, idiolect_records::AtUriError> {
+    Ok(SchemaRef {
+        uri: Some(idiolect_records::AtUri::parse(uri)?),
         cid: None,
         language: None,
-    }
+    })
 }
 
 /// Build a [`LensRef`] from a plain at-uri. Cid and direction left
 /// unset.
-#[must_use]
-pub const fn lens_ref_from_uri(uri: String) -> LensRef {
-    LensRef {
-        uri: Some(uri),
+///
+/// # Errors
+///
+/// Returns an [`AtUriError`](idiolect_records::AtUriError) when
+/// the input does not parse as an at-uri.
+pub fn lens_ref_from_uri(uri: &str) -> Result<LensRef, idiolect_records::AtUriError> {
+    Ok(LensRef {
+        uri: Some(idiolect_records::AtUri::parse(uri)?),
         cid: None,
         direction: None,
-    }
+    })
 }
 
 // -----------------------------------------------------------------
@@ -246,7 +254,7 @@ pub const fn lens_ref_from_uri(uri: String) -> LensRef {
 /// Belief records whose subject's at-uri matches `subject_uri`.
 #[must_use]
 pub fn belief_about_record(b: &Belief, subject_uri: &str) -> bool {
-    b.subject.uri == subject_uri
+    b.subject.uri.as_str() == subject_uri
 }
 
 /// Belief records whose effective holder (explicit `holder` or, if

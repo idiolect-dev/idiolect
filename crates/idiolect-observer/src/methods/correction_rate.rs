@@ -129,7 +129,8 @@ impl ObservationMethod for CorrectionRateMethod {
                 let lens_key = encounter
                     .lens
                     .uri
-                    .clone()
+                    .as_ref()
+                    .map(|u| u.as_str().to_owned())
                     .or_else(|| encounter.lens.cid.clone())
                     .unwrap_or_else(|| "<unidentified-lens>".to_owned());
                 let stats = self.lenses.entry(lens_key).or_default();
@@ -146,7 +147,7 @@ impl ObservationMethod for CorrectionRateMethod {
                 // encounter is unseen, the method buckets the
                 // correction under a synthetic "<unknown>" lens so the
                 // signal is not lost.
-                let encounter_uri = &correction.encounter.uri;
+                let encounter_uri = correction.encounter.uri.as_str();
                 // first-pass, we only know the encounter at-uri here,
                 // not its lens. in practice an observer would keep a
                 // side-map encounter_uri -> lens_uri. for the

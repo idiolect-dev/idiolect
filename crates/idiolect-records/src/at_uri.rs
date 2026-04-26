@@ -17,8 +17,13 @@ use crate::did::{Did, DidError};
 use crate::nsid::{Nsid, NsidError};
 
 /// A parsed at-uri pointing at a record.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AtUri {
+    /// Canonical wire form `at://{did}/{collection}/{rkey}`.
+    /// Precomputed at parse time so `AsRef<str>` /
+    /// `Deref<Target = str>` can hand out borrowed slices without
+    /// rebuilding on every call.
+    canonical: String,
     did: Did,
     collection: Nsid,
     rkey: String,
@@ -50,11 +55,20 @@ impl AtUri {
     /// validation happens here; the typed inputs guarantee shape.
     #[must_use]
     pub fn new(did: Did, collection: Nsid, rkey: String) -> Self {
+        let canonical = format!("at://{did}/{collection}/{rkey}");
         Self {
+            canonical,
             did,
             collection,
             rkey,
         }
+    }
+
+    /// The full at-uri as a string slice, in canonical
+    /// `at://{did}/{collection}/{rkey}` form.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.canonical
     }
 
     /// Parse and validate an at-uri.
@@ -130,6 +144,26 @@ impl FromStr for AtUri {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::parse(s)
+    }
+}
+
+impl AsRef<str> for AtUri {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::ops::Deref for AtUri {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.canonical
+    }
+}
+
+impl std::borrow::Borrow<str> for AtUri {
+    fn borrow(&self) -> &str {
+        &self.canonical
     }
 }
 

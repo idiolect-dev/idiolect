@@ -23,12 +23,12 @@ pub struct Verification {
     pub counterexample: Option<String>,
     /// Other verifications this one depends on (e.g. a proof assuming a lemma).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub dependencies: Option<Vec<String>>,
+    pub dependencies: Option<Vec<idiolect_records::AtUri>>,
     /// Fixed taxonomy at the Lexicon level. Each kind has its own trust semantics.
     pub kind: VerificationKind,
     /// The lens whose property is being asserted.
     pub lens: crate::generated::dev::idiolect::defs::LensRef,
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
     /// For kind=formal-proof: reference to the checkable proof artifact (e.g. Coq/Lean/Agda term). Orchestrators that have the checker may mechanically verify; others take the assertion on trust.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proof_artifact: Option<String>,
@@ -39,7 +39,7 @@ pub struct Verification {
     /// Tool and version used to establish the verification.
     pub tool: crate::generated::dev::idiolect::defs::Tool,
     /// DID of the party asserting the verification.
-    pub verifier: String,
+    pub verifier: idiolect_records::Did,
 }
 
 impl crate::Record for Verification {

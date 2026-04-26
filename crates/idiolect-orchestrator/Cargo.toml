@@ -38,8 +38,8 @@ daemon = [
 ]
 
 [dependencies]
-idiolect-records  = { version = "0.3.0", path = "../idiolect-records" }
-idiolect-indexer  = { version = "0.3.0", path = "../idiolect-indexer" }
+idiolect-records  = { version = "0.4.0", path = "../idiolect-records" }
+idiolect-indexer  = { version = "0.4.0", path = "../idiolect-indexer" }
 
 # Used by generated expression-form query fns: each record is
 # serialized into a panproto-expr Literal and evaluated against a

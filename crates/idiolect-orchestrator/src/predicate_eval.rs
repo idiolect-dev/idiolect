@@ -236,14 +236,14 @@ pub fn eval_eligibility_tree(
 // -------------------------------------------------------------------
 
 fn source_is(n: &ConditionSourceIs, ctx: &ConditionContext) -> PredicateResult {
-    match (ctx.source_schema.as_ref(), n.schema.uri.as_ref()) {
+    match (ctx.source_schema.as_deref(), n.schema.uri.as_deref()) {
         (Some(a), Some(b)) if a == b => PredicateResult::Holds,
         _ => PredicateResult::DoesNotHold,
     }
 }
 
 fn target_is(n: &ConditionTargetIs, ctx: &ConditionContext) -> PredicateResult {
-    match (ctx.target_schema.as_ref(), n.schema.uri.as_ref()) {
+    match (ctx.target_schema.as_deref(), n.schema.uri.as_deref()) {
         (Some(a), Some(b)) if a == b => PredicateResult::Holds,
         _ => PredicateResult::DoesNotHold,
     }
@@ -300,7 +300,11 @@ fn data_has(n: &ConditionDataHas, ctx: &ConditionContext) -> PredicateResult {
 }
 
 fn is_member_of(n: &EligibilityMember, claimer: &Claimer) -> PredicateResult {
-    if claimer.memberships.contains(&n.community) {
+    if claimer
+        .memberships
+        .iter()
+        .any(|m| m.as_str() == n.community.as_str())
+    {
         PredicateResult::Holds
     } else {
         PredicateResult::DoesNotHold
@@ -362,7 +366,7 @@ fn lens_property_matches(required: &LensProperty, held: &LensProperty) -> bool {
 }
 
 fn is_did(n: &EligibilityDid, claimer: &Claimer) -> PredicateResult {
-    if claimer.did == n.did {
+    if claimer.did.as_str() == n.did.as_str() {
         PredicateResult::Holds
     } else {
         PredicateResult::DoesNotHold
@@ -464,7 +468,7 @@ mod tests {
             schema: SchemaRef {
                 cid: None,
                 language: None,
-                uri: Some(uri.into()),
+                uri: Some(idiolect_records::AtUri::parse(uri).expect("valid at-uri")),
             },
         })
     }
@@ -474,7 +478,7 @@ mod tests {
             schema: SchemaRef {
                 cid: None,
                 language: None,
-                uri: Some(uri.into()),
+                uri: Some(idiolect_records::AtUri::parse(uri).expect("valid at-uri")),
             },
         })
     }
@@ -509,16 +513,18 @@ mod tests {
 
     #[test]
     fn and_combines_two_atoms() {
-        let ctx = ctx_with_schemas("s", "t");
+        let s_uri = "at://did:plc:x/dev.panproto.schema.schema/s";
+        let t_uri = "at://did:plc:x/dev.panproto.schema.schema/t";
+        let ctx = ctx_with_schemas(s_uri, t_uri);
         let s = SchemaRef {
             cid: None,
             language: None,
-            uri: Some("s".into()),
+            uri: Some(idiolect_records::AtUri::parse(s_uri).expect("valid at-uri")),
         };
         let t = SchemaRef {
             cid: None,
             language: None,
-            uri: Some("t".into()),
+            uri: Some(idiolect_records::AtUri::parse(t_uri).expect("valid at-uri")),
         };
         let tree = vec![
             RecommendationConditions::ConditionSourceIs(ConditionSourceIs { schema: s.clone() }),
@@ -536,7 +542,12 @@ mod tests {
                 schema: SchemaRef {
                     cid: None,
                     language: None,
-                    uri: Some("other".into()),
+                    uri: Some(
+                        idiolect_records::AtUri::parse(
+                            "at://did:plc:x/dev.panproto.schema.schema/other",
+                        )
+                        .expect("valid at-uri"),
+                    ),
                 },
             }),
             RecommendationConditions::ConditionAnd(ConditionAnd {}),
@@ -549,9 +560,12 @@ mod tests {
 
     #[test]
     fn not_flips_result() {
-        let ctx = ctx_with_schemas("s", "t");
+        let ctx = ctx_with_schemas(
+            "at://did:plc:x/dev.panproto.schema.schema/s",
+            "at://did:plc:x/dev.panproto.schema.schema/t",
+        );
         let tree = vec![
-            source_is_node("s"),
+            source_is_node("at://did:plc:x/dev.panproto.schema.schema/s"),
             RecommendationConditions::ConditionNot(ConditionNot {}),
         ];
         assert_eq!(
@@ -562,10 +576,13 @@ mod tests {
 
     #[test]
     fn or_short_circuits_on_holds() {
-        let ctx = ctx_with_schemas("s", "t");
+        let ctx = ctx_with_schemas(
+            "at://did:plc:x/dev.panproto.schema.schema/s",
+            "at://did:plc:x/dev.panproto.schema.schema/t",
+        );
         let tree = vec![
-            source_is_node("wrong"),
-            target_is_node("t"),
+            source_is_node("at://did:plc:x/dev.panproto.schema.schema/wrong"),
+            target_is_node("at://did:plc:x/dev.panproto.schema.schema/t"),
             RecommendationConditions::ConditionOr(ConditionOr {}),
         ];
         assert_eq!(

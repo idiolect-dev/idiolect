@@ -51,11 +51,12 @@ fn encounter(
         holder: None,
         kind,
         lens: LensRef {
-            uri: Some(lens.to_owned()),
+            uri: Some(idiolect_records::AtUri::parse(lens).expect("valid at-uri")),
             cid: None,
             direction: None,
         },
-        occurred_at: "2026-04-20T10:00:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T10:00:00Z")
+            .expect("valid datetime"),
         produced_output: None,
         r#use: idiolect_records::generated::dev::idiolect::defs::Use {
             action: "test".to_owned(),
@@ -67,7 +68,10 @@ fn encounter(
         },
         source_instance: None,
         source_schema: SchemaRef {
-            uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".to_owned()),
+            uri: Some(
+                idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.schema/s")
+                    .expect("valid at-uri"),
+            ),
             cid: None,
             language: None,
         },
@@ -80,13 +84,14 @@ fn correction(encounter_uri: &str) -> AnyRecord {
     AnyRecord::Correction(Correction {
         basis: None,
         encounter: idiolect_records::generated::dev::idiolect::defs::EncounterRef {
-            uri: encounter_uri.to_owned(),
+            uri: idiolect_records::AtUri::parse(encounter_uri).expect("valid at-uri"),
             cid: None,
         },
         corrected_value: None,
         holder: None,
         original_value: None,
-        occurred_at: "2026-04-20T10:05:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T10:05:00Z")
+            .expect("valid datetime"),
         path: "/text".to_owned(),
         rationale: None,
         reason: CorrectionReason::LensError,
@@ -113,11 +118,11 @@ fn verification(
         ),
         kind,
         lens: LensRef {
-            uri: Some(lens.to_owned()),
+            uri: Some(idiolect_records::AtUri::parse(lens).expect("valid at-uri")),
             cid: None,
             direction: None,
         },
-        occurred_at: "2026-04-20T11:00:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T11:00:00Z").expect("valid datetime"),
         proof_artifact: None,
         result,
         tool: idiolect_records::generated::dev::idiolect::defs::Tool {
@@ -125,7 +130,7 @@ fn verification(
             version: "8.18".to_owned(),
             commit: None,
         },
-        verifier: verifier.to_owned(),
+        verifier: idiolect_records::Did::parse(verifier).expect("valid did"),
     })
 }
 
@@ -192,7 +197,11 @@ fn throughput_deletes_have_no_body() {
     let mut evt = ix_event(
         1,
         "did:plc:a",
-        encounter(EncounterKind::InvocationLog, None, "at://x/lens/a"),
+        encounter(
+            EncounterKind::InvocationLog,
+            None,
+            "at://did:plc:x/dev.idiolect.lens/a",
+        ),
     );
     evt.record = None;
     evt.action = IndexerAction::Delete;
@@ -271,7 +280,11 @@ fn verification_coverage_ignores_non_verifications() {
     m.observe(&ix_event(
         1,
         "did:plc:a",
-        encounter(EncounterKind::InvocationLog, None, "at://x/lens/a"),
+        encounter(
+            EncounterKind::InvocationLog,
+            None,
+            "at://did:plc:x/dev.idiolect.lens/a",
+        ),
     ))
     .unwrap();
     assert!(m.snapshot().unwrap().is_none());

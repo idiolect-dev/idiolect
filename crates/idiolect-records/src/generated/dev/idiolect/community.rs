@@ -27,18 +27,18 @@ pub struct Community {
     /// Schemas the community treats as canonical for its purposes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub core_schemas: Option<Vec<crate::generated::dev::idiolect::defs::SchemaRef>>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     /// Purpose, norms, and scope of the community. Narrative, not machine-interpreted.
     pub description: String,
     /// Other communities this community recognises as legitimate interlocutors. Endorsement is not transitive.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub endorsed_communities: Option<Vec<String>>,
+    pub endorsed_communities: Option<Vec<idiolect_records::AtUri>>,
     /// Inline list of member DIDs, for small communities. Use membershipRoll instead for communities above ~200 members.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub members: Option<Vec<String>>,
+    pub members: Option<Vec<idiolect_records::Did>>,
     /// AT-URI pointing to an externally maintained membership record for larger communities.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub membership_roll: Option<String>,
+    pub membership_roll: Option<idiolect_records::AtUri>,
     /// Human-readable community name.
     pub name: String,
 }

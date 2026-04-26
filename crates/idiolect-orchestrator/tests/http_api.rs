@@ -24,7 +24,7 @@ fn s_ref(uri: &str) -> SchemaRef {
     SchemaRef {
         cid: None,
         language: None,
-        uri: Some(uri.to_owned()),
+        uri: Some(idiolect_records::AtUri::parse(uri).expect("valid at-uri")),
     }
 }
 
@@ -32,13 +32,13 @@ fn l_ref(uri: &str) -> LensRef {
     LensRef {
         cid: None,
         direction: None,
-        uri: Some(uri.to_owned()),
+        uri: Some(idiolect_records::AtUri::parse(uri).expect("valid at-uri")),
     }
 }
 
 fn adapter_for(framework: &str) -> Adapter {
     Adapter {
-        author: "did:plc:author".into(),
+        author: idiolect_records::Did::parse("did:plc:author").expect("valid DID"),
         framework: framework.into(),
         invocation_protocol: AdapterInvocationProtocol {
             entry_point: Some("bin/x".into()),
@@ -52,7 +52,8 @@ fn adapter_for(framework: &str) -> Adapter {
             network_policy: None,
             resource_limits: None,
         },
-        occurred_at: "2026-04-21T00:00:00Z".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
         verification: None,
         version_range: ">=1 <2".into(),
     }
@@ -64,8 +65,9 @@ fn bounty_want_lens(src: &str, tgt: &str) -> Bounty {
         constraints: None,
         eligibility: None,
         fulfillment: None,
-        occurred_at: "2026-04-21T00:00:00Z".into(),
-        requester: "did:plc:alice".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
+        requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
         wants: BountyWants::WantLens(WantLens {
@@ -82,10 +84,16 @@ fn community(members: &[&str]) -> Community {
         conventions_text: None,
         core_lenses: None,
         core_schemas: None,
-        created_at: "2026-04-21T00:00:00Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
         description: "c".into(),
         endorsed_communities: None,
-        members: Some(members.iter().map(|m| (*m).to_owned()).collect()),
+        members: Some(
+            members
+                .iter()
+                .map(|m| idiolect_records::Did::parse(m).expect("valid did"))
+                .collect(),
+        ),
         membership_roll: None,
         name: "Test".into(),
     }
@@ -98,9 +106,13 @@ fn recommendation_for(lens: &str) -> Recommendation {
         caveats: None,
         caveats_text: None,
         conditions: vec![],
-        issuing_community: "at://did:plc:c/dev.idiolect.community/main".into(),
+        issuing_community: idiolect_records::AtUri::parse(
+            "at://did:plc:c/dev.idiolect.community/main",
+        )
+        .expect("valid at-uri"),
         lens_path: vec![l_ref(lens)],
-        occurred_at: "2026-04-21T00:00:00Z".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
         preconditions: None,
         required_verifications: None,
         supersedes: None,
@@ -156,7 +168,8 @@ fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
         dependencies: None,
         kind,
         lens: l_ref(lens_uri),
-        occurred_at: "2026-04-21T00:00:00Z".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
         proof_artifact: None,
         property,
         result: VerificationResult::Holds,
@@ -165,7 +178,7 @@ fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
             name: "coq".into(),
             version: "8.18".into(),
         },
-        verifier: "did:plc:v".into(),
+        verifier: idiolect_records::Did::parse("did:plc:v").expect("valid DID"),
     }
 }
 
@@ -184,44 +197,49 @@ fn seed_catalog() -> Arc<Mutex<Catalog>> {
     {
         let mut c = cat.lock().unwrap();
         c.upsert(
-            "at://x/dev.idiolect.bounty/b1".into(),
+            "at://did:plc:x/dev.idiolect.bounty/b1".into(),
             "did:plc:alice".into(),
             "r".into(),
-            AnyRecord::Bounty(bounty_want_lens("at://s/a", "at://s/b")),
+            AnyRecord::Bounty(bounty_want_lens(
+                "at://did:plc:s/dev.panproto.schema.schema/a",
+                "at://did:plc:s/dev.panproto.schema.schema/b",
+            )),
         );
         c.upsert(
-            "at://x/dev.idiolect.adapter/a1".into(),
+            "at://did:plc:x/dev.idiolect.adapter/a1".into(),
             "did:plc:author".into(),
             "r".into(),
             AnyRecord::Adapter(adapter_for("hasura")),
         );
         c.upsert(
-            "at://x/dev.idiolect.community/c1".into(),
+            "at://did:plc:x/dev.idiolect.community/c1".into(),
             "did:plc:c".into(),
             "r".into(),
             AnyRecord::Community(community(&["did:plc:alice"])),
         );
         c.upsert(
-            "at://x/dev.idiolect.recommendation/r1".into(),
+            "at://did:plc:x/dev.idiolect.recommendation/r1".into(),
             "did:plc:c".into(),
             "r".into(),
-            AnyRecord::Recommendation(recommendation_for("at://x/dev.panproto.schema.lens/l1")),
+            AnyRecord::Recommendation(recommendation_for(
+                "at://did:plc:x/dev.panproto.schema.lens/l1",
+            )),
         );
         c.upsert(
-            "at://x/dev.idiolect.verification/v1".into(),
+            "at://did:plc:x/dev.idiolect.verification/v1".into(),
             "did:plc:v".into(),
             "r".into(),
             AnyRecord::Verification(verification_holds(
-                "at://x/dev.panproto.schema.lens/l1",
+                "at://did:plc:x/dev.panproto.schema.lens/l1",
                 VerificationKind::FormalProof,
             )),
         );
         c.upsert(
-            "at://x/dev.idiolect.verification/v2".into(),
+            "at://did:plc:x/dev.idiolect.verification/v2".into(),
             "did:plc:v".into(),
             "r".into(),
             AnyRecord::Verification(verification_holds(
-                "at://x/dev.panproto.schema.lens/l1",
+                "at://did:plc:x/dev.panproto.schema.lens/l1",
                 VerificationKind::RoundtripTest,
             )),
         );
@@ -252,7 +270,10 @@ async fn open_bounties_returns_seeded_bounty() {
         .await
         .unwrap();
     assert_eq!(body["items"].as_array().unwrap().len(), 1);
-    assert_eq!(body["items"][0]["uri"], "at://x/dev.idiolect.bounty/b1");
+    assert_eq!(
+        body["items"][0]["uri"],
+        "at://did:plc:x/dev.idiolect.bounty/b1"
+    );
 }
 
 #[tokio::test]
@@ -278,7 +299,7 @@ async fn xrpc_route_matches_rest_route() {
 async fn bounties_want_lens_filters_by_schema_pair() {
     let base = serve_app(seed_catalog()).await;
     let matching: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/bounties/want-lens?source_uri=at://s/a&target_uri=at://s/b"
+        "{base}/v1/bounties/want-lens?source_uri=at://did:plc:s/dev.panproto.schema.schema/a&target_uri=at://did:plc:s/dev.panproto.schema.schema/b"
     ))
     .await
     .unwrap()
@@ -288,7 +309,7 @@ async fn bounties_want_lens_filters_by_schema_pair() {
     assert_eq!(matching["items"].as_array().unwrap().len(), 1);
 
     let miss: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/bounties/want-lens?source_uri=at://s/x&target_uri=at://s/y"
+        "{base}/v1/bounties/want-lens?source_uri=at://did:plc:s/dev.panproto.schema.schema/x&target_uri=at://did:plc:s/dev.panproto.schema.schema/y"
     ))
     .await
     .unwrap()
@@ -326,7 +347,7 @@ async fn recommendations_endpoint_returns_paths() {
 async fn verifications_endpoint_filters_by_lens() {
     let base = serve_app(seed_catalog()).await;
     let body: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/verifications?lens_uri=at://x/dev.panproto.schema.lens/l1"
+        "{base}/v1/verifications?lens_uri=at://did:plc:x/dev.panproto.schema.lens/l1"
     ))
     .await
     .unwrap()
@@ -340,7 +361,7 @@ async fn verifications_endpoint_filters_by_lens() {
 async fn sufficient_returns_true_when_all_kinds_present() {
     let base = serve_app(seed_catalog()).await;
     let body: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/verifications/sufficient?lens_uri=at://x/dev.panproto.schema.lens/l1&kinds=roundtrip-test,formal-proof&hold=true"
+        "{base}/v1/verifications/sufficient?lens_uri=at://did:plc:x/dev.panproto.schema.lens/l1&kinds=roundtrip-test,formal-proof&hold=true"
     ))
     .await
     .unwrap()
@@ -355,7 +376,7 @@ async fn sufficient_returns_true_when_all_kinds_present() {
 async fn sufficient_returns_false_when_kind_missing() {
     let base = serve_app(seed_catalog()).await;
     let body: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/verifications/sufficient?lens_uri=at://x/dev.panproto.schema.lens/l1&kinds=property-test"
+        "{base}/v1/verifications/sufficient?lens_uri=at://did:plc:x/dev.panproto.schema.lens/l1&kinds=property-test"
     ))
     .await
     .unwrap()
@@ -369,7 +390,7 @@ async fn sufficient_returns_false_when_kind_missing() {
 async fn sufficient_returns_400_on_bad_kind() {
     let base = serve_app(seed_catalog()).await;
     let resp = reqwest::get(format!(
-        "{base}/v1/verifications/sufficient?lens_uri=x&kinds=teleport"
+        "{base}/v1/verifications/sufficient?lens_uri=at://did:plc:x/dev.panproto.schema.lens/l1&kinds=teleport"
     ))
     .await
     .unwrap();
@@ -389,10 +410,13 @@ async fn pagination_limit_and_offset_slice_results() {
         let mut c = catalog.lock().unwrap();
         for i in 0..5 {
             c.upsert(
-                format!("at://x/dev.idiolect.bounty/b{i}"),
+                format!("at://did:plc:x/dev.idiolect.bounty/b{i}"),
                 "did:plc:alice".into(),
                 "r".into(),
-                AnyRecord::Bounty(bounty_want_lens("at://s/a", &format!("at://s/t{i}"))),
+                AnyRecord::Bounty(bounty_want_lens(
+                    "at://did:plc:s/dev.panproto.schema.schema/a",
+                    &format!("at://did:plc:s/dev.panproto.schema.schema/t{i}"),
+                )),
             );
         }
     }
@@ -614,16 +638,20 @@ async fn dialects_for_community_filters() {
     {
         let mut c = catalog.lock().unwrap();
         c.upsert(
-            "at://x/dev.idiolect.dialect/d1".into(),
+            "at://did:plc:x/dev.idiolect.dialect/d1".into(),
             "did:plc:c".into(),
             "r".into(),
             idiolect_records::AnyRecord::Dialect(idiolect_records::Dialect {
-                created_at: "2026-04-21T00:00:00Z".into(),
+                created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+                    .expect("valid datetime"),
                 deprecations: None,
                 description: None,
                 idiolects: None,
                 name: "d".into(),
-                owning_community: "at://x/dev.idiolect.community/c1".into(),
+                owning_community: idiolect_records::AtUri::parse(
+                    "at://did:plc:x/dev.idiolect.community/c1",
+                )
+                .expect("valid at-uri"),
                 preferred_lenses: None,
                 previous_version: None,
                 version: None,
@@ -632,7 +660,7 @@ async fn dialects_for_community_filters() {
     }
     let base = serve_app(catalog).await;
     let hit: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/dialects/for-community?community_uri=at://x/dev.idiolect.community/c1"
+        "{base}/v1/dialects/for-community?community_uri=at://did:plc:x/dev.idiolect.community/c1"
     ))
     .await
     .unwrap()
@@ -642,7 +670,7 @@ async fn dialects_for_community_filters() {
     assert_eq!(hit["items"].as_array().unwrap().len(), 1);
 
     let miss: serde_json::Value = reqwest::get(format!(
-        "{base}/v1/dialects/for-community?community_uri=at://other"
+        "{base}/v1/dialects/for-community?community_uri=at://did:plc:other/dev.idiolect.community/main"
     ))
     .await
     .unwrap()

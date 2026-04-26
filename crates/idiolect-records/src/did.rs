@@ -15,7 +15,7 @@ use std::str::FromStr;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// A parsed and validated atproto DID.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Did {
     /// The full DID string, e.g. `did:plc:abc123` or `did:web:example.com`.
     canonical: String,
@@ -26,7 +26,7 @@ pub struct Did {
 }
 
 /// Supported DID methods.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum DidMethod {
     /// `did:plc:*` — atproto's primary method.
     Plc,
@@ -118,6 +118,20 @@ impl FromStr for Did {
 impl AsRef<str> for Did {
     fn as_ref(&self) -> &str {
         self.as_str()
+    }
+}
+
+impl std::ops::Deref for Did {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.canonical
+    }
+}
+
+impl std::borrow::Borrow<str> for Did {
+    fn borrow(&self) -> &str {
+        &self.canonical
     }
 }
 

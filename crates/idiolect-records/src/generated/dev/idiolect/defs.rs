@@ -30,10 +30,10 @@ pub enum Basis {
 #[serde(rename_all = "camelCase")]
 pub struct BasisCommunityPolicy {
     /// AT-URI of the community record whose policy grounds this record.
-    pub community: String,
+    pub community: idiolect_records::AtUri,
     /// Optional pointer to the specific policy document.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub policy_uri: Option<String>,
+    pub policy_uri: Option<idiolect_records::Uri>,
 }
 
 /// Grounded in another record on ATProto. `source` pins the exact version via strong ref; `inferenceRule` names how this record derives from it (e.g. 'translates', 'aggregates', 'classifies').
@@ -58,7 +58,7 @@ pub struct BasisExternalSignal {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signal_type: Option<String>,
     /// Pointer to the external signal.
-    pub url: String,
+    pub url: idiolect_records::Uri,
 }
 
 /// The holder is asserting directly, with no external grounding claimed. This is the default when a record carries no `basis`.
@@ -86,7 +86,7 @@ pub struct Caveat {
 pub struct EncounterRef {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cid: Option<String>,
-    pub uri: String,
+    pub uri: idiolect_records::AtUri,
 }
 
 /// Structured evidence for a retrospection finding. Complements the narrative `detail` field on finding; kind=other may omit evidence entirely.
@@ -172,7 +172,7 @@ pub struct LensRef {
     pub direction: Option<LensRefDirection>,
     /// AT-URI pointing to a lens record.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
+    pub uri: Option<idiolect_records::AtUri>,
 }
 
 /// Static-check configuration: which checker and which ruleset the verification covers.
@@ -247,7 +247,7 @@ pub struct LpRoundtrip {
     pub domain: String,
     /// Optional pointer to a generator that enumerates the domain.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub generator: Option<String>,
+    pub generator: Option<idiolect_records::Uri>,
 }
 
 /// Formal theorem statement: the property expressed in a proof-assistant vocabulary.
@@ -273,7 +273,7 @@ pub struct MaterialSpec {
     pub scope: Option<String>,
     /// Optional pointer to the specific dataset or corpus.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
+    pub uri: Option<idiolect_records::Uri>,
 }
 
 /// Reference to a schema. Either an at-uri pointing to a schema record or a content-addressed hash; at least one must be present.
@@ -288,7 +288,7 @@ pub struct SchemaRef {
     pub language: Option<String>,
     /// AT-URI pointing to a schema record, when addressable via atproto.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
+    pub uri: Option<idiolect_records::AtUri>,
 }
 
 /// Strong reference to an ATProto record: AT-URI plus CID. Parallel to com.atproto.repo.strongRef but repeated here so the defs tree is self-contained.
@@ -296,7 +296,7 @@ pub struct SchemaRef {
 #[serde(rename_all = "camelCase")]
 pub struct StrongRecordRef {
     pub cid: String,
-    pub uri: String,
+    pub uri: idiolect_records::AtUri,
 }
 
 /// Identity and version of a tool used by a verifier or observer.
@@ -355,7 +355,7 @@ pub struct VocabRef {
     pub cid: Option<String>,
     /// AT-URI pointing to the vocabulary record.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
+    pub uri: Option<idiolect_records::AtUri>,
 }
 
 /// CaveatSeverity.

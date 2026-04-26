@@ -16,9 +16,9 @@ use serde::{Deserialize, Serialize};
 pub struct PanprotoProtolensChain {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blob: Option<serde_json::Value>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     pub object_hash: String,
-    pub steps: Vec<String>,
+    pub steps: Vec<idiolect_records::AtUri>,
 }
 
 impl crate::Record for PanprotoProtolensChain {

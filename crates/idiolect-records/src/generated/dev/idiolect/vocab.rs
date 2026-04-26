@@ -22,10 +22,10 @@ pub struct Vocab {
     pub description: Option<String>,
     /// Human-readable vocabulary name, e.g. 'pedagogical-use-v1'.
     pub name: String,
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
     /// Prior vocabulary this one replaces. Consumers that pinned to `supersedes` may continue to resolve against it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub supersedes: Option<String>,
+    pub supersedes: Option<idiolect_records::AtUri>,
     /// Identifier of the vocabulary's top action. For 'closed-with-default', every action is transitively subsumed by `top`.
     pub top: String,
     /// Subsumption world discipline. 'closed-with-default' — every undeclared action is subsumed by `top` and nothing else. 'open' — undeclared actions are incomparable to every declared action; consumers must fall back to string equality. 'hierarchy-closed' — only the declared edges exist; undeclared actions do not subsume anything.

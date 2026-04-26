@@ -116,8 +116,8 @@ async fn observer_publishes_observation_after_every_event() {
     );
 
     let last = observations.last().expect("at least one observation");
-    assert_eq!(last.observer, "did:plc:observer");
-    assert_eq!(last.occurred_at, "2026-04-20T12:00:00Z");
+    assert_eq!(last.observer.as_str(), "did:plc:observer");
+    assert_eq!(last.occurred_at.as_str(), "2026-04-20T12:00:00Z");
     assert_eq!(last.version, "1.0.0");
     assert_eq!(last.method.name, "correction-rate");
 

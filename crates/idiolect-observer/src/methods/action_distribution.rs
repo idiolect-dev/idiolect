@@ -121,7 +121,7 @@ impl ActionDistributionMethod {
         u.action_vocabulary
             .as_ref()
             .and_then(|v| v.uri.as_ref())
-            .and_then(|uri| self.vocabularies.get(uri))
+            .and_then(|uri| self.vocabularies.get(uri.as_str()))
             .or_else(|| {
                 if self.vocabularies.len() == 1 {
                     self.vocabularies.values().next()
@@ -174,7 +174,7 @@ impl ObservationMethod for ActionDistributionMethod {
             .or_insert(0) += 1;
         if let Some(vref) = encounter.r#use.action_vocabulary.as_ref()
             && let Some(uri) = vref.uri.as_ref()
-            && !self.vocabularies.contains_key(uri)
+            && !self.vocabularies.contains_key(uri.as_str())
         {
             self.unresolved = self.unresolved.saturating_add(1);
         }
@@ -266,9 +266,13 @@ mod tests {
                 lens: LensRef {
                     cid: None,
                     direction: None,
-                    uri: Some("at://did:plc:x/dev.panproto.schema.lens/l".into()),
+                    uri: Some(
+                        idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l")
+                            .expect("valid at-uri"),
+                    ),
                 },
-                occurred_at: "2026-04-23T00:00:00Z".into(),
+                occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                    .expect("valid datetime"),
                 produced_output: None,
                 r#use: Use {
                     action: action.to_owned(),
@@ -276,7 +280,7 @@ mod tests {
                     actor: None,
                     purpose: None,
                     action_vocabulary: vocab_uri.map(|u| VocabRef {
-                        uri: Some(u.to_owned()),
+                        uri: Some(idiolect_records::AtUri::parse(u).expect("valid at-uri")),
                         cid: None,
                     }),
                     purpose_vocabulary: None,
@@ -285,7 +289,12 @@ mod tests {
                 source_schema: SchemaRef {
                     cid: None,
                     language: None,
-                    uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".into()),
+                    uri: Some(
+                        idiolect_records::AtUri::parse(
+                            "at://did:plc:x/dev.panproto.schema.schema/s",
+                        )
+                        .expect("valid at-uri"),
+                    ),
                 },
                 target_schema: None,
                 visibility:
@@ -321,7 +330,8 @@ mod tests {
                 },
             ],
             supersedes: None,
-            occurred_at: "2026-04-23T00:00:00Z".into(),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                .expect("valid datetime"),
         }
     }
 

@@ -40,8 +40,8 @@ fn stage_fixture(
     tgt_schema: Schema,
     protolens: &panproto_lens::protolens::Protolens,
 ) -> (idiolect_lens::AtUri, InMemoryResolver, InMemorySchemaLoader) {
-    let src_hash = "sha256:src".to_owned();
-    let tgt_hash = "sha256:tgt".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt".to_owned();
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.clone(), src_schema);
@@ -51,12 +51,13 @@ fn stage_fixture(
     let lens_uri = idiolect_lens::AtUri::parse(lens_uri_str).expect("parse lens at-uri");
     let lens_record = PanprotoLens {
         blob: Some(blob),
-        created_at: "2026-04-19T00:00:00.000Z".to_owned(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:deadbeef".to_owned(),
         round_trip_class: Some("isomorphism".to_owned()),
-        source_schema: src_hash,
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
 
     let mut resolver = InMemoryResolver::new();
@@ -135,7 +136,7 @@ async fn apply_lens_round_trips_single_field_rename_sort() {
         &loader,
         &protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: source_record.clone(),
             source_root_vertex: None,
         },
@@ -154,7 +155,7 @@ async fn apply_lens_round_trips_single_field_rename_sort() {
         &loader,
         &protocol,
         ApplyLensPutInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             target_record: forward.target_record,
             complement: forward.complement,
             target_root_vertex: None,
@@ -193,7 +194,7 @@ async fn apply_lens_forward_preserves_multi_field_record() {
         &loader,
         &protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: source_record.clone(),
             source_root_vertex: None,
         },
@@ -231,8 +232,8 @@ async fn apply_lens_accepts_protolens_chain_blob() {
     // stage the fixture. `stage_fixture` wants a `Protolens`, but the
     // untagged `LensBody` serde format lets us drop in a chain blob by
     // serializing the chain directly.
-    let src_hash = "sha256:src".to_owned();
-    let tgt_hash = "sha256:tgt".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt".to_owned();
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.clone(), src_schema);
@@ -243,12 +244,13 @@ async fn apply_lens_accepts_protolens_chain_blob() {
         .expect("parse lens at-uri");
     let lens_record = PanprotoLens {
         blob: Some(blob),
-        created_at: "2026-04-19T00:00:00.000Z".to_owned(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:chain".to_owned(),
         round_trip_class: Some("isomorphism".to_owned()),
-        source_schema: src_hash,
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
 
     let mut resolver = InMemoryResolver::new();
@@ -263,7 +265,7 @@ async fn apply_lens_accepts_protolens_chain_blob() {
         &loader,
         &protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: source_record.clone(),
             source_root_vertex: None,
         },

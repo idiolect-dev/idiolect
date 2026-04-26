@@ -74,8 +74,9 @@ fn fixture_observation() -> Observation {
             name: "correction-rate".to_owned(),
             parameters: None,
         },
-        observer: "did:plc:observer".to_owned(),
-        occurred_at: "2026-04-20T12:00:00Z".to_owned(),
+        observer: idiolect_records::Did::parse("did:plc:observer").expect("valid DID"),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T12:00:00Z")
+            .expect("valid datetime"),
         output: serde_json::json!({ "lenses": {} }),
         scope: ObservationScope {
             communities: None,

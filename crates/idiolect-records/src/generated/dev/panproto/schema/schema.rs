@@ -18,7 +18,7 @@ pub struct PanprotoSchema {
     pub blob: Option<serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constraint_count: Option<i64>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub edge_count: Option<i64>,
     pub object_hash: String,

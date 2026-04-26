@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 pub struct PanprotoRepo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub commit_count: Option<i64>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_branch: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

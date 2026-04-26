@@ -46,15 +46,26 @@
 //! Fixtures for every record kind are exported from [`examples`] for
 //! use in downstream tests without reinventing minimally-valid json.
 
+// Generated record modules under `generated/` reference the typed
+// wrappers via the crate name (`idiolect_records::Did` etc.) so the
+// same emitter source serves both this crate's own generated tree
+// and any downstream codegen target that emits into another crate.
+// `extern crate self` lets that path resolve in-crate.
+extern crate self as idiolect_records;
+
 pub mod at_uri;
+pub mod datetime;
 pub mod did;
 pub mod generated;
 pub mod nsid;
 pub mod record;
+pub mod uri;
 
 pub use at_uri::{AtUri, AtUriError};
+pub use datetime::{Datetime, DatetimeError};
 pub use did::{Did, DidError, DidMethod};
 pub use nsid::{Nsid, NsidError};
+pub use uri::{Uri, UriError};
 
 // Forward every type and sub-module exposed by `generated::` to the
 // crate root. The list of record-type aliases lives in the generated

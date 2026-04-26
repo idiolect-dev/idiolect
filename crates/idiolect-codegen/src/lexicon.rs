@@ -73,10 +73,28 @@ pub struct Prop {
 /// The shape of a property's value.
 #[derive(Debug, Clone)]
 pub enum PropType {
-    /// Plain string.
+    /// Plain string with no `format` declaration.
     String,
-    /// String constrained to the atproto `datetime` format.
+    /// String constrained to the atproto `datetime` format
+    /// (RFC 3339). Emits as `idiolect_records::Datetime`.
     StringDatetime,
+    /// String constrained to the atproto `at-uri` format. Emits
+    /// as `idiolect_records::AtUri`.
+    StringAtUri,
+    /// String constrained to the atproto `did` format. Emits as
+    /// `idiolect_records::Did`.
+    StringDid,
+    /// String constrained to the atproto `nsid` format. Emits as
+    /// `idiolect_records::Nsid`.
+    StringNsid,
+    /// String constrained to the atproto `uri` format (generic
+    /// RFC 3986 URI). Emits as `idiolect_records::Uri`.
+    StringUri,
+    /// String constrained to the atproto `language` format
+    /// (BCP 47 tag). Currently emits as `String` because there is
+    /// no dedicated typed wrapper yet, but the variant is broken
+    /// out so future work has a target.
+    StringLanguage,
     /// Integer (signed, arbitrary width — rendered as `i64`).
     Integer,
     /// Boolean.
@@ -286,8 +304,20 @@ fn parse_prop_type(current_nsid: &str, def: &Value) -> Result<PropType> {
                     .collect();
                 return Ok(PropType::InlineStringEnum(values));
             }
-            if def.get("format").and_then(Value::as_str) == Some("datetime") {
-                return Ok(PropType::StringDatetime);
+            // Dispatch on `format`. Unknown formats fall through to
+            // `PropType::String` so the codegen stays forward-
+            // compatible with future format types — adding a typed
+            // wrapper later is a non-breaking refinement.
+            if let Some(fmt) = def.get("format").and_then(Value::as_str) {
+                return Ok(match fmt {
+                    "datetime" => PropType::StringDatetime,
+                    "at-uri" => PropType::StringAtUri,
+                    "did" => PropType::StringDid,
+                    "nsid" => PropType::StringNsid,
+                    "uri" => PropType::StringUri,
+                    "language" => PropType::StringLanguage,
+                    _ => PropType::String,
+                });
             }
             Ok(PropType::String)
         }

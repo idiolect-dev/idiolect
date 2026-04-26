@@ -46,12 +46,12 @@
 //! let uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
 //! let lens = PanprotoLens {
 //!     blob: None,
-//!     created_at: "2026-04-19T00:00:00.000Z".to_owned(),
+//!     created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z").expect("valid datetime"),
 //!     laws_verified: None,
 //!     object_hash: "sha256:deadbeef".to_owned(),
 //!     round_trip_class: None,
-//!     source_schema: "sha256:aaa".to_owned(),
-//!     target_schema: "sha256:bbb".to_owned(),
+//!     source_schema: idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.schema/aaa").expect("valid at-uri"),
+//!     target_schema: idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.schema/bbb").expect("valid at-uri"),
 //! };
 //!
 //! let mut r = InMemoryResolver::new();

@@ -26,9 +26,9 @@ pub struct Bounty {
     pub eligibility: Option<Vec<BountyEligibility>>,
     /// Once fulfilled, points to the deliverable record (lens, verification, or adapter).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fulfillment: Option<String>,
-    pub occurred_at: String,
-    pub requester: String,
+    pub fulfillment: Option<idiolect_records::AtUri>,
+    pub occurred_at: idiolect_records::Datetime,
+    pub requester: idiolect_records::Did,
     /// Reward terms. The bounty record does not transact; `externalRef` is the machine-actionable hook; `summary` is narrative.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reward: Option<BountyReward>,
@@ -57,7 +57,7 @@ pub struct ConstraintConformance {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConstraintDeadline {
-    pub deadline: String,
+    pub deadline: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub grace_seconds: Option<i64>,
 }
@@ -66,7 +66,7 @@ pub struct ConstraintDeadline {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConstraintDependency {
-    pub bounty: String,
+    pub bounty: idiolect_records::AtUri,
 }
 
 /// License requirement expressed as an SPDX expression plus optional allow/deny lists.
@@ -107,14 +107,14 @@ pub struct EligibilityAnd {}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EligibilityDid {
-    pub did: String,
+    pub did: idiolect_records::Did,
 }
 
 /// Atomic predicate: claimer is a member of the named community.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EligibilityMember {
-    pub community: String,
+    pub community: idiolect_records::AtUri,
 }
 
 /// Combinator: negate the top predicate on the evaluation stack.
@@ -256,7 +256,7 @@ pub enum BountyStatus {
 pub struct BountyReward {
     /// URL pointing to the rail that handles actual reward (grant portal, payment platform, attestation service).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub external_ref: Option<String>,
+    pub external_ref: Option<idiolect_records::Uri>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
 }

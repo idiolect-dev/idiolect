@@ -153,11 +153,11 @@ impl ObservationMethod for DialectFederationMethod {
             .as_deref()
             .unwrap_or(&[])
             .iter()
-            .filter_map(|lr| lr.uri.clone())
+            .filter_map(|lr| lr.uri.as_ref().map(|u| u.as_str().to_owned()))
             .collect();
 
         state.current_dialect_uri = Some(at_uri);
-        state.current_created_at = Some(dialect.created_at.clone());
+        state.current_created_at = Some(dialect.created_at.as_str().to_owned());
         state.current_lenses = lenses;
         Ok(())
     }
@@ -205,19 +205,22 @@ mod tests {
 
     fn dialect(created_at: &str, lens_uris: &[&str]) -> Dialect {
         Dialect {
-            created_at: created_at.to_owned(),
+            created_at: idiolect_records::Datetime::parse(created_at).expect("valid datetime"),
             deprecations: None,
             description: None,
             idiolects: None,
             name: "watched".into(),
-            owning_community: "at://did:plc:c/dev.idiolect.community/main".into(),
+            owning_community: idiolect_records::AtUri::parse(
+                "at://did:plc:c/dev.idiolect.community/main",
+            )
+            .expect("valid at-uri"),
             preferred_lenses: Some(
                 lens_uris
                     .iter()
                     .map(|u| LensRef {
                         cid: None,
                         direction: None,
-                        uri: Some((*u).to_owned()),
+                        uri: Some(idiolect_records::AtUri::parse(u).expect("valid at-uri")),
                     })
                     .collect(),
             ),
@@ -247,7 +250,10 @@ mod tests {
         m.observe(&event_from(
             "did:plc:other",
             "d",
-            dialect("2026-04-21T00:00:00Z", &["at://lens/1"]),
+            dialect(
+                "2026-04-21T00:00:00Z",
+                &["at://did:plc:lens/dev.idiolect.test/1"],
+            ),
         ))
         .unwrap();
         // Snapshot shows the watched DID with no current dialect.
@@ -264,13 +270,22 @@ mod tests {
         m.observe(&event_from(
             "did:plc:w",
             "d1",
-            dialect("2026-04-21T00:00:00Z", &["at://l/1"]),
+            dialect(
+                "2026-04-21T00:00:00Z",
+                &["at://did:plc:l/dev.idiolect.test/1"],
+            ),
         ))
         .unwrap();
         m.observe(&event_from(
             "did:plc:w",
             "d2",
-            dialect("2026-04-22T00:00:00Z", &["at://l/2", "at://l/3"]),
+            dialect(
+                "2026-04-22T00:00:00Z",
+                &[
+                    "at://did:plc:l/dev.idiolect.test/2",
+                    "at://did:plc:l/dev.idiolect.test/3",
+                ],
+            ),
         ))
         .unwrap();
 
@@ -292,14 +307,20 @@ mod tests {
         m.observe(&event_from(
             "did:plc:w",
             "d-new",
-            dialect("2026-04-22T00:00:00Z", &["at://l/new"]),
+            dialect(
+                "2026-04-22T00:00:00Z",
+                &["at://did:plc:l/dev.idiolect.test/new"],
+            ),
         ))
         .unwrap();
         // Older createdAt arrives second — should not overwrite.
         m.observe(&event_from(
             "did:plc:w",
             "d-old",
-            dialect("2026-04-21T00:00:00Z", &["at://l/old"]),
+            dialect(
+                "2026-04-21T00:00:00Z",
+                &["at://did:plc:l/dev.idiolect.test/old"],
+            ),
         ))
         .unwrap();
 

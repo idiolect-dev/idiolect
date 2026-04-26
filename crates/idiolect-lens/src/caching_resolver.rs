@@ -162,12 +162,19 @@ mod tests {
     fn sample_lens() -> PanprotoLens {
         PanprotoLens {
             blob: None,
-            created_at: "2026-04-19T00:00:00.000Z".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: None,
             object_hash: "sha256:deadbeef".into(),
             round_trip_class: None,
-            source_schema: "sha256:a".into(),
-            target_schema: "sha256:b".into(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/a",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/b",
+            )
+            .expect("valid at-uri"),
         }
     }
 

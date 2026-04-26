@@ -66,12 +66,17 @@ where
         })?;
 
         // Resolve the lens record so we can pull source+target schema hashes.
-        let parsed = idiolect_lens::AtUri::parse(&lens_uri)?;
-        let lens_record = self.resolver.resolve(&parsed).await?;
+        let lens_record = self.resolver.resolve(&lens_uri).await?;
 
         // Load both schemas and validate each.
-        let src = self.schema_loader.load(&lens_record.source_schema).await?;
-        let tgt = self.schema_loader.load(&lens_record.target_schema).await?;
+        let src = self
+            .schema_loader
+            .load(lens_record.source_schema.as_str())
+            .await?;
+        let tgt = self
+            .schema_loader
+            .load(lens_record.target_schema.as_str())
+            .await?;
 
         let src_errors = validate(&src, &self.protocol);
         let tgt_errors = validate(&tgt, &self.protocol);
@@ -154,13 +159,19 @@ mod tests {
             .unwrap()
     }
 
-    fn stage(valid_target: bool) -> (String, InMemoryResolver, InMemorySchemaLoader) {
+    fn stage(
+        valid_target: bool,
+    ) -> (
+        idiolect_records::AtUri,
+        InMemoryResolver,
+        InMemorySchemaLoader,
+    ) {
         let src = valid_schema();
         let protolens = elementary::rename_sort("string", "string");
         let tgt = protolens.target_schema(&src, &test_protocol()).unwrap();
 
-        let src_hash = "sha256:src".to_owned();
-        let tgt_hash = "sha256:tgt".to_owned();
+        let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src".to_owned();
+        let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt".to_owned();
         let mut loader = InMemorySchemaLoader::new();
         loader.insert(src_hash.clone(), src);
         if valid_target {
@@ -183,27 +194,29 @@ mod tests {
             idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/sc").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
-            created_at: "2026-04-21T00:00:00.000Z".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: Some(true),
             object_hash: "sha256:lens-sc".into(),
             round_trip_class: Some("isomorphism".into()),
-            source_schema: src_hash,
-            target_schema: tgt_hash,
+            source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
         };
         let mut resolver = InMemoryResolver::new();
         resolver.insert(&uri, record);
-        (uri.to_string(), resolver, loader)
+        (uri, resolver, loader)
     }
 
-    fn target(uri: String) -> VerificationTarget {
+    fn target(uri: idiolect_records::AtUri) -> VerificationTarget {
         VerificationTarget {
             lens: LensRef {
                 cid: None,
                 direction: None,
                 uri: Some(uri),
             },
-            verifier: "did:plc:verifier".into(),
-            occurred_at: "2026-04-21T00:00:00Z".into(),
+            verifier: idiolect_records::Did::parse("did:plc:verifier").expect("valid DID"),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+                .expect("valid datetime"),
             tool_override: None,
         }
     }
@@ -238,7 +251,10 @@ mod tests {
         let (uri, resolver, loader) = stage(true);
         let _ = uri;
         let runner = StaticCheckRunner::new(resolver, loader, test_protocol());
-        let mut t = target("ignored".into());
+        let mut t = target(
+            idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/placeholder")
+                .expect("valid"),
+        );
         t.lens.uri = None;
         let err = runner.run(&t).await.unwrap_err();
         assert!(matches!(err, VerifyError::InvalidInput(_)));

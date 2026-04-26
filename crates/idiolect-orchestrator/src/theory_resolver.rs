@@ -338,7 +338,8 @@ mod tests {
                 entry("annotate", &["any_action"]),
             ],
             supersedes: None,
-            occurred_at: "2026-04-23T00:00:00Z".to_owned(),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                .expect("valid datetime"),
         }
     }
 
@@ -355,7 +356,8 @@ mod tests {
                 entry("academic", &["non_commercial"]),
             ],
             supersedes: None,
-            occurred_at: "2026-04-23T00:00:00Z".to_owned(),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                .expect("valid datetime"),
         }
     }
 
@@ -371,11 +373,11 @@ mod tests {
             actor: None,
             purpose: purpose.map(ToOwned::to_owned),
             action_vocabulary: action_vocab.map(|u| VocabRef {
-                uri: Some(u.to_owned()),
+                uri: Some(idiolect_records::AtUri::parse(u).expect("valid at-uri")),
                 cid: None,
             }),
             purpose_vocabulary: purpose_vocab.map(|u| VocabRef {
-                uri: Some(u.to_owned()),
+                uri: Some(idiolect_records::AtUri::parse(u).expect("valid at-uri")),
                 cid: None,
             }),
         }
@@ -448,16 +450,23 @@ mod tests {
             lens: idiolect_records::generated::dev::idiolect::defs::LensRef {
                 cid: None,
                 direction: None,
-                uri: Some("at://x/dev.panproto.schema.lens/l".to_owned()),
+                uri: Some(
+                    idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l")
+                        .expect("valid at-uri"),
+                ),
             },
-            occurred_at: "2026-04-23T00:00:00Z".to_owned(),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                .expect("valid datetime"),
             produced_output: None,
             r#use: mk_use("ungrounded_action", Some(av_uri), None, None),
             source_instance: None,
             source_schema: idiolect_records::generated::dev::idiolect::defs::SchemaRef {
                 cid: None,
                 language: None,
-                uri: Some("at://x/dev.panproto.schema.schema/s".to_owned()),
+                uri: Some(
+                    idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.schema/s")
+                        .expect("valid at-uri"),
+                ),
             },
             target_schema: None,
             visibility:

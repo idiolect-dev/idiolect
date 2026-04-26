@@ -18,7 +18,7 @@ pub struct PanprotoProtocol {
     pub category: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constraint_sorts: Option<Vec<String>>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub edge_rules: Option<Vec<EdgeRule>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

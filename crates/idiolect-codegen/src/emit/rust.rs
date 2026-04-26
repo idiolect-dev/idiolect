@@ -28,6 +28,8 @@
     clippy::needless_pass_by_value
 )]
 
+use std::fmt::Write as _;
+
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -460,12 +462,18 @@ fn resolve_prop_type(
     current_nsid: &str,
 ) -> (TokenStream, Option<InlineType>) {
     match ty {
-        // cid-link renders as an atproto cid string on the wire; we
-        // keep it a bare `String` like other string formats rather
-        // than carrying a distinct newtype yet.
-        PropType::String | PropType::StringDatetime | PropType::CidLink => {
+        // cid-link renders as an atproto cid string on the wire;
+        // we keep it a bare `String` until a dedicated `Cid`
+        // newtype lands. `language` follows the same fallback —
+        // BCP 47 validation isn't shipped yet.
+        PropType::String | PropType::CidLink | PropType::StringLanguage => {
             (quote! { String }, None)
         }
+        PropType::StringDatetime => (quote! { idiolect_records::Datetime }, None),
+        PropType::StringAtUri => (quote! { idiolect_records::AtUri }, None),
+        PropType::StringDid => (quote! { idiolect_records::Did }, None),
+        PropType::StringNsid => (quote! { idiolect_records::Nsid }, None),
+        PropType::StringUri => (quote! { idiolect_records::Uri }, None),
         PropType::Integer => (quote! { i64 }, None),
         PropType::Boolean => (quote! { bool }, None),
         PropType::Number => (quote! { f64 }, None),
@@ -588,26 +596,104 @@ fn render_mod_rs(docs: &[LexiconDoc]) -> String {
     out.push_str("pub mod examples;\n\n");
 
     // Re-export every lexicon's main record type at the crate root.
+    // When two records under different parent namespaces share a leaf
+    // TypeName (e.g. `pub.layers.changelog.entry::Entry` and
+    // `pub.layers.resource.entry::Entry`), an unaliased re-export
+    // would collide (E0252). Walk-up disambiguation produces unique
+    // prefixed aliases only for the colliding groups.
     let mut records: Vec<&LexiconDoc> = docs
         .iter()
         .filter(|d| matches!(d.defs.get("main"), Some(Def::Record(_))))
         .collect();
     records.sort_by(|a, b| a.nsid.cmp(&b.nsid));
-    for doc in records {
-        let path: Vec<String> = module_path_for_nsid(&doc.nsid)
-            .into_iter()
-            .map(|s| {
-                if is_rust_keyword(&s) {
-                    format!("r#{s}")
-                } else {
-                    s
-                }
-            })
-            .collect();
-        let ty = pascal_case(&module_name_for_nsid(&doc.nsid));
-        out.push_str(&format!("pub use {}::{ty};\n", path.join("::")));
+    let prepared: Vec<(Vec<String>, String)> = records
+        .iter()
+        .map(|d| {
+            (
+                rust_module_path(&d.nsid),
+                pascal_case(&module_name_for_nsid(&d.nsid)),
+            )
+        })
+        .collect();
+    let aliases = walk_up_aliases(&prepared);
+    for (i, (path, ty)) in prepared.iter().enumerate() {
+        match &aliases[i] {
+            Some(alias) => {
+                let _ = writeln!(out, "pub use {}::{ty} as {alias};", path.join("::"));
+            }
+            None => {
+                let _ = writeln!(out, "pub use {}::{ty};", path.join("::"));
+            }
+        }
     }
     out
+}
+
+fn rust_module_path(nsid: &str) -> Vec<String> {
+    module_path_for_nsid(nsid)
+        .into_iter()
+        .map(|s| {
+            if is_rust_keyword(&s) {
+                format!("r#{s}")
+            } else {
+                s
+            }
+        })
+        .collect()
+}
+
+/// Compute walk-up disambiguating aliases for `(path, type_name)` pairs.
+///
+/// `aliases[i]` is `Some(prefix + ty)` when `type_name` `i` collides
+/// with another in the slice; `None` when its leaf is unique.
+fn walk_up_aliases(prepared: &[(Vec<String>, String)]) -> Vec<Option<String>> {
+    use std::collections::BTreeMap;
+
+    let mut by_ty: BTreeMap<&str, Vec<usize>> = BTreeMap::new();
+    for (i, (_, ty)) in prepared.iter().enumerate() {
+        by_ty.entry(ty.as_str()).or_default().push(i);
+    }
+    let mut aliases: Vec<Option<String>> = vec![None; prepared.len()];
+    for indices in by_ty.values() {
+        if indices.len() < 2 {
+            continue;
+        }
+        let mut take = 1;
+        loop {
+            let suffixes: Vec<String> = indices
+                .iter()
+                .map(|&i| suffix_for(&prepared[i].0, take))
+                .collect();
+            let unique: std::collections::BTreeSet<&String> = suffixes.iter().collect();
+            let exhausted = indices
+                .iter()
+                .all(|&i| take >= prepared[i].0.len().saturating_sub(1));
+            if unique.len() == indices.len() || exhausted {
+                for &i in indices {
+                    aliases[i] = Some(prefixed_alias(&prepared[i], take));
+                }
+                break;
+            }
+            take += 1;
+        }
+    }
+    aliases
+}
+
+fn suffix_for(path: &[String], take: usize) -> String {
+    let leaf_idx = path.len().saturating_sub(1);
+    let start = leaf_idx.saturating_sub(take);
+    path[start..leaf_idx].join("/")
+}
+
+fn prefixed_alias((path, ty): &(Vec<String>, String), take: usize) -> String {
+    let leaf_idx = path.len().saturating_sub(1);
+    let start = leaf_idx.saturating_sub(take);
+    let prefix: String = path[start..leaf_idx]
+        .iter()
+        .map(|s| pascal_case(s.trim_start_matches("r#")))
+        .collect();
+    format!("{prefix}{ty}")
 }
 
 /// Per-directory `mod.rs` files. For every internal directory in the
@@ -793,4 +879,69 @@ fn snake_case(s: &str) -> String {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod re_export_tests {
+    use super::*;
+    use crate::lexicon::{Def, LexiconDoc, ObjectDef, RecordDef};
+    use std::collections::BTreeMap;
+
+    fn record_doc(nsid: &str) -> LexiconDoc {
+        let mut defs = BTreeMap::new();
+        defs.insert(
+            "main".to_owned(),
+            Def::Record(RecordDef {
+                description: None,
+                key: None,
+                body: ObjectDef {
+                    description: None,
+                    required: Vec::new(),
+                    properties: Vec::new(),
+                },
+            }),
+        );
+        LexiconDoc {
+            nsid: nsid.to_owned(),
+            description: None,
+            defs,
+        }
+    }
+
+    #[test]
+    fn unique_leaf_typenames_emit_unaliased_re_exports() {
+        let docs = vec![
+            record_doc("pub.layers.changelog.entry"),
+            record_doc("pub.layers.persona.persona"),
+        ];
+        let out = render_mod_rs(&docs);
+        assert!(
+            out.contains("pub use r#pub::layers::changelog::entry::Entry;\n"),
+            "expected unaliased Entry re-export, got:\n{out}"
+        );
+        assert!(out.contains("pub use r#pub::layers::persona::persona::Persona;\n"));
+        assert!(
+            !out.contains(" as "),
+            "no aliasing expected when leaves unique"
+        );
+    }
+
+    #[test]
+    fn collision_disambiguates_with_walk_up_alias() {
+        // Two records share leaf TypeName `Entry`; the parent segment
+        // (`changelog`/`resource`) is enough to disambiguate.
+        let docs = vec![
+            record_doc("pub.layers.changelog.entry"),
+            record_doc("pub.layers.resource.entry"),
+        ];
+        let out = render_mod_rs(&docs);
+        assert!(
+            out.contains("pub use r#pub::layers::changelog::entry::Entry as ChangelogEntry;\n"),
+            "missing disambiguated changelog alias:\n{out}"
+        );
+        assert!(
+            out.contains("pub use r#pub::layers::resource::entry::Entry as ResourceEntry;\n"),
+            "missing disambiguated resource alias:\n{out}"
+        );
+    }
 }

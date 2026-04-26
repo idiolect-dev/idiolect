@@ -92,14 +92,20 @@ impl ObservationMethod for AttributionChainsMethod {
             return Ok(());
         };
         self.total = self.total.saturating_add(1);
-        let holder = belief.holder.clone().unwrap_or_else(|| event.did.clone());
+        // The belief carries a typed Did; the firehose event's `did`
+        // is still the raw atproto string from the commit envelope.
+        // Compare on the borrowed `&str` (Did derefs).
+        let holder = belief
+            .holder
+            .as_ref()
+            .map_or_else(|| event.did.clone(), |d| d.as_str().to_owned());
         if holder != event.did {
             self.third_party = self.third_party.saturating_add(1);
         }
         *self.by_holder.entry(holder).or_insert(0) += 1;
         *self
             .by_subject
-            .entry(belief.subject.uri.clone())
+            .entry(belief.subject.uri.as_str().to_owned())
             .or_insert(0) += 1;
         Ok(())
     }
@@ -149,13 +155,14 @@ mod tests {
             record: Some(AnyRecord::Belief(Belief {
                 annotations: None,
                 basis: None,
-                holder: holder.map(ToOwned::to_owned),
+                holder: holder.map(|h| idiolect_records::Did::parse(h).expect("valid did")),
                 subject: StrongRecordRef {
-                    uri: subject.to_owned(),
+                    uri: idiolect_records::AtUri::parse(subject).expect("valid at-uri"),
                     cid: "bafyxxxx".into(),
                 },
                 visibility: Some(Visibility::PublicDetailed),
-                occurred_at: "2026-04-23T00:00:00Z".into(),
+                occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
+                    .expect("valid datetime"),
             })),
         }
     }
@@ -164,19 +171,23 @@ mod tests {
     fn counts_third_party_attributions() {
         let mut m = AttributionChainsMethod::new();
         // first-party (repo == holder default): no third-party bump.
-        m.observe(&belief_event("did:plc:self", None, "at://x/y/z"))
-            .unwrap();
+        m.observe(&belief_event(
+            "did:plc:self",
+            None,
+            "at://did:plc:x/dev.idiolect.test/z",
+        ))
+        .unwrap();
         // third-party: holder differs from repo DID.
         m.observe(&belief_event(
             "did:plc:labeler",
             Some("did:plc:user"),
-            "at://x/y/z",
+            "at://did:plc:x/dev.idiolect.test/z",
         ))
         .unwrap();
         m.observe(&belief_event(
             "did:plc:labeler",
             Some("did:plc:user"),
-            "at://x/y/w",
+            "at://did:plc:x/dev.idiolect.test/w",
         ))
         .unwrap();
 
@@ -185,6 +196,6 @@ mod tests {
         assert_eq!(snap["thirdParty"], 2);
         assert_eq!(snap["byHolder"]["did:plc:self"], 1);
         assert_eq!(snap["byHolder"]["did:plc:user"], 2);
-        assert_eq!(snap["bySubject"]["at://x/y/z"], 2);
+        assert_eq!(snap["bySubject"]["at://did:plc:x/dev.idiolect.test/z"], 2);
     }
 }

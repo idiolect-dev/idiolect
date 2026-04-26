@@ -16,14 +16,14 @@ use serde::{Deserialize, Serialize};
 pub struct PanprotoLens {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blob: Option<serde_json::Value>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub laws_verified: Option<bool>,
     pub object_hash: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub round_trip_class: Option<String>,
-    pub source_schema: String,
-    pub target_schema: String,
+    pub source_schema: idiolect_records::AtUri,
+    pub target_schema: idiolect_records::AtUri,
 }
 
 impl crate::Record for PanprotoLens {

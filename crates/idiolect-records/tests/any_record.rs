@@ -10,7 +10,7 @@ use idiolect_records::{Adapter, AnyRecord};
 
 fn sample_adapter() -> Adapter {
     Adapter {
-        author: "did:plc:author".into(),
+        author: idiolect_records::Did::parse("did:plc:author").expect("valid DID"),
         framework: "hasura".into(),
         invocation_protocol: AdapterInvocationProtocol {
             entry_point: Some("bin/x".into()),
@@ -24,7 +24,8 @@ fn sample_adapter() -> Adapter {
             network_policy: None,
             resource_limits: None,
         },
-        occurred_at: "2026-04-21T00:00:00Z".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
         verification: None,
         version_range: ">=1 <2".into(),
     }

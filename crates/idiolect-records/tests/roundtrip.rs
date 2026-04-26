@@ -143,8 +143,8 @@ fn unknown_enum_value_rejected() {
     // if a lexicon adds an enum value, deserialization of the old
     // binary must fail loudly rather than silently coerce.
     let bad = json!({
-        "lens":         { "uri": "at://x/y/z" },
-        "sourceSchema": { "uri": "at://x/y/a" },
+        "lens":         { "uri": "at://did:plc:x/dev.panproto.schema.lens/z" },
+        "sourceSchema": { "uri": "at://did:plc:x/dev.panproto.schema.schema/a" },
         "use":          { "action": "p" },
         "kind":         "not-a-real-kind",
         "visibility":   "public-detailed",
