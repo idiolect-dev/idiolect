@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use idiolect_indexer::{IndexerAction, IndexerEvent, RecordHandler};
 use idiolect_orchestrator::{CatalogHandler, SqliteCatalogStore, handler::CatalogPersist, query};
-use idiolect_records::generated::adapter::{
+use idiolect_records::generated::dev::idiolect::adapter::{
     AdapterInvocationProtocol, AdapterInvocationProtocolKind, AdapterIsolation,
     AdapterIsolationKind,
 };
@@ -148,7 +148,7 @@ async fn handler_with_persist_mirrors_ingest() {
         live: true,
         did: "did:plc:author".into(),
         rev: "r1".into(),
-        collection: "dev.idiolect.adapter".into(),
+        collection: idiolect_records::Nsid::parse("dev.idiolect.adapter").expect("valid nsid"),
         rkey: "a1".into(),
         action: IndexerAction::Create,
         cid: None,
@@ -197,7 +197,7 @@ async fn handler_with_persist_halts_on_store_error() {
         live: true,
         did: "did:plc:author".into(),
         rev: "r1".into(),
-        collection: "dev.idiolect.adapter".into(),
+        collection: idiolect_records::Nsid::parse("dev.idiolect.adapter").expect("valid nsid"),
         rkey: "a1".into(),
         action: IndexerAction::Create,
         cid: None,

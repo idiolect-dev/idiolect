@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 
@@ -134,7 +134,7 @@ mod tests {
     use super::*;
     use idiolect_indexer::{IndexerAction, IndexerEvent};
     use idiolect_records::Belief;
-    use idiolect_records::generated::defs::{StrongRecordRef, Visibility};
+    use idiolect_records::generated::dev::idiolect::defs::{StrongRecordRef, Visibility};
 
     fn belief_event(repo: &str, holder: Option<&str>, subject: &str) -> IndexerEvent {
         IndexerEvent {
@@ -142,7 +142,7 @@ mod tests {
             live: true,
             did: repo.to_owned(),
             rev: "r".into(),
-            collection: "dev.idiolect.belief".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.belief").expect("valid nsid"),
             rkey: "b1".into(),
             action: IndexerAction::Create,
             cid: None,

@@ -76,16 +76,16 @@ impl<C: PdsClient> RecordFetcher<C> {
     /// See [`fetch`](Self::fetch), plus [`LensError::Transport`] for
     /// malformed at-uris and collection mismatches.
     pub async fn fetch_at_uri<R: Record>(&self, at_uri: &str) -> Result<R, LensError> {
-        let parsed = crate::at_uri::parse_at_uri(at_uri)
+        let parsed = crate::AtUri::parse(at_uri)
             .map_err(|e| LensError::Transport(format!("at-uri parse {at_uri}: {e}")))?;
-        if parsed.collection() != R::NSID {
+        if parsed.collection().as_str() != R::NSID {
             return Err(LensError::Transport(format!(
                 "at-uri {at_uri} collection {} does not match expected {}",
                 parsed.collection(),
                 R::NSID,
             )));
         }
-        self.fetch(parsed.did(), parsed.rkey()).await
+        self.fetch(parsed.did().as_str(), parsed.rkey()).await
     }
 
     /// List records of type `R` in `did`'s repo, decoding each into
@@ -154,7 +154,9 @@ pub struct ListedEntry<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use idiolect_records::generated::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+    use idiolect_records::generated::dev::idiolect::bounty::{
+        Bounty, BountyStatus, BountyWants, WantAdapter,
+    };
     use std::sync::Mutex;
 
     #[derive(Default)]

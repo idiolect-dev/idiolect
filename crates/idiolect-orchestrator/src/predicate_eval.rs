@@ -15,11 +15,11 @@
 //! distinguish "the predicate doesn't hold" from "we don't know
 //! enough yet to say."
 
-use idiolect_records::generated::bounty::{
+use idiolect_records::generated::dev::idiolect::bounty::{
     BountyEligibility, EligibilityDid, EligibilityMember, EligibilityVerificationFor,
 };
-use idiolect_records::generated::defs::{LensProperty, VocabRef};
-use idiolect_records::generated::recommendation::{
+use idiolect_records::generated::dev::idiolect::defs::{LensProperty, VocabRef};
+use idiolect_records::generated::dev::idiolect::recommendation::{
     ConditionActionSubsumedBy, ConditionDataHas, ConditionPurposeSubsumedBy, ConditionSourceIs,
     ConditionTargetIs, RecommendationConditions, RecommendationPreconditions,
 };
@@ -353,6 +353,10 @@ fn lens_property_matches(required: &LensProperty, held: &LensProperty) -> bool {
         (LensProperty::LpConvergence(req), LensProperty::LpConvergence(h)) => {
             str_wildcard_eq(&req.property, &h.property)
         }
+        (LensProperty::LpCoercionLaw(req), LensProperty::LpCoercionLaw(h)) => {
+            str_wildcard_eq(&req.standard, &h.standard)
+                && opt_str_wildcard_eq(req.version.as_deref(), h.version.as_deref())
+        }
         _ => false,
     }
 }
@@ -442,8 +446,10 @@ fn vocab_uri_from<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use idiolect_records::generated::defs::SchemaRef;
-    use idiolect_records::generated::recommendation::{ConditionAnd, ConditionNot, ConditionOr};
+    use idiolect_records::generated::dev::idiolect::defs::SchemaRef;
+    use idiolect_records::generated::dev::idiolect::recommendation::{
+        ConditionAnd, ConditionNot, ConditionOr,
+    };
 
     fn ctx_with_schemas(src: &str, tgt: &str) -> ConditionContext {
         ConditionContext {

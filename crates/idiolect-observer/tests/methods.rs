@@ -11,10 +11,12 @@ use idiolect_observer::{
     EncounterThroughputMethod, LensAdoptionMethod, ObservationMethod, VerificationCoverageMethod,
 };
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::correction::{Correction, CorrectionReason};
-use idiolect_records::generated::defs::{LensRef, SchemaRef, Visibility};
-use idiolect_records::generated::encounter::{Encounter, EncounterDownstreamResult, EncounterKind};
-use idiolect_records::generated::verification::{
+use idiolect_records::generated::dev::idiolect::correction::{Correction, CorrectionReason};
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef, Visibility};
+use idiolect_records::generated::dev::idiolect::encounter::{
+    Encounter, EncounterDownstreamResult, EncounterKind,
+};
+use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationResult,
 };
 
@@ -24,12 +26,12 @@ fn ix_event(seq: u64, did: &str, record: AnyRecord) -> IndexerEvent {
         live: true,
         did: did.to_owned(),
         rev: format!("3l{seq}"),
-        collection: match &record {
+        collection: idiolect_records::Nsid::parse(match &record {
             AnyRecord::Correction(_) => "dev.idiolect.correction",
             AnyRecord::Verification(_) => "dev.idiolect.verification",
             _ => "dev.idiolect.encounter",
-        }
-        .to_owned(),
+        })
+        .expect("valid nsid"),
         rkey: format!("k{seq}"),
         action: IndexerAction::Create,
         cid: Some(format!("bafyrei{seq}")),
@@ -55,7 +57,7 @@ fn encounter(
         },
         occurred_at: "2026-04-20T10:00:00Z".to_owned(),
         produced_output: None,
-        r#use: idiolect_records::generated::defs::Use {
+        r#use: idiolect_records::generated::dev::idiolect::defs::Use {
             action: "test".to_owned(),
             material: None,
             actor: None,
@@ -77,7 +79,7 @@ fn encounter(
 fn correction(encounter_uri: &str) -> AnyRecord {
     AnyRecord::Correction(Correction {
         basis: None,
-        encounter: idiolect_records::generated::defs::EncounterRef {
+        encounter: idiolect_records::generated::dev::idiolect::defs::EncounterRef {
             uri: encounter_uri.to_owned(),
             cid: None,
         },
@@ -102,8 +104,8 @@ fn verification(
         basis: None,
         counterexample: None,
         dependencies: None,
-        property: idiolect_records::generated::verification::VerificationProperty::LpTheorem(
-            idiolect_records::generated::defs::LpTheorem {
+        property: idiolect_records::generated::dev::idiolect::verification::VerificationProperty::LpTheorem(
+            idiolect_records::generated::dev::idiolect::defs::LpTheorem {
                 statement: "test".to_owned(),
                 system: None,
                 free_variables: None,
@@ -118,7 +120,7 @@ fn verification(
         occurred_at: "2026-04-20T11:00:00Z".to_owned(),
         proof_artifact: None,
         result,
-        tool: idiolect_records::generated::defs::Tool {
+        tool: idiolect_records::generated::dev::idiolect::defs::Tool {
             name: "coq".to_owned(),
             version: "8.18".to_owned(),
             commit: None,

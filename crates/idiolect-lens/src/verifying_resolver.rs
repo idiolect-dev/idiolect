@@ -29,7 +29,7 @@
 
 use idiolect_records::PanprotoLens;
 
-use crate::at_uri::AtUri;
+use crate::AtUri;
 use crate::error::LensError;
 use crate::resolver::Resolver;
 
@@ -307,7 +307,7 @@ mod tests {
 
     #[tokio::test]
     async fn verifier_accepts_matching_hash() {
-        let uri = crate::at_uri::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
         let lens = valid_lens(serde_json::json!({ "step": "rename_sort" }));
         let mut inner = InMemoryResolver::new();
         inner.insert(&uri, lens.clone());
@@ -318,8 +318,7 @@ mod tests {
 
     #[tokio::test]
     async fn verifier_rejects_mismatched_hash() {
-        let uri =
-            crate::at_uri::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/bad").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/bad").unwrap();
         let mut lens = valid_lens(serde_json::json!({ "step": "rename_sort" }));
         // Corrupt the hash to something random.
         lens.object_hash =
@@ -333,7 +332,7 @@ mod tests {
 
     #[tokio::test]
     async fn verifier_rejects_malformed_hash_string() {
-        let uri = crate::at_uri::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
         let mut lens = valid_lens(serde_json::json!({ "step": "rename_sort" }));
         lens.object_hash = "no-algorithm-prefix".into();
         let mut inner = InMemoryResolver::new();
@@ -345,7 +344,7 @@ mod tests {
 
     #[tokio::test]
     async fn verifier_rejects_wrong_algorithm() {
-        let uri = crate::at_uri::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
         let mut lens = valid_lens(serde_json::json!({ "step": "rename_sort" }));
         lens.object_hash = "md5:d41d8cd98f00b204e9800998ecf8427e".into();
         let mut inner = InMemoryResolver::new();
@@ -359,7 +358,7 @@ mod tests {
 
     #[tokio::test]
     async fn verifier_rejects_lens_with_no_blob() {
-        let uri = crate::at_uri::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
         let mut inner = InMemoryResolver::new();
         inner.insert(
             &uri,

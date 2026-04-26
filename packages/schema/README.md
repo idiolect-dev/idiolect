@@ -100,6 +100,14 @@ const tagged: AnyRecord = tagRecord(NSIDS.encounter, e);
   committed output differs from what the current lexicons would produce.
   Hand-edits to `src/generated/` never merge.
 
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — TypeScript
+exports, lexicon shapes, wire formats, and the validator surface
+are all in scope. Pin to an exact version if you depend on this
+package, and read [CHANGELOG.md](../../CHANGELOG.md) before bumping.
+
 ## Related
 
 - [`idiolect-records`](../../crates/idiolect-records) — Rust twin,

@@ -1,8 +1,8 @@
 //! Reference [`ObservationMethod`]: encounter throughput by kind.
 //!
 //! Counts encounters observed, partitioned by
-//! [`EncounterKind`](idiolect_records::generated::encounter::EncounterKind)
-//! and [`EncounterDownstreamResult`](idiolect_records::generated::encounter::EncounterDownstreamResult).
+//! [`EncounterKind`](idiolect_records::generated::dev::idiolect::encounter::EncounterKind)
+//! and [`EncounterDownstreamResult`](idiolect_records::generated::dev::idiolect::encounter::EncounterDownstreamResult).
 //! Output is a small json object with total-seen and the two histograms.
 //!
 //! Purpose: the simplest possible "is the firehose healthy and are
@@ -14,8 +14,10 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::encounter::{EncounterDownstreamResult, EncounterKind};
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::encounter::{
+    EncounterDownstreamResult, EncounterKind,
+};
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 

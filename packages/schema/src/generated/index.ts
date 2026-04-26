@@ -2,28 +2,13 @@
 
 // TypeScript types generated from the `dev.idiolect.*` lexicons plus the vendored
 // `dev.panproto.*` tree (see `lexicons/dev/panproto/VENDORED.md`).
+//
+// The on-disk layout mirrors the lexicon directory tree under
+// `lexicons/`: a per-directory `index.ts` re-exports its
+// immediate children. Top-level barrel below points at every
+// first-segment directory plus the cross-cutting fixtures and
+// record helpers.
 
-export * from "./adapter";
-export * from "./belief";
-export * from "./bounty";
-export * from "./community";
-export * from "./correction";
-export * from "./defs";
-export * from "./dialect";
-export * from "./encounter";
+export * from "./dev/index";
 export * from "./examples";
-export * from "./observation";
-export * from "./panproto_commit";
-export * from "./panproto_complement";
-export * from "./panproto_lens";
-export * from "./panproto_lens_attestation";
-export * from "./panproto_protolens";
-export * from "./panproto_protolens_chain";
-export * from "./panproto_ref_update";
-export * from "./panproto_repo";
-export * from "./panproto_schema";
-export * from "./recommendation";
 export * from "./records";
-export * from "./retrospection";
-export * from "./verification";
-export * from "./vocab";

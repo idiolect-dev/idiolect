@@ -24,7 +24,8 @@
               "formal-proof",
               "conformance-test",
               "static-check",
-              "convergence-preserving"
+              "convergence-preserving",
+              "coercion-law"
             ],
             "description": "Fixed taxonomy at the Lexicon level. Each kind has its own trust semantics."
           },
@@ -47,7 +48,8 @@
               "dev.idiolect.defs#lpTheorem",
               "dev.idiolect.defs#lpConformance",
               "dev.idiolect.defs#lpChecker",
-              "dev.idiolect.defs#lpConvergence"
+              "dev.idiolect.defs#lpConvergence",
+              "dev.idiolect.defs#lpCoercionLaw"
             ]
           },
           "result": {

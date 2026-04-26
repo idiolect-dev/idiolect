@@ -29,7 +29,7 @@ use std::process::ExitCode;
 
 use anyhow::{Context, Result, anyhow, bail};
 use idiolect_identity::{Did, IdentityResolver, ReqwestIdentityResolver};
-use idiolect_lens::{RecordFetcher, ReqwestPdsClient, fetcher_for_did, parse_at_uri};
+use idiolect_lens::{RecordFetcher, ReqwestPdsClient, fetcher_for_did};
 use tracing_subscriber::EnvFilter;
 
 mod encounter;
@@ -120,11 +120,10 @@ async fn cmd_fetch(args: &[String]) -> Result<ExitCode> {
     let uri = args
         .first()
         .ok_or_else(|| anyhow!("usage: idiolect fetch <at-uri>"))?;
-    let parsed = parse_at_uri(uri).context("parse at-uri")?;
-    let did = Did::parse(parsed.did()).context("parse DID component")?;
+    let parsed = idiolect_lens::AtUri::parse(uri).context("parse at-uri")?;
 
     let resolver = ReqwestIdentityResolver::new();
-    let fetcher: RecordFetcher<ReqwestPdsClient> = fetcher_for_did(&resolver, &did)
+    let fetcher: RecordFetcher<ReqwestPdsClient> = fetcher_for_did(&resolver, parsed.did())
         .await
         .context("resolve PDS for DID")?;
 
@@ -134,7 +133,11 @@ async fn cmd_fetch(args: &[String]) -> Result<ExitCode> {
     use idiolect_lens::PdsClient;
     let body = fetcher
         .client()
-        .get_record(parsed.did(), parsed.collection(), parsed.rkey())
+        .get_record(
+            parsed.did().as_str(),
+            parsed.collection().as_str(),
+            parsed.rkey(),
+        )
         .await
         .context("fetch record")?;
     println!(

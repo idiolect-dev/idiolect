@@ -20,7 +20,8 @@
               "formal-proof",
               "conformance-test",
               "static-check",
-              "convergence-preserving"
+              "convergence-preserving",
+              "coercion-law"
             ],
             "type": "string"
           },

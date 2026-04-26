@@ -88,7 +88,7 @@ fn make_event(seq: u64, collection: &str, rkey: &str, body: serde_json::Value) -
         live: true,
         did: "did:plc:alice".to_owned(),
         rev: format!("3l{seq}"),
-        collection: collection.to_owned(),
+        collection: idiolect_records::Nsid::parse(collection).expect("valid nsid"),
         rkey: rkey.to_owned(),
         action: IndexerAction::Create,
         cid: Some(format!("bafyrei{seq}")),

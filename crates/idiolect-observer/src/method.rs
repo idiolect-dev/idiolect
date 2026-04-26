@@ -13,8 +13,8 @@
 //! orchestrator").
 
 use idiolect_indexer::IndexerEvent;
-use idiolect_records::generated::defs::Visibility;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::defs::Visibility;
+use idiolect_records::generated::dev::idiolect::observation::{
     Observation, ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 

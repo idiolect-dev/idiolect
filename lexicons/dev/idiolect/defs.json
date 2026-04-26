@@ -167,7 +167,8 @@
         "#lpTheorem",
         "#lpConformance",
         "#lpChecker",
-        "#lpConvergence"
+        "#lpConvergence",
+        "#lpCoercionLaw"
       ]
     },
     "lpRoundtrip": {
@@ -274,6 +275,27 @@
         "boundSteps": {
           "type": "integer",
           "description": "Optional bound on steps to reach fixpoint."
+        }
+      }
+    },
+    "lpCoercionLaw": {
+      "type": "object",
+      "description": "Coercion-law claim: every theory inhabitant the lens carries across a translation must satisfy the named standard's coercion laws (e.g. signature preservation, axiom soundness). Surfaced from panproto's verifyCoercionLaws xrpc; violations turn the verification falsified.",
+      "required": ["standard"],
+      "properties": {
+        "standard": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Identifier of the coercion-law standard the lens is being checked against."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Optional version of the standard, useful when a standard evolves and the verification pins to a specific revision."
+        },
+        "violationThreshold": {
+          "type": "integer",
+          "description": "Optional cap on the number of violations a runner may report before falsifying the claim. Acts as a runtime parameter, not a property assertion."
         }
       }
     },

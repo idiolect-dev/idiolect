@@ -18,7 +18,6 @@
 
 use idiolect_lens::{
     ApplyLensInput, AtriumPdsClient, InMemorySchemaLoader, LensError, PdsResolver, apply_lens,
-    parse_at_uri,
 };
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::elementary;
@@ -111,7 +110,7 @@ async fn apply_lens_reads_lens_record_from_mock_pds() {
     let resolver = PdsResolver::new(client);
 
     let source_record = json!({ "text": "hello, world" });
-    let lens_uri = parse_at_uri(&format!("at://{did}/{collection}/{rkey}")).unwrap();
+    let lens_uri = idiolect_lens::AtUri::parse(&format!("at://{did}/{collection}/{rkey}")).unwrap();
 
     let out = apply_lens(
         &resolver,
@@ -152,7 +151,7 @@ async fn record_not_found_is_mapped_to_not_found_error() {
     let client = AtriumPdsClient::with_service_url(server.uri());
     let err = idiolect_lens::Resolver::resolve(
         &PdsResolver::new(client),
-        &parse_at_uri(&format!("at://{did}/{collection}/{rkey}")).unwrap(),
+        &idiolect_lens::AtUri::parse(&format!("at://{did}/{collection}/{rkey}")).unwrap(),
     )
     .await
     .expect_err("missing record should be an error");

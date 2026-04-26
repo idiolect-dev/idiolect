@@ -20,8 +20,8 @@ pub fn open_bounties(catalog: &Catalog) -> Vec<&Entry<idiolect_records::Bounty>>
 #[must_use]
 pub fn bounties_for_want_lens<'a>(
     catalog: &'a Catalog,
-    source: &idiolect_records::generated::defs::SchemaRef,
-    target: &idiolect_records::generated::defs::SchemaRef,
+    source: &idiolect_records::generated::dev::idiolect::defs::SchemaRef,
+    target: &idiolect_records::generated::dev::idiolect::defs::SchemaRef,
 ) -> Vec<&'a Entry<idiolect_records::Bounty>> {
     catalog
         .bounties()
@@ -54,7 +54,7 @@ pub fn adapters_for_framework<'a>(
 #[must_use]
 pub fn adapters_by_invocation_protocol<'a>(
     catalog: &'a Catalog,
-    kind: &idiolect_records::generated::adapter::AdapterInvocationProtocolKind,
+    kind: &idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind,
 ) -> Vec<&'a Entry<idiolect_records::Adapter>> {
     catalog
         .adapters()
@@ -75,7 +75,7 @@ pub fn recommendations_starting_from(
 #[must_use]
 pub fn verifications_for_lens<'a>(
     catalog: &'a Catalog,
-    lens: &idiolect_records::generated::defs::LensRef,
+    lens: &idiolect_records::generated::dev::idiolect::defs::LensRef,
 ) -> Vec<&'a Entry<idiolect_records::Verification>> {
     catalog
         .verifications()
@@ -86,7 +86,7 @@ pub fn verifications_for_lens<'a>(
 #[must_use]
 pub fn verifications_by_kind<'a>(
     catalog: &'a Catalog,
-    kind: &idiolect_records::generated::verification::VerificationKind,
+    kind: &idiolect_records::generated::dev::idiolect::verification::VerificationKind,
 ) -> Vec<&'a Entry<idiolect_records::Verification>> {
     catalog
         .verifications()
@@ -162,7 +162,7 @@ pub fn beliefs_by_holder<'a>(
 #[must_use]
 pub fn vocabularies_with_world<'a>(
     catalog: &'a Catalog,
-    world: &idiolect_records::generated::vocab::VocabWorld,
+    world: &idiolect_records::generated::dev::idiolect::vocab::VocabWorld,
 ) -> Vec<&'a Entry<idiolect_records::Vocab>> {
     catalog
         .vocabularies()

@@ -23,10 +23,10 @@
 //! ```
 //!
 //! When the nsid is only known at runtime (e.g. firehose traffic),
-//! use [`decode_record`] to decode into the [`AnyRecord`] variant:
+//! parse it into [`Nsid`] and dispatch via [`decode_record`]:
 //!
 //! ```
-//! use idiolect_records::{AnyRecord, decode_record, Record, Encounter};
+//! use idiolect_records::{AnyRecord, decode_record, Encounter, Nsid, Record};
 //! let json: serde_json::Value = serde_json::from_str(r#"{
 //!   "lens":         { "uri": "at://did:plc:x/dev.idiolect.lens/1" },
 //!   "sourceSchema": { "uri": "at://did:plc:x/dev.idiolect.schema/a" },
@@ -35,7 +35,8 @@
 //!   "visibility":   "public-detailed",
 //!   "occurredAt":   "2026-04-19T00:00:00.000Z"
 //! }"#).unwrap();
-//! let rec = decode_record(Encounter::NSID, json).unwrap();
+//! let nsid = Encounter::nsid();
+//! let rec = decode_record(&nsid, json).unwrap();
 //! match rec {
 //!     AnyRecord::Encounter(_) => {}
 //!     _ => panic!("expected encounter"),
@@ -45,21 +46,19 @@
 //! Fixtures for every record kind are exported from [`examples`] for
 //! use in downstream tests without reinventing minimally-valid json.
 
+pub mod at_uri;
+pub mod did;
 pub mod generated;
 pub mod nsid;
 pub mod record;
 
-// re-export every generated module at the crate root, plus each
-// lexicon's main record type, so callers can write
-// `idiolect_records::Encounter` instead of
-// `idiolect_records::generated::encounter::Encounter`.
-pub use generated::{
-    Adapter, Belief, Bounty, Community, Correction, Dialect, Encounter, Observation,
-    PanprotoCommit, PanprotoComplement, PanprotoLens, PanprotoLensAttestation, PanprotoProtolens,
-    PanprotoProtolensChain, PanprotoRefUpdate, PanprotoRepo, PanprotoSchema, Recommendation,
-    Retrospection, Verification, Vocab, adapter, belief, bounty, community, correction, defs,
-    dialect, encounter, examples, observation, panproto_commit, panproto_complement, panproto_lens,
-    panproto_lens_attestation, panproto_protolens, panproto_protolens_chain, panproto_ref_update,
-    panproto_repo, panproto_schema, recommendation, retrospection, verification, vocab,
-};
+pub use at_uri::{AtUri, AtUriError};
+pub use did::{Did, DidError, DidMethod};
+pub use nsid::{Nsid, NsidError};
+
+// Forward every type and sub-module exposed by `generated::` to the
+// crate root. The list of record-type aliases lives in the generated
+// `mod.rs` (one `pub use dev::...::T` per lexicon main record) so it
+// stays in sync with the lexicon set without a hand-edit step.
+pub use generated::*;
 pub use record::{AnyRecord, DecodeError, Record, decode_record};

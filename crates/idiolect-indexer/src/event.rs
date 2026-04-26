@@ -8,7 +8,7 @@
 //! `IndexerEvent`, not the raw tapped type, so the core crate never
 //! imposes the tapped dependency on callers.
 
-use idiolect_records::AnyRecord;
+use idiolect_records::{AnyRecord, Nsid};
 
 /// Commit action that produced this event.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,8 +37,8 @@ pub struct IndexerEvent {
     pub rev: String,
     /// Record key (usually a TID) within the collection.
     pub rkey: String,
-    /// Lexicon nsid of the commit's collection.
-    pub collection: String,
+    /// Lexicon NSID of the commit's collection.
+    pub collection: Nsid,
     /// Commit action: create / update / delete.
     pub action: IndexerAction,
     /// CID of the record body (`None` on delete).

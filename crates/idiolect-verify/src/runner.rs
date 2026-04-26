@@ -1,7 +1,7 @@
 //! Core [`VerificationRunner`] trait + supporting types.
 
-use idiolect_records::generated::defs::{LensRef, Tool};
-use idiolect_records::generated::verification::{
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, Tool};
+use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 
@@ -71,7 +71,8 @@ pub trait VerificationRunner: Send + Sync {
 ///
 /// `property` is the structured statement of what the verifier is
 /// asserting — a `LensProperty` variant sized to match `runner.kind()`
-/// (see the lexicon for the v0.2.0 shape).
+/// (see `dev.idiolect.defs#lensProperty` in the lexicons for the
+/// authoritative shape).
 #[must_use]
 pub fn build_verification<R: VerificationRunner + ?Sized>(
     target: &VerificationTarget,

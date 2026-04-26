@@ -102,9 +102,21 @@ drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default()).await?
 - Every event carries a `live: bool`. Live and backfill events dispatch
   identically at the handler, but the cursor store only advances on live
   events — replaying backfill on reconnect is safe and expected.
+- `IndexerEvent.collection` is a typed `Nsid` (parsed at the
+  stream-decode boundary). A frame with a malformed NSID is skipped
+  with a `tracing::warn!` rather than fatal-ing the loop, so a single
+  buggy publisher does not drop the firehose for everyone else.
 - Trait objects are not dyn-compatible because the traits use native
   `async fn`; the crate ships Arc blanket impls so consumers share state
   via `Arc<ConcreteImpl>` instead.
+
+## Stability
+
+idiolect is pre-1.0. Releases in the `0.x` series may include
+arbitrary breaking changes between minor versions — Rust APIs,
+lexicon shapes, wire formats, and CLI surfaces are all in scope.
+Pin to an exact version if you depend on this crate, and read
+[CHANGELOG.md](../../CHANGELOG.md) before bumping.
 
 ## Related
 

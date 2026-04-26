@@ -16,8 +16,8 @@
 use idiolect_lens::{
     ApplyLensInput, ApplyLensPutInput, Resolver, SchemaLoader, apply_lens, apply_lens_put,
 };
-use idiolect_records::generated::defs::{LpGenerator, Tool};
-use idiolect_records::generated::verification::{
+use idiolect_records::generated::dev::idiolect::defs::{LpGenerator, Tool};
+use idiolect_records::generated::dev::idiolect::verification::{
     Verification, VerificationKind, VerificationProperty, VerificationResult,
 };
 use panproto_schema::Protocol;
@@ -171,7 +171,7 @@ mod tests {
     use super::*;
     use idiolect_lens::{InMemoryResolver, InMemorySchemaLoader};
     use idiolect_records::PanprotoLens;
-    use idiolect_records::generated::defs::LensRef;
+    use idiolect_records::generated::dev::idiolect::defs::LensRef;
     use panproto_lens::protolens::elementary;
     use panproto_schema::{Schema, SchemaBuilder};
 
@@ -203,7 +203,7 @@ mod tests {
         loader.insert(tgt_hash.clone(), tgt);
 
         let uri =
-            idiolect_lens::parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/pt").unwrap();
+            idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/pt").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
             created_at: "2026-04-21T00:00:00.000Z".into(),

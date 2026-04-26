@@ -18,10 +18,10 @@ use std::io::{self, BufRead, Write};
 
 use anyhow::{Context, Result, anyhow, bail};
 use idiolect_records::Vocab;
-use idiolect_records::generated::defs::{
+use idiolect_records::generated::dev::idiolect::defs::{
     LensRef, MaterialSpec, SchemaRef, Use, Visibility, VocabRef,
 };
-use idiolect_records::generated::encounter::EncounterKind;
+use idiolect_records::generated::dev::idiolect::encounter::EncounterKind;
 use std::process::ExitCode;
 
 /// Entry point: `idiolect encounter record [--lens URI] [--source-schema URI]
@@ -189,18 +189,21 @@ fn prompt_text_only_use() -> Result<Use> {
 }
 
 async fn fetch_vocabulary(uri: &str) -> Result<Vocab> {
-    use idiolect_identity::{Did, ReqwestIdentityResolver};
-    use idiolect_lens::{PdsClient, fetcher_for_did, parse_at_uri};
+    use idiolect_identity::ReqwestIdentityResolver;
+    use idiolect_lens::{PdsClient, fetcher_for_did};
 
-    let parsed = parse_at_uri(uri).context("parse vocabulary at-uri")?;
-    let did = Did::parse(parsed.did()).context("parse DID component")?;
+    let parsed = idiolect_lens::AtUri::parse(uri).context("parse vocabulary at-uri")?;
     let resolver = ReqwestIdentityResolver::new();
-    let fetcher = fetcher_for_did(&resolver, &did)
+    let fetcher = fetcher_for_did(&resolver, parsed.did())
         .await
         .context("resolve PDS for vocabulary DID")?;
     let body = fetcher
         .client()
-        .get_record(parsed.did(), parsed.collection(), parsed.rkey())
+        .get_record(
+            parsed.did().as_str(),
+            parsed.collection().as_str(),
+            parsed.rkey(),
+        )
         .await
         .context("fetch vocabulary record")?;
     serde_json::from_value(body).context("decode vocabulary record")

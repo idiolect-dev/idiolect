@@ -3,27 +3,29 @@
 // appview-facing helpers over every generated record (dev.idiolect.* plus
 // the vendored dev.panproto.* tree). produced alongside the per-nsid modules.
 
-import type { Adapter } from "./adapter";
-import type { Belief } from "./belief";
-import type { Bounty } from "./bounty";
-import type { Community } from "./community";
-import type { Correction } from "./correction";
-import type { Dialect } from "./dialect";
-import type { Encounter } from "./encounter";
-import type { Observation } from "./observation";
-import type { Recommendation } from "./recommendation";
-import type { Retrospection } from "./retrospection";
-import type { Verification } from "./verification";
-import type { Vocab } from "./vocab";
-import type { PanprotoComplement } from "./panproto_complement";
-import type { PanprotoLens } from "./panproto_lens";
-import type { PanprotoLensAttestation } from "./panproto_lens_attestation";
-import type { PanprotoProtolens } from "./panproto_protolens";
-import type { PanprotoProtolensChain } from "./panproto_protolens_chain";
-import type { PanprotoSchema } from "./panproto_schema";
-import type { PanprotoCommit } from "./panproto_commit";
-import type { PanprotoRefUpdate } from "./panproto_ref_update";
-import type { PanprotoRepo } from "./panproto_repo";
+import type { Adapter } from "./dev/idiolect/adapter";
+import type { Belief } from "./dev/idiolect/belief";
+import type { Bounty } from "./dev/idiolect/bounty";
+import type { Community } from "./dev/idiolect/community";
+import type { Correction } from "./dev/idiolect/correction";
+import type { Dialect } from "./dev/idiolect/dialect";
+import type { Encounter } from "./dev/idiolect/encounter";
+import type { Observation } from "./dev/idiolect/observation";
+import type { Recommendation } from "./dev/idiolect/recommendation";
+import type { Retrospection } from "./dev/idiolect/retrospection";
+import type { Verification } from "./dev/idiolect/verification";
+import type { Vocab } from "./dev/idiolect/vocab";
+import type { PanprotoComplement } from "./dev/panproto/schema/complement";
+import type { PanprotoLens } from "./dev/panproto/schema/lens";
+import type { PanprotoLensAttestation } from "./dev/panproto/schema/lens_attestation";
+import type { PanprotoProtocol } from "./dev/panproto/schema/protocol";
+import type { PanprotoProtolens } from "./dev/panproto/schema/protolens";
+import type { PanprotoProtolensChain } from "./dev/panproto/schema/protolens_chain";
+import type { PanprotoSchema } from "./dev/panproto/schema/schema";
+import type { PanprotoTheory } from "./dev/panproto/schema/theory";
+import type { PanprotoCommit } from "./dev/panproto/vcs/commit";
+import type { PanprotoRefUpdate } from "./dev/panproto/vcs/ref_update";
+import type { PanprotoRepo } from "./dev/panproto/vcs/repo";
 
 /**
  * Canonical NSIDs, keyed by record kind for ergonomic call sites.
@@ -44,9 +46,11 @@ export const NSID = {
   panproto_complement: "dev.panproto.schema.complement",
   panproto_lens: "dev.panproto.schema.lens",
   panproto_lens_attestation: "dev.panproto.schema.lensAttestation",
+  panproto_protocol: "dev.panproto.schema.protocol",
   panproto_protolens: "dev.panproto.schema.protolens",
   panproto_protolens_chain: "dev.panproto.schema.protolensChain",
   panproto_schema: "dev.panproto.schema.schema",
+  panproto_theory: "dev.panproto.schema.theory",
   panproto_commit: "dev.panproto.vcs.commit",
   panproto_ref_update: "dev.panproto.vcs.refUpdate",
   panproto_repo: "dev.panproto.vcs.repo",
@@ -73,9 +77,11 @@ export type RecordTypes = {
   [NSID.panproto_complement]: PanprotoComplement;
   [NSID.panproto_lens]: PanprotoLens;
   [NSID.panproto_lens_attestation]: PanprotoLensAttestation;
+  [NSID.panproto_protocol]: PanprotoProtocol;
   [NSID.panproto_protolens]: PanprotoProtolens;
   [NSID.panproto_protolens_chain]: PanprotoProtolensChain;
   [NSID.panproto_schema]: PanprotoSchema;
+  [NSID.panproto_theory]: PanprotoTheory;
   [NSID.panproto_commit]: PanprotoCommit;
   [NSID.panproto_ref_update]: PanprotoRefUpdate;
   [NSID.panproto_repo]: PanprotoRepo;
@@ -100,9 +106,11 @@ export type AnyRecord =
   | { readonly $nsid: typeof NSID.panproto_complement; readonly value: PanprotoComplement }
   | { readonly $nsid: typeof NSID.panproto_lens; readonly value: PanprotoLens }
   | { readonly $nsid: typeof NSID.panproto_lens_attestation; readonly value: PanprotoLensAttestation }
+  | { readonly $nsid: typeof NSID.panproto_protocol; readonly value: PanprotoProtocol }
   | { readonly $nsid: typeof NSID.panproto_protolens; readonly value: PanprotoProtolens }
   | { readonly $nsid: typeof NSID.panproto_protolens_chain; readonly value: PanprotoProtolensChain }
   | { readonly $nsid: typeof NSID.panproto_schema; readonly value: PanprotoSchema }
+  | { readonly $nsid: typeof NSID.panproto_theory; readonly value: PanprotoTheory }
   | { readonly $nsid: typeof NSID.panproto_commit; readonly value: PanprotoCommit }
   | { readonly $nsid: typeof NSID.panproto_ref_update; readonly value: PanprotoRefUpdate }
   | { readonly $nsid: typeof NSID.panproto_repo; readonly value: PanprotoRepo };
@@ -190,6 +198,11 @@ export function isPanprotoLensAttestation(r: AnyRecord): r is { readonly $nsid: 
   return r.$nsid === NSID.panproto_lens_attestation;
 }
 
+/** True if `r` wraps a `PanprotoProtocol`. */
+export function isPanprotoProtocol(r: AnyRecord): r is { readonly $nsid: typeof NSID.panproto_protocol; readonly value: PanprotoProtocol } {
+  return r.$nsid === NSID.panproto_protocol;
+}
+
 /** True if `r` wraps a `PanprotoProtolens`. */
 export function isPanprotoProtolens(r: AnyRecord): r is { readonly $nsid: typeof NSID.panproto_protolens; readonly value: PanprotoProtolens } {
   return r.$nsid === NSID.panproto_protolens;
@@ -203,6 +216,11 @@ export function isPanprotoProtolensChain(r: AnyRecord): r is { readonly $nsid: t
 /** True if `r` wraps a `PanprotoSchema`. */
 export function isPanprotoSchema(r: AnyRecord): r is { readonly $nsid: typeof NSID.panproto_schema; readonly value: PanprotoSchema } {
   return r.$nsid === NSID.panproto_schema;
+}
+
+/** True if `r` wraps a `PanprotoTheory`. */
+export function isPanprotoTheory(r: AnyRecord): r is { readonly $nsid: typeof NSID.panproto_theory; readonly value: PanprotoTheory } {
+  return r.$nsid === NSID.panproto_theory;
 }
 
 /** True if `r` wraps a `PanprotoCommit`. */
@@ -247,9 +265,11 @@ export const RECORD_NSIDS = [
   NSID.panproto_complement,
   NSID.panproto_lens,
   NSID.panproto_lens_attestation,
+  NSID.panproto_protocol,
   NSID.panproto_protolens,
   NSID.panproto_protolens_chain,
   NSID.panproto_schema,
+  NSID.panproto_theory,
   NSID.panproto_commit,
   NSID.panproto_ref_update,
   NSID.panproto_repo,

@@ -18,7 +18,7 @@
 use std::sync::Mutex;
 
 use idiolect_indexer::{IndexerError, IndexerEvent, RecordHandler};
-use idiolect_records::generated::defs::Visibility;
+use idiolect_records::generated::dev::idiolect::defs::Visibility;
 
 use crate::error::{ObserverError, ObserverResult};
 use crate::method::{ObservationMethod, build_observation};

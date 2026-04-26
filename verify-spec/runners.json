@@ -19,6 +19,12 @@
       "module": "static_check",
       "struct": "StaticCheckRunner",
       "description": "Run panproto's schema validator on the lens's source and target schemas. Does not invoke the lens itself."
+    },
+    {
+      "kind": "coercion-law",
+      "module": "coercion_law",
+      "struct": "CoercionLawRunner",
+      "description": "Call dev.panproto.translate.verifyCoercionLaws on the lens and report any returned coercionLawViolation entries as a falsified verification."
     }
   ]
 }

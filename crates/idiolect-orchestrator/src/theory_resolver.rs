@@ -29,8 +29,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::defs::Use;
-use idiolect_records::generated::vocab::{Vocab, VocabWorld};
+use idiolect_records::generated::dev::idiolect::defs::Use;
+use idiolect_records::generated::dev::idiolect::vocab::{Vocab, VocabWorld};
 
 /// Outcome of a theory-resolution pass over a record's content.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -313,8 +313,8 @@ impl ResolvedVocabulary {
 mod tests {
     use super::*;
     use idiolect_records::Vocab;
-    use idiolect_records::generated::defs::{Use, VocabRef};
-    use idiolect_records::generated::vocab::ActionEntry;
+    use idiolect_records::generated::dev::idiolect::defs::{Use, VocabRef};
+    use idiolect_records::generated::dev::idiolect::vocab::ActionEntry;
 
     fn entry(id: &str, parents: &[&str]) -> ActionEntry {
         ActionEntry {
@@ -443,8 +443,9 @@ mod tests {
             basis: None,
             downstream_result: None,
             holder: None,
-            kind: idiolect_records::encounter::EncounterKind::InvocationLog,
-            lens: idiolect_records::generated::defs::LensRef {
+            kind:
+                idiolect_records::generated::dev::idiolect::encounter::EncounterKind::InvocationLog,
+            lens: idiolect_records::generated::dev::idiolect::defs::LensRef {
                 cid: None,
                 direction: None,
                 uri: Some("at://x/dev.panproto.schema.lens/l".to_owned()),
@@ -453,13 +454,14 @@ mod tests {
             produced_output: None,
             r#use: mk_use("ungrounded_action", Some(av_uri), None, None),
             source_instance: None,
-            source_schema: idiolect_records::generated::defs::SchemaRef {
+            source_schema: idiolect_records::generated::dev::idiolect::defs::SchemaRef {
                 cid: None,
                 language: None,
                 uri: Some("at://x/dev.panproto.schema.schema/s".to_owned()),
             },
             target_schema: None,
-            visibility: idiolect_records::generated::defs::Visibility::PublicDetailed,
+            visibility:
+                idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
         };
         let record = idiolect_records::AnyRecord::Encounter(encounter);
         match r.resolution_of(&record) {

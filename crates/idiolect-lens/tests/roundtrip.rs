@@ -16,7 +16,7 @@
 
 use idiolect_lens::{
     ApplyLensInput, ApplyLensPutInput, InMemoryResolver, InMemorySchemaLoader, apply_lens,
-    apply_lens_put, parse_at_uri,
+    apply_lens_put,
 };
 use idiolect_records::PanprotoLens;
 use panproto_lens::protolens::{ProtolensChain, elementary};
@@ -48,7 +48,7 @@ fn stage_fixture(
     loader.insert(tgt_hash.clone(), tgt_schema);
 
     let blob = serde_json::to_value(protolens).expect("serialize protolens");
-    let lens_uri = parse_at_uri(lens_uri_str).expect("parse lens at-uri");
+    let lens_uri = idiolect_lens::AtUri::parse(lens_uri_str).expect("parse lens at-uri");
     let lens_record = PanprotoLens {
         blob: Some(blob),
         created_at: "2026-04-19T00:00:00.000Z".to_owned(),
@@ -239,8 +239,8 @@ async fn apply_lens_accepts_protolens_chain_blob() {
     loader.insert(tgt_hash.clone(), tgt_schema);
 
     let blob = serde_json::to_value(&chain).expect("serialize chain");
-    let lens_uri =
-        parse_at_uri("at://did:plc:xyz/dev.panproto.schema.lens/l3").expect("parse lens at-uri");
+    let lens_uri = idiolect_lens::AtUri::parse("at://did:plc:xyz/dev.panproto.schema.lens/l3")
+        .expect("parse lens at-uri");
     let lens_record = PanprotoLens {
         blob: Some(blob),
         created_at: "2026-04-19T00:00:00.000Z".to_owned(),

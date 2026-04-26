@@ -186,7 +186,9 @@ fn record_with_type<R: Record>(record: &R) -> Result<serde_json::Value, LensErro
 mod tests {
     use super::*;
     use crate::resolver::{PdsClient, PdsWriter};
-    use idiolect_records::generated::bounty::{Bounty, BountyStatus, BountyWants, WantAdapter};
+    use idiolect_records::generated::dev::idiolect::bounty::{
+        Bounty, BountyStatus, BountyWants, WantAdapter,
+    };
     use std::sync::Mutex;
 
     use std::sync::Arc;

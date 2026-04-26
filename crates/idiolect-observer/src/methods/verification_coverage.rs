@@ -1,8 +1,8 @@
 //! Reference [`ObservationMethod`]: verification coverage per lens.
 //!
 //! For every lens referenced by a verification record, tallies
-//! verifications by [`VerificationKind`](idiolect_records::generated::verification::VerificationKind)
-//! and [`VerificationResult`](idiolect_records::generated::verification::VerificationResult).
+//! verifications by [`VerificationKind`](idiolect_records::generated::dev::idiolect::verification::VerificationKind)
+//! and [`VerificationResult`](idiolect_records::generated::dev::idiolect::verification::VerificationResult).
 //! Output enables a downstream orchestrator to decide whether a lens
 //! has adequate formal-channel evidence before recommending it (P3 —
 //! observation precedes declaration, where the formal channel is one
@@ -16,10 +16,12 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
-use idiolect_records::generated::verification::{VerificationKind, VerificationResult};
+use idiolect_records::generated::dev::idiolect::verification::{
+    VerificationKind, VerificationResult,
+};
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;
@@ -70,6 +72,7 @@ impl VerificationCoverageMethod {
             VerificationKind::ConformanceTest => "conformance-test",
             VerificationKind::StaticCheck => "static-check",
             VerificationKind::ConvergencePreserving => "convergence-preserving",
+            VerificationKind::CoercionLaw => "coercion-law",
         }
     }
 

@@ -18,7 +18,7 @@
 //! cursor committed against a backfill event would be stale the
 //! moment the next resync happens.
 
-use idiolect_records::{AnyRecord, DecodeError, decode_record};
+use idiolect_records::{AnyRecord, DecodeError, Nsid, decode_record};
 
 use crate::cursor::CursorStore;
 use crate::error::IndexerError;
@@ -98,8 +98,12 @@ where
     C: CursorStore,
 {
     // 1. prefix filter. commits outside the configured nsid prefix
-    // are not our business; skip without decoding.
-    if !config.nsid_prefix.is_empty() && !raw.collection.starts_with(&config.nsid_prefix) {
+    // are not our business; skip without decoding. The prefix is
+    // matched on segment boundaries via `Nsid::starts_with_authority`,
+    // so a configured prefix of `dev.idiolect` matches
+    // `dev.idiolect.encounter` but never `dev.idiolectx.foo`.
+    if !config.nsid_prefix.is_empty() && !raw.collection.starts_with_authority(&config.nsid_prefix)
+    {
         return Ok(());
     }
 
@@ -151,7 +155,7 @@ where
 /// [`IndexerError::Decode`] only after the prefix filter has already
 /// decided the commit is in the idiolect family. Any error here is a
 /// data drift, not a routing oversight.
-fn decode_body(nsid: &str, body: serde_json::Value) -> Result<AnyRecord, IndexerError> {
+fn decode_body(nsid: &Nsid, body: serde_json::Value) -> Result<AnyRecord, IndexerError> {
     decode_record(nsid, body).map_err(|err| match err {
         // UnknownNsid after a prefix match means the prefix-filter
         // accepted a collection that decode_record does not know

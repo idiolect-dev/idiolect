@@ -189,9 +189,12 @@ jobs:
 
   # ---------------------------------------------------------------
   # On pull requests, diff the current lexicon tree against the
-  # target branch and fail on any breaking change. The architecture
-  # promises schema evolution stays backward-compatible by default;
-  # this gate enforces the promise at the PR boundary.
+  # target branch and report breaking changes. Pre-1.0 the project
+  # explicitly allows arbitrary breaking changes between minor
+  # versions (see CHANGELOG.md and per-crate Stability sections), so
+  # the step is advisory: the report shows up in the job log but
+  # does not gate merge. Once the project tags 1.0 this should flip
+  # back to a hard fail.
   # ---------------------------------------------------------------
   check-compat:
     name: lexicon check-compat
@@ -223,6 +226,11 @@ jobs:
 
       - name: run check-compat
         working-directory: head
+        # Pre-1.0 advisory: classify the diff but never fail the
+        # build. The full report is in the log; reviewers and the
+        # CHANGELOG entry are responsible for catching incidental
+        # breakage.
+        continue-on-error: true
         run: |
           cargo run --quiet -p idiolect-codegen -- \
             check-compat --baseline "$GITHUB_WORKSPACE/base/lexicons/dev"

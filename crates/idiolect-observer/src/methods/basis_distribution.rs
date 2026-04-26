@@ -16,8 +16,8 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::defs::Basis;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::defs::Basis;
+use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 
@@ -214,10 +214,10 @@ mod tests {
     use super::*;
     use idiolect_indexer::{IndexerAction, IndexerEvent};
     use idiolect_records::Encounter;
-    use idiolect_records::generated::defs::{
+    use idiolect_records::generated::dev::idiolect::defs::{
         BasisExternalSignal, BasisSelfAsserted, LensRef, SchemaRef, Use,
     };
-    use idiolect_records::generated::encounter::EncounterKind;
+    use idiolect_records::generated::dev::idiolect::encounter::EncounterKind;
 
     fn encounter_with_basis(basis: Option<Basis>) -> IndexerEvent {
         IndexerEvent {
@@ -225,7 +225,8 @@ mod tests {
             live: true,
             did: "did:plc:a".into(),
             rev: "r".into(),
-            collection: "dev.idiolect.encounter".into(),
+            collection: idiolect_records::Nsid::parse("dev.idiolect.encounter")
+                .expect("valid nsid"),
             rkey: "e1".into(),
             action: IndexerAction::Create,
             cid: None,
@@ -257,7 +258,8 @@ mod tests {
                     uri: Some("at://did:plc:x/dev.panproto.schema.schema/s".into()),
                 },
                 target_schema: None,
-                visibility: idiolect_records::generated::defs::Visibility::PublicDetailed,
+                visibility:
+                    idiolect_records::generated::dev::idiolect::defs::Visibility::PublicDetailed,
             })),
         }
     }

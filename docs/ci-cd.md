@@ -17,7 +17,7 @@ green before merge (enforced by branch protection).
 | `rust` | ubuntu + macos-14 | `cargo fmt`, `clippy --workspace --all-targets -D warnings`, `nextest run --workspace`, doctests. |
 | `feature-matrix` | ubuntu | Per-crate feature combinations that the default pass does not touch (cursor-sqlite, pds-atrium, daemon composites, etc.). |
 | `cargo-deny` | ubuntu | Advisories, licences, bans, and source policy per `deny.toml`. |
-| `check-compat` | ubuntu (PR only) | Diffs `lexicons/dev/` vs the merge base and fails on any breaking change. |
+| `check-compat` | ubuntu (PR only) | Diffs `lexicons/dev/` vs the merge base and reports breaking changes. Advisory pre-1.0: the report lands in the job log but does not gate merge. Flipped to a hard fail at 1.0. |
 | `typescript` | ubuntu | biome lint, tsc typecheck, bun test. |
 
 The workflow is also exposed via `workflow_call` so `release.yml`
@@ -173,15 +173,22 @@ regenerated Rust / TypeScript is a CI failure.
 
 ### "check-compat detected breaking changes"
 
-The PR's lexicon edits are not backward-compatible with `main`. Two
-paths forward:
+Pre-1.0 the gate is advisory: the job step reports the classified
+diff and continues, so the PR remains mergeable. Treat the report
+as a heads-up rather than a stop sign — the CHANGELOG entry under
+`[Unreleased]` is the load-bearing artifact, not the CI pass/fail.
+
+Two reasonable responses to a flagged diff:
 
 1. Rework the change to avoid the breakage (add an optional field
    instead of a required one; rename via deprecation instead of
    outright).
-2. If the breaking change is intentional, mark it explicitly per
-   the project's stewardship process — a schema change that breaks
-   existing records is a conscious decision, not a side effect.
+2. Land the breaking change knowingly. Document the impact in the
+   CHANGELOG's `### Removed` / `### Changed` blocks.
+
+When the project tags 1.0 the gate flips to a hard fail; consult
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) at that
+point to remove `continue-on-error`.
 
 ### `cargo-deny` licence failure
 

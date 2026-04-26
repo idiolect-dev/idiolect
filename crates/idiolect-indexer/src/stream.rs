@@ -9,6 +9,8 @@
 
 use std::collections::VecDeque;
 
+use idiolect_records::Nsid;
+
 use crate::error::IndexerError;
 use crate::event::IndexerAction;
 
@@ -30,8 +32,8 @@ pub struct RawEvent {
     pub did: String,
     /// Repository revision the commit advanced to (TID).
     pub rev: String,
-    /// Collection nsid, e.g. `"dev.idiolect.encounter"`.
-    pub collection: String,
+    /// Collection NSID, e.g. `dev.idiolect.encounter`.
+    pub collection: Nsid,
     /// Record key within the collection.
     pub rkey: String,
     /// Commit action.

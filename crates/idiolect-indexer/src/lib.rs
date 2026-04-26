@@ -35,7 +35,7 @@
 //!     live: true,
 //!     did: "did:plc:alice".to_owned(),
 //!     rev: "3l5".to_owned(),
-//!     collection: "dev.idiolect.encounter".to_owned(),
+//!     collection: idiolect_records::Nsid::parse("dev.idiolect.encounter").unwrap(),
 //!     rkey: "3l5".to_owned(),
 //!     action: IndexerAction::Delete,
 //!     cid: None,

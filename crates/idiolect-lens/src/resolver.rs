@@ -16,11 +16,13 @@
 //!   inject reqwest, ureq, hyper, or a test double without any feature
 //!   flag gymnastics.
 //! - [`PanprotoVcsResolver`] — generic over a [`PanprotoVcsClient`].
-//!   The resolver consults a ref table to turn an at-uri into an
-//!   object-hash, then asks the client for the content-addressed lens
-//!   object. An [`InMemoryVcsClient`] is included so tests and
-//!   fixtures can stand up a content-addressed store without an
-//!   external panproto-vcs dependency.
+//!   The resolver asks the client for the at-uri's current ref hash
+//!   and then for the content-addressed lens object. The mutable ref
+//!   table and the immutable object store both live behind the
+//!   client; the resolver itself is stateless. An
+//!   [`InMemoryVcsClient`] is included so tests and fixtures can
+//!   stand up a content-addressed store without an external
+//!   panproto-vcs dependency.
 //!
 //! The write side of a PDS — creating, updating, and deleting records —
 //! lives behind the separate [`PdsWriter`] trait so callers that only
@@ -32,7 +34,7 @@ use std::collections::HashMap;
 
 use idiolect_records::PanprotoLens;
 
-use crate::at_uri::AtUri;
+use crate::AtUri;
 use crate::error::LensError;
 
 // -----------------------------------------------------------------
@@ -259,7 +261,7 @@ impl<C: PdsClient> Resolver for PdsResolver<C> {
     async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
         let body = self
             .client
-            .get_record(uri.did(), uri.collection(), uri.rkey())
+            .get_record(uri.did().as_str(), uri.collection().as_str(), uri.rkey())
             .await?;
 
         serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
@@ -423,12 +425,16 @@ impl<T: PdsWriter + ?Sized> PdsWriter for std::sync::Arc<T> {
 // panproto vcs
 // -----------------------------------------------------------------
 
-/// Abstraction over a panproto-vcs-shaped content-addressed store.
+/// Abstraction over a panproto-vcs-shaped content-addressed store
+/// plus its mutable ref table.
 ///
-/// Two concrete shapes are anticipated: a live panproto vcs client
-/// that speaks to an external store, and the [`InMemoryVcsClient`]
-/// fixture shipped below. Both resolve object-hashes to raw json
-/// bytes; the resolver decodes those bytes into a [`PanprotoLens`].
+/// Mirrors the `dev.panproto.sync.*` xrpc surface: object reads
+/// (`getObject`), ref reads + writes (`getRef` / `setRef` /
+/// `listRefs`), commit-graph traversal (`getHead` / `listCommits`),
+/// the schema-tree view (`getSchemaTree`), and registry listings
+/// (`listTheories` / `listAlignments`). Concrete impls in scope for
+/// idiolect: a live client that speaks the xrpc surface, and the
+/// [`InMemoryVcsClient`] fixture shipped below.
 #[allow(async_fn_in_trait)]
 pub trait PanprotoVcsClient: Send + Sync {
     /// Fetch the content-addressed object identified by `object_hash`.
@@ -437,39 +443,95 @@ pub trait PanprotoVcsClient: Send + Sync {
     ///
     /// Return [`LensError::NotFound`] when no object matches the hash
     /// and [`LensError::Transport`] for any backend-level failure.
-    async fn fetch_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError>;
+    async fn get_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError>;
+
+    /// Resolve a ref name to its current object hash, or `None` if
+    /// the ref does not exist.
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn get_ref(&self, name: &str) -> Result<Option<String>, LensError>;
+
+    /// Point `name` at `object_hash`. Creates the ref if absent.
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn set_ref(&self, name: &str, object_hash: &str) -> Result<(), LensError>;
+
+    /// List every `(name, object_hash)` ref the store knows about.
+    /// Order is implementation-defined.
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn list_refs(&self) -> Result<Vec<(String, String)>, LensError>;
+
+    /// Walk the commit chain starting at `ref_name`'s head, oldest-
+    /// to-newest. `limit = None` means "every commit reachable".
+    /// Returns the object hashes of the visited commits.
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::NotFound`] when the ref is unknown,
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn list_commits(
+        &self,
+        ref_name: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<String>, LensError>;
+
+    /// Object hash of the most recent commit at `ref_name`, or `None`
+    /// when the ref is empty.
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn get_head(&self, ref_name: &str) -> Result<Option<String>, LensError>;
+
+    /// Fetch the cst-shaped schema tree rooted at `object_hash`.
+    /// Used by the lens runtime when it needs the structural view of
+    /// a schema rather than the file blob.
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::NotFound`] when the tree is missing,
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn get_schema_tree(&self, object_hash: &str) -> Result<serde_json::Value, LensError>;
+
+    /// List every theory id the store recognises (registry view).
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn list_theories(&self) -> Result<Vec<String>, LensError>;
+
+    /// List every theory-alignment id the store recognises (registry
+    /// view used by the verify runners to find proof artifacts).
+    ///
+    /// # Errors
+    ///
+    /// [`LensError::Transport`] for any backend-level failure.
+    async fn list_alignments(&self) -> Result<Vec<String>, LensError>;
 }
 
-/// Resolves lens records by looking up a ref → object-hash mapping,
-/// then fetching the object from a [`PanprotoVcsClient`].
+/// Resolves lens records by asking a [`PanprotoVcsClient`] for the
+/// at-uri's current ref hash and then for the object at that hash.
 ///
-/// The ref table is held in the resolver because refs are mutable
-/// (`dev.panproto.vcs.refUpdate` rewrites them) while objects are
-/// immutable. Keeping them in separate stores matches the upstream
-/// panproto-vcs contract.
+/// State (refs + objects) lives in the client; the resolver is
+/// stateless. This matches the upstream panproto-vcs contract:
+/// `dev.panproto.sync.getRef` plus `dev.panproto.sync.getObject`.
 #[derive(Debug, Clone)]
 pub struct PanprotoVcsResolver<C> {
     client: C,
-    refs: HashMap<String, String>,
 }
 
 impl<C> PanprotoVcsResolver<C> {
-    /// Wrap a vcs client with an empty ref table.
+    /// Wrap a vcs client.
     #[must_use]
-    pub fn new(client: C) -> Self {
-        Self {
-            client,
-            refs: HashMap::new(),
-        }
-    }
-
-    /// Point the at-uri `uri` at the content-addressed object
-    /// identified by `object_hash`.
-    ///
-    /// Models `dev.panproto.vcs.refUpdate`: the ref moves, but the
-    /// object lookup is unchanged.
-    pub fn set_ref(&mut self, uri: &AtUri, object_hash: String) {
-        self.refs.insert(uri.to_string(), object_hash);
+    pub const fn new(client: C) -> Self {
+        Self { client }
     }
 
     /// Borrow the underlying client.
@@ -479,14 +541,28 @@ impl<C> PanprotoVcsResolver<C> {
     }
 }
 
+impl<C: PanprotoVcsClient> PanprotoVcsResolver<C> {
+    /// Point the at-uri `uri` at the content-addressed object
+    /// identified by `object_hash` via the underlying client.
+    ///
+    /// # Errors
+    ///
+    /// Forwards any [`LensError`] from the client's `set_ref`.
+    pub async fn set_ref(&self, uri: &AtUri, object_hash: &str) -> Result<(), LensError> {
+        self.client.set_ref(&uri.to_string(), object_hash).await
+    }
+}
+
 impl<C: PanprotoVcsClient> Resolver for PanprotoVcsResolver<C> {
     async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
+        let key = uri.to_string();
         let object_hash = self
-            .refs
-            .get(&uri.to_string())
-            .ok_or_else(|| LensError::NotFound(uri.to_string()))?;
+            .client
+            .get_ref(&key)
+            .await?
+            .ok_or(LensError::NotFound(key))?;
 
-        let body = self.client.fetch_object(object_hash).await?;
+        let body = self.client.get_object(&object_hash).await?;
 
         serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
     }
@@ -496,14 +572,26 @@ impl<C: PanprotoVcsClient> Resolver for PanprotoVcsResolver<C> {
 // in-memory vcs client (fixture)
 // -----------------------------------------------------------------
 
-/// An in-memory content-addressed store for tests and fixtures.
+/// An in-memory panproto-vcs client for tests and fixtures.
 ///
-/// Matches the contract a real panproto-vcs client satisfies: objects
-/// are immutable and keyed by `object_hash`; refs (which change) live
-/// in [`PanprotoVcsResolver`], not here.
-#[derive(Debug, Default, Clone)]
+/// Holds three maps under a single `Mutex`: the immutable object
+/// store keyed by content hash, the mutable ref table mapping ref
+/// names to head hashes, and a per-ref linear commit history (oldest
+/// to newest). Schema-tree, theory, and alignment data are stored
+/// alongside as opaque blobs the runner under test can prepopulate.
+#[derive(Debug, Default)]
 pub struct InMemoryVcsClient {
+    state: std::sync::Mutex<InMemoryVcsState>,
+}
+
+#[derive(Debug, Default)]
+struct InMemoryVcsState {
     objects: HashMap<String, serde_json::Value>,
+    refs: HashMap<String, String>,
+    commits: HashMap<String, Vec<String>>,
+    schema_trees: HashMap<String, serde_json::Value>,
+    theories: Vec<String>,
+    alignments: Vec<String>,
 }
 
 impl InMemoryVcsClient {
@@ -513,41 +601,154 @@ impl InMemoryVcsClient {
         Self::default()
     }
 
-    /// Insert a content-addressed object.
-    ///
-    /// The caller is responsible for ensuring `object_hash` is a
-    /// faithful hash of `value`; this store performs no verification
-    /// (that is the job of the upstream panproto hasher).
-    pub fn insert_object(&mut self, object_hash: String, value: serde_json::Value) {
-        self.objects.insert(object_hash, value);
+    fn lock(&self) -> std::sync::MutexGuard<'_, InMemoryVcsState> {
+        self.state
+            .lock()
+            .expect("InMemoryVcsClient state mutex poisoned")
+    }
+
+    /// Insert a content-addressed object. The caller is responsible
+    /// for ensuring `object_hash` is a faithful hash of `value`; this
+    /// store performs no verification.
+    pub fn insert_object(&self, object_hash: String, value: serde_json::Value) {
+        self.lock().objects.insert(object_hash, value);
+    }
+
+    /// Pre-populate a per-ref commit chain (oldest to newest). The
+    /// last element becomes the ref's head.
+    pub fn insert_commit_chain(&self, ref_name: String, hashes: Vec<String>) {
+        let mut state = self.lock();
+        if let Some(head) = hashes.last().cloned() {
+            state.refs.insert(ref_name.clone(), head);
+        }
+        state.commits.insert(ref_name, hashes);
+    }
+
+    /// Insert the schema-tree blob keyed by `object_hash`.
+    pub fn insert_schema_tree(&self, object_hash: String, value: serde_json::Value) {
+        self.lock().schema_trees.insert(object_hash, value);
+    }
+
+    /// Replace the registry of theory ids.
+    pub fn set_theories(&self, theories: Vec<String>) {
+        self.lock().theories = theories;
+    }
+
+    /// Replace the registry of alignment ids.
+    pub fn set_alignments(&self, alignments: Vec<String>) {
+        self.lock().alignments = alignments;
     }
 
     /// Number of stored objects.
     #[must_use]
     pub fn len(&self) -> usize {
-        self.objects.len()
+        self.lock().objects.len()
     }
 
-    /// Whether the store is empty.
+    /// Whether the object store is empty.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.objects.is_empty()
+        self.lock().objects.is_empty()
     }
 }
 
 impl PanprotoVcsClient for InMemoryVcsClient {
-    async fn fetch_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
-        self.objects
+    async fn get_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
+        self.lock()
+            .objects
             .get(object_hash)
             .cloned()
             .ok_or_else(|| LensError::NotFound(format!("object:{object_hash}")))
+    }
+
+    async fn get_ref(&self, name: &str) -> Result<Option<String>, LensError> {
+        Ok(self.lock().refs.get(name).cloned())
+    }
+
+    async fn set_ref(&self, name: &str, object_hash: &str) -> Result<(), LensError> {
+        self.lock()
+            .refs
+            .insert(name.to_owned(), object_hash.to_owned());
+        Ok(())
+    }
+
+    async fn list_refs(&self) -> Result<Vec<(String, String)>, LensError> {
+        Ok(self
+            .lock()
+            .refs
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect())
+    }
+
+    async fn list_commits(
+        &self,
+        ref_name: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<String>, LensError> {
+        let state = self.lock();
+        let chain = state
+            .commits
+            .get(ref_name)
+            .cloned()
+            .ok_or_else(|| LensError::NotFound(format!("ref:{ref_name}")))?;
+        let take = limit.map_or(chain.len(), |n| (n as usize).min(chain.len()));
+        Ok(chain.into_iter().take(take).collect())
+    }
+
+    async fn get_head(&self, ref_name: &str) -> Result<Option<String>, LensError> {
+        Ok(self.lock().refs.get(ref_name).cloned())
+    }
+
+    async fn get_schema_tree(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
+        self.lock()
+            .schema_trees
+            .get(object_hash)
+            .cloned()
+            .ok_or_else(|| LensError::NotFound(format!("schema-tree:{object_hash}")))
+    }
+
+    async fn list_theories(&self) -> Result<Vec<String>, LensError> {
+        Ok(self.lock().theories.clone())
+    }
+
+    async fn list_alignments(&self) -> Result<Vec<String>, LensError> {
+        Ok(self.lock().alignments.clone())
     }
 }
 
 /// Forward [`PanprotoVcsClient`] through a shared `Arc<T>`.
 impl<T: PanprotoVcsClient + ?Sized> PanprotoVcsClient for std::sync::Arc<T> {
-    async fn fetch_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
-        (**self).fetch_object(object_hash).await
+    async fn get_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
+        (**self).get_object(object_hash).await
+    }
+    async fn get_ref(&self, name: &str) -> Result<Option<String>, LensError> {
+        (**self).get_ref(name).await
+    }
+    async fn set_ref(&self, name: &str, object_hash: &str) -> Result<(), LensError> {
+        (**self).set_ref(name, object_hash).await
+    }
+    async fn list_refs(&self) -> Result<Vec<(String, String)>, LensError> {
+        (**self).list_refs().await
+    }
+    async fn list_commits(
+        &self,
+        ref_name: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<String>, LensError> {
+        (**self).list_commits(ref_name, limit).await
+    }
+    async fn get_head(&self, ref_name: &str) -> Result<Option<String>, LensError> {
+        (**self).get_head(ref_name).await
+    }
+    async fn get_schema_tree(&self, object_hash: &str) -> Result<serde_json::Value, LensError> {
+        (**self).get_schema_tree(object_hash).await
+    }
+    async fn list_theories(&self) -> Result<Vec<String>, LensError> {
+        (**self).list_theories().await
+    }
+    async fn list_alignments(&self) -> Result<Vec<String>, LensError> {
+        (**self).list_alignments().await
     }
 }
 
@@ -558,7 +759,6 @@ impl<T: PanprotoVcsClient + ?Sized> PanprotoVcsClient for std::sync::Arc<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::at_uri::parse_at_uri;
 
     fn fixture_lens() -> PanprotoLens {
         PanprotoLens {
@@ -574,7 +774,7 @@ mod tests {
 
     #[tokio::test]
     async fn in_memory_resolver_hit() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let mut r = InMemoryResolver::new();
         r.insert(&uri, fixture_lens());
 
@@ -584,7 +784,7 @@ mod tests {
 
     #[tokio::test]
     async fn in_memory_resolver_miss() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/missing").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/missing").unwrap();
         let r = InMemoryResolver::new();
 
         let err = r.resolve(&uri).await.unwrap_err();
@@ -606,7 +806,7 @@ mod tests {
 
     #[tokio::test]
     async fn pds_resolver_decodes_client_response() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let body = serde_json::to_value(fixture_lens()).unwrap();
 
         let r = PdsResolver::new(StaticPdsClient(body));
@@ -629,7 +829,7 @@ mod tests {
             }
         }
 
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
         let r = PdsResolver::new(FailingClient);
 
         let err = r.resolve(&uri).await.unwrap_err();
@@ -638,17 +838,17 @@ mod tests {
 
     #[tokio::test]
     async fn vcs_resolver_follows_ref_to_object() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
         let lens = fixture_lens();
 
-        let mut client = InMemoryVcsClient::new();
+        let client = InMemoryVcsClient::new();
         client.insert_object(
             "sha256:obj1".to_owned(),
             serde_json::to_value(&lens).unwrap(),
         );
 
-        let mut r = PanprotoVcsResolver::new(client);
-        r.set_ref(&uri, "sha256:obj1".to_owned());
+        let r = PanprotoVcsResolver::new(client);
+        r.set_ref(&uri, "sha256:obj1").await.unwrap();
 
         let got = r.resolve(&uri).await.unwrap();
         assert_eq!(got.target_schema, "sha256:bbb");
@@ -656,7 +856,7 @@ mod tests {
 
     #[tokio::test]
     async fn vcs_resolver_missing_ref() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/unknown").unwrap();
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/unknown").unwrap();
         let r = PanprotoVcsResolver::new(InMemoryVcsClient::new());
 
         let err = r.resolve(&uri).await.unwrap_err();
@@ -665,11 +865,69 @@ mod tests {
 
     #[tokio::test]
     async fn vcs_resolver_missing_object() {
-        let uri = parse_at_uri("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
-        let mut r = PanprotoVcsResolver::new(InMemoryVcsClient::new());
-        r.set_ref(&uri, "sha256:absent".to_owned());
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/head").unwrap();
+        let r = PanprotoVcsResolver::new(InMemoryVcsClient::new());
+        r.set_ref(&uri, "sha256:absent").await.unwrap();
 
         let err = r.resolve(&uri).await.unwrap_err();
         assert!(matches!(err, LensError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn in_memory_vcs_round_trips_refs_objects_commits() {
+        let client = InMemoryVcsClient::new();
+        client.insert_object(
+            "sha256:c1".to_owned(),
+            serde_json::json!({"kind": "commit", "n": 1}),
+        );
+        client.insert_object(
+            "sha256:c2".to_owned(),
+            serde_json::json!({"kind": "commit", "n": 2}),
+        );
+        client.insert_commit_chain(
+            "main".to_owned(),
+            vec!["sha256:c1".to_owned(), "sha256:c2".to_owned()],
+        );
+
+        assert_eq!(
+            client.get_head("main").await.unwrap(),
+            Some("sha256:c2".to_owned())
+        );
+        assert_eq!(
+            client.list_commits("main", None).await.unwrap(),
+            vec!["sha256:c1".to_owned(), "sha256:c2".to_owned()]
+        );
+        assert_eq!(
+            client.list_commits("main", Some(1)).await.unwrap(),
+            vec!["sha256:c1".to_owned()]
+        );
+        let head = client.get_object("sha256:c2").await.unwrap();
+        assert_eq!(head["n"], 2);
+    }
+
+    #[tokio::test]
+    async fn in_memory_vcs_registry_views_round_trip() {
+        let client = InMemoryVcsClient::new();
+        client.set_theories(vec!["t.first-order".to_owned()]);
+        client.set_alignments(vec!["a.coq.peano".to_owned()]);
+        client.insert_schema_tree("sha256:tree".to_owned(), serde_json::json!({"root": "S"}));
+
+        assert_eq!(
+            client.list_theories().await.unwrap(),
+            vec!["t.first-order".to_owned()]
+        );
+        assert_eq!(
+            client.list_alignments().await.unwrap(),
+            vec!["a.coq.peano".to_owned()]
+        );
+        assert_eq!(
+            client
+                .get_schema_tree("sha256:tree")
+                .await
+                .unwrap()
+                .get("root")
+                .and_then(|v| v.as_str()),
+            Some("S")
+        );
     }
 }

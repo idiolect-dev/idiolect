@@ -7,8 +7,8 @@
 use std::sync::{Arc, Mutex};
 
 use idiolect_observer::{LogPublisher, OBSERVATION_NSID, ObservationPublisher};
-use idiolect_records::generated::defs::Visibility;
-use idiolect_records::generated::observation::{
+use idiolect_records::generated::dev::idiolect::defs::Visibility;
+use idiolect_records::generated::dev::idiolect::observation::{
     Observation, ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 use tracing::subscriber::with_default;

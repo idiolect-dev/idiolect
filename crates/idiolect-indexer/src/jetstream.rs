@@ -116,12 +116,30 @@ pub fn parse_frame(line: &str) -> Result<Option<RawEvent>, IndexerError> {
         }
     };
 
+    // A malformed NSID on a single frame is an upstream-side issue
+    // (a buggy publisher, not a structural firehose problem); log it
+    // and skip the frame rather than dropping the websocket and
+    // missing every subsequent good event.
+    let collection = match idiolect_records::Nsid::parse(&commit.collection) {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::warn!(
+                did = %frame.did,
+                rkey = %commit.rkey,
+                collection = %commit.collection,
+                error = %e,
+                "skipping jetstream commit with invalid NSID collection",
+            );
+            return Ok(None);
+        }
+    };
+
     Ok(Some(RawEvent {
         seq: frame.time_us,
         live: true,
         did: frame.did,
         rev: commit.rev,
-        collection: commit.collection,
+        collection,
         rkey: commit.rkey,
         action,
         cid: commit.cid,

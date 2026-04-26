@@ -8,9 +8,10 @@ Thanks for contributing. Before filling this out:
 - If your change edits files under `<crate>-spec/`, the same
   applies — codegen regenerates the corresponding crate's
   `src/generated/` output.
-- Lexicon edits also face `check-compat` in CI; breaking schema
-  changes need an explicit ratification step per the project's
-  stewardship process.
+- Lexicon edits also face `check-compat` in CI. Pre-1.0 the gate
+  is advisory: it classifies the diff and reports in the job log
+  but does not block merge. Document any intentional breakage in
+  `CHANGELOG.md` under `[Unreleased]`.
 -->
 
 ## Summary

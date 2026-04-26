@@ -25,7 +25,7 @@
 use std::sync::Mutex;
 
 use idiolect_lens::{CreateRecordRequest, PdsWriter};
-use idiolect_records::generated::observation::Observation;
+use idiolect_records::generated::dev::idiolect::observation::Observation;
 
 use crate::error::{ObserverError, ObserverResult};
 
