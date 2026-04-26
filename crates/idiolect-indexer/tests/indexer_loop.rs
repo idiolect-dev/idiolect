@@ -341,7 +341,7 @@ async fn drive_indexer_preserves_decoded_record_type() {
 
             match record {
                 AnyRecord::Observation(obs) => {
-                    assert_eq!(obs.observer, "did:plc:observer");
+                    assert_eq!(obs.observer.as_str(), "did:plc:observer");
                     assert_eq!(obs.version, "1.0.0");
                     assert_eq!(obs.method.name, "weighted-correction-rate");
                 }

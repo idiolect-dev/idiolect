@@ -28,7 +28,7 @@ fn s_ref(uri: &str) -> SchemaRef {
     SchemaRef {
         cid: None,
         language: None,
-        uri: Some(uri.to_owned()),
+        uri: Some(idiolect_records::AtUri::parse(uri).expect("valid at-uri")),
     }
 }
 
@@ -36,7 +36,7 @@ fn l_ref(uri: &str) -> LensRef {
     LensRef {
         cid: None,
         direction: None,
-        uri: Some(uri.to_owned()),
+        uri: Some(idiolect_records::AtUri::parse(uri).expect("valid at-uri")),
     }
 }
 
@@ -86,8 +86,9 @@ fn bounty_want_lens(status: Option<BountyStatus>, src: &str, tgt: &str) -> Bount
         constraints: None,
         eligibility: None,
         fulfillment: None,
-        occurred_at: "2026-04-20T00:00:00Z".to_owned(),
-        requester: "did:plc:alice".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
+        requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status,
         wants: BountyWants::WantLens(WantLens {
@@ -104,8 +105,9 @@ fn bounty_want_adapter(fw: &str) -> Bounty {
         constraints: None,
         eligibility: None,
         fulfillment: None,
-        occurred_at: "2026-04-20T00:00:00Z".to_owned(),
-        requester: "did:plc:alice".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
+        requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
         wants: BountyWants::WantAdapter(WantAdapter {
@@ -121,7 +123,7 @@ fn adapter(framework: &str) -> Adapter {
         AdapterIsolationKind,
     };
     Adapter {
-        author: "did:plc:author".to_owned(),
+        author: idiolect_records::Did::parse("did:plc:author").expect("valid DID"),
         framework: framework.to_owned(),
         invocation_protocol: AdapterInvocationProtocol {
             entry_point: Some("bin/adapter".to_owned()),
@@ -135,7 +137,8 @@ fn adapter(framework: &str) -> Adapter {
             network_policy: None,
             resource_limits: None,
         },
-        occurred_at: "2026-04-20T00:00:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
         verification: None,
         version_range: ">=1.0 <2.0".to_owned(),
     }
@@ -147,10 +150,16 @@ fn community(members: &[&str]) -> Community {
         conventions_text: None,
         core_lenses: None,
         core_schemas: None,
-        created_at: "2026-04-20T00:00:00Z".to_owned(),
+        created_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
         description: "c".to_owned(),
         endorsed_communities: None,
-        members: Some(members.iter().map(|m| (*m).to_owned()).collect()),
+        members: Some(
+            members
+                .iter()
+                .map(|m| idiolect_records::Did::parse(m).expect("valid did"))
+                .collect(),
+        ),
         membership_roll: None,
         name: "Test".to_owned(),
     }
@@ -158,12 +167,16 @@ fn community(members: &[&str]) -> Community {
 
 fn dialect(preferred: &[&str]) -> Dialect {
     Dialect {
-        created_at: "2026-04-20T00:00:00Z".to_owned(),
+        created_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
         deprecations: None,
         description: None,
         idiolects: None,
         name: "d".to_owned(),
-        owning_community: "at://did:plc:c/dev.idiolect.community/main".to_owned(),
+        owning_community: idiolect_records::AtUri::parse(
+            "at://did:plc:c/dev.idiolect.community/main",
+        )
+        .expect("valid at-uri"),
         preferred_lenses: Some(preferred.iter().map(|u| l_ref(u)).collect()),
         previous_version: None,
         version: None,
@@ -178,9 +191,13 @@ fn recommendation(path: &[&str]) -> Recommendation {
         caveats: None,
         caveats_text: None,
         conditions: Vec::new(),
-        issuing_community: "at://did:plc:c/dev.idiolect.community/main".to_owned(),
+        issuing_community: idiolect_records::AtUri::parse(
+            "at://did:plc:c/dev.idiolect.community/main",
+        )
+        .expect("valid at-uri"),
         lens_path: path.iter().map(|u| l_ref(u)).collect(),
-        occurred_at: "2026-04-20T00:00:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
         preconditions: None,
         required_verifications: Some(vec![
             RecommendationRequiredVerifications::LpRoundtrip(LpRoundtrip {
@@ -253,7 +270,8 @@ fn verification(
         property,
         kind,
         lens: l_ref(lens_uri),
-        occurred_at: "2026-04-20T00:00:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
         proof_artifact: None,
         result,
         tool: Tool {
@@ -261,7 +279,7 @@ fn verification(
             name: "coq".to_owned(),
             version: "8.18".to_owned(),
         },
-        verifier: "did:plc:v".to_owned(),
+        verifier: idiolect_records::Did::parse("did:plc:v").expect("valid DID"),
     }
 }
 
@@ -389,7 +407,8 @@ async fn catalog_ignores_non_orchestrator_records() {
         holder: None,
         kind: EncounterKind::InvocationLog,
         lens: l_ref("at://did:plc:x/dev.panproto.schema.lens/l1"),
-        occurred_at: "2026-04-20T00:00:00Z".to_owned(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
+            .expect("valid datetime"),
         produced_output: None,
         r#use: Use {
             action: "t".to_owned(),
@@ -458,8 +477,8 @@ fn seed_catalog() -> Arc<std::sync::Mutex<idiolect_orchestrator::Catalog>> {
             "r".to_owned(),
             AnyRecord::Bounty(bounty_want_lens(
                 Some(BountyStatus::Open),
-                "at://s/a",
-                "at://s/b",
+                "at://did:plc:s/dev.panproto.schema.schema/a",
+                "at://did:plc:s/dev.panproto.schema.schema/b",
             )),
         );
         c.upsert(
@@ -468,7 +487,11 @@ fn seed_catalog() -> Arc<std::sync::Mutex<idiolect_orchestrator::Catalog>> {
             "r".to_owned(),
             AnyRecord::Bounty(Bounty {
                 status: Some(BountyStatus::Fulfilled),
-                ..bounty_want_lens(None, "at://s/a", "at://s/b")
+                ..bounty_want_lens(
+                    None,
+                    "at://did:plc:s/dev.panproto.schema.schema/a",
+                    "at://did:plc:s/dev.panproto.schema.schema/b",
+                )
             }),
         );
         c.upsert(
@@ -556,10 +579,18 @@ fn query_open_bounties_filters_out_fulfilled() {
 fn query_bounties_for_want_lens_matches_schema_pair() {
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
-    let got = query::bounties_for_want_lens(&catalog, &s_ref("at://s/a"), &s_ref("at://s/b"));
+    let got = query::bounties_for_want_lens(
+        &catalog,
+        &s_ref("at://did:plc:s/dev.panproto.schema.schema/a"),
+        &s_ref("at://did:plc:s/dev.panproto.schema.schema/b"),
+    );
     assert_eq!(got.len(), 1);
     // Non-matching pair returns empty.
-    let got = query::bounties_for_want_lens(&catalog, &s_ref("at://s/x"), &s_ref("at://s/y"));
+    let got = query::bounties_for_want_lens(
+        &catalog,
+        &s_ref("at://did:plc:s/dev.panproto.schema.schema/x"),
+        &s_ref("at://did:plc:s/dev.panproto.schema.schema/y"),
+    );
     assert!(got.is_empty());
 }
 
@@ -575,7 +606,10 @@ fn query_adapters_for_framework_case_insensitive() {
 
 #[test]
 fn query_preferred_lenses_for_dialect() {
-    let d = dialect(&["at://x/l1", "at://x/l2"]);
+    let d = dialect(&[
+        "at://did:plc:x/dev.panproto.schema.lens/l1",
+        "at://did:plc:x/dev.panproto.schema.lens/l2",
+    ]);
     let lenses = query::preferred_lenses_for_dialect(&d);
     assert_eq!(lenses.len(), 2);
 }
@@ -640,7 +674,7 @@ fn query_sufficient_verifications_excludes_falsified_when_holding_required() {
 fn query_sufficient_verifications_empty_required_is_vacuously_true() {
     let cat = seed_catalog();
     let catalog = cat.lock().unwrap();
-    let lens = l_ref("at://any/lens");
+    let lens = l_ref("at://did:plc:any/dev.panproto.schema.lens/main");
     assert!(query::sufficient_verifications_for(
         &catalog,
         &lens,
@@ -706,30 +740,45 @@ fn schema_refs_match_prefers_cid_over_uri() {
     let a = SchemaRef {
         cid: Some("cid-a".into()),
         language: None,
-        uri: Some("at://a".into()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     let b = SchemaRef {
         cid: Some("cid-a".into()),
         language: None,
-        uri: Some("at://b".into()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:b/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     assert!(query::schema_refs_match(&a, &b));
     let c = SchemaRef {
         cid: Some("cid-other".into()),
         language: None,
-        uri: Some("at://a".into()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     assert!(!query::schema_refs_match(&a, &c));
     // Falls back to uri match when neither has a cid.
     let d = SchemaRef {
         cid: None,
         language: None,
-        uri: Some("at://shared".into()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:shared/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     let e = SchemaRef {
         cid: None,
         language: None,
-        uri: Some("at://shared".into()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:shared/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     assert!(query::schema_refs_match(&d, &e));
     // Two refs with nothing in common don't match.
@@ -756,7 +805,11 @@ fn catalog_find_returns_polymorphic_ref() {
         }
         other => panic!("unexpected: {other:?}"),
     }
-    assert!(catalog.find("at://no/such/uri").is_none());
+    assert!(
+        catalog
+            .find("at://did:plc:no/dev.panproto.schema.schema/uri")
+            .is_none()
+    );
 }
 
 #[test]
@@ -783,8 +836,8 @@ fn upsert_across_kinds_does_not_leak_old_slot() {
             "r2".into(),
             AnyRecord::Bounty(bounty_want_lens(
                 Some(BountyStatus::Open),
-                "at://s/a",
-                "at://s/b",
+                "at://did:plc:s/dev.panproto.schema.schema/a",
+                "at://did:plc:s/dev.panproto.schema.schema/b",
             )),
         );
         assert_eq!(c.adapters().count(), 0, "old adapter slot must be vacated");
@@ -854,7 +907,8 @@ fn query_dialects_for_community_filters_on_owning_community() {
     // Seed catalog has one dialect owned by "at://did:plc:c/dev.idiolect.community/main"
     let got = query::dialects_for_community(&catalog, "at://did:plc:c/dev.idiolect.community/main");
     assert_eq!(got.len(), 1);
-    let miss = query::dialects_for_community(&catalog, "at://absent");
+    let miss =
+        query::dialects_for_community(&catalog, "at://did:plc:absent/dev.idiolect.community/main");
     assert!(miss.is_empty());
 }
 
@@ -878,18 +932,27 @@ fn lens_refs_match_prefers_cid() {
     let a = LensRef {
         cid: Some("cid-a".to_owned()),
         direction: None,
-        uri: Some("at://a".to_owned()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     let b = LensRef {
         cid: Some("cid-a".to_owned()),
         direction: None,
-        uri: Some("at://b".to_owned()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:b/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     assert!(query::lens_refs_match(&a, &b));
     let c = LensRef {
         cid: Some("cid-other".to_owned()),
         direction: None,
-        uri: Some("at://a".to_owned()),
+        uri: Some(
+            idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
+                .expect("valid at-uri"),
+        ),
     };
     assert!(!query::lens_refs_match(&a, &c));
 }

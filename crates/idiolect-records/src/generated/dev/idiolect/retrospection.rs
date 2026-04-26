@@ -21,9 +21,9 @@ pub struct Retrospection {
     /// Optional confidence score in [0, 1]. Omit when the finding is unambiguous.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confidence: Option<f64>,
-    pub detected_at: String,
+    pub detected_at: idiolect_records::Datetime,
     /// DID of the party that detected the issue.
-    pub detecting_party: String,
+    pub detecting_party: idiolect_records::Did,
     /// True if the detecting party anticipates the causal attribution will be contested. A hint, not a fact; contest records are separate.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disputed_attribution: Option<bool>,
@@ -34,7 +34,7 @@ pub struct Retrospection {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub latency: Option<i64>,
     /// When this retrospection record was published.
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
 }
 
 impl crate::Record for Retrospection {

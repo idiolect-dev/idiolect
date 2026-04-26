@@ -31,6 +31,65 @@ subsection under `[Unreleased]`, and the release cut moves these
 lines into the new versioned section.
 -->
 
+## [0.4.0] — 2026-04-26
+
+### Added
+
+- `idiolect_records::Datetime` and `idiolect_records::Uri` typed
+  newtypes alongside the v0.3.0 `Nsid`, `AtUri`, and `Did`. Each
+  validates at parse time (`time::OffsetDateTime` for RFC 3339,
+  `url::Url` for URIs) and exposes the standard `Deref<Target=str>`,
+  `Borrow<str>`, `AsRef<str>`, `Display`, `FromStr`, `Serialize`,
+  and `Deserialize` impls.
+- A walk-up disambiguation pass in `idiolect-codegen`'s Rust and
+  TypeScript record re-exports. Two records under different parent
+  namespaces that share a leaf TypeName (e.g.
+  `pub.layers.changelog.entry::Entry` vs
+  `pub.layers.resource.entry::Entry`) now alias as
+  `ChangelogEntry` / `ResourceEntry`. Records with unique leaf
+  TypeNames keep their unaliased `pub use` lines unchanged.
+- `notes/dependent-optics-codegen.md` — forward-looking design
+  note for the panproto v0.40 emission migration. Fixes
+  vocabulary (focus-edge → optic kind dispatch via
+  `panproto_lens::scoped`); does not change v0.4 emission.
+
+### Changed
+
+- **Breaking (Rust API).** Codegen now emits typed values for
+  every format-declared lexicon field. `format: "at-uri"` →
+  `idiolect_records::AtUri`, `format: "did"` →
+  `idiolect_records::Did`, `format: "datetime"` →
+  `idiolect_records::Datetime`, `format: "uri"` →
+  `idiolect_records::Uri`, `format: "nsid"` →
+  `idiolect_records::Nsid`. Previously every format collapsed to
+  `String`. Callsites that read these fields now see the typed
+  value; serialization shape is unchanged. The 196 format
+  declarations across `lexicons/dev/idiolect/**` and the vendored
+  `lexicons/dev/panproto/**` are all in scope.
+- TypeScript codegen continues to emit format-declared fields as
+  `string` for v0.4. Branded-string wrappers and the matching
+  runtime validator helpers are deferred until panproto v0.40's
+  upstream emitter lands.
+
+### Fixed
+
+- Closes #31. With v0.3.0's nested file layout, two records under
+  different parent namespaces that ended in the same leaf
+  TypeName produced colliding `pub use … as TypeName;` lines at
+  the crate root. Phase C's walk-up disambiguation produces
+  unique aliases only for the colliding groups; consumers like
+  `layers-pub` that depend on the generated record set now
+  compile clean.
+
+### Stability
+
+- v0.4 ships zero new emission machinery in anticipation of
+  panproto v0.40's upstream schema-to-target-language emission.
+  When v0.40 lands, `idiolect-codegen` will migrate to that
+  surface. The typed-format boundary, the walk-up alias contract,
+  and the dependent-optics design note are intentionally chosen
+  to make that migration mechanical.
+
 ## [0.3.0] — 2026-04-25
 
 ### Added

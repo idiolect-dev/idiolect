@@ -549,7 +549,7 @@ impl<C: PanprotoVcsClient> PanprotoVcsResolver<C> {
     ///
     /// Forwards any [`LensError`] from the client's `set_ref`.
     pub async fn set_ref(&self, uri: &AtUri, object_hash: &str) -> Result<(), LensError> {
-        self.client.set_ref(&uri.to_string(), object_hash).await
+        self.client.set_ref(uri.as_ref(), object_hash).await
     }
 }
 
@@ -763,12 +763,19 @@ mod tests {
     fn fixture_lens() -> PanprotoLens {
         PanprotoLens {
             blob: None,
-            created_at: "2026-04-19T00:00:00.000Z".to_owned(),
+            created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: Some(true),
             object_hash: "sha256:deadbeef".to_owned(),
             round_trip_class: Some("isomorphism".to_owned()),
-            source_schema: "sha256:aaa".to_owned(),
-            target_schema: "sha256:bbb".to_owned(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/aaa",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/bbb",
+            )
+            .expect("valid at-uri"),
         }
     }
 
@@ -812,7 +819,10 @@ mod tests {
         let r = PdsResolver::new(StaticPdsClient(body));
         let got = r.resolve(&uri).await.unwrap();
 
-        assert_eq!(got.source_schema, "sha256:aaa");
+        assert_eq!(
+            got.source_schema.as_str(),
+            "at://did:plc:x/dev.panproto.schema.schema/aaa"
+        );
     }
 
     #[tokio::test]
@@ -851,7 +861,10 @@ mod tests {
         r.set_ref(&uri, "sha256:obj1").await.unwrap();
 
         let got = r.resolve(&uri).await.unwrap();
-        assert_eq!(got.target_schema, "sha256:bbb");
+        assert_eq!(
+            got.target_schema.as_str(),
+            "at://did:plc:x/dev.panproto.schema.schema/bbb"
+        );
     }
 
     #[tokio::test]

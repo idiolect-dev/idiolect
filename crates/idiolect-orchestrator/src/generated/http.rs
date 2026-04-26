@@ -40,9 +40,15 @@ async fn handler_bounties_for_want_lens(
     Query(p): Query<BountiesForWantLensParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Bounty>>>, ApiError> {
     let source: idiolect_records::generated::dev::idiolect::defs::SchemaRef =
-        crate::predicates::schema_ref_from_uri(p.raw_source.clone());
+        match crate::predicates::schema_ref_from_uri(&p.raw_source) {
+            Ok(v) => v,
+            Err(e) => return Err(ApiError::invalid_request(e.to_string())),
+        };
     let target: idiolect_records::generated::dev::idiolect::defs::SchemaRef =
-        crate::predicates::schema_ref_from_uri(p.raw_target.clone());
+        match crate::predicates::schema_ref_from_uri(&p.raw_target) {
+            Ok(v) => v,
+            Err(e) => return Err(ApiError::invalid_request(e.to_string())),
+        };
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::bounties_for_want_lens(&catalog, &source, &target)
         .into_iter()
@@ -139,7 +145,10 @@ async fn handler_verifications_for_lens(
     Query(p): Query<VerificationsForLensParams>,
 ) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Verification>>>, ApiError> {
     let lens: idiolect_records::generated::dev::idiolect::defs::LensRef =
-        crate::predicates::lens_ref_from_uri(p.raw_lens.clone());
+        match crate::predicates::lens_ref_from_uri(&p.raw_lens) {
+            Ok(v) => v,
+            Err(e) => return Err(ApiError::invalid_request(e.to_string())),
+        };
     let catalog = s.catalog.lock()?;
     let items: Vec<_> = q::verifications_for_lens(&catalog, &lens)
         .into_iter()

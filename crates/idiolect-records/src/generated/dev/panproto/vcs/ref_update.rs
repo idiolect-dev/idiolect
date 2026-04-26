@@ -18,8 +18,8 @@ pub struct PanprotoRefUpdate {
     pub breaking_changes: Option<Vec<BreakingChange>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub commit_count: Option<i64>,
-    pub committer_did: String,
-    pub created_at: String,
+    pub committer_did: idiolect_records::Did,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lens_hash: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -31,7 +31,7 @@ pub struct PanprotoRefUpdate {
     pub old_target: Option<String>,
     pub protocol: String,
     pub r#ref: String,
-    pub repo: String,
+    pub repo: idiolect_records::AtUri,
 }
 
 impl crate::Record for PanprotoRefUpdate {

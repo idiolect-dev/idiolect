@@ -129,7 +129,8 @@ impl ObservationMethod for VerificationCoverageMethod {
         let lens_key = verification
             .lens
             .uri
-            .clone()
+            .as_ref()
+            .map(|u| u.as_str().to_owned())
             .or_else(|| verification.lens.cid.clone())
             .unwrap_or_else(|| "<unidentified-lens>".to_owned());
         let entry = self.lenses.entry(lens_key).or_default();
@@ -144,7 +145,7 @@ impl ObservationMethod for VerificationCoverageMethod {
             .or_insert(0) += 1;
         *entry
             .verifiers
-            .entry(verification.verifier.clone())
+            .entry(verification.verifier.as_str().to_owned())
             .or_insert(0) += 1;
 
         Ok(())

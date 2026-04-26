@@ -285,23 +285,37 @@ mod tests {
     fn valid_lens(blob: serde_json::Value) -> PanprotoLens {
         let bytes = canonical_blob_bytes(&PanprotoLens {
             blob: Some(blob.clone()),
-            created_at: "2026-04-21T00:00:00.000Z".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: None,
             object_hash: "sha256:placeholder".into(),
             round_trip_class: None,
-            source_schema: "sha256:src".into(),
-            target_schema: "sha256:tgt".into(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/src",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/tgt",
+            )
+            .expect("valid at-uri"),
         })
         .unwrap();
         let hex = sha256_hex(&bytes);
         PanprotoLens {
             blob: Some(blob),
-            created_at: "2026-04-21T00:00:00.000Z".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: None,
             object_hash: format!("sha256:{hex}"),
             round_trip_class: None,
-            source_schema: "sha256:src".into(),
-            target_schema: "sha256:tgt".into(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/src",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/tgt",
+            )
+            .expect("valid at-uri"),
         }
     }
 
@@ -364,12 +378,19 @@ mod tests {
             &uri,
             PanprotoLens {
                 blob: None,
-                created_at: "2026-04-21T00:00:00.000Z".into(),
+                created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00.000Z")
+                    .expect("valid datetime"),
                 laws_verified: None,
                 object_hash: "sha256:deadbeef".into(),
                 round_trip_class: None,
-                source_schema: "sha256:src".into(),
-                target_schema: "sha256:tgt".into(),
+                source_schema: idiolect_records::AtUri::parse(
+                    "at://did:plc:x/dev.panproto.schema.schema/src",
+                )
+                .expect("valid at-uri"),
+                target_schema: idiolect_records::AtUri::parse(
+                    "at://did:plc:x/dev.panproto.schema.schema/tgt",
+                )
+                .expect("valid at-uri"),
             },
         );
         let verifier = VerifyingResolver::sha256(inner);
@@ -386,22 +407,36 @@ mod tests {
         let blob_b = serde_json::json!({ "b": 2, "a": 1 });
         let bytes_a = canonical_blob_bytes(&PanprotoLens {
             blob: Some(blob_a),
-            created_at: "x".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00Z")
+                .expect("valid datetime"),
             laws_verified: None,
             object_hash: "sha256:_".into(),
             round_trip_class: None,
-            source_schema: "sha256:_".into(),
-            target_schema: "sha256:_".into(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/x",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/x",
+            )
+            .expect("valid at-uri"),
         })
         .unwrap();
         let bytes_b = canonical_blob_bytes(&PanprotoLens {
             blob: Some(blob_b),
-            created_at: "x".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00Z")
+                .expect("valid datetime"),
             laws_verified: None,
             object_hash: "sha256:_".into(),
             round_trip_class: None,
-            source_schema: "sha256:_".into(),
-            target_schema: "sha256:_".into(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/x",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/x",
+            )
+            .expect("valid at-uri"),
         })
         .unwrap();
         assert_eq!(bytes_a, bytes_b);

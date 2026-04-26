@@ -17,8 +17,8 @@ fn lens_envelope() -> serde_json::Value {
         "value": {
             "createdAt": "2026-04-19T00:00:00.000Z",
             "objectHash": "sha256:deadbeef",
-            "sourceSchema": "sha256:a",
-            "targetSchema": "sha256:b"
+            "sourceSchema": "at://did:plc:x/dev.panproto.schema.schema/a",
+            "targetSchema": "at://did:plc:x/dev.panproto.schema.schema/b"
         }
     })
 }

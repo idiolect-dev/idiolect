@@ -26,13 +26,13 @@ pub struct Encounter {
     pub downstream_result: Option<EncounterDownstreamResult>,
     /// DID of the party the encounter is attributed to. Omit for first-party records (holder is implicit in the repo owner); set explicitly for third-party attestations such as a labeler recording someone else's invocation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub holder: Option<String>,
+    pub holder: Option<idiolect_records::Did>,
     /// Fixed taxonomy at the Lexicon level. Observers declare how they weight each kind.
     pub kind: EncounterKind,
     /// The lens that was invoked.
     pub lens: crate::generated::dev::idiolect::defs::LensRef,
     /// When the lens invocation occurred. Distinct from the record's createdAt, which may be later.
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
     /// Optional content-addressed reference to the produced output.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub produced_output: Option<String>,

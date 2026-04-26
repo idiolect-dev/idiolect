@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PanprotoLensAttestation {
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     /// AT-URI of the lens being attested.
-    pub lens: String,
+    pub lens: idiolect_records::AtUri,
     /// Free-text explanation of the attestation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
@@ -28,7 +28,7 @@ pub struct PanprotoLensAttestation {
     pub stance: String,
     /// AT-URI of a previous attestation this one replaces.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub supersedes: Option<String>,
+    pub supersedes: Option<idiolect_records::AtUri>,
 }
 
 impl crate::Record for PanprotoLensAttestation {

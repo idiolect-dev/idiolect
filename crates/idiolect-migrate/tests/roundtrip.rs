@@ -30,8 +30,8 @@ async fn migrate_record_translates_through_identity_lens() {
     let protolens = elementary::rename_sort("string", "string");
     let tgt = protolens.target_schema(&src, &protocol()).unwrap();
 
-    let src_hash = "sha256:src".to_owned();
-    let tgt_hash = "sha256:tgt".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt".to_owned();
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.clone(), src);
     loader.insert(tgt_hash.clone(), tgt);
@@ -39,26 +39,21 @@ async fn migrate_record_translates_through_identity_lens() {
     let uri = idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/id").unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
-        created_at: "2026-04-21T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:lens".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: src_hash,
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
     let mut resolver = InMemoryResolver::new();
     resolver.insert(&uri, record);
 
     let input = serde_json::json!({ "text": "hello" });
-    let output = migrate_record(
-        &resolver,
-        &loader,
-        &protocol(),
-        &uri.to_string(),
-        input.clone(),
-    )
-    .await
-    .unwrap();
+    let output = migrate_record(&resolver, &loader, &protocol(), uri.as_ref(), input.clone())
+        .await
+        .unwrap();
     // rename_sort with identical source/target kinds preserves the body.
     assert_eq!(output, input);
 }

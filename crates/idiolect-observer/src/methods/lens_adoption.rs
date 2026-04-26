@@ -101,7 +101,8 @@ impl ObservationMethod for LensAdoptionMethod {
         let lens_key = encounter
             .lens
             .uri
-            .clone()
+            .as_ref()
+            .map(|u| u.as_str().to_owned())
             .or_else(|| encounter.lens.cid.clone())
             .unwrap_or_else(|| "<unidentified-lens>".to_owned());
         let entry = self.lenses.entry(lens_key).or_default();

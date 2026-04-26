@@ -138,8 +138,14 @@ pub fn build_observation<M: ObservationMethod + ?Sized>(
     Ok(Some(Observation {
         basis: None,
         method: method.descriptor(),
-        observer: observer_did.to_owned(),
-        occurred_at: occurred_at.to_owned(),
+        observer: idiolect_records::Did::parse(observer_did).map_err(|e| {
+            crate::error::ObserverError::Method(format!("observer DID does not parse: {e}"))
+        })?,
+        occurred_at: idiolect_records::Datetime::parse(occurred_at).map_err(|e| {
+            crate::error::ObserverError::Method(format!(
+                "observer occurred_at is not RFC 3339: {e}"
+            ))
+        })?,
         output,
         scope: method.scope(),
         version: method.version().to_owned(),

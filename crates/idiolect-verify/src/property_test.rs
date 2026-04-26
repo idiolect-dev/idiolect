@@ -192,12 +192,16 @@ mod tests {
             .unwrap()
     }
 
-    fn stage() -> (String, InMemoryResolver, InMemorySchemaLoader) {
+    fn stage() -> (
+        idiolect_records::AtUri,
+        InMemoryResolver,
+        InMemorySchemaLoader,
+    ) {
         let src = schema();
         let protolens = elementary::rename_sort("string", "string");
         let tgt = protolens.target_schema(&src, &test_protocol()).unwrap();
-        let src_hash = "sha256:src-pt".to_owned();
-        let tgt_hash = "sha256:tgt-pt".to_owned();
+        let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src-pt".to_owned();
+        let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt-pt".to_owned();
         let mut loader = InMemorySchemaLoader::new();
         loader.insert(src_hash.clone(), src);
         loader.insert(tgt_hash.clone(), tgt);
@@ -206,27 +210,29 @@ mod tests {
             idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/pt").unwrap();
         let record = PanprotoLens {
             blob: Some(serde_json::to_value(&protolens).unwrap()),
-            created_at: "2026-04-21T00:00:00.000Z".into(),
+            created_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: Some(true),
             object_hash: "sha256:lens-pt".into(),
             round_trip_class: Some("isomorphism".into()),
-            source_schema: src_hash,
-            target_schema: tgt_hash,
+            source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
         };
         let mut resolver = InMemoryResolver::new();
         resolver.insert(&uri, record);
-        (uri.to_string(), resolver, loader)
+        (uri, resolver, loader)
     }
 
-    fn target(uri: String) -> VerificationTarget {
+    fn target(uri: idiolect_records::AtUri) -> VerificationTarget {
         VerificationTarget {
             lens: LensRef {
                 cid: None,
                 direction: None,
                 uri: Some(uri),
             },
-            verifier: "did:plc:verifier".into(),
-            occurred_at: "2026-04-21T00:00:00Z".into(),
+            verifier: idiolect_records::Did::parse("did:plc:verifier").expect("valid DID"),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+                .expect("valid datetime"),
             tool_override: None,
         }
     }
@@ -275,7 +281,10 @@ mod tests {
             1,
             |_| serde_json::json!({ "text": "x" }),
         );
-        let mut t = target("ignored".into());
+        let mut t = target(
+            idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/placeholder")
+                .expect("valid"),
+        );
         t.lens.uri = None;
         let err = runner.run(&t).await.unwrap_err();
         assert!(matches!(err, VerifyError::InvalidInput(_)));
@@ -291,7 +300,10 @@ mod tests {
             1,
             |_| serde_json::json!({ "text": "x" }),
         );
-        let t = target("at://did:plc:x/dev.panproto.schema.lens/ghost".into());
+        let t = target(
+            idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/ghost")
+                .expect("valid"),
+        );
         let err = runner.run(&t).await.unwrap_err();
         assert!(matches!(err, VerifyError::Lens(_)));
     }

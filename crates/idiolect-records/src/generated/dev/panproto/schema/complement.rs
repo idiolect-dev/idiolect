@@ -18,19 +18,19 @@ pub struct PanprotoComplement {
     /// The residual data: field values, sort data, or other content the lens set aside.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blob: Option<serde_json::Value>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     /// AT-URI of the lens record that produced this complement.
-    pub lens: String,
+    pub lens: idiolect_records::AtUri,
     /// Content hash of the residual blob.
     pub object_hash: String,
     /// Content hash of the source record at translation time, for staleness detection.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_hash: Option<String>,
     /// AT-URI of the original source record that was translated.
-    pub source_record: String,
+    pub source_record: idiolect_records::AtUri,
     /// AT-URI of the translated target record, if it was persisted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_record: Option<String>,
+    pub target_record: Option<idiolect_records::AtUri>,
 }
 
 impl crate::Record for PanprotoComplement {

@@ -688,10 +688,16 @@ fn param_binding(p: &ParamDecl) -> Result<TokenStream> {
             let #typed: #owned_ty = p.#raw.clone();
         }),
         ParserKind::SchemaRefFromUri => Ok(quote! {
-            let #typed: #owned_ty = crate::predicates::schema_ref_from_uri(p.#raw.clone());
+            let #typed: #owned_ty = match crate::predicates::schema_ref_from_uri(&p.#raw) {
+                Ok(v) => v,
+                Err(e) => return Err(ApiError::invalid_request(e.to_string())),
+            };
         }),
         ParserKind::LensRefFromUri => Ok(quote! {
-            let #typed: #owned_ty = crate::predicates::lens_ref_from_uri(p.#raw.clone());
+            let #typed: #owned_ty = match crate::predicates::lens_ref_from_uri(&p.#raw) {
+                Ok(v) => v,
+                Err(e) => return Err(ApiError::invalid_request(e.to_string())),
+            };
         }),
         ParserKind::VerificationKind => Ok(quote! {
             let #typed: #owned_ty = match crate::predicates::parse_verification_kind(&p.#raw) {

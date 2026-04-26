@@ -20,10 +20,10 @@ pub struct VerificationTarget {
     pub lens: LensRef,
     /// DID of the party publishing the verification. Echoed back on
     /// `verifier`.
-    pub verifier: String,
+    pub verifier: idiolect_records::Did,
     /// Timestamp the verifier recorded the result. Echoed back on
     /// `occurred_at`.
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
     /// Tool identity + version. Populated by the runner by default
     /// (e.g. `RoundtripTestRunner` names itself) but callers can
     /// override for the published record.

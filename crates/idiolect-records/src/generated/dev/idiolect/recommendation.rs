@@ -29,10 +29,10 @@ pub struct Recommendation {
     pub caveats_text: Option<String>,
     /// Structured applicability predicate in postfix-operator form: each item is either an atomic predicate over the invocation context or a combinator (and/or/not) that pops operands from the running stack. An empty array means 'always applies'. See dev.idiolect.theory.condition.
     pub conditions: Vec<RecommendationConditions>,
-    pub issuing_community: String,
+    pub issuing_community: idiolect_records::AtUri,
     /// Ordered sequence of lenses to compose. Length 1 means a single recommended lens.
     pub lens_path: Vec<crate::generated::dev::idiolect::defs::LensRef>,
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
     /// Additional structured assumptions the consumer must verify before adopting (same combinator shape as `conditions`). Empty array means no explicit preconditions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preconditions: Option<Vec<RecommendationPreconditions>>,
@@ -41,7 +41,7 @@ pub struct Recommendation {
     pub required_verifications: Option<Vec<RecommendationRequiredVerifications>>,
     /// Prior recommendation this one replaces.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub supersedes: Option<String>,
+    pub supersedes: Option<idiolect_records::AtUri>,
 }
 
 impl crate::Record for Recommendation {

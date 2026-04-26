@@ -1,7 +1,6 @@
 //! Errors raised by the verification runners.
 
 use idiolect_lens::LensError;
-use idiolect_records::AtUriError;
 
 /// Errors a [`VerificationRunner`](crate::VerificationRunner) can
 /// raise.
@@ -22,12 +21,6 @@ pub enum VerifyError {
     /// emitted with `result=inconclusive`.
     #[error("inconclusive: {0}")]
     Inconclusive(String),
-}
-
-impl From<AtUriError> for VerifyError {
-    fn from(err: AtUriError) -> Self {
-        Self::Lens(LensError::from(err))
-    }
 }
 
 /// Convenience alias.

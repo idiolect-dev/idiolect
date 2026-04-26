@@ -25,8 +25,8 @@ pub struct Correction {
     pub encounter: crate::generated::dev::idiolect::defs::EncounterRef,
     /// DID of the party the correction is attributed to. Omit for first-party records; set explicitly when a third party is recording someone else's edit (e.g. a reviewer transcribing an off-network correction).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub holder: Option<String>,
-    pub occurred_at: String,
+    pub holder: Option<idiolect_records::Did>,
+    pub occurred_at: idiolect_records::Datetime,
     /// The value prior to correction. May be elided for visibility reasons.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub original_value: Option<serde_json::Value>,

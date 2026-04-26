@@ -251,7 +251,7 @@ mod tests {
         let fetcher = RecordFetcher::new(client);
         let uri = "at://did:plc:alice/dev.idiolect.bounty/b1";
         let got: Bounty = fetcher.fetch_at_uri(uri).await.unwrap();
-        assert_eq!(got.requester, "did:plc:alice");
+        assert_eq!(got.requester.as_str(), "did:plc:alice");
         let last = fetcher.client().last.lock().unwrap().clone().unwrap();
         assert_eq!(last.0, "did:plc:alice");
         assert_eq!(last.1, "dev.idiolect.bounty");

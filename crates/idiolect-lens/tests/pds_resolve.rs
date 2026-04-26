@@ -18,8 +18,9 @@ fn fixture_bounty() -> Bounty {
         constraints: None,
         eligibility: None,
         fulfillment: None,
-        occurred_at: "2026-04-21T00:00:00Z".into(),
-        requester: "did:plc:alice".into(),
+        occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
+            .expect("valid datetime"),
+        requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
         wants: BountyWants::WantAdapter(WantAdapter {
@@ -105,7 +106,7 @@ async fn fetcher_for_did_reads_from_resolved_pds() {
     let did = Did::parse("did:plc:alice").unwrap();
     let fetcher = fetcher_for_did(&resolver, &did).await.unwrap();
     let got: Bounty = fetcher.fetch("did:plc:alice", "b1").await.unwrap();
-    assert_eq!(got.requester, "did:plc:alice");
+    assert_eq!(got.requester.as_str(), "did:plc:alice");
     assert_eq!(got.status, Some(BountyStatus::Open));
 }
 

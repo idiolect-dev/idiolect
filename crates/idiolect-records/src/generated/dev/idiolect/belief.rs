@@ -23,8 +23,8 @@ pub struct Belief {
     pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// DID of the party whose attitude is being represented. Omit when the repo owner holds the belief themselves; set explicitly when a third party (a labeler, a reviewer, a researcher) is attributing a belief to someone else.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub holder: Option<String>,
-    pub occurred_at: String,
+    pub holder: Option<idiolect_records::Did>,
+    pub occurred_at: idiolect_records::Datetime,
     /// Strong reference (AT-URI + CID) to the record the belief is about. Pinning via CID means a later revision of that record does not silently change what this belief asserts.
     pub subject: crate::generated::dev::idiolect::defs::StrongRecordRef,
     #[serde(default, skip_serializing_if = "Option::is_none")]

@@ -33,13 +33,16 @@ pub async fn cmd_encounter_record(args: &[String]) -> Result<ExitCode> {
 
     let lens_uri = flags
         .get("lens")
-        .cloned()
-        .ok_or_else(|| anyhow!("--lens is required"))?;
+        .ok_or_else(|| anyhow!("--lens is required"))
+        .and_then(|s| idiolect_records::AtUri::parse(s).context("parse --lens"))?;
     let source_schema_uri = flags
         .get("source-schema")
-        .cloned()
-        .ok_or_else(|| anyhow!("--source-schema is required"))?;
-    let target_schema_uri = flags.get("target-schema").cloned();
+        .ok_or_else(|| anyhow!("--source-schema is required"))
+        .and_then(|s| idiolect_records::AtUri::parse(s).context("parse --source-schema"))?;
+    let target_schema_uri = match flags.get("target-schema") {
+        Some(s) => Some(idiolect_records::AtUri::parse(s).context("parse --target-schema")?),
+        None => None,
+    };
     let kind = parse_kind(flags.get("kind").map_or("invocation-log", String::as_str))?;
     let visibility = parse_visibility(
         flags
@@ -139,10 +142,15 @@ const fn visibility_wire(v: Visibility) -> &'static str {
 /// `idiolect_lens` and the action list is presented as a numbered
 /// menu.
 async fn prompt_structured_use(action_vocab_uri: Option<String>) -> Result<Use> {
-    let action_vocab_ref = action_vocab_uri.as_ref().map(|u| VocabRef {
-        uri: Some(u.clone()),
-        cid: None,
-    });
+    let action_vocab_ref = action_vocab_uri
+        .as_deref()
+        .map(idiolect_records::AtUri::parse)
+        .transpose()
+        .context("parse --action-vocab")?
+        .map(|uri| VocabRef {
+            uri: Some(uri),
+            cid: None,
+        });
 
     let action = if let Some(uri) = action_vocab_uri.as_deref() {
         let vocab = fetch_vocabulary(uri).await?;

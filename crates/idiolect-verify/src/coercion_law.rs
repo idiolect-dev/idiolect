@@ -185,10 +185,14 @@ mod tests {
             lens: LensRef {
                 cid: None,
                 direction: None,
-                uri: Some("at://did:plc:x/dev.panproto.schema.lens/c1".into()),
+                uri: Some(
+                    idiolect_records::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/c1")
+                        .expect("valid at-uri"),
+                ),
             },
-            verifier: "did:plc:verifier".into(),
-            occurred_at: "2026-04-25T00:00:00.000Z".into(),
+            verifier: idiolect_records::Did::parse("did:plc:verifier").expect("valid DID"),
+            occurred_at: idiolect_records::Datetime::parse("2026-04-25T00:00:00.000Z")
+                .expect("valid datetime"),
             tool_override: None,
         }
     }

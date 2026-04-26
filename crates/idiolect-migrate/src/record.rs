@@ -28,12 +28,14 @@ where
     R: Resolver,
     L: SchemaLoader,
 {
+    let lens_uri = idiolect_records::AtUri::parse(lens_uri)
+        .map_err(|e| MigrateError::InvalidInput(format!("lens-uri: {e}")))?;
     let output = apply_lens(
         resolver,
         schema_loader,
         protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_owned(),
+            lens_uri,
             source_record,
             source_root_vertex: None,
         },

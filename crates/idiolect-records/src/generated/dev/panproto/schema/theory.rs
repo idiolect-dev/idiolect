@@ -18,7 +18,7 @@ pub struct PanprotoTheory {
     pub blob: Option<serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub class_count: Option<i64>,
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub directed_eq_count: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

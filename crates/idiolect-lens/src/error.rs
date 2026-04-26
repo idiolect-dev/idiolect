@@ -6,7 +6,6 @@
 //! appropriate `LensError` case, so downstream callers only pattern-
 //! match one enum regardless of backend.
 
-use idiolect_records::AtUriError;
 use thiserror::Error;
 
 /// Errors produced by the lens runtime.
@@ -18,10 +17,6 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum LensError {
-    /// The at-uri could not be parsed.
-    #[error("invalid at-uri: {0}")]
-    InvalidUri(String),
-
     /// The resolver or schema loader could not locate the requested
     /// artifact.
     ///
@@ -72,10 +67,4 @@ pub enum LensError {
     /// layer.
     #[error("lens apply failed: {0}")]
     Translate(String),
-}
-
-impl From<AtUriError> for LensError {
-    fn from(err: AtUriError) -> Self {
-        Self::InvalidUri(err.to_string())
-    }
 }

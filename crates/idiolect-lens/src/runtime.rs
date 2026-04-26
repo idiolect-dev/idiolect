@@ -110,7 +110,7 @@ impl LensBody {
 #[derive(Debug, Clone)]
 pub struct ApplyLensInput {
     /// At-uri of the `dev.panproto.schema.lens` record to apply.
-    pub lens_uri: String,
+    pub lens_uri: crate::AtUri,
     /// The source record body as json.
     pub source_record: serde_json::Value,
     /// Override the source root vertex. When `None`, the runtime uses
@@ -133,7 +133,7 @@ pub struct ApplyLensOutput {
 pub struct ApplyLensPutInput {
     /// At-uri of the same `dev.panproto.schema.lens` record used in
     /// the forward direction.
-    pub lens_uri: String,
+    pub lens_uri: crate::AtUri,
     /// The (possibly modified) target record as json.
     pub target_record: serde_json::Value,
     /// Complement produced by the forward direction for this record.
@@ -162,7 +162,7 @@ pub struct ApplyLensPutOutput {
 #[derive(Debug, Clone)]
 pub struct ApplyLensEditInput {
     /// At-uri of the lens to apply.
-    pub lens_uri: String,
+    pub lens_uri: crate::AtUri,
     /// The source record body, used to prime the edit lens's
     /// complement state. Required because edit lenses maintain a
     /// stateful complement derived from a whole-state `get`.
@@ -203,10 +203,10 @@ pub struct ApplyLensEditOutput {
 pub struct ApplyLensSymmetricInput {
     /// At-uri of the lens whose source schema is the middle and whose
     /// target schema is the "left" leg's target.
-    pub left_lens_uri: String,
+    pub left_lens_uri: crate::AtUri,
     /// At-uri of the lens whose source schema is the same middle and
     /// whose target schema is the "right" leg's target.
-    pub right_lens_uri: String,
+    pub right_lens_uri: crate::AtUri,
     /// The input record for the chosen direction, as json.
     pub record: serde_json::Value,
     /// Which direction to run:
@@ -311,11 +311,14 @@ where
     R: Resolver,
     S: SchemaLoader,
 {
-    let lens_record_uri = crate::AtUri::parse(&input.lens_uri)?;
-    let lens_record = resolver.resolve(&lens_record_uri).await?;
-    let body = decode_lens_body(&lens_record, &input.lens_uri)?;
-    let src_schema = schema_loader.load(&lens_record.source_schema).await?;
-    let tgt_schema = schema_loader.load(&lens_record.target_schema).await?;
+    let lens_record = resolver.resolve(&input.lens_uri).await?;
+    let body = decode_lens_body(&lens_record, input.lens_uri.as_str())?;
+    let src_schema = schema_loader
+        .load(lens_record.source_schema.as_str())
+        .await?;
+    let tgt_schema = schema_loader
+        .load(lens_record.target_schema.as_str())
+        .await?;
 
     let lens = body.instantiate(&src_schema, protocol)?;
 
@@ -460,10 +463,8 @@ where
 {
     // resolve both records; both must reference the same source-schema
     // hash (the middle of the span).
-    let left_record_uri = crate::AtUri::parse(&input.left_lens_uri)?;
-    let right_record_uri = crate::AtUri::parse(&input.right_lens_uri)?;
-    let left_record = resolver.resolve(&left_record_uri).await?;
-    let right_record = resolver.resolve(&right_record_uri).await?;
+    let left_record = resolver.resolve(&input.left_lens_uri).await?;
+    let right_record = resolver.resolve(&input.right_lens_uri).await?;
 
     if left_record.source_schema != right_record.source_schema {
         return Err(LensError::Translate(format!(
@@ -472,12 +473,18 @@ where
         )));
     }
 
-    let middle_schema = schema_loader.load(&left_record.source_schema).await?;
-    let left_tgt = schema_loader.load(&left_record.target_schema).await?;
-    let right_tgt = schema_loader.load(&right_record.target_schema).await?;
+    let middle_schema = schema_loader
+        .load(left_record.source_schema.as_str())
+        .await?;
+    let left_tgt = schema_loader
+        .load(left_record.target_schema.as_str())
+        .await?;
+    let right_tgt = schema_loader
+        .load(right_record.target_schema.as_str())
+        .await?;
 
-    let left_body = decode_lens_body(&left_record, &input.left_lens_uri)?;
-    let right_body = decode_lens_body(&right_record, &input.right_lens_uri)?;
+    let left_body = decode_lens_body(&left_record, input.left_lens_uri.as_str())?;
+    let right_body = decode_lens_body(&right_record, input.right_lens_uri.as_str())?;
 
     let left_lens = left_body.instantiate(&middle_schema, protocol)?;
     let right_lens = right_body.instantiate(&middle_schema, protocol)?;
@@ -530,7 +537,7 @@ async fn build_lens_and_source<R, S>(
     resolver: &R,
     schema_loader: &S,
     protocol: &Protocol,
-    lens_uri: &str,
+    lens_uri: &crate::AtUri,
     source_record: &serde_json::Value,
     source_root_vertex: Option<&str>,
 ) -> Result<(Lens, Schema, Schema, WInstance), LensError>
@@ -538,13 +545,16 @@ where
     R: Resolver,
     S: SchemaLoader,
 {
-    let uri = crate::AtUri::parse(lens_uri)?;
-    let lens_record = resolver.resolve(&uri).await?;
+    let lens_record = resolver.resolve(lens_uri).await?;
 
-    let body = decode_lens_body(&lens_record, lens_uri)?;
+    let body = decode_lens_body(&lens_record, lens_uri.as_str())?;
 
-    let src_schema = schema_loader.load(&lens_record.source_schema).await?;
-    let tgt_schema = schema_loader.load(&lens_record.target_schema).await?;
+    let src_schema = schema_loader
+        .load(lens_record.source_schema.as_str())
+        .await?;
+    let tgt_schema = schema_loader
+        .load(lens_record.target_schema.as_str())
+        .await?;
 
     let lens = body.instantiate(&src_schema, protocol)?;
 
@@ -561,7 +571,7 @@ async fn build_edit_lens_and_source<R, S>(
     resolver: &R,
     schema_loader: &S,
     protocol: &Protocol,
-    lens_uri: &str,
+    lens_uri: &crate::AtUri,
     source_record: &serde_json::Value,
     source_root_vertex: Option<&str>,
 ) -> Result<(EditLens, WInstance), LensError>
@@ -623,34 +633,20 @@ mod tests {
     fn fixture_lens_record(blob: Option<serde_json::Value>) -> PanprotoLens {
         PanprotoLens {
             blob,
-            created_at: "2026-04-19T00:00:00.000Z".to_owned(),
+            created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+                .expect("valid datetime"),
             laws_verified: None,
             object_hash: "sha256:deadbeef".to_owned(),
             round_trip_class: None,
-            source_schema: "sha256:src".to_owned(),
-            target_schema: "sha256:tgt".to_owned(),
+            source_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/src",
+            )
+            .expect("valid at-uri"),
+            target_schema: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.schema/tgt",
+            )
+            .expect("valid at-uri"),
         }
-    }
-
-    #[tokio::test]
-    async fn forward_errors_on_bad_uri() {
-        let resolver = InMemoryResolver::new();
-        let loader = InMemorySchemaLoader::new();
-        let protocol = Protocol::default();
-
-        let out = apply_lens(
-            &resolver,
-            &loader,
-            &protocol,
-            ApplyLensInput {
-                lens_uri: "not-an-at-uri".to_owned(),
-                source_record: serde_json::json!({}),
-                source_root_vertex: None,
-            },
-        )
-        .await;
-
-        assert!(matches!(out.unwrap_err(), LensError::InvalidUri(_)));
     }
 
     #[tokio::test]
@@ -664,7 +660,8 @@ mod tests {
             &loader,
             &protocol,
             ApplyLensInput {
-                lens_uri: "at://did:plc:x/dev.panproto.schema.lens/missing".to_owned(),
+                lens_uri: crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/missing")
+                    .expect("valid at-uri"),
                 source_record: serde_json::json!({}),
                 source_root_vertex: None,
             },
@@ -688,7 +685,7 @@ mod tests {
             &loader,
             &protocol,
             ApplyLensInput {
-                lens_uri: uri.to_string(),
+                lens_uri: uri.clone(),
                 source_record: serde_json::json!({}),
                 source_root_vertex: None,
             },
@@ -716,7 +713,7 @@ mod tests {
             &loader,
             &protocol,
             ApplyLensInput {
-                lens_uri: uri.to_string(),
+                lens_uri: uri.clone(),
                 source_record: serde_json::json!({}),
                 source_root_vertex: None,
             },
@@ -745,7 +742,7 @@ mod tests {
             &loader,
             &protocol,
             ApplyLensInput {
-                lens_uri: uri.to_string(),
+                lens_uri: uri.clone(),
                 source_record: serde_json::json!({}),
                 source_root_vertex: None,
             },
@@ -753,7 +750,7 @@ mod tests {
         .await;
 
         assert!(
-            matches!(out.unwrap_err(), LensError::NotFound(m) if m.contains("schema:sha256:src"))
+            matches!(out.unwrap_err(), LensError::NotFound(m) if m.contains("at://did:plc:x/dev.panproto.schema.schema/src"))
         );
     }
 

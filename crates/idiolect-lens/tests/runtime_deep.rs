@@ -51,18 +51,19 @@ fn stage_identity_lens(
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.to_owned(), src);
-    let tgt_hash = "sha256:tgt-symmetric".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt-symmetric".to_owned();
     loader.insert(tgt_hash.clone(), tgt_schema);
 
     let lens_uri = idiolect_lens::AtUri::parse(uri).unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:lens".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: src_hash.to_owned(),
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
     let mut resolver = InMemoryResolver::new();
     resolver.insert(&lens_uri, record);
@@ -82,7 +83,10 @@ async fn apply_lens_not_found_surfaces_resolver_error() {
         &loader,
         &test_protocol(),
         ApplyLensInput {
-            lens_uri: "at://did:plc:x/dev.panproto.schema.lens/absent".into(),
+            lens_uri: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.lens/absent",
+            )
+            .expect("valid at-uri"),
             source_record: serde_json::json!({}),
             source_root_vertex: None,
         },
@@ -93,32 +97,13 @@ async fn apply_lens_not_found_surfaces_resolver_error() {
 }
 
 #[tokio::test]
-async fn apply_lens_malformed_uri_surfaces_invalid_uri() {
-    let resolver = InMemoryResolver::new();
-    let loader = InMemorySchemaLoader::new();
-    let err = apply_lens(
-        &resolver,
-        &loader,
-        &test_protocol(),
-        ApplyLensInput {
-            lens_uri: "not-an-at-uri".into(),
-            source_record: serde_json::json!({}),
-            source_root_vertex: None,
-        },
-    )
-    .await
-    .unwrap_err();
-    assert!(matches!(err, LensError::InvalidUri(_)));
-}
-
-#[tokio::test]
 async fn apply_lens_missing_source_schema_surfaces_not_found() {
     // Register the lens but NOT the schemas it references.
     let src = single_field_schema("post:body", "string");
     let protolens = elementary::rename_sort("string", "string");
     let tgt = protolens.target_schema(&src, &test_protocol()).unwrap();
-    let src_hash = "sha256:src".to_owned();
-    let tgt_hash = "sha256:tgt".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt".to_owned();
     // Do NOT insert src_hash into the loader.
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(tgt_hash.clone(), tgt);
@@ -127,12 +112,13 @@ async fn apply_lens_missing_source_schema_surfaces_not_found() {
         idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l").unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:lens".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: src_hash,
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
     let mut resolver = InMemoryResolver::new();
     resolver.insert(&lens_uri, record);
@@ -142,7 +128,7 @@ async fn apply_lens_missing_source_schema_surfaces_not_found() {
         &loader,
         &test_protocol(),
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: serde_json::json!({ "text": "hi" }),
             source_root_vertex: None,
         },
@@ -162,7 +148,7 @@ async fn apply_lens_get_edit_empty_edit_list_returns_empty() {
     let (lens_uri, resolver, loader) = stage_identity_lens(
         "at://did:plc:x/dev.panproto.schema.lens/edit",
         src,
-        "sha256:src-edit",
+        "at://did:plc:x/dev.panproto.schema.schema/src-edit",
     );
 
     let out = apply_lens_get_edit(
@@ -170,7 +156,7 @@ async fn apply_lens_get_edit_empty_edit_list_returns_empty() {
         &loader,
         &test_protocol(),
         ApplyLensEditInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: serde_json::json!({ "text": "hello" }),
             source_root_vertex: None,
             edits: Vec::new(),
@@ -187,7 +173,7 @@ async fn apply_lens_put_edit_empty_edit_list_returns_empty() {
     let (lens_uri, resolver, loader) = stage_identity_lens(
         "at://did:plc:x/dev.panproto.schema.lens/edit-put",
         src,
-        "sha256:src-edit-put",
+        "at://did:plc:x/dev.panproto.schema.schema/src-edit-put",
     );
 
     let out = apply_lens_put_edit(
@@ -195,7 +181,7 @@ async fn apply_lens_put_edit_empty_edit_list_returns_empty() {
         &loader,
         &test_protocol(),
         ApplyLensEditInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: serde_json::json!({ "text": "hello" }),
             source_root_vertex: None,
             edits: Vec::new(),
@@ -215,7 +201,10 @@ async fn apply_lens_get_edit_errors_on_missing_lens() {
         &loader,
         &test_protocol(),
         ApplyLensEditInput {
-            lens_uri: "at://did:plc:x/dev.panproto.schema.lens/ghost".into(),
+            lens_uri: idiolect_records::AtUri::parse(
+                "at://did:plc:x/dev.panproto.schema.lens/ghost",
+            )
+            .expect("valid at-uri"),
             source_record: serde_json::json!({}),
             source_root_vertex: None,
             edits: Vec::new(),
@@ -244,9 +233,9 @@ async fn apply_lens_symmetric_returns_a_value_for_both_directions() {
     let left_tgt = protolens.target_schema(&middle, &protocol).unwrap();
     let right_tgt = protolens.target_schema(&middle, &protocol).unwrap();
 
-    let middle_hash = "sha256:middle".to_owned();
-    let left_tgt_hash = "sha256:left-tgt".to_owned();
-    let right_tgt_hash = "sha256:right-tgt".to_owned();
+    let middle_hash = "at://did:plc:x/dev.panproto.schema.schema/middle".to_owned();
+    let left_tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/left-tgt".to_owned();
+    let right_tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/right-tgt".to_owned();
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(middle_hash.clone(), middle);
@@ -260,21 +249,23 @@ async fn apply_lens_symmetric_returns_a_value_for_both_directions() {
         idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/right").unwrap();
     let left_record = PanprotoLens {
         blob: Some(blob.clone()),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:left-l".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: middle_hash.clone(),
-        target_schema: left_tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&middle_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&left_tgt_hash).expect("valid at-uri"),
     };
     let right_record = PanprotoLens {
         blob: Some(blob),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:right-l".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: middle_hash.clone(),
-        target_schema: right_tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&middle_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&right_tgt_hash).expect("valid at-uri"),
     };
     let mut resolver = InMemoryResolver::new();
     resolver.insert(&left_uri, left_record);
@@ -287,8 +278,8 @@ async fn apply_lens_symmetric_returns_a_value_for_both_directions() {
         &loader,
         &protocol,
         ApplyLensSymmetricInput {
-            left_lens_uri: left_uri.to_string(),
-            right_lens_uri: right_uri.to_string(),
+            left_lens_uri: left_uri.clone(),
+            right_lens_uri: right_uri.clone(),
             record: record.clone(),
             direction: SymmetricDirection::LeftToRight,
             input_root_vertex: None,
@@ -303,8 +294,8 @@ async fn apply_lens_symmetric_returns_a_value_for_both_directions() {
         &loader,
         &protocol,
         ApplyLensSymmetricInput {
-            left_lens_uri: left_uri.to_string(),
-            right_lens_uri: right_uri.to_string(),
+            left_lens_uri: left_uri.clone(),
+            right_lens_uri: right_uri.clone(),
             record: record.clone(),
             direction: SymmetricDirection::RightToLeft,
             input_root_vertex: None,
@@ -327,10 +318,10 @@ async fn apply_lens_symmetric_mismatched_middle_surfaces_translate_error() {
     let left_tgt = protolens.target_schema(&left_src, &protocol).unwrap();
     let right_tgt = protolens.target_schema(&right_src, &protocol).unwrap();
 
-    let left_src_hash = "sha256:left-src".to_owned();
-    let right_src_hash = "sha256:right-src".to_owned();
-    let left_tgt_hash = "sha256:left-tgt".to_owned();
-    let right_tgt_hash = "sha256:right-tgt".to_owned();
+    let left_src_hash = "at://did:plc:x/dev.panproto.schema.schema/left-src".to_owned();
+    let right_src_hash = "at://did:plc:x/dev.panproto.schema.schema/right-src".to_owned();
+    let left_tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/left-tgt".to_owned();
+    let right_tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/right-tgt".to_owned();
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(left_src_hash.clone(), left_src);
@@ -344,21 +335,23 @@ async fn apply_lens_symmetric_mismatched_middle_surfaces_translate_error() {
         idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/right").unwrap();
     let left_record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:left-l".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: left_src_hash,
-        target_schema: left_tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&left_src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&left_tgt_hash).expect("valid at-uri"),
     };
     let right_record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:right-l".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: right_src_hash,
-        target_schema: right_tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&right_src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&right_tgt_hash).expect("valid at-uri"),
     };
     let mut resolver = InMemoryResolver::new();
     resolver.insert(&left_uri, left_record);
@@ -369,8 +362,8 @@ async fn apply_lens_symmetric_mismatched_middle_surfaces_translate_error() {
         &loader,
         &protocol,
         ApplyLensSymmetricInput {
-            left_lens_uri: left_uri.to_string(),
-            right_lens_uri: right_uri.to_string(),
+            left_lens_uri: left_uri.clone(),
+            right_lens_uri: right_uri.clone(),
             record: serde_json::json!({ "text": "x" }),
             direction: SymmetricDirection::LeftToRight,
             input_root_vertex: None,
@@ -395,8 +388,8 @@ async fn apply_lens_put_with_mismatched_complement_surfaces_error() {
     let protolens = elementary::rename_sort("string", "string");
     let tgt = protolens.target_schema(&src, &protocol).unwrap();
 
-    let src_hash = "sha256:src-mismatch".to_owned();
-    let tgt_hash = "sha256:tgt-mismatch".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/src-mismatch".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/tgt-mismatch".to_owned();
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.clone(), src);
     loader.insert(tgt_hash.clone(), tgt);
@@ -405,12 +398,13 @@ async fn apply_lens_put_with_mismatched_complement_surfaces_error() {
         idiolect_lens::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/mismatch").unwrap();
     let record = PanprotoLens {
         blob: Some(serde_json::to_value(&protolens).unwrap()),
-        created_at: "2026-04-19T00:00:00.000Z".into(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:lens".into(),
         round_trip_class: Some("isomorphism".into()),
-        source_schema: src_hash,
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
     let mut resolver = InMemoryResolver::new();
     resolver.insert(&lens_uri, record);
@@ -421,7 +415,7 @@ async fn apply_lens_put_with_mismatched_complement_surfaces_error() {
         &loader,
         &protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: serde_json::json!({ "text": "original" }),
             source_root_vertex: None,
         },
@@ -435,7 +429,7 @@ async fn apply_lens_put_with_mismatched_complement_surfaces_error() {
         &loader,
         &protocol,
         ApplyLensPutInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             target_record: forward.target_record.clone(),
             complement: forward.complement.clone(),
             target_root_vertex: None,

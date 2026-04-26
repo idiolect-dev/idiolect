@@ -95,8 +95,8 @@ async fn identity_lens_round_trips_oauth_session_body() {
         .target_schema(&src_schema, &protocol)
         .expect("derive identity target schema");
 
-    let src_hash = "sha256:oauth-session-src".to_owned();
-    let tgt_hash = "sha256:oauth-session-tgt".to_owned();
+    let src_hash = "at://did:plc:x/dev.panproto.schema.schema/oauth-session-src".to_owned();
+    let tgt_hash = "at://did:plc:x/dev.panproto.schema.schema/oauth-session-tgt".to_owned();
 
     let mut loader = InMemorySchemaLoader::new();
     loader.insert(src_hash.clone(), src_schema);
@@ -108,12 +108,13 @@ async fn identity_lens_round_trips_oauth_session_body() {
             .expect("parse lens uri");
     let lens_record = PanprotoLens {
         blob: Some(blob),
-        created_at: "2026-04-19T00:00:00.000Z".to_owned(),
+        created_at: idiolect_records::Datetime::parse("2026-04-19T00:00:00.000Z")
+            .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:deadbeef".to_owned(),
         round_trip_class: Some("isomorphism".to_owned()),
-        source_schema: src_hash,
-        target_schema: tgt_hash,
+        source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
+        target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
 
     let mut resolver = InMemoryResolver::new();
@@ -129,7 +130,7 @@ async fn identity_lens_round_trips_oauth_session_body() {
         &loader,
         &protocol,
         ApplyLensInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             source_record: source_record.clone(),
             source_root_vertex: Some(body_root.clone()),
         },
@@ -143,7 +144,7 @@ async fn identity_lens_round_trips_oauth_session_body() {
         &loader,
         &protocol,
         ApplyLensPutInput {
-            lens_uri: lens_uri.to_string(),
+            lens_uri: lens_uri.clone(),
             target_record: forward.target_record,
             complement: forward.complement,
             target_root_vertex: Some(body_root),

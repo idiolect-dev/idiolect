@@ -334,7 +334,10 @@ async fn verifications_sufficient(
 ) -> Result<axum::Json<SufficientResponse>, ApiError> {
     let catalog = s.catalog.lock()?;
     let lens = LensRef {
-        uri: Some(p.lens_uri),
+        uri: Some(
+            idiolect_records::AtUri::parse(&p.lens_uri)
+                .map_err(|e| ApiError::invalid_request(e.to_string()))?,
+        ),
         cid: None,
         direction: None,
     };

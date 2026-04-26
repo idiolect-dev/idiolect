@@ -21,8 +21,8 @@ pub struct Observation {
     /// Structured method descriptor (see dev.idiolect.observer for the conformance floor). Enables reproducibility and comparison.
     pub method: ObservationMethod,
     /// DID of the observer publishing this aggregate.
-    pub observer: String,
-    pub occurred_at: String,
+    pub observer: idiolect_records::Did,
+    pub occurred_at: idiolect_records::Datetime,
     /// The observation's payload. Shape is method-defined. Typical shapes include correction-rate rankings, quality scores, or structured diagnostic summaries.
     pub output: serde_json::Value,
     /// The set of records this observation aggregates over.
@@ -42,7 +42,7 @@ impl crate::Record for Observation {
 pub struct ObservationMethod {
     /// Optional reference to the method's source code or specification.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub code_ref: Option<String>,
+    pub code_ref: Option<idiolect_records::AtUri>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     /// Short method identifier.
@@ -58,7 +58,7 @@ pub struct ObservationMethod {
 pub struct ObservationScope {
     /// Communities whose records are in scope.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub communities: Option<Vec<String>>,
+    pub communities: Option<Vec<idiolect_records::AtUri>>,
     /// Which encounter kinds this observation weights and includes. Observer must disclose this or the claim is uninterpretable.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encounter_kinds: Option<Vec<ObservationScopeEncounterKinds>>,
@@ -84,7 +84,7 @@ pub enum ObservationScopeEncounterKinds {
 #[serde(rename_all = "camelCase")]
 pub struct ObservationScopeWindow {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub from: Option<String>,
+    pub from: Option<idiolect_records::Datetime>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub until: Option<String>,
+    pub until: Option<idiolect_records::Datetime>,
 }

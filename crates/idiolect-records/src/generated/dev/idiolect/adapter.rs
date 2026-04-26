@@ -16,17 +16,17 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct Adapter {
     /// DID of the adapter author. Not an endorsement; users judge.
-    pub author: String,
+    pub author: idiolect_records::Did,
     /// Canonical framework name, e.g. 'hasura', 'prisma', 'datomic', 'fhir-validator', 'coq', 'meilisearch'.
     pub framework: String,
     /// How the adapter is invoked.
     pub invocation_protocol: AdapterInvocationProtocol,
     /// Sandboxing requirements the orchestrator must honour.
     pub isolation: AdapterIsolation,
-    pub occurred_at: String,
+    pub occurred_at: idiolect_records::Datetime,
     /// Optional verification record demonstrating the adapter's conformance.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub verification: Option<String>,
+    pub verification: Option<idiolect_records::AtUri>,
     /// Semver range the adapter supports.
     pub version_range: String,
 }

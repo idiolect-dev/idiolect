@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dialect {
-    pub created_at: String,
+    pub created_at: idiolect_records::Datetime,
     /// Idiolect or lens references that were once part of this dialect and are now deprecated. Retained for migration and traceability.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deprecations: Option<Vec<DialectDeprecations>>,
@@ -28,13 +28,13 @@ pub struct Dialect {
     /// Human-readable dialect name.
     pub name: String,
     /// The community that owns this dialect.
-    pub owning_community: String,
+    pub owning_community: idiolect_records::AtUri,
     /// Translations the community prefers when mapping between its idiolects and external schemas.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preferred_lenses: Option<Vec<crate::generated::dev::idiolect::defs::LensRef>>,
     /// AT-URI of the immediately preceding dialect revision, forming a version chain.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub previous_version: Option<String>,
+    pub previous_version: Option<idiolect_records::AtUri>,
     /// Dialect version (semver when applicable).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
@@ -47,11 +47,11 @@ impl crate::Record for Dialect {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DialectDeprecations {
-    pub deprecated_at: String,
+    pub deprecated_at: idiolect_records::Datetime,
     pub reason: String,
     /// The deprecated idiolect or lens.
-    pub r#ref: String,
+    pub r#ref: idiolect_records::AtUri,
     /// Optional successor.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub replacement: Option<String>,
+    pub replacement: Option<idiolect_records::AtUri>,
 }
