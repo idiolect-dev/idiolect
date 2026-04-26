@@ -49,11 +49,16 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: upgrade npm so Trusted Publishers OIDC handshake works
-        # `--force` skips the self-upgrade dependency-resolution
-        # path that, on the runner image's bundled npm, errors out
-        # with `Cannot find module 'promise-retry'` mid-upgrade.
-        run: npm install -g npm@latest --force
+      - name: install a recent npm via corepack
+        # The runner image's bundled npm is missing
+        # `promise-retry` and can't even invoke `install` to upgrade
+        # itself. corepack ships a fresh npm tarball into the path
+        # without touching the broken bundled tree, which is enough
+        # to give us the Trusted Publishers OIDC handshake (≥11.5.1).
+        run: |
+          corepack enable
+          corepack prepare npm@latest --activate
+          npm --version
 
       - name: publish
         working-directory: packages/schema
