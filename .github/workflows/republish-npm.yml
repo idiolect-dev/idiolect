@@ -50,7 +50,10 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: upgrade npm so Trusted Publishers OIDC handshake works
-        run: npm install -g npm@latest
+        # `--force` skips the self-upgrade dependency-resolution
+        # path that, on the runner image's bundled npm, errors out
+        # with `Cannot find module 'promise-retry'` mid-upgrade.
+        run: npm install -g npm@latest --force
 
       - name: publish
         working-directory: packages/schema
