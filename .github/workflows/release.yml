@@ -499,15 +499,17 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: install a recent npm via corepack
+      - name: install npm 11 via corepack
         # npm Trusted Publishers needs the OIDC handshake added in
         # npm ≥ 11.5.1. The runner image's bundled npm is older
         # AND its tree is missing `promise-retry`, so it can't even
         # self-upgrade. corepack ships a fresh npm tarball into the
-        # path without touching the broken bundled tree.
+        # path; pin a concrete version because `npm@latest` resolves
+        # against corepack's own snapshot (currently 10.x) rather
+        # than the live npm dist-tag.
         run: |
           corepack enable
-          corepack prepare npm@latest --activate
+          corepack prepare npm@11.13.0 --activate
           npm --version
 
       - name: publish
