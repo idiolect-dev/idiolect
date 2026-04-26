@@ -28,7 +28,7 @@
 #
 # Secrets required:
 #   CARGO_REGISTRY_TOKEN    crates.io publish token, conditional
-#   NPM_TOKEN               npm publish token, conditional
+# npm uses OIDC via Trusted Publishers; no long-lived token needed.
 #
 # Permissions granted per-job rather than at workflow scope so a
 # compromise of one job cannot mint tokens for another.
