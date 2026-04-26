@@ -7,10 +7,17 @@
 # retarget the npm publish step at an arbitrary tag using whatever
 # release.yml on `main` happens to look like at dispatch time.
 #
-# It uses npm Trusted Publishers (OIDC) the same way release.yml
-# does, but installs `npm@latest` first so the npm CLI is recent
-# enough to drive the OIDC handshake (≥11.5.1, which the runner's
-# default npm is currently older than).
+# Two auth modes are supported:
+#
+# - If `NPM_TOKEN` is set as a repo secret, publish with classic
+#   token auth (no provenance attestation).
+# - Otherwise, publish via Trusted Publishers (OIDC + provenance).
+#   This requires npmjs.com/package/<name>/access to allowlist
+#   this repo + workflow filename.
+#
+# Either way, the bundled npm CLI on the runner image is too old
+# for the Trusted Publishers OIDC handshake (≥ 11.5.1) and is
+# missing `promise-retry`, so we fetch a fresh tarball first.
 name: republish-npm
 
 on:
@@ -66,6 +73,15 @@ jobs:
 
       - name: publish
         working-directory: packages/schema
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          node "$RUNNER_TEMP/npm-bin/bin/npm-cli.js" \
-            publish --provenance --access public
+          if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::notice::publishing with NPM_TOKEN (no provenance)"
+            node "$RUNNER_TEMP/npm-bin/bin/npm-cli.js" \
+              publish --access public
+          else
+            echo "::notice::no NPM_TOKEN; publishing via Trusted Publishers OIDC"
+            node "$RUNNER_TEMP/npm-bin/bin/npm-cli.js" \
+              publish --provenance --access public
+          fi
