@@ -49,15 +49,17 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: install a recent npm via corepack
-        # The runner image's bundled npm is missing
-        # `promise-retry` and can't even invoke `install` to upgrade
-        # itself. corepack ships a fresh npm tarball into the path
-        # without touching the broken bundled tree, which is enough
-        # to give us the Trusted Publishers OIDC handshake (≥11.5.1).
+      - name: install npm 11 via corepack
+        # The runner image's bundled npm is missing `promise-retry`
+        # and can't even invoke `install` to self-upgrade. corepack
+        # ships a fresh npm tarball into the path. We pin a concrete
+        # version: corepack's `npm@latest` resolves against its own
+        # snapshot rather than the live npm dist-tag and currently
+        # returns 10.x, which is below the Trusted Publishers OIDC
+        # handshake floor (≥ 11.5.1).
         run: |
           corepack enable
-          corepack prepare npm@latest --activate
+          corepack prepare npm@11.13.0 --activate
           npm --version
 
       - name: publish
