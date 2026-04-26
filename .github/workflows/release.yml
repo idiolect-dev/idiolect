@@ -494,6 +494,18 @@ jobs:
       - name: typecheck
         run: bun run typecheck
 
+      - name: build dist/
+        # `package.json` declares `"main": "./dist/index.js"` and
+        # `"files": ["dist", "src", ...]`, so the publish must include
+        # the built dist/ tree. The `bun run build` script wipes
+        # dist/ and rebuilds the bundled `.js` plus tsc-emitted `.d.ts`
+        # — without this step npm publish ships only `src/` and
+        # consumers see "Cannot find module @idiolect-dev/schema".
+        # (v0.4.0 shipped without dist/ for exactly this reason; the
+        # earlier v0.3.0 publish was driven manually from a developer
+        # machine where the build step was implicit.)
+        run: bun run build
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

@@ -31,6 +31,22 @@ subsection under `[Unreleased]`, and the release cut moves these
 lines into the new versioned section.
 -->
 
+## [0.4.1] — 2026-04-26
+
+### Fixed
+
+- The release pipeline's `publish-npm` job now runs `bun run build`
+  before `npm publish`, so the published `@idiolect-dev/schema`
+  tarball includes the compiled `dist/` tree the package's
+  `"main"` / `"types"` / `"exports"` entries point at. v0.4.0
+  shipped without `dist/` (only `src/` and a stale
+  `dist/.tsbuildinfo` from the typecheck step) — consumers
+  importing from `@idiolect-dev/schema` saw "Cannot find module"
+  at typecheck time. The earlier v0.3.0 publish was driven from a
+  developer machine where the build step ran implicitly; v0.4.0
+  was the first fully-CI-driven release and exposed the missing
+  step. Republish via the v0.4.1 tag picks up the fix.
+
 ## [0.4.0] — 2026-04-26
 
 ### Added
