@@ -31,6 +31,19 @@ subsection under `[Unreleased]`, and the release cut moves these
 lines into the new versioned section.
 -->
 
+## [0.4.3] — 2026-04-27
+
+### Added
+
+- `@idiolect-dev/schema` exports `bundledLexiconDocs` and
+  `bundledLexicons()` for browser consumers. The build pipeline
+  bakes every lexicon JSON document under `lexicons/dev/**` into
+  `src/generated-lexicons.ts` (via `scripts/copy-lexicons.ts`),
+  and the bundler inlines it into `dist/index.js`. Browser apps
+  import the bundled docs as plain ES module data without needing
+  `node:fs`. The Node-side `loadLexiconDocs()` and
+  `defaultLexicons()` helpers are unchanged.
+
 ## [0.4.2] — 2026-04-26
 
 ### Fixed

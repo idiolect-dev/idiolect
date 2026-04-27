@@ -21,7 +21,13 @@ export {
   verificationExample,
 } from "./examples";
 export * from "./generated/index";
-export { buildLexicons, defaultLexicons, loadLexiconDocs } from "./lexicons";
+export {
+  buildLexicons,
+  bundledLexiconDocs,
+  bundledLexicons,
+  defaultLexicons,
+  loadLexiconDocs,
+} from "./lexicons";
 export * from "./nsids";
 export * from "./recordMap";
 export * from "./validators";

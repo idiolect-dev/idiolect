@@ -1,6 +1,6 @@
 {
   "name": "@idiolect-dev/schema",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Runtime validators, types, and NSIDs for the dev.idiolect.* Lexicon family.",
   "license": "MIT",
   "author": "Aaron White <aaronstevenwhite@gmail.com>",
