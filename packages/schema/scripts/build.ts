@@ -17,6 +17,19 @@ const DIST = resolve(ROOT, "dist");
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
 
+// Stage lexicons/ alongside the package so loadLexiconDocs
+// resolves it via `import.meta.url`-relative paths in both dev
+// and published builds. Delegates to scripts/copy-lexicons.ts so
+// the same copy runs as a `pretest` hook for tests that exercise
+// loadLexiconDocs without a full bundle.
+{
+  const result = spawnSync("bun", ["run", "scripts/copy-lexicons.ts"], {
+    cwd: ROOT,
+    stdio: "inherit",
+  });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
 // step 1: bun-bundle js from src/index.ts.
 const bundle = spawnSync(
   "bun",
