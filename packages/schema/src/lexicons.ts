@@ -77,3 +77,30 @@ export function defaultLexicons(): Lexicons {
   }
   return cachedLexicons;
 }
+
+// ---------- browser-friendly bundled exports ----------
+//
+// `loadLexiconDocs` reads from disk via `node:fs`, which doesn't
+// work in the browser. The build pipeline pre-bakes every lexicon
+// document into `src/generated-lexicons.ts` (via
+// `scripts/copy-lexicons.ts`), and the bundler inlines it into
+// `dist/index.js` as plain ES module data. Browser consumers
+// import `bundledLexiconDocs` and `bundledLexicons()` directly.
+
+export { bundledLexiconDocs } from "./generated-lexicons.js";
+
+import { bundledLexiconDocs } from "./generated-lexicons.js";
+
+/**
+ * Browser-friendly counterpart to `defaultLexicons()`. Builds a
+ * `Lexicons` instance from the bundled docs without touching the
+ * filesystem. The returned instance is fresh; cache it on the
+ * caller side if you need a singleton.
+ */
+export function bundledLexicons(): Lexicons {
+  const lexicons = new Lexicons();
+  for (const doc of bundledLexiconDocs) {
+    lexicons.add(doc);
+  }
+  return lexicons;
+}

@@ -1,6 +1,6 @@
 {
   "name": "@idiolect-dev/schema",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Runtime validators, types, and NSIDs for the dev.idiolect.* Lexicon family.",
   "license": "MIT",
   "author": "Aaron White <aaronstevenwhite@gmail.com>",
@@ -38,8 +38,10 @@
     "generate:check": "cargo run --quiet --manifest-path ../../Cargo.toml -p idiolect-codegen -- --check",
     "build": "bun run scripts/build.ts",
     "copy-lexicons": "bun run scripts/copy-lexicons.ts",
-    "typecheck": "tsc --noEmit",
+    "pretypecheck": "bun run scripts/copy-lexicons.ts",
+    "prelint": "bun run scripts/copy-lexicons.ts",
     "pretest": "bun run scripts/copy-lexicons.ts",
+    "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome check src tests scripts"
   },

@@ -37,8 +37,13 @@ notes/
 # claude code runtime state
 .claude/
 
-# Build artefact: packages/schema/scripts/build.ts copies the
-# workspace-root lexicons/ tree here so loadLexiconDocs resolves
-# it via import.meta.url-relative paths in both dev and published
-# builds. The workspace root is the source of truth.
+# Build artefact: packages/schema/scripts/copy-lexicons.ts copies
+# the workspace-root lexicons/ tree here so loadLexiconDocs
+# resolves it via import.meta.url-relative paths in both dev and
+# published builds. The workspace root is the source of truth.
 packages/schema/lexicons/
+
+# Build artefact: copy-lexicons.ts also bakes the lexicon JSON
+# into a TS module (bundledLexiconDocs) so browser consumers
+# work without node:fs. Regenerated on every build / pretest.
+packages/schema/src/generated-lexicons.ts
