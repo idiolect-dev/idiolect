@@ -83,10 +83,7 @@ async fn main() -> Result<()> {
 
     // Sqlite cursor store.
     let cursors = SqliteCursorStore::open(&cursor_path).context("open cursors")?;
-    let ix = IndexerConfig {
-        subscription_id,
-        nsid_prefix: "dev.idiolect.".to_owned(),
-    };
+    let ix = IndexerConfig { subscription_id };
 
     // HTTP task. The readiness flag is flipped immediately because
     // we just successfully warmed the catalog; a deployment with a

@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use idiolect_indexer::{
     CursorStore, InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig,
-    IndexerError, IndexerEvent, NoopRecordHandler, RawEvent, RecordHandler, drive_indexer,
+    IndexerError, IndexerEvent, NoopRecordHandler, RawEvent, RecordHandler, drive_idiolect_indexer,
 };
 
 #[tokio::test]
@@ -27,7 +27,7 @@ async fn arc_cursor_store_works() {
 #[tokio::test]
 async fn arc_record_handler_works() {
     let handler = Arc::new(NoopRecordHandler::new());
-    let event = IndexerEvent {
+    let event = IndexerEvent::<idiolect_records::IdiolectFamily> {
         seq: 1,
         live: true,
         did: "did:plc:x".to_owned(),
@@ -43,7 +43,7 @@ async fn arc_record_handler_works() {
 }
 
 #[tokio::test]
-async fn arc_wrapped_types_drive_indexer() {
+async fn arc_wrapped_types_drive_idiolect_indexer() {
     // Representative shape: the daemon holds `Arc<Handler>` + `Arc<Store>`
     // and passes references to drive_indexer. The Arc forwarding impls
     // let `&Arc<...>` satisfy the `&impl Trait` bound without a deref
@@ -64,7 +64,7 @@ async fn arc_wrapped_types_drive_indexer() {
         body: None,
     });
 
-    drive_indexer(&mut stream, &handler, &store, &IndexerConfig::default())
+    drive_idiolect_indexer(&mut stream, &handler, &store, &IndexerConfig::default())
         .await
         .unwrap();
     assert_eq!(handler.observed(), 1);

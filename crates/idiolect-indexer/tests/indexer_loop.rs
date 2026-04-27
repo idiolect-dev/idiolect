@@ -15,7 +15,7 @@
 
 use idiolect_indexer::{
     CursorStore, InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig,
-    IndexerError, NoopRecordHandler, RawEvent, RecordHandler, drive_indexer,
+    IndexerError, NoopRecordHandler, RawEvent, RecordHandler, drive_idiolect_indexer,
 };
 use idiolect_records::{AnyRecord, generated::examples};
 
@@ -161,7 +161,7 @@ async fn drive_indexer_decodes_every_record_kind() {
     let cursors = InMemoryCursorStore::new();
     let cfg = IndexerConfig::default();
 
-    drive_indexer(&mut stream, &handler, &cursors, &cfg)
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &cfg)
         .await
         .expect("indexer drains stream");
 
@@ -221,7 +221,7 @@ async fn drive_indexer_skips_cursor_commit_on_backfill() {
     let cursors = InMemoryCursorStore::new();
     let cfg = IndexerConfig::default();
 
-    drive_indexer(&mut stream, &handler, &cursors, &cfg)
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &cfg)
         .await
         .expect("indexer drains stream");
 
@@ -266,7 +266,7 @@ async fn drive_indexer_filters_out_of_prefix_collections() {
     let cursors = InMemoryCursorStore::new();
     let cfg = IndexerConfig::default();
 
-    drive_indexer(&mut stream, &handler, &cursors, &cfg)
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &cfg)
         .await
         .expect("indexer drains stream");
 
@@ -303,7 +303,7 @@ async fn drive_indexer_surfaces_missing_body_on_create_without_body() {
     let cursors = InMemoryCursorStore::new();
     let cfg = IndexerConfig::default();
 
-    let err = drive_indexer(&mut stream, &handler, &cursors, &cfg)
+    let err = drive_idiolect_indexer(&mut stream, &handler, &cursors, &cfg)
         .await
         .expect_err("indexer raises MissingBody");
 
@@ -364,7 +364,7 @@ async fn drive_indexer_preserves_decoded_record_type() {
     let cursors = InMemoryCursorStore::new();
     let cfg = IndexerConfig::default();
 
-    drive_indexer(&mut stream, &handler, &cursors, &cfg)
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &cfg)
         .await
         .expect("indexer processes observation fixture");
 }

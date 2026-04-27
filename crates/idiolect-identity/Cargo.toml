@@ -23,7 +23,7 @@ default = []
 resolver-reqwest = ["dep:reqwest"]
 
 [dependencies]
-idiolect-records = { version = "0.4.3", path = "../idiolect-records" }
+idiolect-records = { version = "0.5.0", path = "../idiolect-records" }
 serde      = { workspace = true }
 serde_json = { workspace = true }
 thiserror  = { workspace = true }

@@ -13,6 +13,7 @@
 
 pub mod dev;
 pub mod examples;
+pub mod family;
 
 pub use dev::idiolect::adapter::Adapter;
 pub use dev::idiolect::belief::Belief;

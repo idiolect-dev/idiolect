@@ -16,6 +16,7 @@ use crate::Example;
 use crate::lexicon::LexiconDoc;
 use crate::target::{EmittedFile, TargetEmitter};
 
+pub mod family;
 pub mod rust;
 pub mod typescript;
 

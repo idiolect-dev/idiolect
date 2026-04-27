@@ -24,7 +24,7 @@
 //! ```
 //! use idiolect_indexer::{
 //!     InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig,
-//!     NoopRecordHandler, RawEvent, drive_indexer,
+//!     NoopRecordHandler, RawEvent, drive_idiolect_indexer,
 //! };
 //!
 //! # #[tokio::main(flavor = "current_thread")]
@@ -46,7 +46,7 @@
 //! let cursors = InMemoryCursorStore::new();
 //! let cfg = IndexerConfig::default();
 //!
-//! drive_indexer(&mut stream, &handler, &cursors, &cfg)
+//! drive_idiolect_indexer(&mut stream, &handler, &cursors, &cfg)
 //!     .await
 //!     .unwrap();
 //!
@@ -82,7 +82,7 @@ pub use cursor::{CursorStore, InMemoryCursorStore};
 pub use error::IndexerError;
 pub use event::{IndexerAction, IndexerEvent};
 pub use handler::{NoopRecordHandler, RecordHandler};
-pub use indexer::{IndexerConfig, drive_indexer};
+pub use indexer::{IndexerConfig, drive_idiolect_indexer, drive_indexer};
 pub use stream::{EventStream, InMemoryEventStream, RawEvent};
 
 #[cfg(feature = "firehose-tapped")]
