@@ -16,7 +16,7 @@
 // Run as `bun run copy-lexicons` (also auto-runs as `pretest`)
 // or via `bun run build`.
 
-import { cpSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
