@@ -31,6 +31,54 @@ subsection under `[Unreleased]`, and the release cut moves these
 lines into the new versioned section.
 -->
 
+## [0.5.0] — 2026-04-27
+
+### Added
+
+- `idiolect_records::family::RecordFamily` trait. Every record-set
+  scoped boundary in the workspace (indexer, handlers, soon
+  orchestrator + verify) parameterises over a family rather than
+  hardcoding the `dev.idiolect.*` set. Closes #38.
+- `idiolect_records::OrFamily<F1, F2>` composer plus `OrAny` tagged
+  union, so dialect bundles (curated cross-family record sets) are
+  first-class. Includes `detect_or_family_overlap` for boot-time
+  configuration audits.
+- `idiolect_records::IdiolectFamily` marker, with the `RecordFamily`
+  impl produced by `idiolect-codegen`'s new family emitter
+  (`crates/idiolect-codegen/src/emit/family.rs`). The hand-written
+  `AnyRecord` enum and `decode_record` function are gone; the
+  identical surface is re-exported from `generated::family`.
+  Adding a record to the family is now a one-line lexicon change.
+- `drive_idiolect_indexer` convenience entry point. Runs
+  `drive_indexer` against `IdiolectFamily` without an explicit
+  type argument.
+
+### Changed
+
+- **Breaking (Rust API).** `idiolect_indexer::IndexerEvent`,
+  `RecordHandler`, and `drive_indexer` are now generic over
+  `F: RecordFamily` (default `IdiolectFamily`). Existing call
+  sites that don't name the type parameter keep working through
+  the default, but signatures with explicit `IndexerEvent` /
+  `RecordHandler` bounds need to add the family parameter.
+  Closes #39.
+- **Breaking (Rust API).** `IndexerConfig::nsid_prefix` is gone.
+  Family membership lives in the family's `RecordFamily::contains`
+  predicate; one source of truth. The default `IndexerConfig`
+  shrinks to just `subscription_id`.
+- **Breaking (Rust API).** An unknown `dev.idiolect.*` NSID (one
+  whose authority+name match `dev.idiolect.*` but isn't a known
+  record type at codegen time) used to halt the loop with
+  `IndexerError::Decode(UnknownNsid)`. It now flows through
+  `IdiolectFamily::contains` and is dropped silently as
+  out-of-family. The previous behaviour was brittle to upstream
+  PDS additions landing ahead of our codegen; the new behaviour
+  absorbs them gracefully.
+- `idiolect_observer::driver` runs against `IdiolectFamily`
+  explicitly. Observers are domain-coupled to the encounter /
+  correction / observation set by construction; the bound is
+  written into the type signature now instead of being implicit.
+
 ## [0.4.3] — 2026-04-27
 
 ### Added
@@ -296,4 +344,3 @@ lines into the new versioned section.
 
 - Bumped `rustls-webpki` to 0.103.13 to pick up the fix for
   [RUSTSEC-2026-0104](https://rustsec.org/advisories/RUSTSEC-2026-0104).
-

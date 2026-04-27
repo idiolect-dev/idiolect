@@ -50,7 +50,7 @@ dpop-p256 = ["pds-reqwest", "dep:p256", "dep:base64", "dep:sha2", "dep:rand"]
 # the lens record type itself lives in idiolect-records under the
 # vendored dev.panproto.* tree. we never redefine records here — we
 # resolve and apply them.
-idiolect-records = { version = "0.4.3", path = "../idiolect-records" }
+idiolect-records = { version = "0.5.0", path = "../idiolect-records" }
 
 # the runtime side of lens application is done by panproto-lens
 # (compile + get + put), panproto-inst (json parse + to_json + wtype
@@ -78,7 +78,7 @@ atrium-xrpc        = { version = "0.12.4", optional = true }
 atrium-xrpc-client = { version = "0.5.15", optional = true, default-features = false, features = ["reqwest"] }
 reqwest            = { version = "0.12", optional = true, default-features = false, features = ["rustls-tls"] }
 
-idiolect-identity  = { version = "0.4.3", path = "../idiolect-identity", optional = true }
+idiolect-identity  = { version = "0.5.0", path = "../idiolect-identity", optional = true }
 
 # DPoP ES256 proof construction. All optional; enabled via `dpop-p256`.
 p256   = { version = "0.13", optional = true, default-features = false, features = ["ecdsa", "pem", "std"] }

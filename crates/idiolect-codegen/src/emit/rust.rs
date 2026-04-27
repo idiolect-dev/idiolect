@@ -83,6 +83,21 @@ impl TargetEmitter for RustTarget {
             path: "examples.rs".to_owned(),
             contents: rustfmt(&render_examples_rs(examples))?,
         });
+        // Generated family module: AnyRecord, decode_record, and
+        // the RecordFamily impl. Adding a record to the family is
+        // now a one-line lexicon change; the hand-written record.rs
+        // shrinks to the Record trait + DecodeError.
+        out.push(EmittedFile {
+            path: "family.rs".to_owned(),
+            contents: rustfmt(
+                &super::family::render_family_rs(docs, &super::family::IDIOLECT_FAMILY).map_err(
+                    |e| EmitError::InvalidAst {
+                        target: "rust",
+                        source: e.into(),
+                    },
+                )?,
+            )?,
+        });
 
         Ok(out)
     }
@@ -593,7 +608,8 @@ fn render_mod_rs(docs: &[LexiconDoc]) -> String {
         };
         out.push_str(&format!("pub mod {ident};\n"));
     }
-    out.push_str("pub mod examples;\n\n");
+    out.push_str("pub mod examples;\n");
+    out.push_str("pub mod family;\n\n");
 
     // Re-export every lexicon's main record type at the crate root.
     // When two records under different parent namespaces share a leaf
@@ -848,7 +864,7 @@ fn doc_attr(text: &str) -> TokenStream {
     quote! { #[doc = #padded] }
 }
 
-fn pascal_case(s: &str) -> String {
+pub(crate) fn pascal_case(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut upper_next = true;
     for ch in s.chars() {

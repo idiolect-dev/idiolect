@@ -56,6 +56,7 @@ extern crate self as idiolect_records;
 pub mod at_uri;
 pub mod datetime;
 pub mod did;
+pub mod family;
 pub mod generated;
 pub mod nsid;
 pub mod record;
@@ -64,6 +65,7 @@ pub mod uri;
 pub use at_uri::{AtUri, AtUriError};
 pub use datetime::{Datetime, DatetimeError};
 pub use did::{Did, DidError, DidMethod};
+pub use family::{OrAny, OrFamily, RecordFamily, detect_or_family_overlap};
 pub use nsid::{Nsid, NsidError};
 pub use uri::{Uri, UriError};
 
@@ -72,4 +74,8 @@ pub use uri::{Uri, UriError};
 // `mod.rs` (one `pub use dev::...::T` per lexicon main record) so it
 // stays in sync with the lexicon set without a hand-edit step.
 pub use generated::*;
-pub use record::{AnyRecord, DecodeError, Record, decode_record};
+// `AnyRecord`, `decode_record`, and `IdiolectFamily` are codegen
+// output (see `crates/idiolect-codegen/src/emit/family.rs`); the
+// hand-written `record.rs` only owns the `Record` trait + `DecodeError`.
+pub use generated::family::{AnyRecord, IdiolectFamily, decode_record};
+pub use record::{DecodeError, Record};

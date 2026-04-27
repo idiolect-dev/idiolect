@@ -27,8 +27,9 @@ flowchart LR
     subgraph crate["idiolect-records"]
         TYPED["nsid · at_uri · did<br/>(typed identifiers)"]
         GEN["generated/dev/&lt;authority&gt;/…/&lt;name&gt;.rs<br/>(one module per lexicon)"]
-        ANY["AnyRecord<br/>(discriminated union over<br/>idiolect record kinds)"]
+        FAM["IdiolectFamily<br/>+ AnyRecord + decode_record<br/>(generated/family.rs)"]
         TRAIT["Record trait<br/>(NSID const · nsid() -> Nsid)"]
+        FAMTRAIT["RecordFamily trait<br/>+ OrFamily / OrAny composers"]
         EX["examples::<br/>minimally-valid fixtures"]
     end
 
@@ -36,18 +37,34 @@ flowchart LR
 
     LEX --> CG --> GEN
     GEN --> TRAIT
-    GEN --> ANY
+    GEN --> FAM
     GEN --> EX
+    FAMTRAIT --> FAM
     TYPED --> CONS
-    ANY --> CONS
+    FAM --> CONS
+    FAMTRAIT --> CONS
     TRAIT --> CONS
 ```
 
+`RecordFamily` is the trait every workspace boundary parameterises
+over once it wants to consume more than one record set: a membership
+predicate over NSIDs, a decoder, and a serializer back. The
+`IdiolectFamily` marker (codegen output) implements it for the
+`dev.idiolect.*` set. Two families compose via `OrFamily<F1, F2>`
+into a single family that recognises every NSID either side claims;
+its `AnyRecord` is the tagged union `OrAny`. Use
+`detect_or_family_overlap` at boot when wiring an `OrFamily` to
+catch configuration errors that would otherwise silently shadow the
+right side.
+
 `AnyRecord` is the runtime discriminated union across every shipped
-idiolect record kind. `decode_record(nsid, value)` takes a typed
-`Nsid` and dispatches into the matching variant; the parser refuses
-malformed NSIDs at the boundary, so an `AnyRecord` always carries a
-spec-valid identifier.
+idiolect record kind, and `decode_record(nsid, value)` dispatches
+into the matching variant. Both are generated from the lexicon set
+by `idiolect-codegen`'s family emitter; adding a record is a
+one-file lexicon change. The `RecordFamily` impl on `IdiolectFamily`
+delegates `contains`/`decode` to the same generated table, so
+consumers can switch between the bare `decode_record` API and the
+family-generic `F::decode` API without behaviour change.
 
 ## Usage
 
@@ -66,6 +83,29 @@ match record {
 
 // Or decode directly into a typed struct.
 let e: Encounter = serde_json::from_value(payload)?;
+```
+
+The same dispatch is reachable through the family abstraction, which
+is what indexer / orchestrator / observer code sees:
+
+```rust
+use idiolect_records::{IdiolectFamily, Nsid, RecordFamily};
+
+let nsid = Nsid::parse("dev.idiolect.encounter")?;
+match IdiolectFamily::decode(&nsid, payload)? {
+    Some(any) => index(any),       // in-family, decoded
+    None => {}                     // out-of-family, drop silently
+}
+```
+
+Compose two families into one when you want to index across record
+sets in a single pipeline:
+
+```rust
+use idiolect_records::{IdiolectFamily, OrFamily};
+// Pretend `LayersFamily` came from a sibling codegen pass.
+type Combined = OrFamily<IdiolectFamily, LayersFamily>;
+// drive_indexer::<Combined, _, _, _>(...).await?;
 ```
 
 Every generated record type implements the `Record` trait, which

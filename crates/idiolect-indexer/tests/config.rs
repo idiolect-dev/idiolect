@@ -2,17 +2,16 @@
 //!
 //! Specifically:
 //!
-//! - `nsid_prefix = ""` disables the filter so every collection reaches
-//!   decode. Setting an empty prefix on the default config is a
-//!   debugging knob.
-//! - A prefix that matches nothing drops everything without error.
-//! - The default config's `subscription_id` and `nsid_prefix` values.
+//! - The default config's `subscription_id` value.
+//! - Out-of-family commits (per the family's `contains` predicate)
+//!   are dropped before decode without error.
 //! - Backfill events never advance the cursor even when their
-//!   collection is in-prefix.
+//!   collection is in-family.
+//! - Delete actions advance the cursor without going through decode.
 
 use idiolect_indexer::{
     CursorStore, InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig,
-    IndexerError, IndexerEvent, RawEvent, RecordHandler, drive_indexer,
+    IndexerError, IndexerEvent, RawEvent, RecordHandler, drive_idiolect_indexer,
 };
 
 struct CountingHandler {
@@ -62,48 +61,27 @@ fn encounter(seq: u64, live: bool, collection: &str) -> RawEvent {
 fn default_config_values() {
     let cfg = IndexerConfig::default();
     assert_eq!(cfg.subscription_id, "idiolect-indexer");
-    assert_eq!(cfg.nsid_prefix, "dev.idiolect.");
 }
 
 #[tokio::test]
-async fn prefix_matching_nothing_drops_every_event() {
+async fn out_of_family_commits_are_dropped_silently() {
+    // Two events: one in the dev.idiolect.* family, one outside
+    // (app.bsky.feed.post). The family's `contains` predicate
+    // accepts the first and rejects the second; the rejected one
+    // never reaches decode or the handler, and the cursor only
+    // advances on the in-family commit.
     let mut stream = InMemoryEventStream::new();
     stream.push(encounter(1, true, "dev.idiolect.encounter"));
     stream.push(encounter(2, true, "app.bsky.feed.post"));
 
     let handler = CountingHandler::new();
     let cursors = InMemoryCursorStore::new();
-    let cfg = IndexerConfig {
-        subscription_id: "test".into(),
-        nsid_prefix: "com.example.nothing.".into(),
-    };
-    drive_indexer(&mut stream, &handler, &cursors, &cfg)
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap();
-    // Nothing routed through handler.
-    assert_eq!(handler.observed(), 0);
-    assert!(cursors.load("test").await.unwrap().is_none());
-}
-
-#[tokio::test]
-async fn empty_prefix_disables_filter_but_decode_still_required() {
-    // An empty prefix means "route every collection". Non-idiolect
-    // collections then try to decode and fail, surfacing as a decode
-    // error — the empty prefix is only safe for debugging against a
-    // stream known to carry only dev.idiolect.* traffic.
-    let mut stream = InMemoryEventStream::new();
-    stream.push(encounter(1, true, "app.bsky.feed.post"));
-
-    let handler = CountingHandler::new();
-    let cursors = InMemoryCursorStore::new();
-    let cfg = IndexerConfig {
-        subscription_id: "test".into(),
-        nsid_prefix: String::new(),
-    };
-    let err = drive_indexer(&mut stream, &handler, &cursors, &cfg)
-        .await
-        .unwrap_err();
-    assert!(matches!(err, IndexerError::Decode(_)));
+    assert_eq!(handler.observed(), 1);
+    assert_eq!(cursors.load("idiolect-indexer").await.unwrap(), Some(1));
+    let _ = IndexerError::MissingBody(String::new());
 }
 
 #[tokio::test]
@@ -116,7 +94,7 @@ async fn backfill_events_do_not_advance_cursor() {
 
     let handler = CountingHandler::new();
     let cursors = InMemoryCursorStore::new();
-    drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap();
     // Both events reached the handler.
@@ -146,7 +124,7 @@ async fn delete_action_advances_cursor_without_decode() {
 
     let handler = CountingHandler::new();
     let cursors = InMemoryCursorStore::new();
-    drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap();
     assert_eq!(handler.observed(), 1);

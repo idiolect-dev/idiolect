@@ -107,21 +107,26 @@ where
     P: ObservationPublisher,
 {
     use idiolect_indexer::{IndexerAction, IndexerError, IndexerEvent, RecordHandler};
-    use idiolect_records::decode_record;
+    use idiolect_records::{IdiolectFamily, RecordFamily};
 
-    // 1. prefix filter. skip commits outside the observer's
-    // configured family.
-    if !config.nsid_prefix.is_empty() && !raw.collection.starts_with_authority(&config.nsid_prefix)
-    {
+    // 1. family-membership filter. observers are domain-coupled to
+    // the dev.idiolect.* family (encounters, corrections, etc.) by
+    // construction; the bound is `IdiolectFamily` and out-of-family
+    // commits are skipped via the family's contains predicate.
+    if !IdiolectFamily::contains(&raw.collection) {
         return Ok(());
     }
 
     // 2. decode. delete actions carry no body.
     let record = match (raw.action, &raw.body) {
         (IndexerAction::Delete, _) => None,
-        (_, Some(body)) => {
-            Some(decode_record(&raw.collection, body.clone()).map_err(IndexerError::Decode)?)
-        }
+        (_, Some(body)) => match IdiolectFamily::decode(&raw.collection, body.clone()) {
+            Ok(Some(decoded)) => Some(decoded),
+            Ok(None) => {
+                return Err(IndexerError::FamilyContract(raw.collection.to_string()).into());
+            }
+            Err(e) => return Err(IndexerError::Decode(e).into()),
+        },
         (_, None) => {
             return Err(IndexerError::MissingBody(format!(
                 "{}/{}/{}",
@@ -131,7 +136,7 @@ where
         }
     };
 
-    let event = IndexerEvent {
+    let event = IndexerEvent::<IdiolectFamily> {
         seq: raw.seq,
         live: raw.live,
         did: raw.did,

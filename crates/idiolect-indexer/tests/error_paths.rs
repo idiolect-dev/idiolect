@@ -12,7 +12,7 @@
 
 use idiolect_indexer::{
     CursorStore, EventStream, IndexerAction, IndexerConfig, IndexerError, RawEvent, RecordHandler,
-    drive_indexer,
+    drive_idiolect_indexer,
 };
 
 /// Stream that returns one `Err(Stream)` on first call.
@@ -106,7 +106,7 @@ async fn stream_error_halts_loop() {
     let mut stream = ExplodingStream { fired: false };
     let handler = OkHandler;
     let cursors = InMemoryCursorStore::new();
-    let err = drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    let err = drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap_err();
     assert!(matches!(err, IndexerError::Stream(msg) if msg == "boom"));
@@ -118,7 +118,7 @@ async fn handler_error_halts_loop_and_does_not_commit() {
     let mut stream = preloaded(vec![encounter_event(1)]);
     let handler = FailingHandler;
     let cursors = InMemoryCursorStore::new();
-    let err = drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    let err = drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap_err();
     assert!(matches!(err, IndexerError::Handler(_)));
@@ -131,7 +131,7 @@ async fn cursor_commit_error_halts_loop() {
     let mut stream = preloaded(vec![encounter_event(1)]);
     let handler = OkHandler;
     let cursors = FailingCursorStore;
-    let err = drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    let err = drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap_err();
     assert!(matches!(err, IndexerError::Cursor(msg) if msg.contains("disk full")));
@@ -146,16 +146,22 @@ async fn malformed_body_on_idiolect_collection_surfaces_decode_error() {
     let mut stream = preloaded(vec![evt]);
     let handler = OkHandler;
     let cursors = InMemoryCursorStore::new();
-    let err = drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    let err = drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
         .unwrap_err();
     assert!(matches!(err, IndexerError::Decode(_)), "got {err:?}");
 }
 
 #[tokio::test]
-async fn unknown_idiolect_nsid_surfaces_decode_error() {
-    // A collection that matches the prefix but has no generated record
-    // type -> DecodeError::UnknownNsid -> IndexerError::Decode.
+async fn unknown_idiolect_nsid_is_dropped_silently() {
+    // Post-v0.5 (issues #38/#39): family membership is the
+    // family's `contains` predicate, which enumerates the family's
+    // exact NSID set. A `dev.idiolect.*` NSID that is not a known
+    // record type is no longer blown up on; it's just out-of-family
+    // for this codegen output and silently dropped, same as
+    // `app.bsky.feed.post` would be. This is a correctness
+    // improvement: an upstream PDS adding a new record type ahead
+    // of our codegen no longer halts the loop.
     use idiolect_indexer::InMemoryCursorStore;
     let mut evt = encounter_event(1);
     evt.collection =
@@ -163,8 +169,9 @@ async fn unknown_idiolect_nsid_surfaces_decode_error() {
     let mut stream = preloaded(vec![evt]);
     let handler = OkHandler;
     let cursors = InMemoryCursorStore::new();
-    let err = drive_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
+    drive_idiolect_indexer(&mut stream, &handler, &cursors, &IndexerConfig::default())
         .await
-        .unwrap_err();
-    assert!(matches!(err, IndexerError::Decode(_)));
+        .unwrap();
+    // Cursor untouched: the event was filtered before processing.
+    assert!(cursors.load("idiolect-indexer").await.unwrap().is_none());
 }
