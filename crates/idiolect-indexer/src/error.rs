@@ -40,4 +40,13 @@ pub enum IndexerError {
     /// round-trip through `serde_json::RawValue`.
     #[error("missing or malformed record body: {0}")]
     MissingBody(String),
+
+    /// The configured [`RecordFamily`](idiolect_records::RecordFamily)'s
+    /// `contains` predicate accepted a collection NSID, but its
+    /// `decode` then returned `Ok(None)` for the same NSID. The
+    /// two predicates have diverged, which is a family-implementation
+    /// bug; this variant surfaces it as a hard error rather than
+    /// silently dropping the record.
+    #[error("record family contract violated: contains accepted {0} but decode returned None")]
+    FamilyContract(String),
 }

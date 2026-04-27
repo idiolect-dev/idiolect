@@ -123,11 +123,7 @@ where
         (_, Some(body)) => match IdiolectFamily::decode(&raw.collection, body.clone()) {
             Ok(Some(decoded)) => Some(decoded),
             Ok(None) => {
-                return Err(IndexerError::Handler(format!(
-                    "IdiolectFamily::contains accepted {} but decode returned None",
-                    raw.collection,
-                ))
-                .into());
+                return Err(IndexerError::FamilyContract(raw.collection.to_string()).into());
             }
             Err(e) => return Err(IndexerError::Decode(e).into()),
         },

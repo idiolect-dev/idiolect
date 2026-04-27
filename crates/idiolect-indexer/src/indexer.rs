@@ -137,13 +137,11 @@ where
             Ok(Some(decoded)) => Some(decoded),
             Ok(None) => {
                 // F::contains said yes but F::decode came back None.
-                // That's a family-impl bug: contains and decode have
-                // diverged. Surface it loudly rather than silently
-                // dropping the record.
-                return Err(IndexerError::Handler(format!(
-                    "family decode returned None for in-family nsid {}",
-                    raw.collection,
-                )));
+                // The family's contains and decode predicates have
+                // diverged — a family-implementation bug. Surface it
+                // loudly via the dedicated error variant rather than
+                // silently dropping the record.
+                return Err(IndexerError::FamilyContract(raw.collection.to_string()));
             }
             Err(e) => return Err(IndexerError::Decode(e)),
         },

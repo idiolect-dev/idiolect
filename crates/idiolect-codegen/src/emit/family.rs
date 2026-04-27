@@ -66,6 +66,20 @@ struct Entry {
 pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<String> {
     let entries: Vec<Entry> = collect_entries(docs, cfg);
 
+    // An empty family doesn't have a useful runtime shape — every
+    // emitted match would be an empty pattern (`matches!(_, )`) and
+    // the AnyRecord enum would be uninhabited. Refuse to emit and
+    // ask the caller to either widen the prefix or pick a different
+    // family ID.
+    if entries.is_empty() {
+        anyhow::bail!(
+            "family `{}` has no records matching prefix `{}`; \
+             nothing to emit",
+            cfg.id,
+            cfg.nsid_prefix,
+        );
+    }
+
     let marker = format_ident!("{}", cfg.marker_name);
     let id_lit = cfg.id;
 
@@ -90,10 +104,15 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
         quote! { Self::#ident(r) => serde_json::to_value(r) }
     });
 
+    // Trailing-comma each arm so the catch-all `other =>` arm has a
+    // separator regardless of the entries count. Pre-fix this used a
+    // leading `#(#arms),*,` which emitted a stray leading comma when
+    // `entries` was empty (caught by the guard above, but the shape
+    // is still safer).
     let decode_arms = entries.iter().map(|e| {
         let ident = &e.ident;
         let nsid_path = &e.nsid_path;
-        quote! { s if s == #nsid_path => Ok(AnyRecord::#ident(from(value)?)) }
+        quote! { s if s == #nsid_path => Ok(AnyRecord::#ident(from(value)?)), }
     });
 
     let contains_first = entries.first().map(|e| e.nsid_path.clone());
@@ -239,7 +258,7 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
             }
             let s = nsid.as_str();
             match s {
-                #(#decode_arms),*,
+                #(#decode_arms)*
                 other => Err(DecodeError::UnknownNsid(other.to_owned())),
             }
         }

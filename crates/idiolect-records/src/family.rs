@@ -135,9 +135,12 @@ where
 {
     type AnyRecord = OrAny<F1::AnyRecord, F2::AnyRecord>;
 
-    /// `OrFamily<F1, F2>` reports its ID as `"<F1>+<F2>"`. Curated
-    /// bundles that want a stable ID should wrap an `OrFamily`
-    /// chain in their own [`RecordFamily`] impl with a chosen ID.
+    /// Composed families report a constant `"OrFamily"` ID. The
+    /// trait const is `&'static str`, so we cannot synthesise the
+    /// `<F1::ID>+<F2::ID>` pair at compile time. Curated bundles
+    /// that want a stable, descriptive ID should wrap the
+    /// `OrFamily` chain in their own zero-sized marker with its
+    /// own [`RecordFamily`] impl and a chosen `ID` literal.
     const ID: &'static str = "OrFamily";
 
     fn contains(nsid: &Nsid) -> bool {
