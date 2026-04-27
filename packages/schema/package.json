@@ -37,7 +37,9 @@
     "generate": "cargo run --quiet --manifest-path ../../Cargo.toml -p idiolect-codegen",
     "generate:check": "cargo run --quiet --manifest-path ../../Cargo.toml -p idiolect-codegen -- --check",
     "build": "bun run scripts/build.ts",
+    "copy-lexicons": "bun run scripts/copy-lexicons.ts",
     "typecheck": "tsc --noEmit",
+    "pretest": "bun run scripts/copy-lexicons.ts",
     "test": "bun test",
     "lint": "biome check src tests scripts"
   },
