@@ -25,9 +25,7 @@ fn idiolect_family_contains_known_record_types() {
 #[test]
 fn idiolect_family_rejects_outside_nsids() {
     assert!(!IdiolectFamily::contains(&nsid("app.bsky.feed.post")));
-    assert!(!IdiolectFamily::contains(&nsid(
-        "dev.panproto.schema.lens"
-    )));
+    assert!(!IdiolectFamily::contains(&nsid("dev.panproto.schema.lens")));
     // Same prefix, NSID not a known idiolect record type — the
     // codegen-emitted contains predicate enumerates the exact set,
     // so this returns false rather than relying on the prefix.
@@ -48,7 +46,8 @@ fn idiolect_family_decode_returns_none_for_outside_nsids() {
 fn idiolect_family_decode_round_trips_known_record() {
     let bounty_nsid = nsid("dev.idiolect.bounty");
     // Pull the canonical example so the body actually deserializes.
-    let body = serde_json::to_value(idiolect_records::generated::examples::bounty()).expect("serialize bounty");
+    let body = serde_json::to_value(idiolect_records::generated::examples::bounty())
+        .expect("serialize bounty");
     let decoded = IdiolectFamily::decode(&bounty_nsid, body)
         .expect("in-family decode succeeds")
         .expect("in-family decode returns Some");
@@ -61,10 +60,7 @@ fn idiolect_family_decode_propagates_serde_error_for_in_family_garbage() {
     let body = json!({"not": "a valid bounty"});
     let err = IdiolectFamily::decode(&nsid("dev.idiolect.bounty"), body)
         .expect_err("missing-required-fields surfaces as Serde error");
-    assert!(matches!(
-        err,
-        idiolect_records::DecodeError::Serde(_)
-    ));
+    assert!(matches!(err, idiolect_records::DecodeError::Serde(_)));
 }
 
 #[test]
@@ -165,12 +161,8 @@ fn or_family_overlap_detector_surfaces_intersection() {
     // Pair an idiolect NSID against itself (so both sides "claim" it
     // for the test).
     type Self_ = OrFamily<IdiolectFamily, IdiolectFamily>;
-    let probe = vec![
-        nsid("dev.idiolect.encounter"),
-        nsid("app.bsky.feed.post"),
-    ];
-    let overlap =
-        detect_or_family_overlap::<IdiolectFamily, IdiolectFamily>(&probe);
+    let probe = vec![nsid("dev.idiolect.encounter"), nsid("app.bsky.feed.post")];
+    let overlap = detect_or_family_overlap::<IdiolectFamily, IdiolectFamily>(&probe);
     assert_eq!(overlap.len(), 1);
     assert_eq!(overlap[0].as_str(), "dev.idiolect.encounter");
     // Self_ is the type — exercise it just so the compiler verifies
