@@ -4,10 +4,22 @@ import { fileURLToPath } from "node:url";
 import { type LexiconDoc, Lexicons } from "@atproto/lexicon";
 
 // resolve the lexicons/ directory relative to this module.
-// the package ships the raw json so consumers can rebuild the lexicons
-// instance with their own extensions without re-fetching.
+//
+// The package ships the raw json so consumers can rebuild the
+// lexicons instance with their own extensions without re-fetching.
+// Build-time `scripts/build.ts` copies the workspace-root
+// `lexicons/` tree into `packages/schema/lexicons/` so the path
+// math is the same in dev (running off `src/`) and after publish
+// (running off `dist/`):
+//
+//   - dev:       src/lexicons.ts → ../lexicons → packages/schema/lexicons/
+//   - published: dist/index.js   → ../lexicons → package/lexicons/
+//
+// `..` from the bundled `dist/index.js` resolves to the package
+// root because `import.meta.url` points at the bundled file's
+// location, not at the original source path.
 const HERE = fileURLToPath(new URL(".", import.meta.url));
-const LEXICONS_DIR = join(HERE, "..", "..", "..", "lexicons");
+const LEXICONS_DIR = join(HERE, "..", "lexicons");
 
 /**
  * Recursively enumerate every .json file under `root`.

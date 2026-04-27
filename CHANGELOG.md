@@ -31,6 +31,21 @@ subsection under `[Unreleased]`, and the release cut moves these
 lines into the new versioned section.
 -->
 
+## [0.4.2] — 2026-04-26
+
+### Fixed
+
+- `@idiolect-dev/schema`'s build now copies the workspace-root
+  `lexicons/` tree into `packages/schema/lexicons/` before
+  publish, so the directory the package's `files` array claims
+  is actually included in the npm tarball. Previously the path
+  was workspace-relative-only — `loadLexiconDocs()` worked from
+  the source repo but threw `ENOENT` for any consumer importing
+  `@idiolect-dev/schema` from `node_modules/`. Also retargets
+  `LEXICONS_DIR` to `../lexicons` (sibling of `dist/`) so the
+  same path resolves cleanly in dev (off `src/`) and after
+  publish (off `dist/`).
+
 ## [0.4.1] — 2026-04-26
 
 ### Fixed
