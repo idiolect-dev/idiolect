@@ -129,9 +129,7 @@ impl Resolver {
         // edge). Empty string only when the vocab has no rooted
         // subsumption hierarchy at all, which closed-with-default
         // semantics treat as 'no implicit parent'.
-        let top = graph
-            .top_with(vocab.top.as_deref())
-            .unwrap_or_default();
+        let top = graph.top_with(vocab.top.as_deref()).unwrap_or_default();
 
         self.vocabularies.insert(
             uri.into(),

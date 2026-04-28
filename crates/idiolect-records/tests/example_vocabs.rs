@@ -27,8 +27,7 @@ fn workspace_root() -> PathBuf {
 
 fn json_files_in(dir: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
-    let entries = fs::read_dir(dir)
-        .unwrap_or_else(|e| panic!("read {}: {e}", dir.display()));
+    let entries = fs::read_dir(dir).unwrap_or_else(|e| panic!("read {}: {e}", dir.display()));
     for entry in entries {
         let entry = entry.expect("entry");
         let path = entry.path();
@@ -136,10 +135,10 @@ fn acorn_bridge_vote_stances_translate_via_equivalent_to() {
     // canonical idiolect vote-stances. Direct match wins (slugs are
     // identical) but the bridge also declares equivalent_to edges
     // for forward-compatibility when slugs diverge.
-    let bridge_path = workspace_root()
-        .join("examples/idiolect-acorn/data/vocabs/blacksky-vote-stances.json");
-    let canonical_path = workspace_root()
-        .join("lexicons/dev/idiolect/examples/vocab/vote-stances.json");
+    let bridge_path =
+        workspace_root().join("examples/idiolect-acorn/data/vocabs/blacksky-vote-stances.json");
+    let canonical_path =
+        workspace_root().join("lexicons/dev/idiolect/examples/vocab/vote-stances.json");
     let bridge = parse_vocab(&bridge_path);
     let canonical = parse_vocab(&canonical_path);
     let g_bridge = VocabGraph::from_vocab(&bridge);
@@ -151,4 +150,52 @@ fn acorn_bridge_vote_stances_translate_via_equivalent_to() {
             "bridge slug {slug} must translate into canonical vocab"
         );
     }
+}
+
+#[test]
+fn acorn_bridge_records_parse() {
+    use idiolect_records::{Adapter, Community, Dialect};
+
+    let dir = workspace_root().join("examples/idiolect-acorn/data/bridge-records");
+
+    let mut community_value: Value =
+        serde_json::from_slice(&fs::read(dir.join("blacksky-community.json")).expect("community"))
+            .expect("community json");
+    community_value
+        .as_object_mut()
+        .expect("object")
+        .remove("$nsid");
+    let community: Community =
+        serde_json::from_value(community_value).expect("Community deserializes");
+    assert_eq!(community.name, "Blacksky");
+    assert!(community.appview_endpoint.is_some());
+
+    let mut dialect_value: Value =
+        serde_json::from_slice(&fs::read(dir.join("blacksky-dialect.json")).expect("dialect"))
+            .expect("dialect json");
+    dialect_value
+        .as_object_mut()
+        .expect("object")
+        .remove("$nsid");
+    let dialect: Dialect = serde_json::from_value(dialect_value).expect("Dialect deserializes");
+    assert!(
+        dialect
+            .preferred_lenses
+            .as_ref()
+            .map_or(0, std::vec::Vec::len)
+            >= 3,
+        "dialect should reference at least three bridge lenses"
+    );
+
+    let mut adapter_value: Value = serde_json::from_slice(
+        &fs::read(dir.join("blacksky-appview-adapter.json")).expect("adapter"),
+    )
+    .expect("adapter json");
+    adapter_value
+        .as_object_mut()
+        .expect("object")
+        .remove("$nsid");
+    let adapter: Adapter = serde_json::from_value(adapter_value).expect("Adapter deserializes");
+    assert_eq!(adapter.framework, "blacksky-appview");
+    assert_eq!(adapter.invocation_protocol.kind.as_str(), "http");
 }

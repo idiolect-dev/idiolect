@@ -78,7 +78,8 @@ pub struct NormalizedNode {
 /// every property has a definite reading at traversal time. Defaults
 /// to all-false when the relation node is unauthored or its metadata
 /// is missing.
-#[allow(clippy::struct_excessive_bools)] // Each bool corresponds to a distinct algebraic property; collapsing into a bitfield would obscure the API.
+#[allow(clippy::struct_excessive_bools)]
+// Each bool corresponds to a distinct algebraic property; collapsing into a bitfield would obscure the API.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct RelationProperties {
     /// `A R B` implies `B R A`. Walks traverse outbound and inbound
@@ -110,12 +111,14 @@ impl VocabGraph {
         // entry in `parents` becomes a `subsumed_by` edge.
         if let Some(actions) = vocab.actions.as_ref() {
             for entry in actions {
-                nodes.entry(entry.id.clone()).or_insert_with(|| NormalizedNode {
-                    id: entry.id.clone(),
-                    label: None,
-                    description: entry.description.clone(),
-                    kind: Some("concept".to_owned()),
-                });
+                nodes
+                    .entry(entry.id.clone())
+                    .or_insert_with(|| NormalizedNode {
+                        id: entry.id.clone(),
+                        label: None,
+                        description: entry.description.clone(),
+                        kind: Some("concept".to_owned()),
+                    });
                 for parent in &entry.parents {
                     insert_edge(
                         &mut out_edges,
@@ -124,12 +127,14 @@ impl VocabGraph {
                         parent,
                         "subsumed_by",
                     );
-                    nodes.entry(parent.clone()).or_insert_with(|| NormalizedNode {
-                        id: parent.clone(),
-                        label: None,
-                        description: None,
-                        kind: Some("concept".to_owned()),
-                    });
+                    nodes
+                        .entry(parent.clone())
+                        .or_insert_with(|| NormalizedNode {
+                            id: parent.clone(),
+                            label: None,
+                            description: None,
+                            kind: Some("concept".to_owned()),
+                        });
                 }
             }
         }
@@ -152,17 +157,10 @@ impl VocabGraph {
             }
         }
 
-        // The legacy `subsumed_by` relation has standing semantics
-        // (transitive + reflexive); seed those when no relation node
-        // is authored. Authored relation nodes win on conflict.
-        relations
-            .entry("subsumed_by".to_owned())
-            .or_insert(RelationProperties {
-                transitive: true,
-                reflexive: true,
-                ..RelationProperties::default()
-            });
-
+        // No standing seed for `subsumed_by` here — the lookup in
+        // `relation_properties` handles the legacy semantic so it
+        // applies uniformly across `Default::default()` and
+        // `from_vocab`-constructed graphs.
         Self {
             nodes,
             out_edges,
@@ -188,13 +186,25 @@ impl VocabGraph {
         self.nodes.len()
     }
 
-    /// Properties of the named relation, when authored. Falls back to
-    /// `RelationProperties::default()` (all-false) for unauthored
+    /// Properties of the named relation, when authored. Falls back
+    /// to `RelationProperties::default()` (all-false) for unauthored
     /// relations, except for `subsumed_by` which always starts at
-    /// transitive+reflexive (the legacy semantic).
+    /// transitive+reflexive — the legacy semantic, applied uniformly
+    /// whether or not a relation-kind node is authored.
     #[must_use]
     pub fn relation_properties(&self, relation: &str) -> RelationProperties {
-        self.relations.get(relation).copied().unwrap_or_default()
+        if let Some(authored) = self.relations.get(relation).copied() {
+            return authored;
+        }
+        if relation == "subsumed_by" {
+            return RelationProperties {
+                transitive: true,
+                reflexive: true,
+                symmetric: false,
+                functional: false,
+            };
+        }
+        RelationProperties::default()
     }
 
     /// Direct out-edges from `source` along the named relation.
@@ -217,10 +227,11 @@ impl VocabGraph {
 
     /// Every node reachable from `source` by traversing edges of the
     /// named relation. When `reflexive` is true, the result includes
-    /// `source` itself unconditionally. When the relation is
-    /// declared symmetric, the walk traverses both outbound and
-    /// inbound edges as one set. Result is BFS-discovery order,
-    /// deduplicated.
+    /// `source` itself unconditionally. When the relation is declared
+    /// symmetric, the walk traverses both outbound and inbound edges
+    /// as one set. The result is deduplicated; iteration order is
+    /// implementation-defined (currently a stack-based DFS) and
+    /// callers that need a deterministic order should sort.
     ///
     /// Canonical traversal primitive: subsumption queries,
     /// equivalence chasing, and SKOS-style broader/narrower walks
@@ -364,9 +375,7 @@ fn normalize_node(n: &VocabNode) -> NormalizedNode {
 }
 
 fn is_relation_kind(n: &VocabNode) -> bool {
-    n.kind
-        .as_ref()
-        .is_some_and(|k| k.as_str() == "relation")
+    n.kind.as_ref().is_some_and(|k| k.as_str() == "relation")
 }
 
 fn relation_properties_from(n: &VocabNode) -> RelationProperties {
@@ -603,7 +612,11 @@ mod tests {
                 graph_node("any", VocabNodeKind::Concept),
                 graph_node("train", VocabNodeKind::Concept),
             ],
-            vec![graph_edge("train", "any", VocabEdgeRelationSlug::SubsumedBy)],
+            vec![graph_edge(
+                "train",
+                "any",
+                VocabEdgeRelationSlug::SubsumedBy,
+            )],
         );
         let g = VocabGraph::from_vocab(&v);
         assert_eq!(g.top(), Some("any".to_owned()));
@@ -637,7 +650,11 @@ mod tests {
                     },
                 ),
             ],
-            vec![graph_edge("train", "any", VocabEdgeRelationSlug::SubsumedBy)],
+            vec![graph_edge(
+                "train",
+                "any",
+                VocabEdgeRelationSlug::SubsumedBy,
+            )],
         );
         let g = VocabGraph::from_vocab(&v);
         // The relation node is itself a no-outbound-edge node, but it
@@ -784,5 +801,186 @@ mod tests {
         let n = g.node("train").expect("authored node present");
         assert_eq!(n.label.as_deref(), Some("Train"));
         assert_eq!(n.description.as_deref(), Some("authored"));
+    }
+}
+
+#[cfg(test)]
+mod edge_case_tests {
+    use super::*;
+    use crate::Datetime;
+    use crate::generated::dev::idiolect::vocab::{
+        ActionEntry, VocabEdgeRelationSlug, VocabNodeKind, VocabWorld,
+    };
+
+    fn cyclic_vocab() -> Vocab {
+        // a subsumed_by b subsumed_by a — a directed cycle.
+        // walk_relation must terminate; the closure should contain
+        // both nodes regardless of where you start.
+        Vocab {
+            name: "cyclic".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: Some(vec![
+                ActionEntry {
+                    id: "a".to_owned(),
+                    parents: vec!["b".to_owned()],
+                    class: None,
+                    description: None,
+                },
+                ActionEntry {
+                    id: "b".to_owned(),
+                    parents: vec!["a".to_owned()],
+                    class: None,
+                    description: None,
+                },
+            ]),
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-28T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
+        }
+    }
+
+    #[test]
+    fn cyclic_subsumed_by_terminates_and_includes_both_nodes() {
+        let g = VocabGraph::from_vocab(&cyclic_vocab());
+        let mut closure = g.walk_relation("a", "subsumed_by", false);
+        closure.sort();
+        assert_eq!(closure, vec!["a".to_owned(), "b".to_owned()]);
+    }
+
+    #[test]
+    fn relation_properties_default_when_unauthored() {
+        let g = VocabGraph::default();
+        let props = g.relation_properties("never_authored");
+        assert!(!props.symmetric);
+        assert!(!props.transitive);
+        assert!(!props.reflexive);
+        assert!(!props.functional);
+    }
+
+    #[test]
+    fn subsumed_by_has_seeded_legacy_semantics() {
+        // Even an empty vocab gets transitive+reflexive on
+        // subsumed_by per the legacy semantic seed.
+        let g = VocabGraph::default();
+        let props = g.relation_properties("subsumed_by");
+        assert!(props.transitive);
+        assert!(props.reflexive);
+    }
+
+    #[test]
+    fn empty_known_values_emits_only_fallback_variant() {
+        // Edge case for codegen: empty knownValues. Expressed at
+        // the runtime level: walk_relation on an unknown slug
+        // returns just the source under reflexive=true.
+        let v = Vocab {
+            name: "empty".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-28T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
+        };
+        let g = VocabGraph::from_vocab(&v);
+        assert_eq!(g.node_count(), 0);
+        assert!(g.walk_relation("x", "subsumed_by", false).is_empty());
+        assert_eq!(
+            g.walk_relation("x", "subsumed_by", true),
+            vec!["x".to_owned()]
+        );
+    }
+
+    #[test]
+    fn graph_node_authored_relation_kind_carries_metadata_into_walks() {
+        // A symmetric authored relation must propagate to walk
+        // semantics even without a kind="relation" on the legacy
+        // tree side.
+        let v = Vocab {
+            name: "with_relation".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-28T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            nodes: Some(vec![
+                VocabNode {
+                    id: "a".to_owned(),
+                    kind: Some(VocabNodeKind::Concept),
+                    kind_vocab: None,
+                    subkind_uri: None,
+                    label: None,
+                    alternate_labels: None,
+                    description: None,
+                    external_ids: None,
+                    status: None,
+                    status_vocab: None,
+                    deprecated_by: None,
+                    relation_metadata: None,
+                },
+                VocabNode {
+                    id: "b".to_owned(),
+                    kind: Some(VocabNodeKind::Concept),
+                    kind_vocab: None,
+                    subkind_uri: None,
+                    label: None,
+                    alternate_labels: None,
+                    description: None,
+                    external_ids: None,
+                    status: None,
+                    status_vocab: None,
+                    deprecated_by: None,
+                    relation_metadata: None,
+                },
+                VocabNode {
+                    id: "near".to_owned(),
+                    kind: Some(VocabNodeKind::Relation),
+                    kind_vocab: None,
+                    subkind_uri: None,
+                    label: None,
+                    alternate_labels: None,
+                    description: None,
+                    external_ids: None,
+                    status: None,
+                    status_vocab: None,
+                    deprecated_by: None,
+                    relation_metadata: Some(
+                        crate::generated::dev::idiolect::vocab::RelationMetadata {
+                            symmetric: Some(true),
+                            transitive: None,
+                            reflexive: None,
+                            functional: None,
+                            inverse_of: None,
+                            world: None,
+                        },
+                    ),
+                },
+            ]),
+            edges: Some(vec![crate::generated::dev::idiolect::vocab::VocabEdge {
+                source: "a".to_owned(),
+                target: "b".to_owned(),
+                relation_slug: VocabEdgeRelationSlug::Other("near".to_owned()),
+                relation_vocab: None,
+                relation_uri: None,
+                weight: None,
+                metadata: None,
+            }]),
+        };
+        let g = VocabGraph::from_vocab(&v);
+        // Walking from b under "near" must reach a thanks to
+        // symmetric metadata.
+        let from_b = g.walk_relation("b", "near", false);
+        assert!(
+            from_b.iter().any(|x| x == "a"),
+            "symmetric authored relation should permit reverse walk: {from_b:?}"
+        );
     }
 }

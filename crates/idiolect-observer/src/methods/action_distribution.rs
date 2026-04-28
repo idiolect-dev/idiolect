@@ -94,9 +94,7 @@ impl ActionDistributionMethod {
                 graph.walk_relation(&n.id, "subsumed_by", false),
             );
         }
-        let top = graph
-            .top_with(vocab.top.as_deref())
-            .unwrap_or_default();
+        let top = graph.top_with(vocab.top.as_deref()).unwrap_or_default();
         self.vocabularies.insert(
             uri.into(),
             InternalVocab {

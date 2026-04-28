@@ -278,7 +278,10 @@ fn deliberation_vote_with_weight_and_rationale_roundtrips() {
         "createdAt": "2026-04-28T00:00:00.000Z",
     }));
     assert_eq!(parsed.weight, Some(750));
-    assert_eq!(parsed.rationale.as_deref(), Some("matches our prior policy"));
+    assert_eq!(
+        parsed.rationale.as_deref(),
+        Some("matches our prior policy")
+    );
 }
 
 #[test]
@@ -326,11 +329,11 @@ fn community_with_role_assignments_roundtrips() {
         .role_assignments
         .expect("roleAssignments deserializes");
     assert_eq!(assignments.len(), 2);
+    assert_eq!(assignments[0].role, RoleAssignmentRole::Moderator);
     assert_eq!(
-        assignments[0].role,
-        RoleAssignmentRole::Moderator
+        parsed.appview_endpoint.as_deref(),
+        Some("https://example.community")
     );
-    assert_eq!(parsed.appview_endpoint.as_deref(), Some("https://example.community"));
 }
 
 #[test]

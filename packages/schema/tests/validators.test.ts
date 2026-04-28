@@ -111,9 +111,17 @@ describe("validateRecord", () => {
     expect(validateRecord(NSID.encounter, bad).success).toBe(false);
   });
 
-  test("rejects correction with unknown reason", () => {
-    const bad = { ...CORRECTION, reason: "invented" };
-    expect(validateRecord(NSID.correction, bad).success).toBe(false);
+  test("accepts correction with extended reason via open-enum", () => {
+    // correction.reason is a knownValues open enum: community-extended
+    // values are wire-compatible, validators accept them as a strings.
+    // Closed enums (like visibility) still reject unknown values.
+    const extended = { ...CORRECTION, reason: "invented" };
+    expect(validateRecord(NSID.correction, extended).success).toBe(true);
+  });
+
+  test("rejects encounter with unknown visibility (closed enum)", () => {
+    const bad = { ...ENCOUNTER, visibility: "not-a-real-visibility" };
+    expect(validateRecord(NSID.encounter, bad).success).toBe(false);
   });
 });
 

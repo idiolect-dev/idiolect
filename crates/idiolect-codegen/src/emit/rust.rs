@@ -369,11 +369,28 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
     });
     let doc = doc_attr(&doc_text);
 
-    let known_idents: Vec<_> = def
-        .values
-        .iter()
-        .map(|v| format_ident!("{}", sanitize_variant_ident(v)))
-        .collect();
+    // Sanitize each slug, then disambiguate any collisions by
+    // appending a numeric suffix. Two distinct slugs that
+    // pascal-case to the same identifier (e.g. `foo-bar` and
+    // `foo_bar`) would otherwise emit a duplicate-variant Rust
+    // enum that fails to compile.
+    let known_idents: Vec<Ident> = {
+        let mut seen: std::collections::BTreeMap<String, u32> = std::collections::BTreeMap::new();
+        def.values
+            .iter()
+            .map(|v| {
+                let base = sanitize_variant_ident(v);
+                let count = seen.entry(base.clone()).or_insert(0);
+                *count += 1;
+                let unique = if *count == 1 {
+                    base
+                } else {
+                    format!("{base}{count}")
+                };
+                format_ident!("{}", unique)
+            })
+            .collect()
+    };
     let known_kebab: Vec<&str> = def.values.iter().map(String::as_str).collect();
     // The fallback variant carries a community-extended slug. Try
     // common names in order; pick the first that does not collide
@@ -1207,7 +1224,10 @@ mod open_enum_tests {
     #[test]
     fn fallback_is_other_when_no_collision() {
         let out = render(&["foo", "bar"]);
-        assert!(out.contains("Other (String)"), "expected Other variant in:\n{out}");
+        assert!(
+            out.contains("Other (String)"),
+            "expected Other variant in:\n{out}"
+        );
         assert!(!out.contains("Extended (String)"));
     }
 
@@ -1257,5 +1277,41 @@ mod open_enum_tests {
             out.contains("\"chive.pub\""),
             "expected verbatim chive.pub wire form:\n{out}"
         );
+    }
+}
+
+#[cfg(test)]
+mod open_enum_collision_tests {
+    use super::*;
+    use crate::lexicon::StringEnumDef;
+
+    fn render(values: &[&str]) -> String {
+        let def = StringEnumDef {
+            description: None,
+            values: values.iter().map(|s| (*s).to_owned()).collect(),
+        };
+        emit_open_string_enum("TestKind", &def).to_string()
+    }
+
+    #[test]
+    fn ident_collisions_get_numeric_suffix() {
+        // foo-bar and foo_bar both pascal-case to FooBar; the
+        // second occurrence must be disambiguated to compile.
+        let out = render(&["foo-bar", "foo_bar", "baz"]);
+        assert!(
+            out.contains("FooBar ,"),
+            "first collision keeps the bare ident:\n{out}"
+        );
+        assert!(
+            out.contains("FooBar2 ,"),
+            "second collision gets a numeric suffix:\n{out}"
+        );
+        assert!(
+            out.contains("Baz ,"),
+            "non-colliding ident is unaffected:\n{out}"
+        );
+        // Wire-form arms must preserve the original slugs verbatim.
+        assert!(out.contains("\"foo-bar\""));
+        assert!(out.contains("\"foo_bar\""));
     }
 }
