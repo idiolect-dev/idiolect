@@ -1296,7 +1296,7 @@ checksum = "3d3067d79b975e8844ca9eb072e16b31c3c1c36928edf9c6789548c524d0d954"
 
 [[package]]
 name = "idiolect-cli"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "idiolect-identity",
@@ -1314,7 +1314,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-codegen"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "oxc_allocator",
@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-identity"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-records",
  "reqwest",
@@ -1350,7 +1350,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-indexer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "futures-util",
  "idiolect-records",
@@ -1368,7 +1368,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-lens"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "atrium-api",
  "atrium-xrpc",
@@ -1394,7 +1394,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-migrate"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-oauth"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1430,7 +1430,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-observer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "idiolect-indexer",
@@ -1450,7 +1450,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-orchestrator"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1472,7 +1472,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-records"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1483,7 +1483,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-verify"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",

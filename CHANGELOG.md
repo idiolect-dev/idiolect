@@ -23,6 +23,15 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.6.0] — 2026-04-28
+
+### Changed
+
+- **Breaking.** `idiolect-codegen`'s `FamilyConfig` fields are now `Cow<'static, str>` (was `&'static str`), so downstream codegen consumers can construct one from runtime-owned strings without `Box::leak`. Static-literal call sites stay zero-allocation through `Cow::Borrowed`. Add `FamilyConfig::new(impl Into<Cow<'static, str>>, ...)` so callers don't have to name `Cow` at the construction site.
+- **Breaking.** `idiolect-codegen`'s `IDIOLECT_FAMILY` const is replaced by an `idiolect_family()` fn. Update direct references accordingly.
+- **Breaking.** `idiolect-codegen`'s `emit::emit_rust`, `emit::emit_typescript`, and `target::TargetEmitter::emit` now take a `&FamilyConfig` argument. The CLI binary continues to pass `&idiolect_family()` so its surface is unchanged; downstream consumers (e.g. `layers-codegen` over `pub.layers.*`) construct their own `FamilyConfig::new(...)` rather than vendoring the target loop. Closes #41.
+- **Breaking.** The `@idiolect-dev/schema` package now exports `family.ts` in place of `records.ts`. `AnyRecord`, `NSID`, `RecordTypes`, `isKind`, `is{Type}` guards, `tagRecord`, and `RECORD_NSIDS` keep their signatures; new exports are `FAMILY_ID`, `FAMILY_NSID_PREFIX`, `FamilyMarker` type, `familyContains(nsid)`, `decodeRecord(value)` (returns a loose `DecodedRecord` because TypeScript has no runtime structural validator for the wire form), and `toTypedJson(r)`. The TS family is now scoped to records matching `FAMILY_NSID_PREFIX`, dropping the vendored `dev.panproto.*` records that used to bundle into the unscoped `records.ts`. External consumers reach the package through `index.ts` which re-exports the new module, so the file rename is invisible at the public surface.
+
 <!--
 The release pipeline extracts this section between `[Unreleased]`
 and the first versioned heading below. Keep it current: PRs that
