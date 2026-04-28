@@ -68,6 +68,11 @@ impl TargetEmitter for TypeScriptTarget {
         &self,
         docs: &[LexiconDoc],
         examples: &[Example],
+        // The TS family module that consumes this lands in the next
+        // commit; for now the parameter is part of the trait surface
+        // but unused by the body so RustTarget and TypeScriptTarget
+        // share one signature.
+        _family: &super::family::FamilyConfig,
     ) -> Result<Vec<EmittedFile>, EmitError> {
         let mut out = Vec::with_capacity(docs.len() + 3);
 
