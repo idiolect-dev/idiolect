@@ -1,0 +1,18 @@
+{
+  "$nsid": "dev.idiolect.community",
+  "name": "Blacksky",
+  "description": "Blacksky community as represented inside the idiolect framework. Blacksky publishes its own ATProto lexicons under community.blacksky.{feed,assembly}.* and runs an AppView that hosts community-scoped feed records. This idiolect record makes Blacksky a first-class participant in the idiolect catalog: dialect preferences, role assignments, and translation lenses all hang off this AT-URI.",
+  "membershipRoll": "at://did:plc:blacksky/community.blacksky.membership/main",
+  "memberRoleVocab": {
+    "uri": "at://did:plc:idiolect/dev.idiolect.vocab/community-roles-v1"
+  },
+  "recordHosting": "community-hosted",
+  "appviewEndpoint": "https://blacksky.community",
+  "coreSchemas": [
+    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.feed.post" },
+    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.conversation" },
+    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.statement" },
+    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.vote" }
+  ],
+  "createdAt": "2026-04-28T00:00:00.000Z"
+}

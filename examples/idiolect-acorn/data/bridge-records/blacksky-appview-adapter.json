@@ -1,0 +1,16 @@
+{
+  "$nsid": "dev.idiolect.adapter",
+  "framework": "blacksky-appview",
+  "versionRange": "^1",
+  "invocationProtocol": {
+    "kind": "http",
+    "entryPoint": "https://blacksky.community/xrpc/"
+  },
+  "isolation": {
+    "kind": "process",
+    "networkPolicy": "egress-allowlist",
+    "filesystemPolicy": "readonly"
+  },
+  "author": "did:plc:idiolect-acorn",
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}
