@@ -73,6 +73,7 @@ pub trait ObservationMethod: Send + Sync {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }

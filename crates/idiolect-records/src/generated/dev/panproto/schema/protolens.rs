@@ -52,7 +52,7 @@ pub enum PanprotoProtolensComplementConstructor {
 }
 impl PanprotoProtolensComplementConstructor {
     /// Wire-form slug for this value. Known variants render
-    /// kebab-case; `Other` passes through verbatim.
+    /// kebab-case; the fallback variant passes through verbatim.
     #[must_use]
     pub fn as_str(&self) -> &str {
         match self {
@@ -134,7 +134,7 @@ pub enum PanprotoProtolensOpticKind {
 }
 impl PanprotoProtolensOpticKind {
     /// Wire-form slug for this value. Known variants render
-    /// kebab-case; `Other` passes through verbatim.
+    /// kebab-case; the fallback variant passes through verbatim.
     #[must_use]
     pub fn as_str(&self) -> &str {
         match self {

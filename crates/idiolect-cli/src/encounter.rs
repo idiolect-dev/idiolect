@@ -65,7 +65,7 @@ pub async fn cmd_encounter_record(args: &[String]) -> Result<ExitCode> {
         "sourceSchema": SchemaRef { uri: Some(source_schema_uri), cid: None, language: None },
         "targetSchema": target_schema_uri.map(|u| SchemaRef { uri: Some(u), cid: None, language: None }),
         "use": use_value,
-        "kind": encounter_kind_wire(kind),
+        "kind": kind.as_str(),
         "visibility": visibility_wire(visibility),
         "occurredAt": now,
     });
@@ -103,16 +103,6 @@ fn parse_kind(raw: &str) -> Result<EncounterKind> {
         "production" => Ok(EncounterKind::Production),
         "adversarial" => Ok(EncounterKind::Adversarial),
         other => bail!("unknown --kind: {other}"),
-    }
-}
-
-const fn encounter_kind_wire(k: EncounterKind) -> &'static str {
-    match k {
-        EncounterKind::InvocationLog => "invocation-log",
-        EncounterKind::Curated => "curated",
-        EncounterKind::RoundtripVerified => "roundtrip-verified",
-        EncounterKind::Production => "production",
-        EncounterKind::Adversarial => "adversarial",
     }
 }
 

@@ -87,10 +87,12 @@ pub fn build_verification<R: VerificationRunner + ?Sized>(
         dependencies: None,
         property,
         kind: runner.kind(),
+        kind_vocab: None,
         lens: target.lens.clone(),
         occurred_at: target.occurred_at.clone(),
         proof_artifact: None,
         result,
+        result_vocab: None,
         tool: target
             .tool_override
             .clone()

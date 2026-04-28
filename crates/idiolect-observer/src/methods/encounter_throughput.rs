@@ -36,10 +36,10 @@ pub struct EncounterThroughputMethod {
     /// Total encounter records observed.
     total: u64,
     /// Per-kind counts, in stable (serialized) order.
-    by_kind: BTreeMap<&'static str, u64>,
+    by_kind: BTreeMap<String, u64>,
     /// Per-downstream-result counts. `None` means the encounter
     /// record did not include a result.
-    by_downstream_result: BTreeMap<&'static str, u64>,
+    by_downstream_result: BTreeMap<String, u64>,
 }
 
 impl EncounterThroughputMethod {
@@ -47,27 +47,6 @@ impl EncounterThroughputMethod {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Serialize [`EncounterKind`] into its kebab-case wire form.
-    const fn kind_key(kind: EncounterKind) -> &'static str {
-        match kind {
-            EncounterKind::InvocationLog => "invocation-log",
-            EncounterKind::Curated => "curated",
-            EncounterKind::RoundtripVerified => "roundtrip-verified",
-            EncounterKind::Production => "production",
-            EncounterKind::Adversarial => "adversarial",
-        }
-    }
-
-    /// Serialize [`EncounterDownstreamResult`] into its kebab-case wire form.
-    const fn result_key(result: EncounterDownstreamResult) -> &'static str {
-        match result {
-            EncounterDownstreamResult::Success => "success",
-            EncounterDownstreamResult::Corrected => "corrected",
-            EncounterDownstreamResult::Rejected => "rejected",
-            EncounterDownstreamResult::Unknown => "unknown",
-        }
     }
 
     /// Total encounters observed so far.
@@ -103,6 +82,7 @@ impl ObservationMethod for EncounterThroughputMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -119,9 +99,12 @@ impl ObservationMethod for EncounterThroughputMethod {
         self.total = self.total.saturating_add(1);
         *self
             .by_kind
-            .entry(Self::kind_key(encounter.kind))
+            .entry(encounter.kind.as_str().to_owned())
             .or_insert(0) += 1;
-        let result_key = encounter.downstream_result.map_or("none", Self::result_key);
+        let result_key = encounter
+            .downstream_result
+            .as_ref()
+            .map_or("none".to_owned(), |r| r.as_str().to_owned());
         *self.by_downstream_result.entry(result_key).or_insert(0) += 1;
 
         Ok(())
@@ -135,12 +118,12 @@ impl ObservationMethod for EncounterThroughputMethod {
         let by_kind: serde_json::Map<String, serde_json::Value> = self
             .by_kind
             .iter()
-            .map(|(k, v)| ((*k).to_owned(), serde_json::Value::Number((*v).into())))
+            .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
             .collect();
         let by_result: serde_json::Map<String, serde_json::Value> = self
             .by_downstream_result
             .iter()
-            .map(|(k, v)| ((*k).to_owned(), serde_json::Value::Number((*v).into())))
+            .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
             .collect();
 
         Ok(Some(serde_json::json!({

@@ -32,9 +32,12 @@ pub struct Bounty {
     /// Reward terms. The bounty record does not transact; `externalRef` is the machine-actionable hook; `summary` is narrative.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reward: Option<BountyReward>,
-    /// Current lifecycle state as declared by the requester.
+    /// Open-enum lifecycle slug declared by the requester. Resolved against `statusVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<BountyStatus>,
+    /// Vocabulary the `status` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// What is being requested. Exactly one of: a lens between two schemas, a verification of a lens, or an adapter for a framework.
     pub wants: BountyWants,
 }
@@ -47,7 +50,11 @@ impl crate::Record for Bounty {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConstraintConformance {
+    /// Open-enum verification-kind slug. Resolved against `kindVocab` when present.
     pub kind: ConstraintConformanceKind,
+    /// Vocabulary the `kind` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Optional specific property the verification must establish.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub property: Option<crate::generated::dev::idiolect::defs::LensProperty>,
@@ -155,13 +162,16 @@ pub struct WantLens {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WantVerification {
+    /// Open-enum verification-kind slug. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary.
     pub kind: WantVerificationKind,
+    /// Vocabulary the `kind` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     pub lens: crate::generated::dev::idiolect::defs::LensRef,
 }
 
-/// ConstraintConformanceKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// ConstraintConformanceKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ConstraintConformanceKind {
     RoundtripTest,
     PropertyTest,
@@ -169,6 +179,69 @@ pub enum ConstraintConformanceKind {
     ConformanceTest,
     StaticCheck,
     ConvergencePreserving,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl ConstraintConformanceKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::RoundtripTest => "roundtrip-test",
+            Self::PropertyTest => "property-test",
+            Self::FormalProof => "formal-proof",
+            Self::ConformanceTest => "conformance-test",
+            Self::StaticCheck => "static-check",
+            Self::ConvergencePreserving => "convergence-preserving",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for ConstraintConformanceKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for ConstraintConformanceKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for ConstraintConformanceKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for ConstraintConformanceKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 /// ConstraintPerformanceCmp.
@@ -182,9 +255,8 @@ pub enum ConstraintPerformanceCmp {
     Gt,
 }
 
-/// WantVerificationKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// WantVerificationKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum WantVerificationKind {
     RoundtripTest,
     PropertyTest,
@@ -192,6 +264,69 @@ pub enum WantVerificationKind {
     ConformanceTest,
     StaticCheck,
     ConvergencePreserving,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl WantVerificationKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::RoundtripTest => "roundtrip-test",
+            Self::PropertyTest => "property-test",
+            Self::FormalProof => "formal-proof",
+            Self::ConformanceTest => "conformance-test",
+            Self::StaticCheck => "static-check",
+            Self::ConvergencePreserving => "convergence-preserving",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for WantVerificationKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for WantVerificationKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for WantVerificationKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for WantVerificationKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 /// BountyConstraints tagged union.
@@ -240,14 +375,70 @@ pub enum BountyWants {
     WantAdapter(WantAdapter),
 }
 
-/// BountyStatus.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// BountyStatus. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum BountyStatus {
     Open,
     Claimed,
     Fulfilled,
     Withdrawn,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl BountyStatus {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Open => "open",
+            Self::Claimed => "claimed",
+            Self::Fulfilled => "fulfilled",
+            Self::Withdrawn => "withdrawn",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for BountyStatus {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "open" => Self::Open,
+            "claimed" => Self::Claimed,
+            "fulfilled" => Self::Fulfilled,
+            "withdrawn" => Self::Withdrawn,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for BountyStatus {
+    fn from(s: &str) -> Self {
+        match s {
+            "open" => Self::Open,
+            "claimed" => Self::Claimed,
+            "fulfilled" => Self::Fulfilled,
+            "withdrawn" => Self::Withdrawn,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for BountyStatus {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for BountyStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 /// Reward terms. The bounty record does not transact; `externalRef` is the machine-actionable hook; `summary` is narrative.

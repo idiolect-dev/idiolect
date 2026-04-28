@@ -18,7 +18,8 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
+            "maxLength": 256,
+            "knownValues": [
               "roundtrip-test",
               "property-test",
               "formal-proof",
@@ -27,7 +28,12 @@
               "convergence-preserving",
               "coercion-law"
             ],
-            "description": "Fixed taxonomy at the Lexicon level. Each kind has its own trust semantics."
+            "description": "Open-enum verification-kind slug. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary; each kind has its own trust semantics."
+          },
+          "kindVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `kind` slug resolves against."
           },
           "verifier": {
             "type": "string",
@@ -54,8 +60,14 @@
           },
           "result": {
             "type": "string",
-            "enum": ["holds", "falsified", "inconclusive"],
-            "description": "Assertion outcome. Falsified verifications are first-class records; they are how the community learns a lens is wrong."
+            "maxLength": 256,
+            "knownValues": ["holds", "falsified", "inconclusive"],
+            "description": "Open-enum assertion outcome. Resolved against `resultVocab` when present; falsified verifications are first-class records and are how the community learns a lens is wrong."
+          },
+          "resultVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `result` slug resolves against."
           },
           "counterexample": {
             "type": "cid-link",

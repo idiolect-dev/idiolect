@@ -59,9 +59,12 @@ pub struct ObservationScope {
     /// Communities whose records are in scope.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub communities: Option<Vec<idiolect_records::AtUri>>,
-    /// Which encounter kinds this observation weights and includes. Observer must disclose this or the claim is uninterpretable.
+    /// Which encounter kinds this observation weights and includes. Observer must disclose this or the claim is uninterpretable. Slugs are open-enum and resolved against `encounterKindsVocab`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encounter_kinds: Option<Vec<ObservationScopeEncounterKinds>>,
+    /// Vocabulary the `encounterKinds` slugs resolve against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encounter_kinds_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Lenses included in scope. Empty array or omitted means 'all'.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lenses: Option<Vec<crate::generated::dev::idiolect::defs::LensRef>>,
@@ -69,15 +72,74 @@ pub struct ObservationScope {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub window: Option<ObservationScopeWindow>,
 }
-/// ObservationScopeEncounterKinds.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// ObservationScopeEncounterKinds. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ObservationScopeEncounterKinds {
     InvocationLog,
     Curated,
     RoundtripVerified,
     Production,
     Adversarial,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl ObservationScopeEncounterKinds {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::InvocationLog => "invocation-log",
+            Self::Curated => "curated",
+            Self::RoundtripVerified => "roundtrip-verified",
+            Self::Production => "production",
+            Self::Adversarial => "adversarial",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for ObservationScopeEncounterKinds {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "invocation-log" => Self::InvocationLog,
+            "curated" => Self::Curated,
+            "roundtrip-verified" => Self::RoundtripVerified,
+            "production" => Self::Production,
+            "adversarial" => Self::Adversarial,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for ObservationScopeEncounterKinds {
+    fn from(s: &str) -> Self {
+        match s {
+            "invocation-log" => Self::InvocationLog,
+            "curated" => Self::Curated,
+            "roundtrip-verified" => Self::RoundtripVerified,
+            "production" => Self::Production,
+            "adversarial" => Self::Adversarial,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for ObservationScopeEncounterKinds {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for ObservationScopeEncounterKinds {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 /// Time window covered by the aggregation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -375,6 +375,14 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
         .map(|v| format_ident!("{}", sanitize_variant_ident(v)))
         .collect();
     let known_kebab: Vec<&str> = def.values.iter().map(String::as_str).collect();
+    // The fallback variant is normally `Other(String)`; a known value
+    // that pascal-cases to `Other` (e.g. the slug `"other"`) would
+    // collide, so fall back to `Extended(String)` instead.
+    let fallback_ident = if known_idents.iter().any(|i| i == "Other") {
+        format_ident!("Extended")
+    } else {
+        format_ident!("Other")
+    };
 
     let variants = known_idents.iter().map(|ident| quote! { #ident, });
 
@@ -398,17 +406,17 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
             /// Community-extended slug not present in the lexicon's
             /// `knownValues`. Resolves through the sibling
             /// `*Vocab` field on the containing record.
-            Other(String),
+            #fallback_ident(String),
         }
 
         impl #ty_ident {
             /// Wire-form slug for this value. Known variants render
-            /// kebab-case; `Other` passes through verbatim.
+            /// kebab-case; the fallback variant passes through verbatim.
             #[must_use]
             pub fn as_str(&self) -> &str {
                 match self {
                     #(#to_str_arms)*
-                    Self::Other(s) => s.as_str(),
+                    Self::#fallback_ident(s) => s.as_str(),
                 }
             }
         }
@@ -417,7 +425,7 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
             fn from(s: String) -> Self {
                 match s.as_str() {
                     #(#from_str_arms)*
-                    _ => Self::Other(s),
+                    _ => Self::#fallback_ident(s),
                 }
             }
         }
@@ -426,7 +434,7 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
             fn from(s: &str) -> Self {
                 match s {
                     #(#from_str_arms_dup)*
-                    _ => Self::Other(s.to_owned()),
+                    _ => Self::#fallback_ident(s.to_owned()),
                 }
             }
         }

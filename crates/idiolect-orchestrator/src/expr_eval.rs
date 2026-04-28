@@ -163,6 +163,7 @@ mod tests {
                 summary: Some(s.to_owned()),
             }),
             status: Some(BountyStatus::Open),
+            status_vocab: None,
             wants: BountyWants::WantAdapter(WantAdapter {
                 framework: "hasura".into(),
                 version_range: None,

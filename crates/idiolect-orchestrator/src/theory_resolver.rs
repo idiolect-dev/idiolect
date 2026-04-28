@@ -444,9 +444,11 @@ mod tests {
             annotations: None,
             basis: None,
             downstream_result: None,
+            downstream_result_vocab: None,
             holder: None,
             kind:
                 idiolect_records::generated::dev::idiolect::encounter::EncounterKind::InvocationLog,
+            kind_vocab: None,
             lens: idiolect_records::generated::dev::idiolect::defs::LensRef {
                 cid: None,
                 direction: None,

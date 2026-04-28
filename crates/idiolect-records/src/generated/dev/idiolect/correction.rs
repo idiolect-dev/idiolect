@@ -35,8 +35,11 @@ pub struct Correction {
     /// Optional human-readable justification for the correction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rationale: Option<String>,
-    /// Fixed taxonomy at the Lexicon level. Aggregators filter or weight by reason; corrections of different reasons signal different things about a lens.
+    /// Open-enum reason slug. Resolved against `reasonVocab` when present; aggregators filter or weight by reason.
     pub reason: CorrectionReason,
+    /// Vocabulary the `reason` slug resolves against. Omit to use the canonical idiolect default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     pub visibility: crate::generated::dev::idiolect::defs::Visibility,
 }
 
@@ -44,9 +47,8 @@ impl crate::Record for Correction {
     const NSID: &'static str = "dev.idiolect.correction";
 }
 
-/// CorrectionReason.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// CorrectionReason. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum CorrectionReason {
     LensError,
     DomainDifference,
@@ -54,4 +56,67 @@ pub enum CorrectionReason {
     DownstreamIdiosyncrasy,
     UserMistake,
     Retrospective,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl CorrectionReason {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::LensError => "lens-error",
+            Self::DomainDifference => "domain-difference",
+            Self::SourceError => "source-error",
+            Self::DownstreamIdiosyncrasy => "downstream-idiosyncrasy",
+            Self::UserMistake => "user-mistake",
+            Self::Retrospective => "retrospective",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for CorrectionReason {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "lens-error" => Self::LensError,
+            "domain-difference" => Self::DomainDifference,
+            "source-error" => Self::SourceError,
+            "downstream-idiosyncrasy" => Self::DownstreamIdiosyncrasy,
+            "user-mistake" => Self::UserMistake,
+            "retrospective" => Self::Retrospective,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for CorrectionReason {
+    fn from(s: &str) -> Self {
+        match s {
+            "lens-error" => Self::LensError,
+            "domain-difference" => Self::DomainDifference,
+            "source-error" => Self::SourceError,
+            "downstream-idiosyncrasy" => Self::DownstreamIdiosyncrasy,
+            "user-mistake" => Self::UserMistake,
+            "retrospective" => Self::Retrospective,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for CorrectionReason {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for CorrectionReason {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

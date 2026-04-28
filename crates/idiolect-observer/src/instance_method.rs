@@ -58,6 +58,7 @@ pub trait InstanceMethod: Send + Sync {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -306,6 +307,7 @@ mod tests {
             requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
             reward: None,
             status: Some(BountyStatus::Open),
+            status_vocab: None,
             wants: BountyWants::WantAdapter(WantAdapter {
                 framework: "hasura".into(),
                 version_range: None,

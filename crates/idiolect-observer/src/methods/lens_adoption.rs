@@ -85,6 +85,7 @@ impl ObservationMethod for LensAdoptionMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }

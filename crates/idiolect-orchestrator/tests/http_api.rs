@@ -45,12 +45,16 @@ fn adapter_for(framework: &str) -> Adapter {
             input_schema: None,
             kind: AdapterInvocationProtocolKind::Subprocess,
             output_schema: None,
+            kind_vocab: None,
         },
         isolation: AdapterIsolation {
             kind: AdapterIsolationKind::Process,
             filesystem_policy: None,
             network_policy: None,
             resource_limits: None,
+            filesystem_policy_vocab: None,
+            kind_vocab: None,
+            network_policy_vocab: None,
         },
         occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
             .expect("valid datetime"),
@@ -70,6 +74,7 @@ fn bounty_want_lens(src: &str, tgt: &str) -> Bounty {
         requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
+        status_vocab: None,
         wants: BountyWants::WantLens(WantLens {
             bidirectional: None,
             source: s_ref(src),
@@ -177,6 +182,7 @@ fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
         proof_artifact: None,
         property,
         result: VerificationResult::Holds,
+        result_vocab: None,
         tool: Tool {
             commit: None,
             name: "coq".into(),

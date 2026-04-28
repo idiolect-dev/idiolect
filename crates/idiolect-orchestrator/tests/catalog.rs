@@ -91,6 +91,7 @@ fn bounty_want_lens(status: Option<BountyStatus>, src: &str, tgt: &str) -> Bount
         requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status,
+        status_vocab: None,
         wants: BountyWants::WantLens(WantLens {
             bidirectional: None,
             source: s_ref(src),
@@ -110,6 +111,7 @@ fn bounty_want_adapter(fw: &str) -> Bounty {
         requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
+        status_vocab: None,
         wants: BountyWants::WantAdapter(WantAdapter {
             framework: fw.to_owned(),
             version_range: None,
@@ -130,12 +132,16 @@ fn adapter(framework: &str) -> Adapter {
             input_schema: None,
             kind: AdapterInvocationProtocolKind::Subprocess,
             output_schema: None,
+            kind_vocab: None,
         },
         isolation: AdapterIsolation {
             kind: AdapterIsolationKind::Process,
             filesystem_policy: None,
             network_policy: None,
             resource_limits: None,
+            filesystem_policy_vocab: None,
+            kind_vocab: None,
+            network_policy_vocab: None,
         },
         occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
             .expect("valid datetime"),
@@ -266,6 +272,10 @@ fn verification(
             version: None,
             violation_threshold: None,
         }),
+        VerificationKind::Other(_) => VerificationProperty::LpRoundtrip(LpRoundtrip {
+            domain: "extended".to_owned(),
+            generator: None,
+        }),
     };
     Verification {
         basis: None,
@@ -273,11 +283,13 @@ fn verification(
         dependencies: None,
         property,
         kind,
+        kind_vocab: None,
         lens: l_ref(lens_uri),
         occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
             .expect("valid datetime"),
         proof_artifact: None,
         result,
+        result_vocab: None,
         tool: Tool {
             commit: None,
             name: "coq".to_owned(),
@@ -408,8 +420,10 @@ async fn catalog_ignores_non_orchestrator_records() {
         annotations: None,
         basis: None,
         downstream_result: None,
+        downstream_result_vocab: None,
         holder: None,
         kind: EncounterKind::InvocationLog,
+        kind_vocab: None,
         lens: l_ref("at://did:plc:x/dev.panproto.schema.lens/l1"),
         occurred_at: idiolect_records::Datetime::parse("2026-04-20T00:00:00Z")
             .expect("valid datetime"),
@@ -491,6 +505,7 @@ fn seed_catalog() -> Arc<std::sync::Mutex<idiolect_orchestrator::Catalog>> {
             "r".to_owned(),
             AnyRecord::Bounty(Bounty {
                 status: Some(BountyStatus::Fulfilled),
+                status_vocab: None,
                 ..bounty_want_lens(
                     None,
                     "at://did:plc:s/dev.panproto.schema.schema/a",

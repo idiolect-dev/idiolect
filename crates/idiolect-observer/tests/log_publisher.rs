@@ -81,6 +81,7 @@ fn fixture_observation() -> Observation {
         scope: ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         },

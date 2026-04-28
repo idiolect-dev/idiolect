@@ -77,8 +77,14 @@
           },
           "status": {
             "type": "string",
-            "enum": ["open", "claimed", "fulfilled", "withdrawn"],
-            "description": "Current lifecycle state as declared by the requester."
+            "maxLength": 256,
+            "knownValues": ["open", "claimed", "fulfilled", "withdrawn"],
+            "description": "Open-enum lifecycle slug declared by the requester. Resolved against `statusVocab` when present."
+          },
+          "statusVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `status` slug resolves against."
           },
           "basis": {
             "type": "ref",
@@ -111,14 +117,21 @@
         "lens": { "type": "ref", "ref": "dev.idiolect.defs#lensRef" },
         "kind": {
           "type": "string",
-          "enum": [
+          "maxLength": 256,
+          "knownValues": [
             "roundtrip-test",
             "property-test",
             "formal-proof",
             "conformance-test",
             "static-check",
             "convergence-preserving"
-          ]
+          ],
+          "description": "Open-enum verification-kind slug. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary."
+        },
+        "kindVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `kind` slug resolves against."
         }
       }
     },
@@ -158,14 +171,21 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": [
+          "maxLength": 256,
+          "knownValues": [
             "roundtrip-test",
             "property-test",
             "formal-proof",
             "conformance-test",
             "static-check",
             "convergence-preserving"
-          ]
+          ],
+          "description": "Open-enum verification-kind slug. Resolved against `kindVocab` when present."
+        },
+        "kindVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `kind` slug resolves against."
         },
         "property": {
           "type": "ref",

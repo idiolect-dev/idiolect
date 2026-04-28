@@ -21,14 +21,20 @@ pub struct Encounter {
     /// Structured grounding for the assertion. Useful when `holder` is a third party and the record must state on what basis the invocation is being attributed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
-    /// Outcome as assessed by the invoking party at record time. 'corrected' signals a follow-up correction record is expected or exists.
+    /// Open-enum outcome slug as assessed by the invoking party at record time. Resolved against `downstreamResultVocab` when present; `corrected` signals a follow-up correction record is expected or exists.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub downstream_result: Option<EncounterDownstreamResult>,
+    /// Vocabulary the `downstreamResult` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub downstream_result_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// DID of the party the encounter is attributed to. Omit for first-party records (holder is implicit in the repo owner); set explicitly for third-party attestations such as a labeler recording someone else's invocation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub holder: Option<idiolect_records::Did>,
-    /// Fixed taxonomy at the Lexicon level. Observers declare how they weight each kind.
+    /// Open-enum corpus-kind slug. Resolved against `kindVocab` when present; observers declare how they weight each kind.
     pub kind: EncounterKind,
+    /// Vocabulary the `kind` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// The lens that was invoked.
     pub lens: crate::generated::dev::idiolect::defs::LensRef,
     /// When the lens invocation occurred. Distinct from the record's createdAt, which may be later.
@@ -53,23 +59,138 @@ impl crate::Record for Encounter {
     const NSID: &'static str = "dev.idiolect.encounter";
 }
 
-/// EncounterDownstreamResult.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// EncounterDownstreamResult. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncounterDownstreamResult {
     Success,
     Corrected,
     Rejected,
     Unknown,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl EncounterDownstreamResult {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Success => "success",
+            Self::Corrected => "corrected",
+            Self::Rejected => "rejected",
+            Self::Unknown => "unknown",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for EncounterDownstreamResult {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "success" => Self::Success,
+            "corrected" => Self::Corrected,
+            "rejected" => Self::Rejected,
+            "unknown" => Self::Unknown,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for EncounterDownstreamResult {
+    fn from(s: &str) -> Self {
+        match s {
+            "success" => Self::Success,
+            "corrected" => Self::Corrected,
+            "rejected" => Self::Rejected,
+            "unknown" => Self::Unknown,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for EncounterDownstreamResult {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for EncounterDownstreamResult {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
-/// EncounterKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// EncounterKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncounterKind {
     InvocationLog,
     Curated,
     RoundtripVerified,
     Production,
     Adversarial,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl EncounterKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::InvocationLog => "invocation-log",
+            Self::Curated => "curated",
+            Self::RoundtripVerified => "roundtrip-verified",
+            Self::Production => "production",
+            Self::Adversarial => "adversarial",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for EncounterKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "invocation-log" => Self::InvocationLog,
+            "curated" => Self::Curated,
+            "roundtrip-verified" => Self::RoundtripVerified,
+            "production" => Self::Production,
+            "adversarial" => Self::Adversarial,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for EncounterKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "invocation-log" => Self::InvocationLog,
+            "curated" => Self::Curated,
+            "roundtrip-verified" => Self::RoundtripVerified,
+            "production" => Self::Production,
+            "adversarial" => Self::Adversarial,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for EncounterKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for EncounterKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

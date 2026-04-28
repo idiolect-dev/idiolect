@@ -142,6 +142,7 @@ impl ObservationMethod for PurposeDistributionMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -242,8 +243,10 @@ mod tests {
                 annotations: None,
                 basis: None,
                 downstream_result: None,
+                downstream_result_vocab: None,
                 holder: None,
                 kind: EncounterKind::Production,
+                kind_vocab: None,
                 lens: LensRef {
                     cid: None,
                     direction: None,

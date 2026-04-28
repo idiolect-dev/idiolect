@@ -139,16 +139,38 @@ fn retrospection_minimal() {
 }
 
 #[test]
-fn unknown_enum_value_rejected() {
-    // if a lexicon adds an enum value, deserialization of the old
-    // binary must fail loudly rather than silently coerce.
+fn unknown_closed_enum_value_rejected() {
+    // closed enums (here: visibility) reject unknown values at
+    // deserialization. open enums (knownValues + Other(String)) do
+    // not — that asymmetry is the point of the open-enum convention.
     let bad = json!({
         "lens":         { "uri": "at://did:plc:x/dev.panproto.schema.lens/z" },
         "sourceSchema": { "uri": "at://did:plc:x/dev.panproto.schema.schema/a" },
         "use":          { "action": "p" },
-        "kind":         "not-a-real-kind",
-        "visibility":   "public-detailed",
+        "kind":         "invocation-log",
+        "visibility":   "not-a-real-visibility",
         "occurredAt":   "2026-04-19T00:00:00.000Z",
     });
     assert!(serde_json::from_value::<Encounter>(bad).is_err());
+}
+
+#[test]
+fn unknown_open_enum_value_accepted_as_other() {
+    // open enums round-trip community-extended slugs through the
+    // Other(String) variant. This is wire-compatible with future
+    // additions to knownValues and lets downstream vocabs extend
+    // without forking the lexicon.
+    use idiolect_records::generated::dev::idiolect::encounter::EncounterKind;
+    let parsed: Encounter = roundtrip(&json!({
+        "lens":         { "uri": "at://did:plc:x/dev.panproto.schema.lens/z" },
+        "sourceSchema": { "uri": "at://did:plc:x/dev.panproto.schema.schema/a" },
+        "use":          { "action": "p" },
+        "kind":         "community-extended-kind",
+        "visibility":   "public-detailed",
+        "occurredAt":   "2026-04-19T00:00:00.000Z",
+    }));
+    assert_eq!(
+        parsed.kind,
+        EncounterKind::Other("community-extended-kind".to_owned())
+    );
 }
