@@ -26,6 +26,7 @@
 //! panproto. The trait boundary is the swap point.
 
 use crate::Example;
+use crate::emit::family::FamilyConfig;
 use crate::lexicon::LexiconDoc;
 
 /// One emitted source file.
@@ -49,6 +50,11 @@ pub trait TargetEmitter: Send + Sync {
 
     /// Render every file this target owns.
     ///
+    /// `family` selects which records (by NSID prefix) constitute
+    /// the emitted family module. Pass [`crate::emit::family::idiolect_family`]
+    /// for `dev.idiolect.*`; downstream consumers construct their own
+    /// via [`FamilyConfig::new`](crate::emit::family::FamilyConfig::new).
+    ///
     /// # Errors
     ///
     /// Returns [`EmitError::Unsupported`] if the inputs contain a
@@ -60,6 +66,7 @@ pub trait TargetEmitter: Send + Sync {
         &self,
         docs: &[LexiconDoc],
         examples: &[Example],
+        family: &FamilyConfig,
     ) -> Result<Vec<EmittedFile>, EmitError>;
 }
 

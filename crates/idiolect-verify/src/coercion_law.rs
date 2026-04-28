@@ -134,19 +134,26 @@ where
             ));
         }
 
-        // Pick the first violation as the counterexample so consumers
-        // can chase a single concrete failure. `violationThreshold`
+        // The lexicon's `counterexample` is a `cid-link` — a content
+        // address pointing at a stored minimal counterexample, not a
+        // free-form string. Until this runner has a content-
+        // addressed store wired in, surface the first violation
+        // through tracing and leave the field empty. `violationThreshold`
         // is a runtime parameter (how many violations the upstream
         // runner produced), not part of the holds/falsified decision:
         // any violation at all falsifies the claim.
         let first = &violations[0];
-        let counterexample = Some(format!("{}: {}", first.law, first.detail));
+        tracing::info!(
+            law = %first.law,
+            detail = %first.detail,
+            "coercion-law verification falsified",
+        );
 
         Ok(build_verification(
             target,
             self,
             VerificationResult::Falsified,
-            counterexample,
+            None,
             property(),
         ))
     }
@@ -214,7 +221,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn nonempty_violation_list_falsifies_with_counterexample() {
+    async fn nonempty_violation_list_falsifies() {
         let client = StubClient::default();
         *client.violations.lock().unwrap() = vec![
             CoercionLawViolation {
@@ -231,9 +238,11 @@ mod tests {
             CoercionLawRunner::new(client, "panproto-core".into(), Some("1.0".into()), Some(1));
         let v = runner.run(&target()).await.unwrap();
         assert!(matches!(v.result, VerificationResult::Falsified));
-        let cx = v.counterexample.unwrap();
-        assert!(cx.contains("signature-preservation"));
-        assert!(cx.contains("carrier of plus does not match"));
+        // The lexicon's `counterexample` is a cid-link, not a free-
+        // form description. Until a content-addressed store is wired
+        // in, the runner emits the falsifying detail through tracing
+        // and leaves the lexicon field empty.
+        assert!(v.counterexample.is_none());
     }
 
     #[tokio::test]

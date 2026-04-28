@@ -158,7 +158,10 @@ mod tests {
                 holder: holder.map(|h| idiolect_records::Did::parse(h).expect("valid did")),
                 subject: StrongRecordRef {
                     uri: idiolect_records::AtUri::parse(subject).expect("valid at-uri"),
-                    cid: "bafyxxxx".into(),
+                    cid: idiolect_records::Cid::parse(
+                        "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm",
+                    )
+                    .expect("valid CID"),
                 },
                 visibility: Some(Visibility::PublicDetailed),
                 occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")

@@ -20,7 +20,7 @@ pub struct Verification {
     pub basis: Option<crate::generated::dev::idiolect::defs::Basis>,
     /// For result=falsified: optional reference to a minimal counterexample.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub counterexample: Option<String>,
+    pub counterexample: Option<idiolect_records::Cid>,
     /// Other verifications this one depends on (e.g. a proof assuming a lemma).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dependencies: Option<Vec<idiolect_records::AtUri>>,
@@ -31,7 +31,7 @@ pub struct Verification {
     pub occurred_at: idiolect_records::Datetime,
     /// For kind=formal-proof: reference to the checkable proof artifact (e.g. Coq/Lean/Agda term). Orchestrators that have the checker may mechanically verify; others take the assertion on trust.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub proof_artifact: Option<String>,
+    pub proof_artifact: Option<idiolect_records::Cid>,
     /// Structured statement of what the verification asserts, dispatched on the variant: RoundtripDomain for roundtrip-test, GeneratorSpec for property-test, Theorem for formal-proof, ConformanceStandard for conformance-test, StaticCheckerConfig for static-check, ConvergenceClaim for convergence-preserving. See dev.idiolect.theory.lens_property.
     pub property: VerificationProperty,
     /// Assertion outcome. Falsified verifications are first-class records; they are how the community learns a lens is wrong.

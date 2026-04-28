@@ -54,18 +54,22 @@
 extern crate self as idiolect_records;
 
 pub mod at_uri;
+pub mod cid;
 pub mod datetime;
 pub mod did;
 pub mod family;
 pub mod generated;
+pub mod language;
 pub mod nsid;
 pub mod record;
 pub mod uri;
 
 pub use at_uri::{AtUri, AtUriError};
+pub use cid::{Cid, CidError};
 pub use datetime::{Datetime, DatetimeError};
 pub use did::{Did, DidError, DidMethod};
 pub use family::{OrAny, OrFamily, RecordFamily, detect_or_family_overlap};
+pub use language::{Language, LanguageError};
 pub use nsid::{Nsid, NsidError};
 pub use uri::{Uri, UriError};
 

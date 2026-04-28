@@ -15,7 +15,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 rust-version = "1.95"
 license = "MIT"
@@ -67,6 +67,8 @@ serde_json = "1.0.149"
 thiserror = "2.0.18"
 time = { version = "0.3.45", features = ["serde", "serde-well-known"] }
 url = "2.5.8"
+cid = { version = "0.11", default-features = false, features = ["alloc", "std"] }
+language-tags = "0.3"
 
 # panproto: idiolect dogfoods panproto for schema codegen, breaking-change
 # detection, and lens compilation. pinned to the same tag cospan uses.

@@ -13,7 +13,8 @@
       "!**/dist",
       "!**/target",
       "!**/packages/*/src/generated",
-      "!lexicons"
+      "!lexicons",
+      "!crates/*/tests/fixtures"
     ]
   },
   "formatter": {

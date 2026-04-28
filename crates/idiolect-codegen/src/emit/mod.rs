@@ -22,16 +22,30 @@ pub mod typescript;
 
 /// Emit the full rust file set for the supplied lexicons + fixtures.
 ///
+/// `family` controls which records (by NSID prefix) populate the
+/// generated family module. Idiolect's binary passes
+/// [`family::idiolect_family`]; downstream consumers construct their
+/// own via [`family::FamilyConfig::new`].
+///
 /// # Errors
 ///
 /// Propagates any error from the rust target's emit pass — in
 /// practice, only `syn` ast-construction failures which indicate a
 /// bug in the lens rather than a user-lexicon issue.
-pub fn emit_rust(docs: &[LexiconDoc], examples: &[Example]) -> Result<Vec<EmittedFile>> {
-    Ok(rust::RustTarget.emit(docs, examples)?)
+pub fn emit_rust(
+    docs: &[LexiconDoc],
+    examples: &[Example],
+    family: &family::FamilyConfig,
+) -> Result<Vec<EmittedFile>> {
+    Ok(rust::RustTarget.emit(docs, examples, family)?)
 }
 
 /// Emit the full typescript file set for the supplied lexicons + fixtures.
+///
+/// `family` is reserved for the upcoming TS family module that
+/// mirrors `family.rs`; the current implementation accepts the
+/// argument for trait uniformity but the emitted output is still
+/// derived purely from `docs` and `examples`.
 ///
 /// # Errors
 ///
@@ -39,6 +53,10 @@ pub fn emit_rust(docs: &[LexiconDoc], examples: &[Example]) -> Result<Vec<Emitte
 /// of the current builders can fail, but the signature is kept result-
 /// shaped so the orchestration can absorb a future panproto-backed
 /// typescript target that has fallible render steps.
-pub fn emit_typescript(docs: &[LexiconDoc], examples: &[Example]) -> Result<Vec<EmittedFile>> {
-    Ok(typescript::TypeScriptTarget.emit(docs, examples)?)
+pub fn emit_typescript(
+    docs: &[LexiconDoc],
+    examples: &[Example],
+    family: &family::FamilyConfig,
+) -> Result<Vec<EmittedFile>> {
+    Ok(typescript::TypeScriptTarget.emit(docs, examples, family)?)
 }

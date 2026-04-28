@@ -78,7 +78,7 @@ pub fn build_verification<R: VerificationRunner + ?Sized>(
     target: &VerificationTarget,
     runner: &R,
     result: VerificationResult,
-    counterexample: Option<String>,
+    counterexample: Option<idiolect_records::Cid>,
     property: VerificationProperty,
 ) -> Verification {
     Verification {

@@ -77,7 +77,8 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
         bail!("no lexicons found under {}", lexicons_dir.display());
     }
 
-    let rust_files: Vec<EmittedFile> = emit::emit_rust(&docs, &examples)
+    let family = emit::family::idiolect_family();
+    let rust_files: Vec<EmittedFile> = emit::emit_rust(&docs, &examples, &family)
         .context("rust emitter")?
         .into_iter()
         .map(|mut f| {
@@ -85,7 +86,7 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
             EmittedFile::from(f)
         })
         .collect();
-    let ts_files: Vec<EmittedFile> = emit::emit_typescript(&docs, &examples)
+    let ts_files: Vec<EmittedFile> = emit::emit_typescript(&docs, &examples, &family)
         .context("typescript emitter")?
         .into_iter()
         .map(EmittedFile::from)

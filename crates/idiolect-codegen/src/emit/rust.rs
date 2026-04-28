@@ -57,6 +57,7 @@ impl TargetEmitter for RustTarget {
         &self,
         docs: &[LexiconDoc],
         examples: &[Example],
+        family: &super::family::FamilyConfig,
     ) -> Result<Vec<EmittedFile>, EmitError> {
         let mut out = Vec::with_capacity(docs.len() + 2);
 
@@ -89,14 +90,12 @@ impl TargetEmitter for RustTarget {
         // shrinks to the Record trait + DecodeError.
         out.push(EmittedFile {
             path: "family.rs".to_owned(),
-            contents: rustfmt(
-                &super::family::render_family_rs(docs, &super::family::IDIOLECT_FAMILY).map_err(
-                    |e| EmitError::InvalidAst {
-                        target: "rust",
-                        source: e.into(),
-                    },
-                )?,
-            )?,
+            contents: rustfmt(&super::family::render_family_rs(docs, family).map_err(|e| {
+                EmitError::InvalidAst {
+                    target: "rust",
+                    source: e.into(),
+                }
+            })?)?,
         });
 
         Ok(out)
@@ -477,13 +476,9 @@ fn resolve_prop_type(
     current_nsid: &str,
 ) -> (TokenStream, Option<InlineType>) {
     match ty {
-        // cid-link renders as an atproto cid string on the wire;
-        // we keep it a bare `String` until a dedicated `Cid`
-        // newtype lands. `language` follows the same fallback —
-        // BCP 47 validation isn't shipped yet.
-        PropType::String | PropType::CidLink | PropType::StringLanguage => {
-            (quote! { String }, None)
-        }
+        PropType::String => (quote! { String }, None),
+        PropType::CidLink => (quote! { idiolect_records::Cid }, None),
+        PropType::StringLanguage => (quote! { idiolect_records::Language }, None),
         PropType::StringDatetime => (quote! { idiolect_records::Datetime }, None),
         PropType::StringAtUri => (quote! { idiolect_records::AtUri }, None),
         PropType::StringDid => (quote! { idiolect_records::Did }, None),

@@ -142,15 +142,23 @@ where
             .await?;
 
             if back.source_record != source {
-                // Surface the falsifying case index in the counter-
-                // example so reproductions can rerun with the same
-                // generator and case index.
-                let counterexample = Some(format!("case={i} source={source}"));
+                // The lexicon's `counterexample` is a cid-link
+                // referring to a stored counterexample blob; without
+                // a content-addressed store the runner can't produce
+                // one. Surface the falsifying case index and source
+                // through tracing so reproductions can rerun with
+                // the same generator + case index, and leave the
+                // lexicon field empty.
+                tracing::info!(
+                    case = i,
+                    source = %source,
+                    "property-test verification falsified",
+                );
                 return Ok(build_verification(
                     target,
                     self,
                     VerificationResult::Falsified,
-                    counterexample,
+                    None,
                     property(),
                 ));
             }

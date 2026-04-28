@@ -82,31 +82,23 @@ where
         let tgt_errors = validate(&tgt, &self.protocol);
 
         if !src_errors.is_empty() || !tgt_errors.is_empty() {
-            use std::fmt::Write as _;
-            let mut detail = String::new();
-            if !src_errors.is_empty() {
-                write!(
-                    detail,
-                    "source schema {}: {} validation error(s); ",
-                    lens_record.source_schema,
-                    src_errors.len()
-                )
-                .expect("write to String");
-            }
-            if !tgt_errors.is_empty() {
-                write!(
-                    detail,
-                    "target schema {}: {} validation error(s)",
-                    lens_record.target_schema,
-                    tgt_errors.len()
-                )
-                .expect("write to String");
-            }
+            // The lexicon's `counterexample` is a cid-link referring
+            // to a stored counterexample blob; without a content-
+            // addressed store the runner can't produce one, so
+            // surface the per-schema error count through tracing and
+            // leave the lexicon field empty.
+            tracing::info!(
+                source_schema = %lens_record.source_schema,
+                source_errors = src_errors.len(),
+                target_schema = %lens_record.target_schema,
+                target_errors = tgt_errors.len(),
+                "static-check verification falsified",
+            );
             return Ok(build_verification(
                 target,
                 self,
                 VerificationResult::Falsified,
-                Some(detail),
+                None,
                 self.property(),
             ));
         }
@@ -243,7 +235,11 @@ mod tests {
         let runner = StaticCheckRunner::new(resolver, loader, restrictive);
         let v = runner.run(&target(uri)).await.unwrap();
         assert_eq!(v.result, VerificationResult::Falsified);
-        assert!(v.counterexample.is_some());
+        // The lexicon's `counterexample` is a cid-link, not a free-
+        // form description. Until a content-addressed store is wired
+        // in, the runner emits the falsifying detail through tracing
+        // and leaves the lexicon field empty.
+        assert!(v.counterexample.is_none());
     }
 
     #[tokio::test]

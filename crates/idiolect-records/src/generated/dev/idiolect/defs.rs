@@ -85,7 +85,7 @@ pub struct Caveat {
 #[serde(rename_all = "camelCase")]
 pub struct EncounterRef {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cid: Option<String>,
+    pub cid: Option<idiolect_records::Cid>,
     pub uri: idiolect_records::AtUri,
 }
 
@@ -111,7 +111,7 @@ pub struct EvidenceDivergence {
     pub path_b: Vec<LensRef>,
     /// Optional cid of an input where the two paths diverge.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub witness_input: Option<String>,
+    pub witness_input: Option<idiolect_records::Cid>,
 }
 
 /// For kind=data-loss: a source-schema field unrepresented in the target after translation.
@@ -124,7 +124,7 @@ pub struct EvidenceLoss {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_schema: Option<SchemaRef>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub witness_input: Option<String>,
+    pub witness_input: Option<idiolect_records::Cid>,
 }
 
 /// For kind=reconciliation-mismatch: two records that should reconcile under the lens but do not.
@@ -135,9 +135,9 @@ pub struct EvidenceMismatch {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expected_equality_on: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub left_record: Option<String>,
+    pub left_record: Option<idiolect_records::Cid>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub right_record: Option<String>,
+    pub right_record: Option<idiolect_records::Cid>,
 }
 
 /// What a verification actually asserts. Each verification kind has its own statement shape. Consumers (proof checkers, PBT runners, conformance runners) dispatch on the tagged variant.
@@ -166,7 +166,7 @@ pub enum LensProperty {
 pub struct LensRef {
     /// Content-addressed hash of the lens.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cid: Option<String>,
+    pub cid: Option<idiolect_records::Cid>,
     /// Whether the lens is invertible.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub direction: Option<LensRefDirection>,
@@ -282,7 +282,7 @@ pub struct MaterialSpec {
 pub struct SchemaRef {
     /// Content-addressed hash of the schema, when tracked in a content-addressed store such as panproto-vcs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cid: Option<String>,
+    pub cid: Option<idiolect_records::Cid>,
     /// Schema language identifier, e.g. 'atproto-lexicon', 'postgres-sql', 'protobuf', 'graphql', 'json-schema'.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
@@ -295,7 +295,7 @@ pub struct SchemaRef {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StrongRecordRef {
-    pub cid: String,
+    pub cid: idiolect_records::Cid,
     pub uri: idiolect_records::AtUri,
 }
 
@@ -352,7 +352,7 @@ pub enum Visibility {
 pub struct VocabRef {
     /// Content hash pinning a specific vocabulary revision.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cid: Option<String>,
+    pub cid: Option<idiolect_records::Cid>,
     /// AT-URI pointing to the vocabulary record.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub uri: Option<idiolect_records::AtUri>,

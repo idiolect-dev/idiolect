@@ -1296,7 +1296,7 @@ checksum = "3d3067d79b975e8844ca9eb072e16b31c3c1c36928edf9c6789548c524d0d954"
 
 [[package]]
 name = "idiolect-cli"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "idiolect-identity",
@@ -1314,7 +1314,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-codegen"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "oxc_allocator",
@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-identity"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-records",
  "reqwest",
@@ -1350,7 +1350,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-indexer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "futures-util",
  "idiolect-records",
@@ -1368,7 +1368,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-lens"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "atrium-api",
  "atrium-xrpc",
@@ -1394,7 +1394,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-migrate"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-oauth"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1430,7 +1430,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-observer"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "idiolect-indexer",
@@ -1450,7 +1450,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-orchestrator"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1472,8 +1472,10 @@ dependencies = [
 
 [[package]]
 name = "idiolect-records"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
+ "cid",
+ "language-tags",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -1483,7 +1485,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-verify"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1603,6 +1605,12 @@ checksum = "ed60c85f254d6ae8450cec15eedd921efbc4d1bdf6fcf6202b9a58b403f6f805"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "language-tags"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4345964bb142484797b161f473a503a434de77149dd8c7427788c6e13379388"
 
 [[package]]
 name = "lazy_static"
@@ -3136,7 +3144,6 @@ dependencies = [
  "cfg-if",
  "libc",
  "psm",
- "windows-sys 0.52.0",
  "windows-sys 0.59.0",
 ]
 
@@ -3250,7 +3257,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "230a1b821ccbd75b185820a1f1ff7b14d21da1e442e22c0863ea5f08771a8874"
 dependencies = [
  "rustix",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
