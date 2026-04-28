@@ -90,7 +90,8 @@ impl TargetEmitter for RustTarget {
         out.push(EmittedFile {
             path: "family.rs".to_owned(),
             contents: rustfmt(
-                &super::family::render_family_rs(docs, &super::family::IDIOLECT_FAMILY).map_err(
+                &super::family::render_family_rs(docs, &super::family::idiolect_family())
+                    .map_err(
                     |e| EmitError::InvalidAst {
                         target: "rust",
                         source: e.into(),

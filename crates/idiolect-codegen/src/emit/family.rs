@@ -12,6 +12,8 @@
 //! consumers running their own codegen instance (e.g. `layers-pub`
 //! over `pub.layers.*`) point this at their own prefix.
 
+use std::borrow::Cow;
+
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -21,22 +23,48 @@ use crate::lexicon::{Def, LexiconDoc, module_name_for_nsid};
 use super::rust::pascal_case;
 
 /// Configuration for a single family.
+///
+/// Fields are [`Cow<'static, str>`] so the idiolect default keeps
+/// zero-allocation `Cow::Borrowed` literals while downstream callers
+/// can construct a config from runtime-owned strings via
+/// [`FamilyConfig::new`].
 pub struct FamilyConfig {
     /// Marker type name (e.g. `IdiolectFamily`).
-    pub marker_name: &'static str,
+    pub marker_name: Cow<'static, str>,
     /// Family ID exposed via `RecordFamily::ID`.
-    pub id: &'static str,
+    pub id: Cow<'static, str>,
     /// NSID prefix used for membership. Records whose NSID does
     /// not start with this string are not part of the family.
-    pub nsid_prefix: &'static str,
+    pub nsid_prefix: Cow<'static, str>,
+}
+
+impl FamilyConfig {
+    /// Construct a config from any string-like inputs.
+    ///
+    /// Static literals stay borrowed (zero allocation); owned
+    /// `String` callers can pass them directly.
+    pub fn new(
+        marker_name: impl Into<Cow<'static, str>>,
+        id: impl Into<Cow<'static, str>>,
+        nsid_prefix: impl Into<Cow<'static, str>>,
+    ) -> Self {
+        Self {
+            marker_name: marker_name.into(),
+            id: id.into(),
+            nsid_prefix: nsid_prefix.into(),
+        }
+    }
 }
 
 /// Default family the `dev.idiolect.*` codegen emits.
-pub const IDIOLECT_FAMILY: FamilyConfig = FamilyConfig {
-    marker_name: "IdiolectFamily",
-    id: "dev.idiolect",
-    nsid_prefix: "dev.idiolect.",
-};
+#[must_use]
+pub fn idiolect_family() -> FamilyConfig {
+    FamilyConfig {
+        marker_name: Cow::Borrowed("IdiolectFamily"),
+        id: Cow::Borrowed("dev.idiolect"),
+        nsid_prefix: Cow::Borrowed("dev.idiolect."),
+    }
+}
 
 /// One member of a family — the precomputed bag of token-trees the
 /// emitter splices into the generated module.
@@ -80,8 +108,8 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
         );
     }
 
-    let marker = format_ident!("{}", cfg.marker_name);
-    let id_lit = cfg.id;
+    let marker = format_ident!("{}", cfg.marker_name.as_ref());
+    let id_lit: &str = cfg.id.as_ref();
 
     let variants = entries.iter().map(|e| {
         let doc = format!(" A `{}` record.", e.nsid);
@@ -309,7 +337,7 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
 fn collect_entries(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Vec<Entry> {
     docs.iter()
         .filter(|d| matches!(d.defs.get("main"), Some(Def::Record(_))))
-        .filter(|d| d.nsid.starts_with(cfg.nsid_prefix))
+        .filter(|d| d.nsid.starts_with(cfg.nsid_prefix.as_ref()))
         .map(|doc| {
             let module = module_name_for_nsid(&doc.nsid);
             let ty_name = pascal_case(&module);
