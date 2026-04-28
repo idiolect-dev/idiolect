@@ -1,17 +1,17 @@
 // backwards-compat shim over the generated surface.
 //
 // the canonical source of record nsids, record types, and per-record
-// type guards is `./generated/records`, which `idiolect-codegen` emits
+// type guards is `./generated/family`, which `idiolect-codegen` emits
 // from the lexicons. this module keeps the legacy `NSIDS` / `Nsid` /
 // `RecordNsid` names working so existing call sites (and external
 // consumers of `@idiolect-dev/schema`) do not need to migrate in lockstep.
 
-import { NSID, RECORD_NSIDS } from "./generated/records";
+import { NSID, RECORD_NSIDS } from "./generated/family";
 
 /**
  * Canonical NSIDs, re-exported under the pre-codegen name (`NSIDS`).
  *
- * Prefer the singular `NSID` export from `./generated/records` in new
+ * Prefer the singular `NSID` export from `./generated/family` in new
  * code; this alias stays to avoid breaking call sites.
  */
 export const NSIDS = NSID;
