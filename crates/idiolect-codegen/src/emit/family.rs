@@ -43,6 +43,7 @@ impl FamilyConfig {
     ///
     /// Static literals stay borrowed (zero allocation); owned
     /// `String` callers can pass them directly.
+    #[must_use]
     pub fn new(
         marker_name: impl Into<Cow<'static, str>>,
         id: impl Into<Cow<'static, str>>,

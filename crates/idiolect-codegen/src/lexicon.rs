@@ -91,9 +91,7 @@ pub enum PropType {
     /// RFC 3986 URI). Emits as `idiolect_records::Uri`.
     StringUri,
     /// String constrained to the atproto `language` format
-    /// (BCP 47 tag). Currently emits as `String` because there is
-    /// no dedicated typed wrapper yet, but the variant is broken
-    /// out so future work has a target.
+    /// (BCP 47 tag). Emits as `idiolect_records::Language`.
     StringLanguage,
     /// Integer (signed, arbitrary width — rendered as `i64`).
     Integer,
@@ -101,7 +99,8 @@ pub enum PropType {
     Boolean,
     /// Floating-point number.
     Number,
-    /// Content-addressed link (atproto `cid-link`).
+    /// Content-addressed link (atproto `cid-link`). Emits as
+    /// `idiolect_records::Cid`.
     CidLink,
     /// Raw byte string.
     Bytes,

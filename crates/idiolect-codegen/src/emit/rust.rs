@@ -478,13 +478,9 @@ fn resolve_prop_type(
     current_nsid: &str,
 ) -> (TokenStream, Option<InlineType>) {
     match ty {
-        // cid-link renders as an atproto cid string on the wire;
-        // we keep it a bare `String` until a dedicated `Cid`
-        // newtype lands. `language` follows the same fallback —
-        // BCP 47 validation isn't shipped yet.
-        PropType::String | PropType::CidLink | PropType::StringLanguage => {
-            (quote! { String }, None)
-        }
+        PropType::String => (quote! { String }, None),
+        PropType::CidLink => (quote! { idiolect_records::Cid }, None),
+        PropType::StringLanguage => (quote! { idiolect_records::Language }, None),
         PropType::StringDatetime => (quote! { idiolect_records::Datetime }, None),
         PropType::StringAtUri => (quote! { idiolect_records::AtUri }, None),
         PropType::StringDid => (quote! { idiolect_records::Did }, None),

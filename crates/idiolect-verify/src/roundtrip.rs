@@ -129,12 +129,20 @@ where
             .await?;
 
             if back.source_record != *source {
-                let counterexample = Some(format!("corpus[{i}]"));
+                // `counterexample` is a cid-link referring to a
+                // stored counterexample blob; without a content-
+                // addressed store the runner can't produce one,
+                // so surface the corpus index via tracing and
+                // leave the lexicon field empty.
+                tracing::info!(
+                    corpus_index = i,
+                    "roundtrip verification falsified",
+                );
                 return Ok(build_verification(
                     target,
                     self,
                     VerificationResult::Falsified,
-                    counterexample,
+                    None,
                     property(),
                 ));
             }

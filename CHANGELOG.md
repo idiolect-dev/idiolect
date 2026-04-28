@@ -25,6 +25,11 @@ if you depend on this project, and read this file before bumping.
 
 ## [0.6.0] — 2026-04-28
 
+### Added
+
+- `idiolect_records::Cid` newtype with parse-time multibase + multihash validation via the `cid` crate. Codegen now emits `dev.idiolect.*` `cid-link` fields as `Option<Cid>` (was `Option<String>`). The wrapper preserves the canonical wire form so byte-for-byte fixture round-trips stay stable.
+- `idiolect_records::Language` newtype with parse-time BCP 47 validation via the `language-tags` crate. Codegen now emits `format: "language"` fields as the typed wrapper. Validation is structural (the IANA registry is not consulted) and the wire form is preserved verbatim.
+
 ### Changed
 
 - **Breaking.** `idiolect-codegen`'s `FamilyConfig` fields are now `Cow<'static, str>` (was `&'static str`), so downstream codegen consumers can construct one from runtime-owned strings without `Box::leak`. Static-literal call sites stay zero-allocation through `Cow::Borrowed`. Add `FamilyConfig::new(impl Into<Cow<'static, str>>, ...)` so callers don't have to name `Cow` at the construction site.

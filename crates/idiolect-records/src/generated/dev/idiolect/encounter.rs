@@ -35,10 +35,10 @@ pub struct Encounter {
     pub occurred_at: idiolect_records::Datetime,
     /// Optional content-addressed reference to the produced output.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub produced_output: Option<String>,
+    pub produced_output: Option<idiolect_records::Cid>,
     /// Optional content-addressed reference to the source instance, when the publisher is willing to include it. Omit when visibility restricts publication of source data.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub source_instance: Option<String>,
+    pub source_instance: Option<idiolect_records::Cid>,
     /// The source schema the lens translated from.
     pub source_schema: crate::generated::dev::idiolect::defs::SchemaRef,
     /// The target schema produced by the lens. Often implied by the lens; may be elided when unambiguous.
