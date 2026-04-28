@@ -81,7 +81,7 @@ impl ActionDistributionMethod {
     /// subsumer under the vocabulary's world discipline.
     pub fn register_vocabulary(&mut self, uri: impl Into<String>, vocab: &Vocab) {
         let mut parents: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for entry in &vocab.actions {
+        for entry in vocab.actions.iter().flatten() {
             parents
                 .entry(entry.id.clone())
                 .or_default()
@@ -105,7 +105,7 @@ impl ActionDistributionMethod {
             uri.into(),
             InternalVocab {
                 world: vocab.world,
-                top: vocab.top.clone(),
+                top: vocab.top.clone().unwrap_or_default(),
                 ancestors,
             },
         );
@@ -311,8 +311,8 @@ mod tests {
             name: "t".into(),
             description: None,
             world: VocabWorld::ClosedWithDefault,
-            top: "any_action".into(),
-            actions: vec![
+            top: Some("any_action".into()),
+            actions: Some(vec![
                 ActionEntry {
                     class: None,
                     id: "any_action".into(),
@@ -331,10 +331,13 @@ mod tests {
                     parents: vec!["train_model".into()],
                     description: None,
                 },
-            ],
+            ]),
             supersedes: None,
             occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
                 .expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
         }
     }
 

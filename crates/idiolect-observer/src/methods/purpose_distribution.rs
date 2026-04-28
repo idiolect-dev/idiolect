@@ -65,7 +65,7 @@ impl PurposeDistributionMethod {
     /// Register a purpose vocabulary at its canonical at-uri.
     pub fn register_vocabulary(&mut self, uri: impl Into<String>, vocab: &Vocab) {
         let mut parents: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for entry in &vocab.actions {
+        for entry in vocab.actions.iter().flatten() {
             parents
                 .entry(entry.id.clone())
                 .or_default()
@@ -89,7 +89,7 @@ impl PurposeDistributionMethod {
             uri.into(),
             InternalVocab {
                 world: vocab.world,
-                top: vocab.top.clone(),
+                top: vocab.top.clone().unwrap_or_default(),
                 ancestors,
             },
         );
@@ -292,8 +292,8 @@ mod tests {
             name: "p".into(),
             description: None,
             world: VocabWorld::ClosedWithDefault,
-            top: "any_purpose".into(),
-            actions: vec![
+            top: Some("any_purpose".into()),
+            actions: Some(vec![
                 ActionEntry {
                     id: "any_purpose".into(),
                     parents: vec![],
@@ -312,10 +312,13 @@ mod tests {
                     description: None,
                     class: None,
                 },
-            ],
+            ]),
             supersedes: None,
             occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
                 .expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
         }
     }
 

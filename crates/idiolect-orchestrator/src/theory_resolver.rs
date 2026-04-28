@@ -92,7 +92,7 @@ impl Resolver {
         let mut parents: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
         let mut declared: BTreeSet<String> = BTreeSet::new();
         let mut class: BTreeMap<String, String> = BTreeMap::new();
-        for entry in &vocab.actions {
+        for entry in vocab.actions.iter().flatten() {
             declared.insert(entry.id.clone());
             parents
                 .entry(entry.id.clone())
@@ -123,7 +123,7 @@ impl Resolver {
             uri.into(),
             ResolvedVocabulary {
                 world: vocab.world,
-                top: vocab.top.clone(),
+                top: vocab.top.clone().unwrap_or_default(),
                 ancestors,
                 declared,
                 class,
@@ -330,16 +330,19 @@ mod tests {
             name: "actions-test".to_owned(),
             description: None,
             world,
-            top: "any_action".to_owned(),
-            actions: vec![
+            top: Some("any_action".to_owned()),
+            actions: Some(vec![
                 entry("any_action", &[]),
                 entry("train_model", &["any_action"]),
                 entry("fine_tune", &["train_model"]),
                 entry("annotate", &["any_action"]),
-            ],
+            ]),
             supersedes: None,
             occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
                 .expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
         }
     }
 
@@ -348,16 +351,19 @@ mod tests {
             name: "purposes-test".to_owned(),
             description: None,
             world: VocabWorld::ClosedWithDefault,
-            top: "any_purpose".to_owned(),
-            actions: vec![
+            top: Some("any_purpose".to_owned()),
+            actions: Some(vec![
                 entry("any_purpose", &[]),
                 entry("commercial", &["any_purpose"]),
                 entry("non_commercial", &["any_purpose"]),
                 entry("academic", &["non_commercial"]),
-            ],
+            ]),
             supersedes: None,
             occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
                 .expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
         }
     }
 

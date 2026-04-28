@@ -208,14 +208,15 @@ async fn fetch_vocabulary(uri: &str) -> Result<Vocab> {
 }
 
 fn prompt_action_from_vocabulary(vocab: &Vocab) -> Result<String> {
+    let actions: &[_] = vocab.actions.as_deref().unwrap_or(&[]);
     let mut stderr = io::stderr().lock();
     writeln!(
         stderr,
         "vocabulary: {} ({} actions)",
         vocab.name,
-        vocab.actions.len()
+        actions.len()
     )?;
-    for (i, entry) in vocab.actions.iter().enumerate() {
+    for (i, entry) in actions.iter().enumerate() {
         writeln!(stderr, "  {:>3}. {}", i + 1, entry.id)?;
     }
     stderr.flush().ok();
@@ -223,12 +224,12 @@ fn prompt_action_from_vocabulary(vocab: &Vocab) -> Result<String> {
     let line = prompt_required("action number or id")?;
     if let Ok(n) = line.parse::<usize>()
         && n >= 1
-        && n <= vocab.actions.len()
+        && n <= actions.len()
     {
-        return Ok(vocab.actions[n - 1].id.clone());
+        return Ok(actions[n - 1].id.clone());
     }
     // fall through: treat the line as an action id and look it up.
-    if let Some(hit) = vocab.actions.iter().find(|e| e.id == line) {
+    if let Some(hit) = actions.iter().find(|e| e.id == line) {
         return Ok(hit.id.clone());
     }
     bail!("no action matching {line:?} in vocabulary {}", vocab.name);
