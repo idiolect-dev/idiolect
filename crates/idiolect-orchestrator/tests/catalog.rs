@@ -162,6 +162,10 @@ fn community(members: &[&str]) -> Community {
         ),
         membership_roll: None,
         name: "Test".to_owned(),
+        appview_endpoint: None,
+        member_role_vocab: None,
+        record_hosting: None,
+        role_assignments: None,
     }
 }
 

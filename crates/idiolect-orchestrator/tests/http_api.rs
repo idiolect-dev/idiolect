@@ -96,6 +96,10 @@ fn community(members: &[&str]) -> Community {
         ),
         membership_roll: None,
         name: "Test".into(),
+        appview_endpoint: None,
+        member_role_vocab: None,
+        record_hosting: None,
+        role_assignments: None,
     }
 }
 

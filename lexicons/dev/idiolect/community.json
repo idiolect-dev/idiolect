@@ -30,6 +30,35 @@
               "format": "did"
             }
           },
+          "roleAssignments": {
+            "type": "array",
+            "maxLength": 500,
+            "description": "Sparse role assignments for members. Only members whose role differs from the implicit default need an entry; the default role is named on the role vocabulary's top node. A DID may appear multiple times when the role vocabulary supports multiple roles per member.",
+            "items": {
+              "type": "ref",
+              "ref": "#roleAssignment"
+            }
+          },
+          "memberRoleVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the role slugs in `roleAssignments[].role` resolve against. Omit to use the canonical idiolect community-roles vocabulary."
+          },
+          "recordHosting": {
+            "type": "string",
+            "maxLength": 256,
+            "knownValues": [
+              "member-hosted",
+              "community-hosted",
+              "hybrid"
+            ],
+            "description": "Where the community's records live. `member-hosted` (default ATProto) means records live on individual member PDSes. `community-hosted` (Acorn-style) means records live on a community AppView, gated by membership. `hybrid` means both. Consumers crawling for community records use this to choose a surface."
+          },
+          "appviewEndpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the community AppView, when `recordHosting` is `community-hosted` or `hybrid`. Consumers route XRPC reads through this endpoint."
+          },
           "membershipRoll": {
             "type": "string",
             "format": "at-uri",
@@ -106,19 +135,49 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": [
+          "maxLength": 256,
+          "knownValues": [
             "roundtrip-test",
             "property-test",
             "formal-proof",
             "conformance-test",
             "static-check",
             "convergence-preserving"
-          ]
+          ],
+          "description": "Open-enum slug naming the verification kind. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary."
+        },
+        "kindVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default."
         },
         "property": {
           "type": "ref",
           "ref": "dev.idiolect.defs#lensProperty",
           "description": "Optional specific property required."
+        }
+      }
+    },
+    "roleAssignment": {
+      "type": "object",
+      "description": "A role assignment for a single member DID. The role slug resolves through the community record's `memberRoleVocab` (or the canonical idiolect default when unset).",
+      "required": ["did", "role"],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did",
+          "description": "DID of the member receiving the role."
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 256,
+          "knownValues": [
+            "member",
+            "moderator",
+            "delegate",
+            "author"
+          ],
+          "description": "Open-enum role slug. The default vocabulary seeds `member` (top), `moderator`, `delegate`, `author`; communities extend by referencing a custom `memberRoleVocab`."
         }
       }
     },

@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Community {
+    /// URL of the community AppView, when `recordHosting` is `community-hosted` or `hybrid`. Consumers route XRPC reads through this endpoint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub appview_endpoint: Option<idiolect_records::Uri>,
     /// Structured community conventions the decidable subset. Review cadence, verification requirements, deprecation policies. Style/tone norms live in `conventionsText`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conventions: Option<Vec<CommunityConventions>>,
@@ -33,6 +36,9 @@ pub struct Community {
     /// Other communities this community recognises as legitimate interlocutors. Endorsement is not transitive.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub endorsed_communities: Option<Vec<idiolect_records::AtUri>>,
+    /// Vocabulary the role slugs in `roleAssignments[].role` resolve against. Omit to use the canonical idiolect community-roles vocabulary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub member_role_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Inline list of member DIDs, for small communities. Use membershipRoll instead for communities above ~200 members.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub members: Option<Vec<idiolect_records::Did>>,
@@ -41,6 +47,12 @@ pub struct Community {
     pub membership_roll: Option<idiolect_records::AtUri>,
     /// Human-readable community name.
     pub name: String,
+    /// Where the community's records live. `member-hosted` (default ATProto) means records live on individual member PDSes. `community-hosted` (Acorn-style) means records live on a community AppView, gated by membership. `hybrid` means both. Consumers crawling for community records use this to choose a surface.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub record_hosting: Option<String>,
+    /// Sparse role assignments for members. Only members whose role differs from the implicit default need an entry; the default role is named on the role vocabulary's top node. A DID may appear multiple times when the role vocabulary supports multiple roles per member.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role_assignments: Option<Vec<RoleAssignment>>,
 }
 
 impl crate::Record for Community {
@@ -73,22 +85,24 @@ pub struct ConventionReviewCadence {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConventionVerificationReq {
-    pub kind: ConventionVerificationReqKind,
+    /// Open-enum slug naming the verification kind. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary.
+    pub kind: String,
+    /// Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Optional specific property required.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub property: Option<crate::generated::dev::idiolect::defs::LensProperty>,
 }
 
-/// ConventionVerificationReqKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum ConventionVerificationReqKind {
-    RoundtripTest,
-    PropertyTest,
-    FormalProof,
-    ConformanceTest,
-    StaticCheck,
-    ConvergencePreserving,
+/// A role assignment for a single member DID. The role slug resolves through the community record's `memberRoleVocab` (or the canonical idiolect default when unset).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoleAssignment {
+    /// DID of the member receiving the role.
+    pub did: idiolect_records::Did,
+    /// Open-enum role slug. The default vocabulary seeds `member` (top), `moderator`, `delegate`, `author`; communities extend by referencing a custom `memberRoleVocab`.
+    pub role: String,
 }
 
 /// CommunityConventions tagged union.
