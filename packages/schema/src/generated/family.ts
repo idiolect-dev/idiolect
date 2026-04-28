@@ -220,7 +220,6 @@ export function decodeRecord(value: unknown): DecodedRecord | null {
   const ty = obj["$type"];
   if (typeof ty !== "string" || !familyContains(ty)) return null;
   const { $type: _stripped, ...body } = obj;
-  void _stripped;
   return { $nsid: ty, body };
 }
 

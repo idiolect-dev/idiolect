@@ -1401,7 +1401,6 @@ fn render_family_decode_record() -> String {
      \x20\x20const ty = obj[\"$type\"];\n\
      \x20\x20if (typeof ty !== \"string\" || !familyContains(ty)) return null;\n\
      \x20\x20const { $type: _stripped, ...body } = obj;\n\
-     \x20\x20void _stripped;\n\
      \x20\x20return { $nsid: ty, body };\n\
      }\n"
         .to_owned()
