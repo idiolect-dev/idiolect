@@ -159,7 +159,7 @@ enum TsDecl {
     },
     /// Open-enum string union: `"a" | "b" | (string & {})`. The
     /// trailing `string & {}` keeps the literal arms surfacing in
-    /// IntelliSense while permitting any string at the type level.
+    /// `IntelliSense` while permitting any string at the type level.
     OpenStringLiteralUnion {
         name: String,
         description: Option<String>,
@@ -497,6 +497,7 @@ fn build_interface_stmt<'a>(
     Statement::ExportNamedDeclaration(export)
 }
 
+#[allow(clippy::too_many_arguments)] // Builder uses positional args for symmetry with sibling stmt builders; the open flag is the only late addition.
 fn build_string_literal_union_stmt<'a>(
     ab: AstBuilder<'a>,
     source_text: &mut String,

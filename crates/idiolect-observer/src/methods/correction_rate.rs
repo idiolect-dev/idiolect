@@ -16,7 +16,6 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::dev::idiolect::correction::CorrectionReason;
 use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };

@@ -375,14 +375,28 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
         .map(|v| format_ident!("{}", sanitize_variant_ident(v)))
         .collect();
     let known_kebab: Vec<&str> = def.values.iter().map(String::as_str).collect();
-    // The fallback variant is normally `Other(String)`; a known value
-    // that pascal-cases to `Other` (e.g. the slug `"other"`) would
-    // collide, so fall back to `Extended(String)` instead.
-    let fallback_ident = if known_idents.iter().any(|i| i == "Other") {
-        format_ident!("Extended")
+    // The fallback variant carries a community-extended slug. Try
+    // common names in order; pick the first that does not collide
+    // with any known variant. Final fallback uses a numeric suffix
+    // to guarantee uniqueness even for pathological enums whose
+    // knownValues already include `Other`, `Extended`, `Custom`,
+    // and `Variant`.
+    let candidate_fallbacks = ["Other", "Extended", "Custom", "Variant"];
+    let fallback_name: String = if let Some(name) = candidate_fallbacks
+        .iter()
+        .find(|c| !known_idents.iter().any(|i| i == *c))
+    {
+        (*name).to_owned()
     } else {
-        format_ident!("Other")
+        // Numeric-suffixed fallback. Bounded to a sane ceiling so
+        // pathological inputs (every integer name taken) error
+        // loudly rather than spinning forever.
+        (0u32..1024)
+            .map(|n| format!("Other{n}"))
+            .find(|c| !known_idents.iter().any(|i| i == c))
+            .expect("ceiling is high enough for any plausible enum")
     };
+    let fallback_ident = format_ident!("{}", fallback_name);
 
     let variants = known_idents.iter().map(|ident| quote! { #ident, });
 
@@ -999,7 +1013,7 @@ fn sanitize_variant_ident(slug: &str) -> String {
     for ch in slug.chars() {
         if ch.is_ascii_alphanumeric() {
             if upper_next {
-                out.extend(ch.to_ascii_uppercase().to_string().chars());
+                out.push(ch.to_ascii_uppercase());
                 upper_next = false;
             } else {
                 out.push(ch);
@@ -1112,6 +1126,136 @@ mod re_export_tests {
         assert!(
             out.contains("pub use r#pub::layers::resource::entry::Entry as ResourceEntry;\n"),
             "missing disambiguated resource alias:\n{out}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod sanitize_tests {
+    use super::sanitize_variant_ident;
+
+    #[test]
+    fn alphanumeric_pascal_cases() {
+        assert_eq!(sanitize_variant_ident("foo-bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("foo_bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("FooBar"), "FooBar");
+    }
+
+    #[test]
+    fn dotted_slug_strips_punctuation() {
+        // The layers-pub fixture has knownValue "chive.pub"; the
+        // dot must not leak into the Rust ident.
+        assert_eq!(sanitize_variant_ident("chive.pub"), "ChivePub");
+    }
+
+    #[test]
+    fn slash_and_colon_are_separators() {
+        assert_eq!(sanitize_variant_ident("foo/bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("foo:bar"), "FooBar");
+    }
+
+    #[test]
+    fn leading_separator_pascal_cases_first_alpha() {
+        assert_eq!(sanitize_variant_ident("-foo"), "Foo");
+        assert_eq!(sanitize_variant_ident("..foo"), "Foo");
+    }
+
+    #[test]
+    fn consecutive_separators_collapse() {
+        assert_eq!(sanitize_variant_ident("foo--bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("foo. .bar"), "FooBar");
+    }
+
+    #[test]
+    fn digit_leading_slug_gets_v_prefix() {
+        // Slugs starting with a digit produce invalid idents
+        // without a prefix; the sanitizer adds `V`.
+        assert_eq!(sanitize_variant_ident("123abc"), "V123abc");
+        assert_eq!(sanitize_variant_ident("9"), "V9");
+    }
+
+    #[test]
+    fn empty_after_strip_becomes_v() {
+        assert_eq!(sanitize_variant_ident("..."), "V");
+        assert_eq!(sanitize_variant_ident(""), "V");
+    }
+
+    #[test]
+    fn unicode_is_treated_as_separator() {
+        // Non-ASCII chars are stripped (treated as separators) so
+        // the emitted ident is always a valid Rust identifier even
+        // if the original slug carried Greek or CJK characters.
+        assert_eq!(sanitize_variant_ident("αβγ"), "V");
+        assert_eq!(sanitize_variant_ident("foo-αβ-bar"), "FooBar");
+    }
+}
+
+#[cfg(test)]
+mod open_enum_tests {
+    use super::*;
+    use crate::lexicon::StringEnumDef;
+
+    fn render(values: &[&str]) -> String {
+        let def = StringEnumDef {
+            description: None,
+            values: values.iter().map(|s| (*s).to_owned()).collect(),
+        };
+        let tokens = emit_open_string_enum("TestKind", &def);
+        tokens.to_string()
+    }
+
+    #[test]
+    fn fallback_is_other_when_no_collision() {
+        let out = render(&["foo", "bar"]);
+        assert!(out.contains("Other (String)"), "expected Other variant in:\n{out}");
+        assert!(!out.contains("Extended (String)"));
+    }
+
+    #[test]
+    fn fallback_falls_back_to_extended_on_other_collision() {
+        let out = render(&["other", "foo"]);
+        assert!(
+            out.contains("Extended (String)"),
+            "expected Extended fallback in:\n{out}"
+        );
+        // The known `Other` variant must remain.
+        assert!(out.contains("Other ,"));
+    }
+
+    #[test]
+    fn fallback_falls_back_to_custom_on_other_and_extended_collision() {
+        let out = render(&["other", "extended"]);
+        assert!(
+            out.contains("Custom (String)"),
+            "expected Custom fallback in:\n{out}"
+        );
+    }
+
+    #[test]
+    fn known_value_serializes_to_original_kebab() {
+        // Ensures underscored / kebab slugs preserve their wire form
+        // through as_str arms.
+        let out = render(&["subsumed_by", "broader-than"]);
+        assert!(
+            out.contains("Self :: SubsumedBy => \"subsumed_by\""),
+            "expected verbatim wire form for underscored slug:\n{out}"
+        );
+        assert!(
+            out.contains("Self :: BroaderThan => \"broader-than\""),
+            "expected verbatim wire form for kebab slug:\n{out}"
+        );
+    }
+
+    #[test]
+    fn dotted_slug_renders_distinct_variant() {
+        let out = render(&["chive.pub", "wikidata"]);
+        assert!(
+            out.contains("ChivePub ,"),
+            "expected ChivePub variant from dotted slug:\n{out}"
+        );
+        assert!(
+            out.contains("\"chive.pub\""),
+            "expected verbatim chive.pub wire form:\n{out}"
         );
     }
 }

@@ -19,9 +19,6 @@ use idiolect_records::AnyRecord;
 use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
-use idiolect_records::generated::dev::idiolect::verification::{
-    VerificationKind, VerificationResult,
-};
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;

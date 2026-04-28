@@ -197,3 +197,154 @@ mod tests {
         assert_eq!(map_enum(&v1, &v2, "agree"), Some("agree".to_owned()));
     }
 }
+
+#[cfg(test)]
+mod additional_tests {
+    use super::*;
+    use idiolect_records::Datetime;
+    use idiolect_records::generated::dev::idiolect::vocab::{
+        RelationMetadata, VocabEdge, VocabEdgeRelationSlug, VocabNode, VocabNodeKind, VocabWorld,
+    };
+
+    fn concept_node(id: &str) -> VocabNode {
+        VocabNode {
+            id: id.to_owned(),
+            kind: Some(VocabNodeKind::Concept),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            description: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: None,
+        }
+    }
+
+    fn relation_node(id: &str, symmetric: bool, transitive: bool) -> VocabNode {
+        VocabNode {
+            id: id.to_owned(),
+            kind: Some(VocabNodeKind::Relation),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            description: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: Some(RelationMetadata {
+                symmetric: Some(symmetric),
+                transitive: Some(transitive),
+                reflexive: None,
+                functional: None,
+                inverse_of: None,
+                world: None,
+            }),
+        }
+    }
+
+    fn equiv_edge(source: &str, target: &str) -> VocabEdge {
+        VocabEdge {
+            source: source.to_owned(),
+            target: target.to_owned(),
+            relation_slug: VocabEdgeRelationSlug::EquivalentTo,
+            relation_vocab: None,
+            relation_uri: None,
+            weight: None,
+            metadata: None,
+        }
+    }
+
+    fn vocab(name: &str, nodes: Vec<VocabNode>, edges: Vec<VocabEdge>) -> Vocab {
+        Vocab {
+            name: name.to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-28T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: Some(edges),
+            nodes: Some(nodes),
+        }
+    }
+
+    #[test]
+    fn transitive_equivalent_to_chains_resolve() {
+        // self has a -> b -> c via equivalent_to (declared transitive).
+        // other knows only c. Transitive walk reaches c from a.
+        let v_self = vocab(
+            "self",
+            vec![
+                concept_node("a"),
+                concept_node("b"),
+                concept_node("c"),
+                relation_node("equivalent_to", true, true),
+            ],
+            vec![equiv_edge("a", "b"), equiv_edge("b", "c")],
+        );
+        let v_other = vocab("other", vec![concept_node("c")], vec![]);
+        assert_eq!(map_enum(&v_self, &v_other, "a"), Some("c".to_owned()));
+    }
+
+    #[test]
+    fn symmetric_relation_finds_target_side_authored_equivalence() {
+        // self has only `endorse`; other has `endorse` + `agree` and
+        // declares the equivalence symmetrically. Direct match for
+        // `endorse` wins.
+        let v_self = vocab("self", vec![concept_node("endorse")], vec![]);
+        let v_other = vocab(
+            "other",
+            vec![
+                concept_node("endorse"),
+                concept_node("agree"),
+                relation_node("equivalent_to", true, false),
+            ],
+            vec![equiv_edge("endorse", "agree")],
+        );
+        assert_eq!(
+            map_enum(&v_self, &v_other, "endorse"),
+            Some("endorse".to_owned())
+        );
+    }
+
+    #[test]
+    fn no_path_returns_none() {
+        let v1 = vocab("a", vec![concept_node("alpha")], vec![]);
+        let v2 = vocab("b", vec![concept_node("beta")], vec![]);
+        assert_eq!(map_enum(&v1, &v2, "alpha"), None);
+        assert_eq!(map_enum(&v1, &v2, "gamma"), None);
+    }
+
+    #[test]
+    fn map_enum_graphs_amortizes_work() {
+        let v1 = vocab(
+            "a",
+            vec![
+                concept_node("agree"),
+                concept_node("disagree"),
+                concept_node("pass"),
+            ],
+            vec![],
+        );
+        let v2 = vocab(
+            "b",
+            vec![
+                concept_node("agree"),
+                concept_node("disagree"),
+                concept_node("pass"),
+            ],
+            vec![],
+        );
+        let g1 = idiolect_records::vocab::VocabGraph::from_vocab(&v1);
+        let g2 = idiolect_records::vocab::VocabGraph::from_vocab(&v2);
+        for slug in ["agree", "disagree", "pass"] {
+            assert_eq!(map_enum_graphs(&g1, &g2, slug), Some(slug.to_owned()));
+        }
+    }
+}

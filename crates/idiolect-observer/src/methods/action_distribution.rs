@@ -34,6 +34,7 @@ use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 use idiolect_records::generated::dev::idiolect::vocab::{Vocab, VocabWorld};
+use idiolect_records::vocab::VocabGraph;
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;
@@ -78,34 +79,29 @@ impl ActionDistributionMethod {
 
     /// Register an action vocabulary at its canonical at-uri.
     /// Rollups will attribute leaf counts to every declared
-    /// subsumer under the vocabulary's world discipline.
+    /// subsumer under the vocabulary's world discipline. Routes
+    /// through [`VocabGraph`] so both legacy tree-shape and new
+    /// graph-shape vocabs produce equivalent ancestor closures.
     pub fn register_vocabulary(&mut self, uri: impl Into<String>, vocab: &Vocab) {
-        let mut parents: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for entry in vocab.actions.iter().flatten() {
-            parents
-                .entry(entry.id.clone())
-                .or_default()
-                .extend(entry.parents.iter().cloned());
-        }
+        let graph = VocabGraph::from_vocab(vocab);
         let mut ancestors: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for id in parents.keys() {
-            let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-            let mut frontier: Vec<String> =
-                parents.get(id).into_iter().flatten().cloned().collect();
-            while let Some(p) = frontier.pop() {
-                if seen.insert(p.clone())
-                    && let Some(gp) = parents.get(&p)
-                {
-                    frontier.extend(gp.iter().cloned());
-                }
+        for n in graph.nodes() {
+            if n.kind.as_deref() == Some("relation") {
+                continue;
             }
-            ancestors.insert(id.clone(), seen.into_iter().collect());
+            ancestors.insert(
+                n.id.clone(),
+                graph.walk_relation(&n.id, "subsumed_by", false),
+            );
         }
+        let top = graph
+            .top_with(vocab.top.as_deref())
+            .unwrap_or_default();
         self.vocabularies.insert(
             uri.into(),
             InternalVocab {
                 world: vocab.world,
-                top: vocab.top.clone().unwrap_or_default(),
+                top,
                 ancestors,
             },
         );

@@ -3,24 +3,87 @@
   "name": "network-policies-v1",
   "description": "Canonical network-policy vocabulary for `dev.idiolect.adapter#isolation.networkPolicy`. Stricter policies are subsumed by more permissive ones in the `permits_at_least` direction; orchestrators satisfying a 'no more egress than X' constraint check subsumption against the maximum.",
   "world": "closed-with-default",
-  "defaultRelation": "at://did:plc:idiolect/dev.idiolect.vocab/network-policies-v1#subsumed_by",
   "nodes": [
-    { "id": "any_policy", "kind": "concept", "label": "Any network policy" },
-    { "id": "none", "kind": "concept", "label": "No network access" },
-    { "id": "egress-denylist", "kind": "concept", "label": "Egress denylist" },
-    { "id": "egress-allowlist", "kind": "concept", "label": "Egress allowlist" },
-    { "id": "full", "kind": "concept", "label": "Full network access" },
-    { "id": "subsumed_by", "kind": "relation", "label": "subsumed by", "relationMetadata": { "transitive": true, "reflexive": true } },
-    { "id": "stricter_than", "kind": "relation", "label": "stricter than", "relationMetadata": { "transitive": true, "inverseOf": "looser_than" } }
+    {
+      "id": "any_policy",
+      "kind": "concept",
+      "label": "Any network policy"
+    },
+    {
+      "id": "none",
+      "kind": "concept",
+      "label": "No network access"
+    },
+    {
+      "id": "egress-denylist",
+      "kind": "concept",
+      "label": "Egress denylist"
+    },
+    {
+      "id": "egress-allowlist",
+      "kind": "concept",
+      "label": "Egress allowlist"
+    },
+    {
+      "id": "full",
+      "kind": "concept",
+      "label": "Full network access"
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    },
+    {
+      "id": "stricter_than",
+      "kind": "relation",
+      "label": "stricter than",
+      "relationMetadata": {
+        "transitive": true,
+        "inverseOf": "looser_than"
+      }
+    }
   ],
   "edges": [
-    { "source": "none", "target": "any_policy", "relationSlug": "subsumed_by" },
-    { "source": "egress-denylist", "target": "any_policy", "relationSlug": "subsumed_by" },
-    { "source": "egress-allowlist", "target": "any_policy", "relationSlug": "subsumed_by" },
-    { "source": "full", "target": "any_policy", "relationSlug": "subsumed_by" },
-    { "source": "none", "target": "egress-allowlist", "relationSlug": "stricter_than" },
-    { "source": "egress-allowlist", "target": "egress-denylist", "relationSlug": "stricter_than" },
-    { "source": "egress-denylist", "target": "full", "relationSlug": "stricter_than" }
+    {
+      "source": "none",
+      "target": "any_policy",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "egress-denylist",
+      "target": "any_policy",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "egress-allowlist",
+      "target": "any_policy",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "full",
+      "target": "any_policy",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "none",
+      "target": "egress-allowlist",
+      "relationSlug": "stricter_than"
+    },
+    {
+      "source": "egress-allowlist",
+      "target": "egress-denylist",
+      "relationSlug": "stricter_than"
+    },
+    {
+      "source": "egress-denylist",
+      "target": "full",
+      "relationSlug": "stricter_than"
+    }
   ],
   "occurredAt": "2026-04-28T00:00:00.000Z"
 }

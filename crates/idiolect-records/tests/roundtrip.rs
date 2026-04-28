@@ -174,3 +174,253 @@ fn unknown_open_enum_value_accepted_as_other() {
         EncounterKind::Other("community-extended-kind".to_owned())
     );
 }
+
+// --- New lexicon round-trips (deliberation, community shape additions, vocab graph) ---
+
+#[test]
+fn deliberation_minimal_roundtrip() {
+    use idiolect_records::Deliberation;
+    let _parsed: Deliberation = roundtrip(&json!({
+        "owningCommunity": "at://did:plc:c/dev.idiolect.community/main",
+        "topic":           "Should we adopt verification policy v2?",
+        "createdAt":       "2026-04-28T00:00:00.000Z",
+    }));
+}
+
+#[test]
+fn deliberation_with_open_enums_roundtrips() {
+    use idiolect_records::Deliberation;
+    use idiolect_records::generated::dev::idiolect::deliberation::{
+        DeliberationClassification, DeliberationStatus,
+    };
+    let parsed: Deliberation = roundtrip(&json!({
+        "owningCommunity": "at://did:plc:c/dev.idiolect.community/main",
+        "topic":           "Adopt v2?",
+        "description":     "Long-form context",
+        "authRequired":    true,
+        "classification":  "proposal",
+        "status":          "open",
+        "createdAt":       "2026-04-28T00:00:00.000Z",
+    }));
+    assert_eq!(
+        parsed.classification,
+        Some(DeliberationClassification::Proposal)
+    );
+    assert_eq!(parsed.status, Some(DeliberationStatus::Open));
+}
+
+#[test]
+fn deliberation_open_enum_extension_lands_in_other() {
+    use idiolect_records::Deliberation;
+    use idiolect_records::generated::dev::idiolect::deliberation::DeliberationClassification;
+    let parsed: Deliberation = roundtrip(&json!({
+        "owningCommunity": "at://did:plc:c/dev.idiolect.community/main",
+        "topic":           "x",
+        "classification":  "community-extended-kind",
+        "createdAt":       "2026-04-28T00:00:00.000Z",
+    }));
+    assert_eq!(
+        parsed.classification,
+        Some(DeliberationClassification::Other(
+            "community-extended-kind".to_owned()
+        ))
+    );
+}
+
+#[test]
+fn deliberation_statement_roundtrip() {
+    use idiolect_records::DeliberationStatement;
+    let _parsed: DeliberationStatement = roundtrip(&json!({
+        "deliberation": {
+            "uri": "at://did:plc:c/dev.idiolect.deliberation/d1",
+            "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm",
+        },
+        "text":           "We should require formal proofs for v2",
+        "classification": "proposal",
+        "createdAt":      "2026-04-28T00:00:00.000Z",
+    }));
+}
+
+#[test]
+fn deliberation_vote_three_way_roundtrip() {
+    use idiolect_records::DeliberationVote;
+    use idiolect_records::generated::dev::idiolect::deliberation_vote::DeliberationVoteStance;
+    for slug in ["agree", "pass", "disagree"] {
+        let parsed: DeliberationVote = roundtrip(&json!({
+            "subject": {
+                "uri": "at://did:plc:c/dev.idiolect.deliberationStatement/s1",
+                "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm",
+            },
+            "stance":    slug,
+            "createdAt": "2026-04-28T00:00:00.000Z",
+        }));
+        let expected = match slug {
+            "agree" => DeliberationVoteStance::Agree,
+            "pass" => DeliberationVoteStance::Pass,
+            "disagree" => DeliberationVoteStance::Disagree,
+            _ => unreachable!(),
+        };
+        assert_eq!(parsed.stance, expected);
+    }
+}
+
+#[test]
+fn deliberation_vote_with_weight_and_rationale_roundtrips() {
+    use idiolect_records::DeliberationVote;
+    let parsed: DeliberationVote = roundtrip(&json!({
+        "subject": {
+            "uri": "at://did:plc:c/dev.idiolect.deliberationStatement/s1",
+            "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm",
+        },
+        "stance":    "agree",
+        "weight":    750,
+        "rationale": "matches our prior policy",
+        "createdAt": "2026-04-28T00:00:00.000Z",
+    }));
+    assert_eq!(parsed.weight, Some(750));
+    assert_eq!(parsed.rationale.as_deref(), Some("matches our prior policy"));
+}
+
+#[test]
+fn deliberation_outcome_roundtrip() {
+    use idiolect_records::DeliberationOutcome;
+    let _parsed: DeliberationOutcome = roundtrip(&json!({
+        "deliberation": {
+            "uri": "at://did:plc:c/dev.idiolect.deliberation/d1",
+            "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm",
+        },
+        "statementTallies": [
+            {
+                "statement": {
+                    "uri": "at://did:plc:c/dev.idiolect.deliberationStatement/s1",
+                    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm",
+                },
+                "counts": [
+                    { "stance": "agree", "count": 12 },
+                    { "stance": "disagree", "count": 3 },
+                ],
+            },
+        ],
+        "computedAt": "2026-04-28T01:00:00.000Z",
+        "occurredAt": "2026-04-28T01:00:00.000Z",
+    }));
+}
+
+#[test]
+fn community_with_role_assignments_roundtrips() {
+    use idiolect_records::Community;
+    use idiolect_records::generated::dev::idiolect::community::RoleAssignmentRole;
+    let parsed: Community = roundtrip(&json!({
+        "name":        "Test community",
+        "description": "x",
+        "members":     ["did:plc:alice", "did:plc:bob"],
+        "roleAssignments": [
+            { "did": "did:plc:alice", "role": "moderator" },
+            { "did": "did:plc:bob",   "role": "delegate" },
+        ],
+        "recordHosting":   "community-hosted",
+        "appviewEndpoint": "https://example.community",
+        "createdAt":       "2026-04-28T00:00:00.000Z",
+    }));
+    let assignments = parsed
+        .role_assignments
+        .expect("roleAssignments deserializes");
+    assert_eq!(assignments.len(), 2);
+    assert_eq!(
+        assignments[0].role,
+        RoleAssignmentRole::Moderator
+    );
+    assert_eq!(parsed.appview_endpoint.as_deref(), Some("https://example.community"));
+}
+
+#[test]
+fn vocab_legacy_tree_roundtrip() {
+    use idiolect_records::Vocab;
+    let _parsed: Vocab = roundtrip(&json!({
+        "name":  "tree-vocab",
+        "world": "closed-with-default",
+        "top":   "any",
+        "actions": [
+            { "id": "any",   "parents": [] },
+            { "id": "child", "parents": ["any"] },
+        ],
+        "occurredAt": "2026-04-28T00:00:00.000Z",
+    }));
+}
+
+#[test]
+fn vocab_graph_shape_roundtrip() {
+    use idiolect_records::Vocab;
+    use idiolect_records::vocab::VocabGraph;
+    let parsed: Vocab = roundtrip(&json!({
+        "name":  "graph-vocab",
+        "world": "closed-with-default",
+        "nodes": [
+            { "id": "any",   "kind": "concept", "label": "Any" },
+            { "id": "child", "kind": "concept" },
+            {
+                "id":   "subsumed_by",
+                "kind": "relation",
+                "relationMetadata": { "transitive": true, "reflexive": true },
+            },
+        ],
+        "edges": [
+            { "source": "child", "target": "any", "relationSlug": "subsumed_by" },
+        ],
+        "occurredAt": "2026-04-28T00:00:00.000Z",
+    }));
+    let g = VocabGraph::from_vocab(&parsed);
+    assert!(g.is_subsumed_by("child", "any"));
+    assert_eq!(g.top(), Some("any".to_owned()));
+}
+
+#[test]
+fn adapter_open_enum_extension_lands_in_other() {
+    use idiolect_records::Adapter;
+    use idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind;
+    let parsed: Adapter = roundtrip(&json!({
+        "framework":          "future-runtime",
+        "versionRange":       "*",
+        "invocationProtocol": { "kind": "grpc" },
+        "isolation":          { "kind": "process" },
+        "author":             "did:plc:author",
+        "occurredAt":         "2026-04-28T00:00:00.000Z",
+    }));
+    assert_eq!(
+        parsed.invocation_protocol.kind,
+        AdapterInvocationProtocolKind::Other("grpc".to_owned())
+    );
+}
+
+#[test]
+fn open_enum_with_underscored_slug_roundtrips() {
+    // The codegen preserves the original slug form when emitting
+    // `as_str` arms; underscored slugs like `subsumed_by` must
+    // serialize back as `subsumed_by`, not as `subsumed-by`.
+    use idiolect_records::Vocab;
+    use idiolect_records::generated::dev::idiolect::vocab::VocabEdgeRelationSlug;
+    let parsed: Vocab = roundtrip(&json!({
+        "name":  "g",
+        "world": "open",
+        "nodes": [
+            { "id": "a" },
+            { "id": "b" },
+        ],
+        "edges": [
+            { "source": "a", "target": "b", "relationSlug": "subsumed_by" },
+            { "source": "b", "target": "a", "relationSlug": "equivalent_to" },
+        ],
+        "occurredAt": "2026-04-28T00:00:00.000Z",
+    }));
+    let edges = parsed.edges.as_ref().expect("edges");
+    assert_eq!(edges[0].relation_slug, VocabEdgeRelationSlug::SubsumedBy);
+    assert_eq!(edges[1].relation_slug, VocabEdgeRelationSlug::EquivalentTo);
+    // Re-serialize and ensure the wire form is verbatim.
+    let serialized = serde_json::to_value(&parsed).expect("serialize");
+    let edges_out = serialized
+        .get("edges")
+        .and_then(|v| v.as_array())
+        .expect("edges array");
+    assert_eq!(edges_out[0]["relationSlug"], "subsumed_by");
+    assert_eq!(edges_out[1]["relationSlug"], "equivalent_to");
+}

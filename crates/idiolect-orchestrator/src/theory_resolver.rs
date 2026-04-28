@@ -31,6 +31,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use idiolect_records::AnyRecord;
 use idiolect_records::generated::dev::idiolect::defs::Use;
 use idiolect_records::generated::dev::idiolect::vocab::{Vocab, VocabWorld};
+use idiolect_records::vocab::VocabGraph;
 
 /// Outcome of a theory-resolution pass over a record's content.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -88,42 +89,55 @@ impl Resolver {
     /// Register a vocabulary at its canonical at-uri. Computes the
     /// transitive ancestor closure for every declared id once, so
     /// subsequent subsumption checks are O(|ancestors(id)|).
+    /// Routes through [`VocabGraph`] so legacy tree-shape vocabs and
+    /// new graph-shape vocabs (`nodes`+`edges`) produce equivalent
+    /// `subsumed_by` closures with no special-casing in the caller.
     pub fn insert_vocab(&mut self, uri: impl Into<String>, vocab: &Vocab) {
-        let mut parents: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        let graph = VocabGraph::from_vocab(vocab);
         let mut declared: BTreeSet<String> = BTreeSet::new();
+        let mut ancestors: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for n in graph.nodes() {
+            // Skip relation-kind nodes when seeding the declared set;
+            // they are not values consumers compare against.
+            if n.kind.as_deref() == Some("relation") {
+                continue;
+            }
+            declared.insert(n.id.clone());
+            // Transitive subsumed-by closure, non-reflexive (matches
+            // the existing semantics where `subsumed_by` did not
+            // include the id itself).
+            let closure: BTreeSet<String> = graph
+                .walk_relation(&n.id, "subsumed_by", false)
+                .into_iter()
+                .collect();
+            ancestors.insert(n.id.clone(), closure);
+        }
+
+        // Class lifting from the legacy tree shape (the graph form
+        // would carry class via `subkindUri` edges; that path is
+        // handled by orchestrator code that walks subkind nodes
+        // directly).
         let mut class: BTreeMap<String, String> = BTreeMap::new();
         for entry in vocab.actions.iter().flatten() {
-            declared.insert(entry.id.clone());
-            parents
-                .entry(entry.id.clone())
-                .or_default()
-                .extend(entry.parents.iter().cloned());
             if let Some(cls) = entry.class.clone() {
                 class.insert(entry.id.clone(), cls);
             }
         }
 
-        // Transitive closure: BFS from each id through its parents.
-        let mut ancestors: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        for id in &declared {
-            let mut seen: BTreeSet<String> = BTreeSet::new();
-            let mut frontier: Vec<String> =
-                parents.get(id).into_iter().flatten().cloned().collect();
-            while let Some(p) = frontier.pop() {
-                if seen.insert(p.clone())
-                    && let Some(grandparents) = parents.get(&p)
-                {
-                    frontier.extend(grandparents.iter().cloned());
-                }
-            }
-            ancestors.insert(id.clone(), seen);
-        }
+        // Top: prefer the explicit field, fall back to graph
+        // derivation (the unique node with no outbound `subsumed_by`
+        // edge). Empty string only when the vocab has no rooted
+        // subsumption hierarchy at all, which closed-with-default
+        // semantics treat as 'no implicit parent'.
+        let top = graph
+            .top_with(vocab.top.as_deref())
+            .unwrap_or_default();
 
         self.vocabularies.insert(
             uri.into(),
             ResolvedVocabulary {
                 world: vocab.world,
-                top: vocab.top.clone().unwrap_or_default(),
+                top,
                 ancestors,
                 declared,
                 class,

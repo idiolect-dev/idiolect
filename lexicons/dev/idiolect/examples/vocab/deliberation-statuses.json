@@ -3,24 +3,86 @@
   "name": "deliberation-statuses-v1",
   "description": "Lifecycle status vocabulary for `dev.idiolect.deliberation.status`. Default values cover the open / closed / tabled / adopted / rejected loop. `closed` subsumes `adopted`, `rejected`, and `tabled` as terminal forms; consumers requiring 'no longer open' match on subsumption by `closed`.",
   "world": "closed-with-default",
-  "defaultRelation": "at://did:plc:idiolect/dev.idiolect.vocab/deliberation-statuses-v1#subsumed_by",
   "nodes": [
-    { "id": "any_status", "kind": "concept", "label": "Any status" },
-    { "id": "open", "kind": "concept", "label": "Open" },
-    { "id": "closed", "kind": "concept", "label": "Closed" },
-    { "id": "tabled", "kind": "concept", "label": "Tabled" },
-    { "id": "adopted", "kind": "concept", "label": "Adopted" },
-    { "id": "rejected", "kind": "concept", "label": "Rejected" },
-    { "id": "subsumed_by", "kind": "relation", "label": "subsumed by", "relationMetadata": { "transitive": true, "reflexive": true } },
-    { "id": "polar_opposite_of", "kind": "relation", "label": "polar opposite of", "relationMetadata": { "symmetric": true } }
+    {
+      "id": "any_status",
+      "kind": "concept",
+      "label": "Any status"
+    },
+    {
+      "id": "open",
+      "kind": "concept",
+      "label": "Open"
+    },
+    {
+      "id": "closed",
+      "kind": "concept",
+      "label": "Closed"
+    },
+    {
+      "id": "tabled",
+      "kind": "concept",
+      "label": "Tabled"
+    },
+    {
+      "id": "adopted",
+      "kind": "concept",
+      "label": "Adopted"
+    },
+    {
+      "id": "rejected",
+      "kind": "concept",
+      "label": "Rejected"
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    },
+    {
+      "id": "polar_opposite_of",
+      "kind": "relation",
+      "label": "polar opposite of",
+      "relationMetadata": {
+        "symmetric": true
+      }
+    }
   ],
   "edges": [
-    { "source": "open", "target": "any_status", "relationSlug": "subsumed_by" },
-    { "source": "closed", "target": "any_status", "relationSlug": "subsumed_by" },
-    { "source": "tabled", "target": "closed", "relationSlug": "subsumed_by" },
-    { "source": "adopted", "target": "closed", "relationSlug": "subsumed_by" },
-    { "source": "rejected", "target": "closed", "relationSlug": "subsumed_by" },
-    { "source": "adopted", "target": "rejected", "relationSlug": "polar_opposite_of" }
+    {
+      "source": "open",
+      "target": "any_status",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "closed",
+      "target": "any_status",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "tabled",
+      "target": "closed",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "adopted",
+      "target": "closed",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "rejected",
+      "target": "closed",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "adopted",
+      "target": "rejected",
+      "relationSlug": "polar_opposite_of"
+    }
   ],
   "occurredAt": "2026-04-28T00:00:00.000Z"
 }

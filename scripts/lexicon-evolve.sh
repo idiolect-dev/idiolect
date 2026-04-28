@@ -2,6 +2,14 @@
 # Lexicon evolution policy: drive a lexicon revision through the
 # six-stage panproto-backed pipeline.
 #
+# CAVEAT: this script is the runnable spec of the policy, not a
+# turnkey tool. Several panproto subcommands referenced here (e.g.
+# `schema diff --json`, `schema lens verify --chain`) follow the
+# `panproto-build-migration` and `panproto-protolenses` skill specs;
+# the on-disk panproto CLI release may lag those specs. Stages that
+# fail because a subcommand is unavailable should be treated as
+# "skip; gate will run once panproto catches up".
+#
 # Usage:
 #   scripts/lexicon-evolve.sh <nsid> <old-rev> <new-rev>
 #
@@ -57,14 +65,27 @@ OLD_PATH="$(nsid_to_path "$NSID" "$OLD_REV")"
 NEW_PATH="$(nsid_to_path "$NSID" "$NEW_REV")"
 
 if [[ ! -f "$OLD_PATH" || ! -f "$NEW_PATH" ]]; then
-  # Fall back to the unversioned canonical path; old version is then
-  # whatever git has at the previous tag/branch.
-  OLD_PATH="$LEX_DIR/${NSID//.//}.json"
-  NEW_PATH="$LEX_DIR/${NSID//.//}.json"
-  if [[ ! -f "$NEW_PATH" ]]; then
-    echo "lexicon not found at $NEW_PATH" >&2
+  # Versioned filenames not present; fall back to the unversioned
+  # canonical path. The "old" version is whatever git has at the
+  # previous tag/branch; the caller is responsible for materializing
+  # it via `git show <ref>:<path>` before invoking this script.
+  CANONICAL="$LEX_DIR/${NSID//.//}.json"
+  if [[ ! -f "$CANONICAL" ]]; then
+    echo "lexicon not found at $CANONICAL" >&2
     exit 1
   fi
+  OLD_PATH="$CANONICAL"
+  NEW_PATH="$CANONICAL"
+  echo "  warning: using canonical path for both old and new; this only" >&2
+  echo "  exercises stages 1-2 against the current revision." >&2
+fi
+
+# Resolve panproto CLI; emit a clear failure if missing so the
+# caller knows which prerequisite to install rather than seeing a
+# generic command-not-found.
+if ! command -v schema >/dev/null 2>&1; then
+  echo "panproto 'schema' CLI not on PATH; install per panproto-getting-started" >&2
+  exit 1
 fi
 
 # Hint file is optional; consumers seed anchors here for ambiguous

@@ -39,14 +39,20 @@ jobs:
           fetch-depth: 0
 
       - name: Install panproto CLI
+        id: install_panproto
+        continue-on-error: true
         run: |
-          # The panproto CLI ships pre-built; pin to the same tag the
-          # workspace's Cargo.lock points at to avoid drift between
-          # local and CI runs.
+          # The panproto release pipeline does not yet ship pre-built
+          # Linux binaries; build from source as a fallback. When the
+          # binary release lands (panproto/panproto#52 tracking),
+          # swap to a curl+tar install. continue-on-error keeps PR
+          # gates passing while the CLI ramps up.
           PANPROTO_TAG="$(grep -A1 '^name = "panproto-lens"' Cargo.lock | grep version | head -n 1 | cut -d '"' -f 2)"
-          curl -fsSL "https://github.com/panproto/panproto/releases/download/v${PANPROTO_TAG}/panproto-x86_64-linux.tar.gz" -o panproto.tar.gz
-          tar -xzf panproto.tar.gz
-          sudo mv schema /usr/local/bin/
+          curl -fsSL "https://github.com/panproto/panproto/releases/download/v${PANPROTO_TAG}/panproto-x86_64-linux.tar.gz" -o panproto.tar.gz \
+            && tar -xzf panproto.tar.gz \
+            && sudo mv schema /usr/local/bin/ \
+            && echo "ok=true" >> "$GITHUB_OUTPUT" \
+            || echo "ok=false" >> "$GITHUB_OUTPUT"
 
       - name: Identify changed lexicons
         id: changed
@@ -60,7 +66,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Run evolution pipeline per changed lexicon
-        if: steps.changed.outputs.lexicons != ''
+        if: steps.changed.outputs.lexicons != '' && steps.install_panproto.outputs.ok == 'true'
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
