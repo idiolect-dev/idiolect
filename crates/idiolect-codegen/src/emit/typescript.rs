@@ -1516,4 +1516,273 @@ mod tests {
             "../vcs/commit",
         );
     }
+
+    // ---------- family module IR tests ----------
+    //
+    // Each renderer is pure over a slice of the IR. Test by
+    // constructing a synthetic FamilyTsModule and asserting on the
+    // emitted bytes. Tests cover the load-bearing pieces; the
+    // layers-pub integration test (`tests/layers_family.rs`) covers
+    // the full pipeline against real lexicons.
+
+    fn member(nsid: &str, kind: &str, ty: &str, import_path: &str) -> FamilyTsMember {
+        FamilyTsMember {
+            nsid: nsid.to_owned(),
+            kind: kind.to_owned(),
+            ty_name: ty.to_owned(),
+            raw_ty_name: ty.to_owned(),
+            import_path: import_path.to_owned(),
+        }
+    }
+
+    fn aliased_member(
+        nsid: &str,
+        kind: &str,
+        used: &str,
+        raw: &str,
+        import_path: &str,
+    ) -> FamilyTsMember {
+        FamilyTsMember {
+            nsid: nsid.to_owned(),
+            kind: kind.to_owned(),
+            ty_name: used.to_owned(),
+            raw_ty_name: raw.to_owned(),
+            import_path: import_path.to_owned(),
+        }
+    }
+
+    #[test]
+    fn family_imports_no_aliasing() {
+        let m = member("dev.x.foo", "foo", "Foo", "dev/x/foo");
+        let out = render_family_imports(&[m]);
+        assert_eq!(out, "import type { Foo } from \"./dev/x/foo\";\n");
+    }
+
+    #[test]
+    fn family_imports_with_aliasing() {
+        let m = aliased_member(
+            "dev.x.changelog.entry",
+            "changelogEntry",
+            "ChangelogEntry",
+            "Entry",
+            "dev/x/changelog/entry",
+        );
+        let out = render_family_imports(&[m]);
+        assert_eq!(
+            out,
+            "import type { Entry as ChangelogEntry } from \"./dev/x/changelog/entry\";\n"
+        );
+    }
+
+    #[test]
+    fn family_identity_emits_id_and_prefix_constants() {
+        let m = FamilyTsModule {
+            family_id: "pub.layers".to_owned(),
+            family_marker: "LayersFamily".to_owned(),
+            family_prefix: "pub.layers.".to_owned(),
+            members: Vec::new(),
+        };
+        let out = render_family_identity(&m);
+        assert!(out.contains("FAMILY_ID = \"pub.layers\" as const"));
+        assert!(out.contains("FAMILY_NSID_PREFIX = \"pub.layers.\" as const"));
+    }
+
+    #[test]
+    fn family_marker_emits_string_literal_type() {
+        let m = FamilyTsModule {
+            family_id: "x".to_owned(),
+            family_marker: "XFamily".to_owned(),
+            family_prefix: "x.".to_owned(),
+            members: Vec::new(),
+        };
+        assert!(render_family_marker(&m).contains("export type FamilyMarker = \"XFamily\";"));
+    }
+
+    #[test]
+    fn family_nsid_const_lists_every_member_kind() {
+        let members = vec![
+            member("dev.x.foo", "foo", "Foo", "dev/x/foo"),
+            member("dev.x.bar", "bar", "Bar", "dev/x/bar"),
+        ];
+        let out = render_family_nsid_const(&members);
+        assert!(out.contains("foo: \"dev.x.foo\""));
+        assert!(out.contains("bar: \"dev.x.bar\""));
+        assert!(out.ends_with("} as const;\n"));
+    }
+
+    #[test]
+    fn family_record_nsids_uses_kind_keys() {
+        let members = vec![
+            member("dev.x.foo", "foo", "Foo", "dev/x/foo"),
+            aliased_member(
+                "dev.x.a.entry",
+                "aEntry",
+                "AEntry",
+                "Entry",
+                "dev/x/a/entry",
+            ),
+        ];
+        let out = render_family_record_nsids(&members);
+        assert!(out.contains("NSID.foo,"));
+        assert!(out.contains("NSID.aEntry,"));
+        assert!(out.contains("] as const satisfies readonly NSID[];"));
+    }
+
+    #[test]
+    fn family_any_record_terminates_last_variant_with_semicolon() {
+        let members = vec![
+            member("dev.x.foo", "foo", "Foo", "dev/x/foo"),
+            member("dev.x.bar", "bar", "Bar", "dev/x/bar"),
+        ];
+        let out = render_family_any_record(&members);
+        // Non-final variant: no trailing semicolon between variants.
+        assert!(out.contains("readonly value: Foo }\n"));
+        // Final variant: terminated with semicolon.
+        assert!(out.contains("readonly value: Bar };\n"));
+    }
+
+    #[test]
+    fn family_per_type_guards_one_per_member() {
+        let members = vec![
+            member("dev.x.foo", "foo", "Foo", "dev/x/foo"),
+            member("dev.x.bar", "bar", "Bar", "dev/x/bar"),
+        ];
+        let out = render_family_per_type_guards(&members);
+        assert!(out.contains("export function isFoo(r: AnyRecord)"));
+        assert!(out.contains("export function isBar(r: AnyRecord)"));
+        assert!(out.contains("return r.$nsid === NSID.foo;"));
+        assert!(out.contains("return r.$nsid === NSID.bar;"));
+    }
+
+    #[test]
+    fn family_decode_record_uses_bracket_dollar_type() {
+        let out = render_family_decode_record();
+        // Must use bracket access for `$type` so TS strict
+        // `noPropertyAccessFromIndexSignature` doesn't reject it.
+        assert!(out.contains("obj[\"$type\"]"));
+        assert!(!out.contains("obj.$type"));
+    }
+
+    #[test]
+    fn family_contains_uses_set_lookup_not_prefix() {
+        let out = render_family_contains();
+        // Soundness gate: the predicate must test exact membership
+        // against the family's record set, not a prefix match.
+        assert!(out.contains("FAMILY_NSID_SET.has(nsid)"));
+        assert!(!out.contains("startsWith"));
+    }
+
+    // ---------- compute_disambiguation_aliases ----------
+
+    fn path(segments: &[&str]) -> Vec<String> {
+        segments.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn aliases_no_collision_returns_all_none() {
+        let prepared = vec![
+            (path(&["dev", "x", "foo"]), "Foo".to_owned()),
+            (path(&["dev", "x", "bar"]), "Bar".to_owned()),
+        ];
+        let aliases = compute_disambiguation_aliases(&prepared);
+        assert_eq!(aliases, vec![None, None]);
+    }
+
+    #[test]
+    fn aliases_two_way_collision_uses_one_segment() {
+        let prepared = vec![
+            (
+                path(&["dev", "x", "changelog", "entry"]),
+                "Entry".to_owned(),
+            ),
+            (
+                path(&["dev", "x", "resource", "entry"]),
+                "Entry".to_owned(),
+            ),
+        ];
+        let aliases = compute_disambiguation_aliases(&prepared);
+        assert_eq!(
+            aliases,
+            vec![
+                Some("ChangelogEntry".to_owned()),
+                Some("ResourceEntry".to_owned()),
+            ]
+        );
+    }
+
+    #[test]
+    fn aliases_three_way_collision_resolves_minimally() {
+        // Three records named `Entry` under three different parents;
+        // one parent segment should suffice.
+        let prepared = vec![
+            (path(&["a", "alpha", "entry"]), "Entry".to_owned()),
+            (path(&["a", "beta", "entry"]), "Entry".to_owned()),
+            (path(&["a", "gamma", "entry"]), "Entry".to_owned()),
+        ];
+        let aliases = compute_disambiguation_aliases(&prepared);
+        assert_eq!(
+            aliases,
+            vec![
+                Some("AlphaEntry".to_owned()),
+                Some("BetaEntry".to_owned()),
+                Some("GammaEntry".to_owned()),
+            ]
+        );
+    }
+
+    #[test]
+    fn aliases_collision_fallback_walks_to_root() {
+        // Two records share the same parent chain except for the
+        // root; expect the alias to walk all the way up.
+        let prepared = vec![
+            (path(&["alpha", "shared", "entry"]), "Entry".to_owned()),
+            (path(&["beta", "shared", "entry"]), "Entry".to_owned()),
+        ];
+        let aliases = compute_disambiguation_aliases(&prepared);
+        // One segment up is "shared" for both — not unique. Two
+        // segments up gives "alpha/shared" vs "beta/shared" — unique.
+        assert_eq!(
+            aliases,
+            vec![
+                Some("AlphaSharedEntry".to_owned()),
+                Some("BetaSharedEntry".to_owned()),
+            ]
+        );
+    }
+
+    // ---------- collect_family_module ----------
+
+    fn synthetic_record(nsid: &str) -> LexiconDoc {
+        let mut defs = std::collections::BTreeMap::new();
+        defs.insert(
+            "main".to_owned(),
+            Def::Record(crate::lexicon::RecordDef {
+                description: None,
+                key: Some("tid".to_owned()),
+                body: crate::lexicon::ObjectDef {
+                    description: None,
+                    required: Vec::new(),
+                    properties: Vec::new(),
+                },
+            }),
+        );
+        LexiconDoc {
+            nsid: nsid.to_owned(),
+            description: None,
+            defs,
+        }
+    }
+
+    #[test]
+    fn collect_filters_to_family_prefix_and_records_only() {
+        let docs = vec![
+            synthetic_record("dev.x.in_family"),
+            synthetic_record("dev.x.also_in"),
+            synthetic_record("dev.other.out_of_family"),
+        ];
+        let family = super::super::family::FamilyConfig::new("XFamily", "dev.x", "dev.x.");
+        let module = collect_family_module(&docs, &family);
+        let names: Vec<&str> = module.members.iter().map(|m| m.nsid.as_str()).collect();
+        assert_eq!(names, vec!["dev.x.also_in", "dev.x.in_family"]);
+    }
 }
