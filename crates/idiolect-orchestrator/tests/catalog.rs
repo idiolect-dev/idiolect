@@ -738,7 +738,12 @@ fn catalog_len_matches_per_kind_counts() {
 fn schema_refs_match_prefers_cid_over_uri() {
     use idiolect_records::generated::dev::idiolect::defs::SchemaRef;
     let a = SchemaRef {
-        cid: Some(idiolect_records::Cid::parse("bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm").expect("valid CID")),
+        cid: Some(
+            idiolect_records::Cid::parse(
+                "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm",
+            )
+            .expect("valid CID"),
+        ),
         language: None,
         uri: Some(
             idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
@@ -746,7 +751,12 @@ fn schema_refs_match_prefers_cid_over_uri() {
         ),
     };
     let b = SchemaRef {
-        cid: Some(idiolect_records::Cid::parse("bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm").expect("valid CID")),
+        cid: Some(
+            idiolect_records::Cid::parse(
+                "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm",
+            )
+            .expect("valid CID"),
+        ),
         language: None,
         uri: Some(
             idiolect_records::AtUri::parse("at://did:plc:b/dev.panproto.schema.schema/main")
@@ -755,7 +765,12 @@ fn schema_refs_match_prefers_cid_over_uri() {
     };
     assert!(query::schema_refs_match(&a, &b));
     let c = SchemaRef {
-        cid: Some(idiolect_records::Cid::parse("bafkreigh2akiscaildcqabsyg3dfr6chu3fgpregiymsck7e7aqa4s52zy").expect("valid CID")),
+        cid: Some(
+            idiolect_records::Cid::parse(
+                "bafkreigh2akiscaildcqabsyg3dfr6chu3fgpregiymsck7e7aqa4s52zy",
+            )
+            .expect("valid CID"),
+        ),
         language: None,
         uri: Some(
             idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
@@ -930,7 +945,12 @@ fn query_catalog_stats_sums_correctly() {
 #[test]
 fn lens_refs_match_prefers_cid() {
     let a = LensRef {
-        cid: Some(idiolect_records::Cid::parse("bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm").expect("valid CID")),
+        cid: Some(
+            idiolect_records::Cid::parse(
+                "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm",
+            )
+            .expect("valid CID"),
+        ),
         direction: None,
         uri: Some(
             idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")
@@ -938,7 +958,12 @@ fn lens_refs_match_prefers_cid() {
         ),
     };
     let b = LensRef {
-        cid: Some(idiolect_records::Cid::parse("bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm").expect("valid CID")),
+        cid: Some(
+            idiolect_records::Cid::parse(
+                "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm",
+            )
+            .expect("valid CID"),
+        ),
         direction: None,
         uri: Some(
             idiolect_records::AtUri::parse("at://did:plc:b/dev.panproto.schema.schema/main")
@@ -947,7 +972,12 @@ fn lens_refs_match_prefers_cid() {
     };
     assert!(query::lens_refs_match(&a, &b));
     let c = LensRef {
-        cid: Some(idiolect_records::Cid::parse("bafkreigh2akiscaildcqabsyg3dfr6chu3fgpregiymsck7e7aqa4s52zy").expect("valid CID")),
+        cid: Some(
+            idiolect_records::Cid::parse(
+                "bafkreigh2akiscaildcqabsyg3dfr6chu3fgpregiymsck7e7aqa4s52zy",
+            )
+            .expect("valid CID"),
+        ),
         direction: None,
         uri: Some(
             idiolect_records::AtUri::parse("at://did:plc:a/dev.panproto.schema.schema/main")

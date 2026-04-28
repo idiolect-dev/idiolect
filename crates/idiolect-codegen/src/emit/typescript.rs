@@ -1295,7 +1295,7 @@ fn render_family_is_kind() -> String {
      ): r is Extract<AnyRecord, { $nsid: K }> {\n\
      \x20\x20return r.$nsid === nsid;\n\
      }\n"
-        .to_owned()
+    .to_owned()
 }
 
 fn render_family_per_type_guards(members: &[FamilyTsMember]) -> String {
@@ -1327,7 +1327,7 @@ fn render_family_tag_record() -> String {
      ): AnyRecord {\n\
      \x20\x20return { $nsid: nsid, value } as AnyRecord;\n\
      }\n"
-        .to_owned()
+    .to_owned()
 }
 
 fn render_family_record_nsids(members: &[FamilyTsMember]) -> String {
@@ -1361,7 +1361,7 @@ fn render_family_contains() -> String {
      export function familyContains(nsid: string): nsid is NSID {\n\
      \x20\x20return FAMILY_NSID_SET.has(nsid);\n\
      }\n"
-        .to_owned()
+    .to_owned()
 }
 
 fn render_family_decoded_record() -> String {
@@ -1375,7 +1375,7 @@ fn render_family_decoded_record() -> String {
      \x20\x20readonly $nsid: NSID;\n\
      \x20\x20readonly body: unknown;\n\
      }\n"
-        .to_owned()
+    .to_owned()
 }
 
 fn render_family_decode_record() -> String {
@@ -1403,7 +1403,7 @@ fn render_family_decode_record() -> String {
      \x20\x20const { $type: _stripped, ...body } = obj;\n\
      \x20\x20return { $nsid: ty, body };\n\
      }\n"
-        .to_owned()
+    .to_owned()
 }
 
 fn render_family_to_typed_json() -> String {
@@ -1415,7 +1415,7 @@ fn render_family_to_typed_json() -> String {
      export function toTypedJson(r: AnyRecord): Record<string, unknown> {\n\
      \x20\x20return { ...r.value, $type: r.$nsid } as Record<string, unknown>;\n\
      }\n"
-        .to_owned()
+    .to_owned()
 }
 
 fn render_examples_ts(examples: &[Example]) -> String {
@@ -1694,10 +1694,7 @@ mod tests {
                 path(&["dev", "x", "changelog", "entry"]),
                 "Entry".to_owned(),
             ),
-            (
-                path(&["dev", "x", "resource", "entry"]),
-                "Entry".to_owned(),
-            ),
+            (path(&["dev", "x", "resource", "entry"]), "Entry".to_owned()),
         ];
         let aliases = compute_disambiguation_aliases(&prepared);
         assert_eq!(

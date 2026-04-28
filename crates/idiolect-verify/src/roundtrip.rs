@@ -134,10 +134,7 @@ where
                 // addressed store the runner can't produce one,
                 // so surface the corpus index via tracing and
                 // leave the lexicon field empty.
-                tracing::info!(
-                    corpus_index = i,
-                    "roundtrip verification falsified",
-                );
+                tracing::info!(corpus_index = i, "roundtrip verification falsified",);
                 return Ok(build_verification(
                     target,
                     self,

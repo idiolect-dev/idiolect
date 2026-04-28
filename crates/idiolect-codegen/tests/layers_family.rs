@@ -55,8 +55,7 @@ fn load_layers_docs() -> Vec<lexicon::LexiconDoc> {
     let mut docs = Vec::new();
     for path in discover_layers_lexicons(&fixtures_root()) {
         let raw = fs::read_to_string(&path).expect("read fixture lexicon");
-        let json: serde_json::Value =
-            serde_json::from_str(&raw).expect("fixture json parses");
+        let json: serde_json::Value = serde_json::from_str(&raw).expect("fixture json parses");
         // Permission-set, query, and procedure lexicons aren't in the
         // structural codegen surface — skip them, same as a downstream
         // codegen would.
@@ -185,7 +184,9 @@ fn emit_typescript_picks_up_non_idiolect_family() {
         family_ts.contents
     );
     assert!(
-        family_ts.contents.contains("export function familyContains"),
+        family_ts
+            .contents
+            .contains("export function familyContains"),
         "family.ts should export familyContains predicate, got:\n{}",
         family_ts.contents
     );

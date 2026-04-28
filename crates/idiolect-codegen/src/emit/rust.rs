@@ -90,14 +90,12 @@ impl TargetEmitter for RustTarget {
         // shrinks to the Record trait + DecodeError.
         out.push(EmittedFile {
             path: "family.rs".to_owned(),
-            contents: rustfmt(
-                &super::family::render_family_rs(docs, family).map_err(|e| {
-                    EmitError::InvalidAst {
-                        target: "rust",
-                        source: e.into(),
-                    }
-                })?,
-            )?,
+            contents: rustfmt(&super::family::render_family_rs(docs, family).map_err(|e| {
+                EmitError::InvalidAst {
+                    target: "rust",
+                    source: e.into(),
+                }
+            })?)?,
         });
 
         Ok(out)

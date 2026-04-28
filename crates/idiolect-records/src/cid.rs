@@ -154,8 +154,7 @@ mod tests {
 
     // CIDv1 base32 of an empty `dag-cbor` block — a real CID
     // produced by `cid::Cid::new_v1(0x71, multihash::Code::Sha2_256.digest(b""))`.
-    const VALID_CID_V1_B32: &str =
-        "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm";
+    const VALID_CID_V1_B32: &str = "bafyreidkacrnonh3pkjnntp7ujnkfeudaodpqzxa67mtbmovd5sayuctfm";
 
     // Legacy CIDv0 base58btc form — `Qm...` prefix.
     const VALID_CID_V0_B58: &str = "QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB";
