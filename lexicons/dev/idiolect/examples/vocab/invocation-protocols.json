@@ -1,0 +1,20 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "invocation-protocols-v1",
+  "description": "Canonical invocation-protocol vocabulary for `dev.idiolect.adapter#invocationProtocol.kind`. Demonstrates the knowledge-graph shape: nodes carry kinds, edges carry typed relations. The `subsumed_by` relation is declared as a transitive node so consumers walking the hierarchy know the algebraic shape.",
+  "world": "closed-with-default",
+  "defaultRelation": "at://did:plc:idiolect/dev.idiolect.vocab/invocation-protocols-v1#subsumed_by",
+  "nodes": [
+    { "id": "any_protocol", "kind": "concept", "label": "Any invocation protocol" },
+    { "id": "subprocess", "kind": "concept", "label": "Subprocess", "description": "Invoked as an OS-level child process via stdio." },
+    { "id": "http", "kind": "concept", "label": "HTTP endpoint" },
+    { "id": "wasm", "kind": "concept", "label": "WebAssembly module" },
+    { "id": "subsumed_by", "kind": "relation", "label": "subsumed by", "relationMetadata": { "transitive": true, "reflexive": true } }
+  ],
+  "edges": [
+    { "source": "subprocess", "target": "any_protocol", "relationSlug": "subsumed_by" },
+    { "source": "http", "target": "any_protocol", "relationSlug": "subsumed_by" },
+    { "source": "wasm", "target": "any_protocol", "relationSlug": "subsumed_by" }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}

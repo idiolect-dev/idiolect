@@ -1,0 +1,22 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "vote-stances-v1",
+  "description": "Canonical vote-stance vocabulary used by `dev.idiolect.deliberationVote.stance`. The three-way Polis-style vote (agree/pass/disagree) is the default; communities running ranked or richer deliberation publish derived vocabularies with additional nodes and translation edges back to this canonical set.",
+  "world": "closed-with-default",
+  "defaultRelation": "at://did:plc:idiolect/dev.idiolect.vocab/vote-stances-v1#subsumed_by",
+  "nodes": [
+    { "id": "any_stance", "kind": "concept", "label": "Any stance" },
+    { "id": "agree", "kind": "concept", "label": "Agree" },
+    { "id": "disagree", "kind": "concept", "label": "Disagree" },
+    { "id": "pass", "kind": "concept", "label": "Pass", "description": "Neither agreement nor disagreement; carries no propositional content." },
+    { "id": "subsumed_by", "kind": "relation", "label": "subsumed by", "relationMetadata": { "transitive": true, "reflexive": true } },
+    { "id": "polar_opposite_of", "kind": "relation", "label": "polar opposite of", "relationMetadata": { "symmetric": true } }
+  ],
+  "edges": [
+    { "source": "agree", "target": "any_stance", "relationSlug": "subsumed_by" },
+    { "source": "disagree", "target": "any_stance", "relationSlug": "subsumed_by" },
+    { "source": "pass", "target": "any_stance", "relationSlug": "subsumed_by" },
+    { "source": "agree", "target": "disagree", "relationSlug": "polar_opposite_of" }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}
