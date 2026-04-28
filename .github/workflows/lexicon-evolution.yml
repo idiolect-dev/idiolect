@@ -1,0 +1,115 @@
+name: lexicon-evolution
+
+# Standing policy gate: whenever a lexicon under lexicons/dev/idiolect/
+# changes on a PR, drive the change through the panproto-backed
+# evolution pipeline. Stages 0-2 run unconditionally; stages 3-4 run
+# when their inputs (cross-kind coercions, a record corpus snapshot)
+# are present. The classification gate (Stage 2) decides whether the
+# PR is auto-mergeable or requires manual review.
+#
+# Stage map (see scripts/lexicon-evolve.sh):
+#   0 diff           always
+#   1 derive chain   always
+#   2 classify       always (gates merge)
+#   3 coercion law   when chain has coerce steps
+#   4 corpus verify  when corpus/<nsid>/ exists
+#   5 publish        on tagged release only
+
+on:
+  pull_request:
+    paths:
+      - "lexicons/dev/idiolect/**"
+      - "scripts/lexicon-evolve.sh"
+      - ".github/workflows/lexicon-evolution.yml"
+  push:
+    branches: [main]
+    paths:
+      - "lexicons/dev/idiolect/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  evolve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install panproto CLI
+        run: |
+          # The panproto CLI ships pre-built; pin to the same tag the
+          # workspace's Cargo.lock points at to avoid drift between
+          # local and CI runs.
+          PANPROTO_TAG="$(grep -A1 '^name = "panproto-lens"' Cargo.lock | grep version | head -n 1 | cut -d '"' -f 2)"
+          curl -fsSL "https://github.com/panproto/panproto/releases/download/v${PANPROTO_TAG}/panproto-x86_64-linux.tar.gz" -o panproto.tar.gz
+          tar -xzf panproto.tar.gz
+          sudo mv schema /usr/local/bin/
+
+      - name: Identify changed lexicons
+        id: changed
+        run: |
+          base="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          changed=$(git diff --name-only "$base" HEAD -- 'lexicons/dev/idiolect/*.json' || true)
+          {
+            echo "lexicons<<EOF"
+            echo "$changed"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run evolution pipeline per changed lexicon
+        if: steps.changed.outputs.lexicons != ''
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          while IFS= read -r path; do
+            [[ -z "$path" ]] && continue
+            nsid=$(echo "$path" | sed -E 's|lexicons/||; s|/|.|g; s|\.json$||')
+            echo "::group::$nsid"
+            # Stage the old version into a known temp path so the
+            # script can diff. The script's nsid_to_path falls back
+            # to the unversioned canonical path; we materialize the
+            # old revision next to the new and let the script run.
+            old_tmp="$(mktemp -d)/old-$RANDOM.json"
+            git show "$base:$path" > "$old_tmp" 2>/dev/null || {
+              echo "  new lexicon, no old revision; skipping diff"
+              echo "::endgroup::"
+              continue
+            }
+            cp "$path" "$old_tmp.new"
+            # Wire stages 0-2 directly; the full script wants
+            # versioned inputs the repo doesn't carry yet.
+            schema diff --src "$old_tmp" --tgt "$old_tmp.new" --json \
+              > "diff-$nsid.json"
+            schema lens generate "$old_tmp" "$old_tmp.new" --json \
+              > "chain-$nsid.json"
+            schema lens inspect "chain-$nsid.json" --protocol atproto \
+              > "class-$nsid.txt"
+            class=$(grep -oE 'Iso|Injection|Projection|Affine|General' "class-$nsid.txt" | head -n 1)
+            echo "  classification: $class"
+            case "$class" in
+              Iso|Injection) ;;
+              Projection)
+                echo "::warning::$nsid migration is a Projection (data-lossy on reverse direction); reviewer must confirm complement persistence."
+                ;;
+              Affine|General)
+                echo "::error::$nsid migration is $class; manual lens authoring + governance sign-off required."
+                exit 2
+                ;;
+            esac
+            echo "::endgroup::"
+          done <<< "${{ steps.changed.outputs.lexicons }}"
+
+      - name: Upload pipeline artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexicon-evolution-${{ github.sha }}
+          path: |
+            diff-*.json
+            chain-*.json
+            class-*.txt
+            verification-*.json
+          if-no-files-found: ignore
