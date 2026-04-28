@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { NSID, type RECORD_NSIDS } from "../src/generated/family.ts";
 import type {
   Adapter,
   Bounty,
@@ -8,7 +9,6 @@ import type {
   Retrospection,
   Verification,
 } from "../src/generated/index.ts";
-import { NSID, RECORD_NSIDS } from "../src/generated/family.ts";
 import { classifyRecord, isRecord, validateRecord } from "../src/validators.ts";
 
 // minimal valid examples used to assert that the generated types

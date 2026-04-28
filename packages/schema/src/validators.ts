@@ -1,11 +1,6 @@
 import type { Lexicons, ValidationResult } from "@atproto/lexicon";
+import { NSID, type NSID as NsidType, RECORD_NSIDS, type RecordTypes } from "./generated/family";
 import { defaultLexicons } from "./lexicons";
-import {
-  NSID,
-  RECORD_NSIDS,
-  type NSID as NsidType,
-  type RecordTypes,
-} from "./generated/family";
 
 /**
  * Validate a candidate record against a given nsid using a `Lexicons`
@@ -42,10 +37,7 @@ export function isRecord<N extends NsidType>(
  * Returns the matching nsid on success, or null if no schema accepts
  * the record.
  */
-export function classifyRecord(
-  value: unknown,
-  lex: Lexicons = defaultLexicons(),
-): NsidType | null {
+export function classifyRecord(value: unknown, lex: Lexicons = defaultLexicons()): NsidType | null {
   for (const nsid of RECORD_NSIDS) {
     if (validateRecord(nsid, value, lex).success) {
       return nsid;

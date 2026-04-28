@@ -21,10 +21,6 @@
     "./lexicons": {
       "types": "./dist/lexicons.d.ts",
       "import": "./dist/lexicons.js"
-    },
-    "./nsids": {
-      "types": "./dist/nsids.d.ts",
-      "import": "./dist/nsids.js"
     }
   },
   "files": [

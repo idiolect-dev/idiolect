@@ -1,16 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import {
+  type AnyRecord,
   decodeRecord,
+  type Encounter,
   FAMILY_ID,
   FAMILY_NSID_PREFIX,
   familyContains,
   NSID,
   RECORD_NSIDS,
+  tagRecord,
   toTypedJson,
-  type AnyRecord,
-  type Encounter,
 } from "../src/generated/family.ts";
-import { tagRecord } from "../src/generated/family.ts";
 
 // Family identity tests are cheap pins on the codegen output. They
 // also catch a regression where `idiolect_family()` gets re-anchored
@@ -98,28 +98,22 @@ describe("decodeRecord", () => {
   });
 
   test("returns null when $type is out of family", () => {
-    expect(
-      decodeRecord({ $type: "com.atproto.repo.createRecord", foo: 1 }),
-    ).toBeNull();
+    expect(decodeRecord({ $type: "com.atproto.repo.createRecord", foo: 1 })).toBeNull();
   });
 
   test("returns null for a same-prefix non-member $type", () => {
-    expect(
-      decodeRecord({ $type: "dev.idiolect.notarealrecord", foo: 1 }),
-    ).toBeNull();
+    expect(decodeRecord({ $type: "dev.idiolect.notarealrecord", foo: 1 })).toBeNull();
   });
 
   test("strips $type from the body and tags it on success", () => {
     const wire = { $type: NSID.encounter, ...ENCOUNTER };
     const decoded = decodeRecord(wire);
     expect(decoded).not.toBeNull();
-    expect(decoded!.$nsid).toBe(NSID.encounter);
+    expect(decoded?.$nsid).toBe(NSID.encounter);
     // $type should not survive in the body.
-    expect((decoded!.body as Record<string, unknown>)).not.toHaveProperty(
-      "$type",
-    );
+    expect(decoded?.body as Record<string, unknown>).not.toHaveProperty("$type");
     // Every other field roundtrips.
-    expect(decoded!.body).toEqual({ ...ENCOUNTER });
+    expect(decoded?.body).toEqual({ ...ENCOUNTER });
   });
 });
 
@@ -127,7 +121,7 @@ describe("toTypedJson", () => {
   test("inlines $nsid as $type alongside the value", () => {
     const tagged: AnyRecord = tagRecord(NSID.encounter, ENCOUNTER);
     const wire = toTypedJson(tagged);
-    expect(wire["$type"]).toBe(NSID.encounter);
+    expect(wire.$type).toBe(NSID.encounter);
     // Every field of the value is in the wire form.
     for (const [k, v] of Object.entries(ENCOUNTER)) {
       expect(wire[k]).toEqual(v);
@@ -139,7 +133,7 @@ describe("toTypedJson", () => {
     const wire = toTypedJson(tagged);
     const decoded = decodeRecord(wire);
     expect(decoded).not.toBeNull();
-    expect(decoded!.$nsid).toBe(tagged.$nsid);
-    expect(decoded!.body).toEqual({ ...tagged.value });
+    expect(decoded?.$nsid).toBe(tagged.$nsid);
+    expect(decoded?.body).toEqual({ ...tagged.value });
   });
 });
