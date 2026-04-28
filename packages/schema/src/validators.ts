@@ -1,7 +1,11 @@
 import type { Lexicons, ValidationResult } from "@atproto/lexicon";
 import { defaultLexicons } from "./lexicons";
-import { RECORD_NSIDS, type RecordNsid } from "./nsids";
-import type { RecordMap } from "./recordMap";
+import {
+  NSID,
+  RECORD_NSIDS,
+  type NSID as NsidType,
+  type RecordTypes,
+} from "./generated/family";
 
 /**
  * Validate a candidate record against a given nsid using a `Lexicons`
@@ -11,29 +15,29 @@ import type { RecordMap } from "./recordMap";
  * @param value - the candidate record.
  * @param lex - optional lexicons instance; defaults to the shipped set.
  */
-export function validateRecord<N extends RecordNsid>(
+export function validateRecord<N extends NsidType>(
   nsid: N,
   value: unknown,
   lex: Lexicons = defaultLexicons(),
-): ValidationResult<RecordMap[N]> {
-  return lex.validate(nsid, value) as ValidationResult<RecordMap[N]>;
+): ValidationResult<RecordTypes[N]> {
+  return lex.validate(nsid, value) as ValidationResult<RecordTypes[N]>;
 }
 
 /**
  * Type-narrowing guard. Returns true iff `value` validates against
  * the lexicon identified by `nsid`.
  */
-export function isRecord<N extends RecordNsid>(
+export function isRecord<N extends NsidType>(
   nsid: N,
   value: unknown,
   lex: Lexicons = defaultLexicons(),
-): value is RecordMap[N] {
+): value is RecordTypes[N] {
   return validateRecord(nsid, value, lex).success;
 }
 
 /**
- * Validate that `value` is a record for any of the dev.idiolect.*
- * record lexicons. Used by ingest pipelines that accept mixed traffic.
+ * Validate that `value` is a record for any of the family's record
+ * lexicons. Used by ingest pipelines that accept mixed traffic.
  *
  * Returns the matching nsid on success, or null if no schema accepts
  * the record.
@@ -41,7 +45,7 @@ export function isRecord<N extends RecordNsid>(
 export function classifyRecord(
   value: unknown,
   lex: Lexicons = defaultLexicons(),
-): RecordNsid | null {
+): NsidType | null {
   for (const nsid of RECORD_NSIDS) {
     if (validateRecord(nsid, value, lex).success) {
       return nsid;
@@ -49,3 +53,7 @@ export function classifyRecord(
   }
   return null;
 }
+
+// Re-export the canonical NSID const so call sites can do
+// `validateRecord(NSID.encounter, ...)` without a separate import.
+export { NSID };

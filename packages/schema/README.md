@@ -11,7 +11,7 @@ rejects drift between the two packages. Three shipped surfaces:
 
 - **Types** — `Encounter`, `Correction`, `Bounty`, … per record kind,
   plus shared types from `defs`.
-- **NSID constants** — `NSIDS.encounter` → `"dev.idiolect.encounter"`,
+- **NSID constants** — `NSID.encounter` → `"dev.idiolect.encounter"`,
   for switching on a record's collection at runtime.
 - **Validators** — `validateRecord`, `isRecord`, `classifyRecord`,
   `tagRecord` for runtime structural checks and typed unions.
@@ -24,7 +24,7 @@ flowchart LR
     CG["idiolect-codegen<br/>(Rust binary)"]
 
     subgraph pkg["@idiolect-dev/schema"]
-        GEN["src/generated/<br/>(types · validators · NSIDS)"]
+        GEN["src/generated/<br/>(types · validators · NSID)"]
         API["isRecord · classifyRecord<br/>tagRecord · validateRecord"]
         FIX["EXAMPLES (fixtures)"]
         LEXDOCS["defaultLexicons()<br/>loadLexiconDocs()"]
@@ -54,7 +54,7 @@ npm install @idiolect-dev/schema
 
 ```ts
 import {
-  NSIDS,
+  NSID,
   isRecord,
   classifyRecord,
   type Encounter,
@@ -63,7 +63,7 @@ import {
 
 // Narrow an unknown payload to a typed record.
 const payload: unknown = await fetch(recordUrl).then(r => r.json());
-if (isRecord(NSIDS.encounter, payload)) {
+if (isRecord(NSID.encounter, payload)) {
   const e: Encounter = payload;
   console.log(e.kind);
 }
@@ -73,14 +73,14 @@ const nsid = classifyRecord(payload); // returns the matching nsid or null
 
 // Wrap a strongly-typed record into a tagged AnyRecord for buffering.
 import { tagRecord } from "@idiolect-dev/schema";
-const tagged: AnyRecord = tagRecord(NSIDS.encounter, e);
+const tagged: AnyRecord = tagRecord(NSID.encounter, e);
 ```
 
 ## What ships
 
 - Every record type (one per lexicon under `lexicons/dev/idiolect/`) plus
   shared types from `defs`.
-- `NSIDS` — a typed constants object with every shipped nsid.
+- `NSID` — a typed constants object with every shipped nsid.
 - `AnyRecord` — discriminated union keyed on `$nsid`.
 - `isKind` / per-record `is<Kind>` type guards.
 - `validateRecord(nsid, value)` — atproto-level structural validation via

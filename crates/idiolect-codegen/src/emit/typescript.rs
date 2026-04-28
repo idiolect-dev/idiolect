@@ -993,7 +993,70 @@ fn render_directory_index_ts_files(docs: &[LexiconDoc]) -> Vec<(String, String)>
     files
 }
 
+// ---------- family module: IR + composable renderers ----------
+//
+// The family module's TS output is a sequence of small, named pieces
+// (banner, imports, family identity, record-keyed NSID const, AnyRecord
+// union, type guards, decode/encode helpers). Each piece is a focused
+// renderer over a typed slice of the IR, so the data flow reads as
+//
+//   docs + family
+//     -> [collect] -> FamilyTsModule
+//     -> [render]  -> [banner, imports, identity, ...] joined as bytes
+//
+// — the same lens-then-render decomposition the per-lexicon path uses,
+// just at the family-aggregate granularity. The IR is family-agnostic;
+// no idiolect strings are baked in.
+
+/// Family-level IR for the generated `family.ts` module.
+///
+/// Built from `(docs, family)` by [`collect_family_module`] and
+/// rendered by [`render_family_module`]. Decouples the
+/// disambiguation / collection logic from the TS-shape rendering
+/// so each renderer is testable in isolation.
+struct FamilyTsModule {
+    /// Identity bits propagated from `FamilyConfig`.
+    family_id: String,
+    family_marker: String,
+    family_prefix: String,
+    /// One entry per family-member record, in canonical (sorted) order.
+    members: Vec<FamilyTsMember>,
+}
+
+/// Per-record IR for the family module. The `kind` and `ty_name` are
+/// already disambiguated when leaf type names collide across nested
+/// directories (e.g. `pub.layers.changelog.entry` vs
+/// `pub.layers.resource.entry`).
+struct FamilyTsMember {
+    /// Full NSID of the record (`dev.idiolect.encounter`).
+    nsid: String,
+    /// Camel-case key for the runtime `NSID` const map (`encounter`).
+    /// When leaf names collide, a parent prefix is folded in:
+    /// `changelogEntry` / `resourceEntry`.
+    kind: String,
+    /// `PascalCase` TS type name as it appears in this module
+    /// (`Encounter`, `ChangelogEntry`).
+    ty_name: String,
+    /// `PascalCase` TS type name in its source module — equals
+    /// `ty_name` when no aliasing was needed.
+    raw_ty_name: String,
+    /// Relative import path from `family.ts` to the per-record
+    /// module, with no leading `./` or trailing `.ts`.
+    import_path: String,
+}
+
 fn render_family_ts(docs: &[LexiconDoc], family: &super::family::FamilyConfig) -> String {
+    let module = collect_family_module(docs, family);
+    render_family_module(&module)
+}
+
+/// Collect family-member entries, performing leaf-name
+/// disambiguation when two records under different directories
+/// share a leaf `TypeName`.
+fn collect_family_module(
+    docs: &[LexiconDoc],
+    family: &super::family::FamilyConfig,
+) -> FamilyTsModule {
     let mut records: Vec<&LexiconDoc> = docs
         .iter()
         .filter(|d| matches!(d.defs.get("main"), Some(Def::Record(_))))
@@ -1001,10 +1064,6 @@ fn render_family_ts(docs: &[LexiconDoc], family: &super::family::FamilyConfig) -
         .collect();
     records.sort_by(|a, b| a.nsid.cmp(&b.nsid));
 
-    // Walk-up disambiguation: when two records share a leaf TypeName,
-    // the import line `import type { Entry } from "./a/entry"` would
-    // collide with `import type { Entry } from "./b/entry"`. Mirror
-    // the rust-side logic by aliasing both to a parent-prefixed name.
     let prepared: Vec<(Vec<String>, String)> = records
         .iter()
         .map(|r| {
@@ -1013,6 +1072,42 @@ fn render_family_ts(docs: &[LexiconDoc], family: &super::family::FamilyConfig) -
             (path, ty)
         })
         .collect();
+    let aliases = compute_disambiguation_aliases(&prepared);
+
+    let members = records
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            let (path_segments, raw_ty) = &prepared[i];
+            let ty_name = aliases[i].clone().unwrap_or_else(|| raw_ty.clone());
+            let kind = if aliases[i].is_some() {
+                camel_case(&ty_name)
+            } else {
+                module_name_for_nsid(&r.nsid)
+            };
+            FamilyTsMember {
+                nsid: r.nsid.clone(),
+                kind,
+                raw_ty_name: raw_ty.clone(),
+                ty_name,
+                import_path: path_segments.join("/"),
+            }
+        })
+        .collect();
+
+    FamilyTsModule {
+        family_id: family.id.as_ref().to_owned(),
+        family_marker: family.marker_name.as_ref().to_owned(),
+        family_prefix: family.nsid_prefix.as_ref().to_owned(),
+        members,
+    }
+}
+
+/// Walk-up disambiguation: when two records share a leaf `TypeName`,
+/// fold parent directory segments into the alias until each member
+/// of the colliding group is unique. Returns `None` for entries that
+/// don't need an alias.
+fn compute_disambiguation_aliases(prepared: &[(Vec<String>, String)]) -> Vec<Option<String>> {
     let mut by_ty: std::collections::BTreeMap<String, Vec<usize>> =
         std::collections::BTreeMap::new();
     for (i, (_, ty)) in prepared.iter().enumerate() {
@@ -1063,196 +1158,265 @@ fn render_family_ts(docs: &[LexiconDoc], family: &super::family::FamilyConfig) -
             take += 1;
         }
     }
-    // Type names actually used downstream — aliased when set, raw
-    // otherwise. Keep the original ordering aligned with `records`.
-    let used_names: Vec<String> = prepared
-        .iter()
-        .enumerate()
-        .map(|(i, (_, ty))| aliases[i].clone().unwrap_or_else(|| ty.clone()))
-        .collect();
-    // NSID-map keys: when leaf module-names collide too, derive a
-    // unique key from the disambiguated TypeName so `NSID.changelogEntry`
-    // / `NSID.resourceEntry` stay distinct.
-    let used_kinds: Vec<String> = records
-        .iter()
-        .enumerate()
-        .map(|(i, r)| {
-            if aliases[i].is_some() {
-                camel_case(&used_names[i])
-            } else {
-                module_name_for_nsid(&r.nsid)
-            }
-        })
-        .collect();
+    aliases
+}
 
-    let family_id = family.id.as_ref();
-    let family_marker = family.marker_name.as_ref();
-    let family_prefix = family.nsid_prefix.as_ref();
+/// Render a [`FamilyTsModule`] by composing focused per-section
+/// renderers. Order of pieces is load-bearing for snapshot stability:
+/// imports first, then identity, then types, then runtime helpers.
+fn render_family_module(m: &FamilyTsModule) -> String {
+    let pieces: Vec<String> = vec![
+        render_family_banner(m),
+        render_family_imports(&m.members),
+        render_family_identity(m),
+        render_family_marker(m),
+        render_family_nsid_const(&m.members),
+        render_family_nsid_type(),
+        render_family_record_types(&m.members),
+        render_family_any_record(&m.members),
+        render_family_is_kind(),
+        render_family_per_type_guards(&m.members),
+        render_family_tag_record(),
+        render_family_record_nsids(&m.members),
+        render_family_nsid_set(),
+        render_family_contains(),
+        render_family_decoded_record(),
+        render_family_decode_record(),
+        render_family_to_typed_json(),
+    ];
+    pieces.join("\n")
+}
 
-    let mut out = String::new();
-    out.push_str("// @generated by idiolect-codegen. do not edit.\n\n");
-    let _ = writeln!(
-        out,
-        "// Generated record family for `{family_id}`.\n\
+fn render_family_banner(m: &FamilyTsModule) -> String {
+    format!(
+        "// @generated by idiolect-codegen. do not edit.\n\
+         \n\
+         // Generated record family for `{id}`.\n\
          //\n\
          // Per-record types come from the sibling generated modules. This file\n\
          // emits the discriminated-union view, the dispatch helpers, and the\n\
          // family identity (`FAMILY_ID`, `FAMILY_NSID_PREFIX`, `FamilyMarker`)\n\
          // that mirror the Rust `family.rs` surface.\n",
-    );
-    out.push('\n');
+        id = m.family_id,
+    )
+}
 
-    for (i, r) in records.iter().enumerate() {
-        let path = module_path_for_nsid(&r.nsid).join("/");
-        let raw_ty = &prepared[i].1;
-        let used = &used_names[i];
-        if used == raw_ty {
-            let _ = writeln!(out, "import type {{ {raw_ty} }} from \"./{path}\";");
+fn render_family_imports(members: &[FamilyTsMember]) -> String {
+    let mut out = String::new();
+    for m in members {
+        if m.ty_name == m.raw_ty_name {
+            let _ = writeln!(
+                out,
+                "import type {{ {raw} }} from \"./{path}\";",
+                raw = m.raw_ty_name,
+                path = m.import_path,
+            );
         } else {
             let _ = writeln!(
                 out,
-                "import type {{ {raw_ty} as {used} }} from \"./{path}\";"
+                "import type {{ {raw} as {used} }} from \"./{path}\";",
+                raw = m.raw_ty_name,
+                used = m.ty_name,
+                path = m.import_path,
             );
         }
     }
-    out.push('\n');
+    out
+}
 
-    let _ = writeln!(
-        out,
+fn render_family_identity(m: &FamilyTsModule) -> String {
+    format!(
         "/** Family identifier, mirrored from the Rust `RecordFamily::ID` constant. */\n\
-         export const FAMILY_ID = \"{family_id}\" as const;\n",
-    );
-    let _ = writeln!(
-        out,
-        "/** NSID prefix every member of this family shares. */\n\
-         export const FAMILY_NSID_PREFIX = \"{family_prefix}\" as const;\n",
-    );
-    let _ = writeln!(
-        out,
-        "/** Nominal marker for the family, mirrored from the Rust `{family_marker}` struct. */\n\
-         export type FamilyMarker = \"{family_marker}\";\n",
-    );
+         export const FAMILY_ID = \"{id}\" as const;\n\
+         \n\
+         /** NSID prefix every member of this family shares. Informational. */\n\
+         export const FAMILY_NSID_PREFIX = \"{prefix}\" as const;\n",
+        id = m.family_id,
+        prefix = m.family_prefix,
+    )
+}
 
+fn render_family_marker(m: &FamilyTsModule) -> String {
+    format!(
+        "/** Nominal marker for the family, mirrored from the Rust `{marker}` struct. */\n\
+         export type FamilyMarker = \"{marker}\";\n",
+        marker = m.family_marker,
+    )
+}
+
+fn render_family_nsid_const(members: &[FamilyTsMember]) -> String {
+    let mut out = String::new();
     out.push_str("/**\n * Canonical NSIDs, keyed by record kind for ergonomic call sites.\n */\n");
     out.push_str("export const NSID = {\n");
-    for (i, r) in records.iter().enumerate() {
-        let kind = &used_kinds[i];
-        let _ = writeln!(out, "  {kind}: \"{nsid}\",", nsid = r.nsid);
+    for m in members {
+        let _ = writeln!(out, "  {kind}: \"{nsid}\",", kind = m.kind, nsid = m.nsid);
     }
-    out.push_str("} as const;\n\n");
-    out.push_str("export type NSID = (typeof NSID)[keyof typeof NSID];\n\n");
+    out.push_str("} as const;\n");
+    out
+}
 
+fn render_family_nsid_type() -> String {
+    "export type NSID = (typeof NSID)[keyof typeof NSID];\n".to_owned()
+}
+
+fn render_family_record_types(members: &[FamilyTsMember]) -> String {
+    let mut out = String::new();
     out.push_str("/**\n * Mapping from record NSID to its TypeScript record type.\n */\n");
     out.push_str("export type RecordTypes = {\n");
-    for i in 0..records.len() {
-        let kind = &used_kinds[i];
-        let ty = &used_names[i];
-        let _ = writeln!(out, "  [NSID.{kind}]: {ty};");
+    for m in members {
+        let _ = writeln!(out, "  [NSID.{kind}]: {ty};", kind = m.kind, ty = m.ty_name);
     }
-    out.push_str("};\n\n");
+    out.push_str("};\n");
+    out
+}
 
+fn render_family_any_record(members: &[FamilyTsMember]) -> String {
+    let mut out = String::new();
     out.push_str("/**\n * Discriminated union tagged by `$nsid` for runtime dispatch.\n */\n");
     out.push_str("export type AnyRecord =\n");
-    for i in 0..records.len() {
-        let kind = &used_kinds[i];
-        let ty = &used_names[i];
-        let suffix = if i + 1 == records.len() { ";" } else { "" };
+    let last = members.len().saturating_sub(1);
+    for (i, m) in members.iter().enumerate() {
+        let suffix = if i == last { ";" } else { "" };
         let _ = writeln!(
             out,
             "  | {{ readonly $nsid: typeof NSID.{kind}; readonly value: {ty} }}{suffix}",
+            kind = m.kind,
+            ty = m.ty_name,
         );
     }
-    out.push('\n');
+    out
+}
 
-    out.push_str("/** True if `r` is an `AnyRecord` tagged with the given nsid. */\n");
-    out.push_str("export function isKind<K extends NSID>(\n");
-    out.push_str("  r: AnyRecord,\n");
-    out.push_str("  nsid: K,\n");
-    out.push_str("): r is Extract<AnyRecord, { $nsid: K }> {\n");
-    out.push_str("  return r.$nsid === nsid;\n}\n\n");
+fn render_family_is_kind() -> String {
+    "/** True if `r` is an `AnyRecord` tagged with the given nsid. */\n\
+     export function isKind<K extends NSID>(\n\
+     \x20\x20r: AnyRecord,\n\
+     \x20\x20nsid: K,\n\
+     ): r is Extract<AnyRecord, { $nsid: K }> {\n\
+     \x20\x20return r.$nsid === nsid;\n\
+     }\n"
+        .to_owned()
+}
 
-    for i in 0..records.len() {
-        let kind = &used_kinds[i];
-        let ty = &used_names[i];
-        let fn_name = format!("is{ty}");
+fn render_family_per_type_guards(members: &[FamilyTsMember]) -> String {
+    let mut out = String::new();
+    let last = members.len().saturating_sub(1);
+    for (i, m) in members.iter().enumerate() {
         let _ = writeln!(
             out,
             "/** True if `r` wraps a `{ty}`. */\n\
-             export function {fn_name}(r: AnyRecord): r is {{ readonly $nsid: typeof NSID.{kind}; readonly value: {ty} }} {{\n  \
-             return r.$nsid === NSID.{kind};\n}}\n",
+             export function is{ty}(r: AnyRecord): r is {{ readonly $nsid: typeof NSID.{kind}; readonly value: {ty} }} {{\n  \
+             return r.$nsid === NSID.{kind};\n}}",
+            ty = m.ty_name,
+            kind = m.kind,
         );
+        if i != last {
+            out.push('\n');
+        }
     }
+    out
+}
 
-    out.push_str("/**\n * Wrap a strongly-typed record in its `AnyRecord` variant.\n */\n");
-    out.push_str("export function tagRecord<K extends NSID>(\n");
-    out.push_str("  nsid: K,\n");
-    out.push_str("  value: RecordTypes[K],\n");
-    out.push_str("): AnyRecord {\n");
-    out.push_str("  return { $nsid: nsid, value } as AnyRecord;\n}\n\n");
+fn render_family_tag_record() -> String {
+    "/**\n\
+     \x20* Wrap a strongly-typed record in its `AnyRecord` variant.\n\
+     \x20*/\n\
+     export function tagRecord<K extends NSID>(\n\
+     \x20\x20nsid: K,\n\
+     \x20\x20value: RecordTypes[K],\n\
+     ): AnyRecord {\n\
+     \x20\x20return { $nsid: nsid, value } as AnyRecord;\n\
+     }\n"
+        .to_owned()
+}
 
+fn render_family_record_nsids(members: &[FamilyTsMember]) -> String {
+    let mut out = String::new();
     out.push_str("/** All record NSIDs in declaration order. */\n");
     out.push_str("export const RECORD_NSIDS = [\n");
-    for kind in &used_kinds {
-        let _ = writeln!(out, "  NSID.{kind},");
+    for m in members {
+        let _ = writeln!(out, "  NSID.{kind},", kind = m.kind);
     }
-    out.push_str("] as const satisfies readonly NSID[];\n\n");
-
-    out.push_str(
-        "/**\n\
-         * True if `nsid` belongs to this family — i.e. starts with `FAMILY_NSID_PREFIX`.\n\
-         * Mirrors the Rust `RecordFamily::contains` predicate.\n\
-         */\n",
-    );
-    out.push_str("export function familyContains(nsid: string): nsid is NSID {\n");
-    out.push_str("  return nsid.startsWith(FAMILY_NSID_PREFIX);\n}\n\n");
-
-    out.push_str(
-        "/**\n\
-         * Loose decoded view: family NSID and an unvalidated record body.\n\
-         * `decodeRecord` produces this; callers pair it with a per-record\n\
-         * validator (Zod, io-ts, hand-rolled) before treating the body as\n\
-         * any specific record type.\n\
-         */\n",
-    );
-    out.push_str("export interface DecodedRecord {\n");
-    out.push_str("  readonly $nsid: NSID;\n");
-    out.push_str("  readonly body: unknown;\n");
-    out.push_str("}\n\n");
-
-    out.push_str(
-        "/**\n\
-         * Split an atproto wire-form record (an object whose `$type` field\n\
-         * carries the NSID of the contained record) into a (`$nsid`, body)\n\
-         * pair. Mirrors the Rust `AnyRecord::from_typed_json` constructor in\n\
-         * shape, but TypeScript has no runtime structural validator for the\n\
-         * generated record types, so the body comes back as `unknown` and\n\
-         * the caller is responsible for narrowing it.\n\
-         *\n\
-         * Returns `null` if `value` is not structurally a record object or\n\
-         * its `$type` is outside this family.\n\
-         */\n",
-    );
-    out.push_str("export function decodeRecord(value: unknown): DecodedRecord | null {\n");
-    out.push_str("  if (typeof value !== \"object\" || value === null || Array.isArray(value)) {\n");
-    out.push_str("    return null;\n  }\n");
-    out.push_str("  const obj = value as { readonly $type?: unknown };\n");
-    out.push_str("  const ty = obj.$type;\n");
-    out.push_str("  if (typeof ty !== \"string\" || !familyContains(ty)) return null;\n");
-    out.push_str("  const { $type: _stripped, ...body } = obj as Record<string, unknown>;\n");
-    out.push_str("  void _stripped;\n");
-    out.push_str("  return { $nsid: ty, body };\n}\n\n");
-
-    out.push_str(
-        "/**\n\
-         * Encode an `AnyRecord` into atproto wire form: the inner `value`\n\
-         * spread with a `$type` discriminator. Mirrors the Rust\n\
-         * `AnyRecord::to_typed_json` method.\n\
-         */\n",
-    );
-    out.push_str("export function toTypedJson(r: AnyRecord): Record<string, unknown> {\n");
-    out.push_str("  return { ...r.value, $type: r.$nsid } as Record<string, unknown>;\n}\n");
-
+    out.push_str("] as const satisfies readonly NSID[];\n");
     out
+}
+
+fn render_family_nsid_set() -> String {
+    // Membership check uses a precomputed set against RECORD_NSIDS so
+    // the type predicate (`nsid is NSID`) is honoured at runtime,
+    // matching the Rust `RecordFamily::contains` semantics. The
+    // FAMILY_NSID_PREFIX constant remains exposed for external
+    // consumers doing prefix-based dispatch (e.g. `OrFamily`-style
+    // composition), but it is informational, not the membership gate.
+    "const FAMILY_NSID_SET: ReadonlySet<string> = new Set(RECORD_NSIDS);\n".to_owned()
+}
+
+fn render_family_contains() -> String {
+    "/**\n\
+     \x20* True if `nsid` is a member of this family — exact match against\n\
+     \x20* the family's record set. Mirrors the Rust `RecordFamily::contains`\n\
+     \x20* predicate; the type narrowing to `NSID` is sound because the\n\
+     \x20* runtime check tests against the same literal set the type encodes.\n\
+     \x20*/\n\
+     export function familyContains(nsid: string): nsid is NSID {\n\
+     \x20\x20return FAMILY_NSID_SET.has(nsid);\n\
+     }\n"
+        .to_owned()
+}
+
+fn render_family_decoded_record() -> String {
+    "/**\n\
+     \x20* Loose decoded view: family NSID and an unvalidated record body.\n\
+     \x20* `decodeRecord` produces this; callers pair it with a per-record\n\
+     \x20* validator (Zod, io-ts, hand-rolled) before treating the body as\n\
+     \x20* any specific record type.\n\
+     \x20*/\n\
+     export interface DecodedRecord {\n\
+     \x20\x20readonly $nsid: NSID;\n\
+     \x20\x20readonly body: unknown;\n\
+     }\n"
+        .to_owned()
+}
+
+fn render_family_decode_record() -> String {
+    // Use bracket access for `$type` so `noPropertyAccessFromIndexSignature`
+    // (TS strict default) doesn't reject the dotted form on a
+    // `Record<string, unknown>` source.
+    "/**\n\
+     \x20* Split an atproto wire-form record (an object whose `$type` field\n\
+     \x20* carries the NSID of the contained record) into a (`$nsid`, body)\n\
+     \x20* pair. Mirrors the Rust `AnyRecord::from_typed_json` constructor in\n\
+     \x20* shape, but TypeScript has no runtime structural validator for the\n\
+     \x20* generated record types, so the body comes back as `unknown` and\n\
+     \x20* the caller is responsible for narrowing it.\n\
+     \x20*\n\
+     \x20* Returns `null` if `value` is not structurally a record object or\n\
+     \x20* its `$type` is outside this family.\n\
+     \x20*/\n\
+     export function decodeRecord(value: unknown): DecodedRecord | null {\n\
+     \x20\x20if (typeof value !== \"object\" || value === null || Array.isArray(value)) {\n\
+     \x20\x20\x20\x20return null;\n\
+     \x20\x20}\n\
+     \x20\x20const obj = value as Record<string, unknown>;\n\
+     \x20\x20const ty = obj[\"$type\"];\n\
+     \x20\x20if (typeof ty !== \"string\" || !familyContains(ty)) return null;\n\
+     \x20\x20const { $type: _stripped, ...body } = obj;\n\
+     \x20\x20void _stripped;\n\
+     \x20\x20return { $nsid: ty, body };\n\
+     }\n"
+        .to_owned()
+}
+
+fn render_family_to_typed_json() -> String {
+    "/**\n\
+     \x20* Encode an `AnyRecord` into atproto wire form: the inner `value`\n\
+     \x20* spread with a `$type` discriminator. Mirrors the Rust\n\
+     \x20* `AnyRecord::to_typed_json` method.\n\
+     \x20*/\n\
+     export function toTypedJson(r: AnyRecord): Record<string, unknown> {\n\
+     \x20\x20return { ...r.value, $type: r.$nsid } as Record<string, unknown>;\n\
+     }\n"
+        .to_owned()
 }
 
 fn render_examples_ts(examples: &[Example]) -> String {

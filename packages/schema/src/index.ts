@@ -28,6 +28,4 @@ export {
   defaultLexicons,
   loadLexiconDocs,
 } from "./lexicons";
-export * from "./nsids";
-export * from "./recordMap";
 export * from "./validators";

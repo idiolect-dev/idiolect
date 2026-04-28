@@ -7,7 +7,6 @@
 // family identity (`FAMILY_ID`, `FAMILY_NSID_PREFIX`, `FamilyMarker`)
 // that mirror the Rust `family.rs` surface.
 
-
 import type { Adapter } from "./dev/idiolect/adapter";
 import type { Belief } from "./dev/idiolect/belief";
 import type { Bounty } from "./dev/idiolect/bounty";
@@ -24,7 +23,7 @@ import type { Vocab } from "./dev/idiolect/vocab";
 /** Family identifier, mirrored from the Rust `RecordFamily::ID` constant. */
 export const FAMILY_ID = "dev.idiolect" as const;
 
-/** NSID prefix every member of this family shares. */
+/** NSID prefix every member of this family shares. Informational. */
 export const FAMILY_NSID_PREFIX = "dev.idiolect." as const;
 
 /** Nominal marker for the family, mirrored from the Rust `IdiolectFamily` struct. */
@@ -179,53 +178,57 @@ export const RECORD_NSIDS = [
   NSID.vocab,
 ] as const satisfies readonly NSID[];
 
+const FAMILY_NSID_SET: ReadonlySet<string> = new Set(RECORD_NSIDS);
+
 /**
-* True if `nsid` belongs to this family — i.e. starts with `FAMILY_NSID_PREFIX`.
-* Mirrors the Rust `RecordFamily::contains` predicate.
-*/
+ * True if `nsid` is a member of this family — exact match against
+ * the family's record set. Mirrors the Rust `RecordFamily::contains`
+ * predicate; the type narrowing to `NSID` is sound because the
+ * runtime check tests against the same literal set the type encodes.
+ */
 export function familyContains(nsid: string): nsid is NSID {
-  return nsid.startsWith(FAMILY_NSID_PREFIX);
+  return FAMILY_NSID_SET.has(nsid);
 }
 
 /**
-* Loose decoded view: family NSID and an unvalidated record body.
-* `decodeRecord` produces this; callers pair it with a per-record
-* validator (Zod, io-ts, hand-rolled) before treating the body as
-* any specific record type.
-*/
+ * Loose decoded view: family NSID and an unvalidated record body.
+ * `decodeRecord` produces this; callers pair it with a per-record
+ * validator (Zod, io-ts, hand-rolled) before treating the body as
+ * any specific record type.
+ */
 export interface DecodedRecord {
   readonly $nsid: NSID;
   readonly body: unknown;
 }
 
 /**
-* Split an atproto wire-form record (an object whose `$type` field
-* carries the NSID of the contained record) into a (`$nsid`, body)
-* pair. Mirrors the Rust `AnyRecord::from_typed_json` constructor in
-* shape, but TypeScript has no runtime structural validator for the
-* generated record types, so the body comes back as `unknown` and
-* the caller is responsible for narrowing it.
-*
-* Returns `null` if `value` is not structurally a record object or
-* its `$type` is outside this family.
-*/
+ * Split an atproto wire-form record (an object whose `$type` field
+ * carries the NSID of the contained record) into a (`$nsid`, body)
+ * pair. Mirrors the Rust `AnyRecord::from_typed_json` constructor in
+ * shape, but TypeScript has no runtime structural validator for the
+ * generated record types, so the body comes back as `unknown` and
+ * the caller is responsible for narrowing it.
+ *
+ * Returns `null` if `value` is not structurally a record object or
+ * its `$type` is outside this family.
+ */
 export function decodeRecord(value: unknown): DecodedRecord | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return null;
   }
-  const obj = value as { readonly $type?: unknown };
-  const ty = obj.$type;
+  const obj = value as Record<string, unknown>;
+  const ty = obj["$type"];
   if (typeof ty !== "string" || !familyContains(ty)) return null;
-  const { $type: _stripped, ...body } = obj as Record<string, unknown>;
+  const { $type: _stripped, ...body } = obj;
   void _stripped;
   return { $nsid: ty, body };
 }
 
 /**
-* Encode an `AnyRecord` into atproto wire form: the inner `value`
-* spread with a `$type` discriminator. Mirrors the Rust
-* `AnyRecord::to_typed_json` method.
-*/
+ * Encode an `AnyRecord` into atproto wire form: the inner `value`
+ * spread with a `$type` discriminator. Mirrors the Rust
+ * `AnyRecord::to_typed_json` method.
+ */
 export function toTypedJson(r: AnyRecord): Record<string, unknown> {
   return { ...r.value, $type: r.$nsid } as Record<string, unknown>;
 }

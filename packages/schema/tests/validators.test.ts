@@ -8,7 +8,7 @@ import type {
   Retrospection,
   Verification,
 } from "../src/generated/index.ts";
-import { NSIDS, type RECORD_NSIDS } from "../src/nsids.ts";
+import { NSID, RECORD_NSIDS } from "../src/generated/family.ts";
 import { classifyRecord, isRecord, validateRecord } from "../src/validators.ts";
 
 // minimal valid examples used to assert that the generated types
@@ -87,18 +87,18 @@ const BOUNTY: Bounty = {
 
 describe("validateRecord", () => {
   test("accepts a minimal valid encounter", () => {
-    expect(validateRecord(NSIDS.encounter, ENCOUNTER).success).toBe(true);
+    expect(validateRecord(NSID.encounter, ENCOUNTER).success).toBe(true);
   });
 
   test("accepts every minimal example at its own nsid", () => {
     const samples: Array<[(typeof RECORD_NSIDS)[number], unknown]> = [
-      [NSIDS.encounter, ENCOUNTER],
-      [NSIDS.correction, CORRECTION],
-      [NSIDS.verification, VERIFICATION],
-      [NSIDS.observation, OBSERVATION],
-      [NSIDS.retrospection, RETROSPECTION],
-      [NSIDS.adapter, ADAPTER],
-      [NSIDS.bounty, BOUNTY],
+      [NSID.encounter, ENCOUNTER],
+      [NSID.correction, CORRECTION],
+      [NSID.verification, VERIFICATION],
+      [NSID.observation, OBSERVATION],
+      [NSID.retrospection, RETROSPECTION],
+      [NSID.adapter, ADAPTER],
+      [NSID.bounty, BOUNTY],
     ];
     for (const [nsid, value] of samples) {
       const result = validateRecord(nsid, value);
@@ -108,19 +108,19 @@ describe("validateRecord", () => {
 
   test("rejects encounter missing required `use`", () => {
     const { use: _drop, ...bad } = ENCOUNTER;
-    expect(validateRecord(NSIDS.encounter, bad).success).toBe(false);
+    expect(validateRecord(NSID.encounter, bad).success).toBe(false);
   });
 
   test("rejects correction with unknown reason", () => {
     const bad = { ...CORRECTION, reason: "invented" };
-    expect(validateRecord(NSIDS.correction, bad).success).toBe(false);
+    expect(validateRecord(NSID.correction, bad).success).toBe(false);
   });
 });
 
 describe("isRecord", () => {
   test("narrows to Encounter on success", () => {
     const maybe: unknown = ENCOUNTER;
-    if (isRecord(NSIDS.encounter, maybe)) {
+    if (isRecord(NSID.encounter, maybe)) {
       expect(maybe.kind).toBe("invocation-log");
     } else {
       throw new Error("expected encounter to narrow");
@@ -130,7 +130,7 @@ describe("isRecord", () => {
 
 describe("classifyRecord", () => {
   test("identifies a bounty record", () => {
-    expect(classifyRecord(BOUNTY)).toBe(NSIDS.bounty);
+    expect(classifyRecord(BOUNTY)).toBe(NSID.bounty);
   });
 
   test("returns null for a foreign payload", () => {
