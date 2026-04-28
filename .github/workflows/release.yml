@@ -12,7 +12,10 @@
 #      - compressed binary archives for every (target, binary) pair
 #      - SHA-256 checksums of every archive, signed by cosign
 #      - SBOMs (SPDX JSON) for each container image + the source tarball
-#      - release notes extracted from CHANGELOG.md's [Unreleased] section
+#      - release notes extracted from CHANGELOG.md's [<version>] section
+#        for the tag (fails the release if the section is missing or empty,
+#        so the [Unreleased] bullets must be moved to a new versioned
+#        heading before tagging)
 #   2. Multi-arch container images on ghcr.io:
 #      - ghcr.io/idiolect-dev/orchestrator:<version>, :latest
 #      - ghcr.io/idiolect-dev/observer:<version>, :latest
@@ -382,7 +385,12 @@ jobs:
   # Consolidate every binary archive into one `checksums.txt`,
   # sign it with cosign, publish the GitHub Release with all
   # artifacts attached, and extract release notes from the
-  # [Unreleased] section of CHANGELOG.md.
+  # `## [<version>]` section of CHANGELOG.md (where `<version>`
+  # comes from the tag). The job fails if that section is missing
+  # or empty: the standard release flow moves [Unreleased] bullets
+  # to a new versioned heading in the same commit that bumps
+  # Cargo.toml, so tagging without that move is a release-process
+  # mistake we want to catch loudly.
   # ---------------------------------------------------------------
   publish-release:
     name: publish GitHub Release
@@ -439,16 +447,42 @@ jobs:
       - name: extract release notes
         id: notes
         shell: bash
+        env:
+          VERSION: ${{ needs.verify-version.outputs.version }}
         run: |
           set -euo pipefail
           python3 - <<'EOF' > release_notes.md
-          import re, pathlib
+          import os, re, pathlib, sys
+          version = os.environ["VERSION"]
           text = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
-          # Grab everything between [Unreleased] and the next `## ` header.
-          m = re.search(r"##\s*\[Unreleased\][^\n]*\n(.*?)(?=\n##\s)", text, re.S)
-          body = m.group(1).strip() if m else ""
+          # Find the section for the tagged version, e.g. `## [0.6.0]`
+          # or `## [0.6.0] — 2026-04-28`. Capture everything until the
+          # next `## ` header (the previous version's section).
+          pattern = rf"##\s*\[{re.escape(version)}\][^\n]*\n(.*?)(?=\n##\s)"
+          m = re.search(pattern, text, re.S)
+          if not m:
+              sys.stderr.write(
+                  f"release-notes extractor: no [{version}] section in "
+                  "CHANGELOG.md. Move the [Unreleased] bullets under a "
+                  f"new ## [{version}] heading before tagging.\n"
+              )
+              sys.exit(1)
+          body = m.group(1).strip()
+          # Strip the empty Keep-a-Changelog scaffolding sections so
+          # the published notes show only subsections that actually
+          # have bullets. A subsection is "empty" when nothing but
+          # blank lines follows it before the next `### ` (or the
+          # end of the body).
+          body = re.sub(
+              r"###\s+\w[^\n]*\n(?:\s*\n)+(?=###\s|\Z)",
+              "",
+              body,
+          ).rstrip()
           if not body:
-              body = "_No release notes supplied for this version._"
+              sys.stderr.write(
+                  f"release-notes extractor: [{version}] section is empty.\n"
+              )
+              sys.exit(1)
           print(body)
           EOF
           echo "path=release_notes.md" >> "$GITHUB_OUTPUT"
