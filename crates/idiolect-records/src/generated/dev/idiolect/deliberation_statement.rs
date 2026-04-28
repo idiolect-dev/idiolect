@@ -20,7 +20,7 @@ pub struct DeliberationStatement {
     pub anonymous: Option<bool>,
     /// Open-enum slug naming the statement's argumentative role. Resolved against `classificationVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub classification: Option<String>,
+    pub classification: Option<DeliberationStatementClassification>,
     /// Vocabulary the `classification` slug resolves against. Omit to use the canonical idiolect default.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub classification_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
@@ -33,4 +33,74 @@ pub struct DeliberationStatement {
 
 impl crate::Record for DeliberationStatement {
     const NSID: &'static str = "dev.idiolect.deliberationStatement";
+}
+
+/// DeliberationStatementClassification. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DeliberationStatementClassification {
+    Claim,
+    Proposal,
+    Dissent,
+    Clarification,
+    Question,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl DeliberationStatementClassification {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Claim => "claim",
+            Self::Proposal => "proposal",
+            Self::Dissent => "dissent",
+            Self::Clarification => "clarification",
+            Self::Question => "question",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for DeliberationStatementClassification {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "claim" => Self::Claim,
+            "proposal" => Self::Proposal,
+            "dissent" => Self::Dissent,
+            "clarification" => Self::Clarification,
+            "question" => Self::Question,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for DeliberationStatementClassification {
+    fn from(s: &str) -> Self {
+        match s {
+            "claim" => Self::Claim,
+            "proposal" => Self::Proposal,
+            "dissent" => Self::Dissent,
+            "clarification" => Self::Clarification,
+            "question" => Self::Question,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for DeliberationStatementClassification {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for DeliberationStatementClassification {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

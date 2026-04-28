@@ -49,7 +49,7 @@ pub struct Community {
     pub name: String,
     /// Where the community's records live. `member-hosted` (default ATProto) means records live on individual member PDSes. `community-hosted` (Acorn-style) means records live on a community AppView, gated by membership. `hybrid` means both. Consumers crawling for community records use this to choose a surface.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub record_hosting: Option<String>,
+    pub record_hosting: Option<CommunityRecordHosting>,
     /// Sparse role assignments for members. Only members whose role differs from the implicit default need an entry; the default role is named on the role vocabulary's top node. A DID may appear multiple times when the role vocabulary supports multiple roles per member.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub role_assignments: Option<Vec<RoleAssignment>>,
@@ -86,7 +86,7 @@ pub struct ConventionReviewCadence {
 #[serde(rename_all = "camelCase")]
 pub struct ConventionVerificationReq {
     /// Open-enum slug naming the verification kind. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary.
-    pub kind: String,
+    pub kind: ConventionVerificationReqKind,
     /// Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
@@ -102,7 +102,147 @@ pub struct RoleAssignment {
     /// DID of the member receiving the role.
     pub did: idiolect_records::Did,
     /// Open-enum role slug. The default vocabulary seeds `member` (top), `moderator`, `delegate`, `author`; communities extend by referencing a custom `memberRoleVocab`.
-    pub role: String,
+    pub role: RoleAssignmentRole,
+}
+
+/// ConventionVerificationReqKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ConventionVerificationReqKind {
+    RoundtripTest,
+    PropertyTest,
+    FormalProof,
+    ConformanceTest,
+    StaticCheck,
+    ConvergencePreserving,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl ConventionVerificationReqKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::RoundtripTest => "roundtrip-test",
+            Self::PropertyTest => "property-test",
+            Self::FormalProof => "formal-proof",
+            Self::ConformanceTest => "conformance-test",
+            Self::StaticCheck => "static-check",
+            Self::ConvergencePreserving => "convergence-preserving",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for ConventionVerificationReqKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for ConventionVerificationReqKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for ConventionVerificationReqKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for ConventionVerificationReqKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
+}
+
+/// RoleAssignmentRole. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum RoleAssignmentRole {
+    Member,
+    Moderator,
+    Delegate,
+    Author,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl RoleAssignmentRole {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Member => "member",
+            Self::Moderator => "moderator",
+            Self::Delegate => "delegate",
+            Self::Author => "author",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for RoleAssignmentRole {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "member" => Self::Member,
+            "moderator" => Self::Moderator,
+            "delegate" => Self::Delegate,
+            "author" => Self::Author,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for RoleAssignmentRole {
+    fn from(s: &str) -> Self {
+        match s {
+            "member" => Self::Member,
+            "moderator" => Self::Moderator,
+            "delegate" => Self::Delegate,
+            "author" => Self::Author,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for RoleAssignmentRole {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for RoleAssignmentRole {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 /// CommunityConventions tagged union.
@@ -115,4 +255,66 @@ pub enum CommunityConventions {
     ConventionVerificationReq(ConventionVerificationReq),
     #[serde(rename = "dev.idiolect.community#conventionDeprecationPolicy")]
     ConventionDeprecationPolicy(ConventionDeprecationPolicy),
+}
+
+/// CommunityRecordHosting. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum CommunityRecordHosting {
+    MemberHosted,
+    CommunityHosted,
+    Hybrid,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl CommunityRecordHosting {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::MemberHosted => "member-hosted",
+            Self::CommunityHosted => "community-hosted",
+            Self::Hybrid => "hybrid",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for CommunityRecordHosting {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "member-hosted" => Self::MemberHosted,
+            "community-hosted" => Self::CommunityHosted,
+            "hybrid" => Self::Hybrid,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for CommunityRecordHosting {
+    fn from(s: &str) -> Self {
+        match s {
+            "member-hosted" => Self::MemberHosted,
+            "community-hosted" => Self::CommunityHosted,
+            "hybrid" => Self::Hybrid,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for CommunityRecordHosting {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for CommunityRecordHosting {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

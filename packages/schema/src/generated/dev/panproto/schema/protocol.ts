@@ -2,7 +2,7 @@
 // source: dev.panproto.schema.protocol
 
 export interface PanprotoProtocol {
-  category?: string;
+  category?: PanprotoProtocolCategory;
   constraintSorts?: string[];
   createdAt: string;
   edgeRules?: EdgeRule[];
@@ -32,3 +32,5 @@ export interface EdgeRule {
   srcKinds?: string[];
   tgtKinds?: string[];
 }
+
+export type PanprotoProtocolCategory = "schemaLanguage" | "programmingLanguage" | "serialization" | "dataScience" | "api" | "database" | "config" | "domain" | "annotation" | "rawFile" | string & {};

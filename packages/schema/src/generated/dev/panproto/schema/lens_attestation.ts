@@ -21,9 +21,11 @@ export interface PanprotoLensAttestation {
   /**
   * The attester's declared relationship to this lens.
   */
-  stance: string;
+  stance: PanprotoLensAttestationStance;
   /**
   * AT-URI of a previous attestation this one replaces.
   */
   supersedes?: string;
 }
+
+export type PanprotoLensAttestationStance = "reviewed" | "deployed" | "endorsed" | "contested" | "deprecated" | string & {};

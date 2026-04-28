@@ -16,7 +16,7 @@ export interface DeliberationStatement {
   /**
   * Open-enum slug naming the statement's argumentative role. Resolved against `classificationVocab` when present.
   */
-  classification?: string;
+  classification?: DeliberationStatementClassification;
   /**
   * Vocabulary the `classification` slug resolves against. Omit to use the canonical idiolect default.
   */
@@ -31,3 +31,5 @@ export interface DeliberationStatement {
   */
   text: string;
 }
+
+export type DeliberationStatementClassification = "claim" | "proposal" | "dissent" | "clarification" | "question" | string & {};

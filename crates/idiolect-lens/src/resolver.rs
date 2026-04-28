@@ -767,7 +767,7 @@ mod tests {
                 .expect("valid datetime"),
             laws_verified: Some(true),
             object_hash: "sha256:deadbeef".to_owned(),
-            round_trip_class: Some("isomorphism".to_owned()),
+            round_trip_class: Some("isomorphism".into()),
             source_schema: idiolect_records::AtUri::parse(
                 "at://did:plc:x/dev.panproto.schema.schema/aaa",
             )

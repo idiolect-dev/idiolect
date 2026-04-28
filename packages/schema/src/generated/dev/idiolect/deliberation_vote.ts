@@ -17,7 +17,7 @@ export interface DeliberationVote {
   /**
   * Open-enum slug naming the stance. Resolved against `stanceVocab` when present, otherwise against the canonical idiolect vote-stance vocabulary.
   */
-  stance: string;
+  stance: DeliberationVoteStance;
   /**
   * Vocabulary the `stance` slug resolves against. Omit to use the canonical idiolect default.
   */
@@ -31,3 +31,5 @@ export interface DeliberationVote {
   */
   weight?: number;
 }
+
+export type DeliberationVoteStance = "agree" | "pass" | "disagree" | string & {};

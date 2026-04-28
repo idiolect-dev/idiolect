@@ -17,7 +17,7 @@ pub struct PanprotoProtolens {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blob: Option<serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub complement_constructor: Option<String>,
+    pub complement_constructor: Option<PanprotoProtolensComplementConstructor>,
     pub created_at: idiolect_records::Datetime,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -26,9 +26,165 @@ pub struct PanprotoProtolens {
     pub name: String,
     pub object_hash: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub optic_kind: Option<String>,
+    pub optic_kind: Option<PanprotoProtolensOpticKind>,
 }
 
 impl crate::Record for PanprotoProtolens {
     const NSID: &'static str = "dev.panproto.schema.protolens";
+}
+
+/// PanprotoProtolensComplementConstructor. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PanprotoProtolensComplementConstructor {
+    Empty,
+    DroppedSortData,
+    DroppedOpData,
+    DroppedEdge,
+    NatTransKernel,
+    AddedElement,
+    CoercedSortData,
+    Composite,
+    Scoped,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl PanprotoProtolensComplementConstructor {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Empty => "empty",
+            Self::DroppedSortData => "droppedSortData",
+            Self::DroppedOpData => "droppedOpData",
+            Self::DroppedEdge => "droppedEdge",
+            Self::NatTransKernel => "natTransKernel",
+            Self::AddedElement => "addedElement",
+            Self::CoercedSortData => "coercedSortData",
+            Self::Composite => "composite",
+            Self::Scoped => "scoped",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for PanprotoProtolensComplementConstructor {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "empty" => Self::Empty,
+            "droppedSortData" => Self::DroppedSortData,
+            "droppedOpData" => Self::DroppedOpData,
+            "droppedEdge" => Self::DroppedEdge,
+            "natTransKernel" => Self::NatTransKernel,
+            "addedElement" => Self::AddedElement,
+            "coercedSortData" => Self::CoercedSortData,
+            "composite" => Self::Composite,
+            "scoped" => Self::Scoped,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for PanprotoProtolensComplementConstructor {
+    fn from(s: &str) -> Self {
+        match s {
+            "empty" => Self::Empty,
+            "droppedSortData" => Self::DroppedSortData,
+            "droppedOpData" => Self::DroppedOpData,
+            "droppedEdge" => Self::DroppedEdge,
+            "natTransKernel" => Self::NatTransKernel,
+            "addedElement" => Self::AddedElement,
+            "coercedSortData" => Self::CoercedSortData,
+            "composite" => Self::Composite,
+            "scoped" => Self::Scoped,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for PanprotoProtolensComplementConstructor {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for PanprotoProtolensComplementConstructor {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
+}
+
+/// PanprotoProtolensOpticKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PanprotoProtolensOpticKind {
+    Lens,
+    Prism,
+    Traversal,
+    Iso,
+    Affine,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl PanprotoProtolensOpticKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Lens => "lens",
+            Self::Prism => "prism",
+            Self::Traversal => "traversal",
+            Self::Iso => "iso",
+            Self::Affine => "affine",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for PanprotoProtolensOpticKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "lens" => Self::Lens,
+            "prism" => Self::Prism,
+            "traversal" => Self::Traversal,
+            "iso" => Self::Iso,
+            "affine" => Self::Affine,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for PanprotoProtolensOpticKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "lens" => Self::Lens,
+            "prism" => Self::Prism,
+            "traversal" => Self::Traversal,
+            "iso" => Self::Iso,
+            "affine" => Self::Affine,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for PanprotoProtolensOpticKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for PanprotoProtolensOpticKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

@@ -25,7 +25,7 @@ pub struct PanprotoLensAttestation {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
     /// The attester's declared relationship to this lens.
-    pub stance: String,
+    pub stance: PanprotoLensAttestationStance,
     /// AT-URI of a previous attestation this one replaces.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub supersedes: Option<idiolect_records::AtUri>,
@@ -33,4 +33,74 @@ pub struct PanprotoLensAttestation {
 
 impl crate::Record for PanprotoLensAttestation {
     const NSID: &'static str = "dev.panproto.schema.lensAttestation";
+}
+
+/// PanprotoLensAttestationStance. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PanprotoLensAttestationStance {
+    Reviewed,
+    Deployed,
+    Endorsed,
+    Contested,
+    Deprecated,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl PanprotoLensAttestationStance {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Reviewed => "reviewed",
+            Self::Deployed => "deployed",
+            Self::Endorsed => "endorsed",
+            Self::Contested => "contested",
+            Self::Deprecated => "deprecated",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for PanprotoLensAttestationStance {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "reviewed" => Self::Reviewed,
+            "deployed" => Self::Deployed,
+            "endorsed" => Self::Endorsed,
+            "contested" => Self::Contested,
+            "deprecated" => Self::Deprecated,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for PanprotoLensAttestationStance {
+    fn from(s: &str) -> Self {
+        match s {
+            "reviewed" => Self::Reviewed,
+            "deployed" => Self::Deployed,
+            "endorsed" => Self::Endorsed,
+            "contested" => Self::Contested,
+            "deprecated" => Self::Deprecated,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for PanprotoLensAttestationStance {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for PanprotoLensAttestationStance {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

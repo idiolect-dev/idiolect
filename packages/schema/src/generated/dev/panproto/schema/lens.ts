@@ -6,7 +6,9 @@ export interface PanprotoLens {
   createdAt: string;
   lawsVerified?: boolean;
   objectHash: string;
-  roundTripClass?: string;
+  roundTripClass?: PanprotoLensRoundTripClass;
   sourceSchema: string;
   targetSchema: string;
 }
+
+export type PanprotoLensRoundTripClass = "iso" | "retraction" | "projection" | "opaque" | string & {};

@@ -57,7 +57,7 @@ export interface Community {
   /**
   * Where the community's records live. `member-hosted` (default ATProto) means records live on individual member PDSes. `community-hosted` (Acorn-style) means records live on a community AppView, gated by membership. `hybrid` means both. Consumers crawling for community records use this to choose a surface.
   */
-  recordHosting?: string;
+  recordHosting?: CommunityRecordHosting;
   /**
   * Sparse role assignments for members. Only members whose role differs from the implicit default need an entry; the default role is named on the role vocabulary's top node. A DID may appear multiple times when the role vocabulary supports multiple roles per member.
   */
@@ -99,7 +99,7 @@ export interface ConventionVerificationReq {
   /**
   * Open-enum slug naming the verification kind. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary.
   */
-  kind: string;
+  kind: ConventionVerificationReqKind;
   /**
   * Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default.
   */
@@ -121,8 +121,12 @@ export interface RoleAssignment {
   /**
   * Open-enum role slug. The default vocabulary seeds `member` (top), `moderator`, `delegate`, `author`; communities extend by referencing a custom `memberRoleVocab`.
   */
-  role: string;
+  role: RoleAssignmentRole;
 }
+
+export type ConventionVerificationReqKind = "roundtrip-test" | "property-test" | "formal-proof" | "conformance-test" | "static-check" | "convergence-preserving" | string & {};
+
+export type RoleAssignmentRole = "member" | "moderator" | "delegate" | "author" | string & {};
 
 export type CommunityConventions = {
   $type: "dev.idiolect.community#conventionReviewCadence";
@@ -131,3 +135,5 @@ export type CommunityConventions = {
 } & ConventionVerificationReq | {
   $type: "dev.idiolect.community#conventionDeprecationPolicy";
 } & ConventionDeprecationPolicy;
+
+export type CommunityRecordHosting = "member-hosted" | "community-hosted" | "hybrid" | string & {};

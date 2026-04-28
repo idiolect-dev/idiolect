@@ -16,7 +16,7 @@ export interface Deliberation {
   /**
   * Open-enum slug naming the deliberation's shape. Resolved against `classificationVocab` when present, otherwise against the canonical idiolect vocabulary.
   */
-  classification?: string;
+  classification?: DeliberationClassification;
   /**
   * Vocabulary the `classification` slug resolves against. Omit to use the canonical idiolect default.
   */
@@ -41,7 +41,7 @@ export interface Deliberation {
   /**
   * Open-enum lifecycle marker. Resolved against `statusVocab` when present.
   */
-  status?: string;
+  status?: DeliberationStatus;
   /**
   * Vocabulary the `status` slug resolves against.
   */
@@ -51,3 +51,7 @@ export interface Deliberation {
   */
   topic: string;
 }
+
+export type DeliberationClassification = "question" | "proposal" | "grievance" | "retrospective" | string & {};
+
+export type DeliberationStatus = "open" | "closed" | "tabled" | "adopted" | "rejected" | string & {};

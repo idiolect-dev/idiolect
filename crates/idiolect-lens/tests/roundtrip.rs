@@ -55,7 +55,7 @@ fn stage_fixture(
             .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:deadbeef".to_owned(),
-        round_trip_class: Some("isomorphism".to_owned()),
+        round_trip_class: Some("isomorphism".into()),
         source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
         target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };
@@ -248,7 +248,7 @@ async fn apply_lens_accepts_protolens_chain_blob() {
             .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:chain".to_owned(),
-        round_trip_class: Some("isomorphism".to_owned()),
+        round_trip_class: Some("isomorphism".into()),
         source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
         target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };

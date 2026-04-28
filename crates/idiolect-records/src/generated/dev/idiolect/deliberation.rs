@@ -20,7 +20,7 @@ pub struct Deliberation {
     pub auth_required: Option<bool>,
     /// Open-enum slug naming the deliberation's shape. Resolved against `classificationVocab` when present, otherwise against the canonical idiolect vocabulary.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub classification: Option<String>,
+    pub classification: Option<DeliberationClassification>,
     /// Vocabulary the `classification` slug resolves against. Omit to use the canonical idiolect default.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub classification_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
@@ -38,7 +38,7 @@ pub struct Deliberation {
     pub owning_community: idiolect_records::AtUri,
     /// Open-enum lifecycle marker. Resolved against `statusVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
+    pub status: Option<DeliberationStatus>,
     /// Vocabulary the `status` slug resolves against.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
@@ -48,4 +48,140 @@ pub struct Deliberation {
 
 impl crate::Record for Deliberation {
     const NSID: &'static str = "dev.idiolect.deliberation";
+}
+
+/// DeliberationClassification. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DeliberationClassification {
+    Question,
+    Proposal,
+    Grievance,
+    Retrospective,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl DeliberationClassification {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Question => "question",
+            Self::Proposal => "proposal",
+            Self::Grievance => "grievance",
+            Self::Retrospective => "retrospective",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for DeliberationClassification {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "question" => Self::Question,
+            "proposal" => Self::Proposal,
+            "grievance" => Self::Grievance,
+            "retrospective" => Self::Retrospective,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for DeliberationClassification {
+    fn from(s: &str) -> Self {
+        match s {
+            "question" => Self::Question,
+            "proposal" => Self::Proposal,
+            "grievance" => Self::Grievance,
+            "retrospective" => Self::Retrospective,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for DeliberationClassification {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for DeliberationClassification {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
+}
+
+/// DeliberationStatus. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DeliberationStatus {
+    Open,
+    Closed,
+    Tabled,
+    Adopted,
+    Rejected,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl DeliberationStatus {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Open => "open",
+            Self::Closed => "closed",
+            Self::Tabled => "tabled",
+            Self::Adopted => "adopted",
+            Self::Rejected => "rejected",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for DeliberationStatus {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "open" => Self::Open,
+            "closed" => Self::Closed,
+            "tabled" => Self::Tabled,
+            "adopted" => Self::Adopted,
+            "rejected" => Self::Rejected,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for DeliberationStatus {
+    fn from(s: &str) -> Self {
+        match s {
+            "open" => Self::Open,
+            "closed" => Self::Closed,
+            "tabled" => Self::Tabled,
+            "adopted" => Self::Adopted,
+            "rejected" => Self::Rejected,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for DeliberationStatus {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for DeliberationStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

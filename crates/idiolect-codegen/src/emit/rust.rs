@@ -360,6 +360,98 @@ fn emit_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
     }
 }
 
+fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
+    let ty_ident = format_ident!("{}", ty_name);
+    let doc_text = def.description.clone().unwrap_or_else(|| {
+        format!(
+            "{ty_name}. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`."
+        )
+    });
+    let doc = doc_attr(&doc_text);
+
+    let known_idents: Vec<_> = def
+        .values
+        .iter()
+        .map(|v| format_ident!("{}", sanitize_variant_ident(v)))
+        .collect();
+    let known_kebab: Vec<&str> = def.values.iter().map(String::as_str).collect();
+
+    let variants = known_idents.iter().map(|ident| quote! { #ident, });
+
+    let to_str_arms: Vec<TokenStream> = known_idents
+        .iter()
+        .zip(&known_kebab)
+        .map(|(ident, kebab)| quote! { Self::#ident => #kebab, })
+        .collect();
+    let from_str_arms: Vec<TokenStream> = known_idents
+        .iter()
+        .zip(&known_kebab)
+        .map(|(ident, kebab)| quote! { #kebab => Self::#ident, })
+        .collect();
+    let from_str_arms_dup = from_str_arms.clone();
+
+    quote! {
+        #doc
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum #ty_ident {
+            #(#variants)*
+            /// Community-extended slug not present in the lexicon's
+            /// `knownValues`. Resolves through the sibling
+            /// `*Vocab` field on the containing record.
+            Other(String),
+        }
+
+        impl #ty_ident {
+            /// Wire-form slug for this value. Known variants render
+            /// kebab-case; `Other` passes through verbatim.
+            #[must_use]
+            pub fn as_str(&self) -> &str {
+                match self {
+                    #(#to_str_arms)*
+                    Self::Other(s) => s.as_str(),
+                }
+            }
+        }
+
+        impl From<String> for #ty_ident {
+            fn from(s: String) -> Self {
+                match s.as_str() {
+                    #(#from_str_arms)*
+                    _ => Self::Other(s),
+                }
+            }
+        }
+
+        impl From<&str> for #ty_ident {
+            fn from(s: &str) -> Self {
+                match s {
+                    #(#from_str_arms_dup)*
+                    _ => Self::Other(s.to_owned()),
+                }
+            }
+        }
+
+        impl serde::Serialize for #ty_ident {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                serializer.serialize_str(self.as_str())
+            }
+        }
+
+        impl<'de> serde::Deserialize<'de> for #ty_ident {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                let s = String::deserialize(deserializer)?;
+                Ok(Self::from(s))
+            }
+        }
+    }
+}
+
 fn emit_union(ty_name: &str, current_nsid: &str, def: &UnionDef) -> TokenStream {
     let ty_ident = format_ident!("{}", ty_name);
     let doc_text = def
@@ -402,6 +494,11 @@ enum InlineType {
         description: Option<String>,
         values: Vec<String>,
     },
+    OpenStringEnum {
+        name: String,
+        description: Option<String>,
+        values: Vec<String>,
+    },
     Object {
         name: String,
         description: Option<String>,
@@ -420,7 +517,7 @@ impl InlineType {
     fn category_order(&self) -> u8 {
         match self {
             Self::Union { .. } => 0,
-            Self::StringEnum { .. } => 1,
+            Self::StringEnum { .. } | Self::OpenStringEnum { .. } => 1,
             Self::Object { .. } => 2,
         }
     }
@@ -433,6 +530,17 @@ fn render_inline(inline: &InlineType, current_nsid: &str) -> TokenStream {
             description,
             values,
         } => emit_string_enum(
+            name,
+            &StringEnumDef {
+                description: description.clone(),
+                values: values.clone(),
+            },
+        ),
+        InlineType::OpenStringEnum {
+            name,
+            description,
+            values,
+        } => emit_open_string_enum(
             name,
             &StringEnumDef {
                 description: description.clone(),
@@ -503,6 +611,16 @@ fn resolve_prop_type(
             let name = format!("{}{}", parent_ty, pascal_case(prop_name));
             let name_ident = format_ident!("{}", &name);
             let inline = InlineType::StringEnum {
+                name,
+                description: None,
+                values: values.clone(),
+            };
+            (quote! { #name_ident }, Some(inline))
+        }
+        PropType::InlineOpenStringEnum(values) => {
+            let name = format!("{}{}", parent_ty, pascal_case(prop_name));
+            let name_ident = format_ident!("{}", &name);
+            let inline = InlineType::OpenStringEnum {
                 name,
                 description: None,
                 values: values.clone(),
@@ -861,6 +979,35 @@ fn fence_for(s: &str) -> usize {
 fn doc_attr(text: &str) -> TokenStream {
     let padded = format!(" {text}");
     quote! { #[doc = #padded] }
+}
+
+/// Pascal-case a slug for use as an open-enum variant identifier,
+/// stripping characters that are not legal in a Rust identifier
+/// (dots, slashes, colons, etc.). The original slug is preserved
+/// at the wire-form match arm; this is purely the in-source name.
+fn sanitize_variant_ident(slug: &str) -> String {
+    let mut out = String::with_capacity(slug.len());
+    let mut upper_next = true;
+    for ch in slug.chars() {
+        if ch.is_ascii_alphanumeric() {
+            if upper_next {
+                out.extend(ch.to_ascii_uppercase().to_string().chars());
+                upper_next = false;
+            } else {
+                out.push(ch);
+            }
+        } else {
+            // Any non-alphanumeric (`-`, `_`, ` `, `.`, `/`, `:`, …)
+            // becomes a word boundary; the next alpha is uppercased.
+            upper_next = true;
+        }
+    }
+    if out.is_empty() || out.starts_with(|c: char| c.is_ascii_digit()) {
+        // Pure-numeric or empty slugs need a prefix to be valid idents.
+        format!("V{out}")
+    } else {
+        out
+    }
 }
 
 pub(crate) fn pascal_case(s: &str) -> String {

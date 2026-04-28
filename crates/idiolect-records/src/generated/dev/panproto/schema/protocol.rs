@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct PanprotoProtocol {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,
+    pub category: Option<PanprotoProtocolCategory>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constraint_sorts: Option<Vec<String>>,
     pub created_at: idiolect_records::Datetime,
@@ -70,4 +70,94 @@ pub struct EdgeRule {
     pub src_kinds: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tgt_kinds: Option<Vec<String>>,
+}
+
+/// PanprotoProtocolCategory. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PanprotoProtocolCategory {
+    SchemaLanguage,
+    ProgrammingLanguage,
+    Serialization,
+    DataScience,
+    Api,
+    Database,
+    Config,
+    Domain,
+    Annotation,
+    RawFile,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl PanprotoProtocolCategory {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; `Other` passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::SchemaLanguage => "schemaLanguage",
+            Self::ProgrammingLanguage => "programmingLanguage",
+            Self::Serialization => "serialization",
+            Self::DataScience => "dataScience",
+            Self::Api => "api",
+            Self::Database => "database",
+            Self::Config => "config",
+            Self::Domain => "domain",
+            Self::Annotation => "annotation",
+            Self::RawFile => "rawFile",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+}
+impl From<String> for PanprotoProtocolCategory {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "schemaLanguage" => Self::SchemaLanguage,
+            "programmingLanguage" => Self::ProgrammingLanguage,
+            "serialization" => Self::Serialization,
+            "dataScience" => Self::DataScience,
+            "api" => Self::Api,
+            "database" => Self::Database,
+            "config" => Self::Config,
+            "domain" => Self::Domain,
+            "annotation" => Self::Annotation,
+            "rawFile" => Self::RawFile,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for PanprotoProtocolCategory {
+    fn from(s: &str) -> Self {
+        match s {
+            "schemaLanguage" => Self::SchemaLanguage,
+            "programmingLanguage" => Self::ProgrammingLanguage,
+            "serialization" => Self::Serialization,
+            "dataScience" => Self::DataScience,
+            "api" => Self::Api,
+            "database" => Self::Database,
+            "config" => Self::Config,
+            "domain" => Self::Domain,
+            "annotation" => Self::Annotation,
+            "rawFile" => Self::RawFile,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for PanprotoProtocolCategory {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for PanprotoProtocolCategory {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
