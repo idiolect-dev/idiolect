@@ -17,6 +17,10 @@ use crate::generated::dev::idiolect::belief::Belief;
 use crate::generated::dev::idiolect::bounty::Bounty;
 use crate::generated::dev::idiolect::community::Community;
 use crate::generated::dev::idiolect::correction::Correction;
+use crate::generated::dev::idiolect::deliberation::Deliberation;
+use crate::generated::dev::idiolect::deliberation_outcome::DeliberationOutcome;
+use crate::generated::dev::idiolect::deliberation_statement::DeliberationStatement;
+use crate::generated::dev::idiolect::deliberation_vote::DeliberationVote;
 use crate::generated::dev::idiolect::dialect::Dialect;
 use crate::generated::dev::idiolect::encounter::Encounter;
 use crate::generated::dev::idiolect::observation::Observation;
@@ -47,6 +51,14 @@ pub enum AnyRecord {
     Community(Community),
     /// A `dev.idiolect.correction` record.
     Correction(Correction),
+    /// A `dev.idiolect.deliberation` record.
+    Deliberation(Deliberation),
+    /// A `dev.idiolect.deliberationOutcome` record.
+    DeliberationOutcome(DeliberationOutcome),
+    /// A `dev.idiolect.deliberationStatement` record.
+    DeliberationStatement(DeliberationStatement),
+    /// A `dev.idiolect.deliberationVote` record.
+    DeliberationVote(DeliberationVote),
     /// A `dev.idiolect.dialect` record.
     Dialect(Dialect),
     /// A `dev.idiolect.encounter` record.
@@ -72,6 +84,10 @@ impl AnyRecord {
             Self::Bounty(_) => Bounty::NSID,
             Self::Community(_) => Community::NSID,
             Self::Correction(_) => Correction::NSID,
+            Self::Deliberation(_) => Deliberation::NSID,
+            Self::DeliberationOutcome(_) => DeliberationOutcome::NSID,
+            Self::DeliberationStatement(_) => DeliberationStatement::NSID,
+            Self::DeliberationVote(_) => DeliberationVote::NSID,
             Self::Dialect(_) => Dialect::NSID,
             Self::Encounter(_) => Encounter::NSID,
             Self::Observation(_) => Observation::NSID,
@@ -145,6 +161,10 @@ impl AnyRecord {
             Self::Bounty(r) => serde_json::to_value(r),
             Self::Community(r) => serde_json::to_value(r),
             Self::Correction(r) => serde_json::to_value(r),
+            Self::Deliberation(r) => serde_json::to_value(r),
+            Self::DeliberationOutcome(r) => serde_json::to_value(r),
+            Self::DeliberationStatement(r) => serde_json::to_value(r),
+            Self::DeliberationVote(r) => serde_json::to_value(r),
             Self::Dialect(r) => serde_json::to_value(r),
             Self::Encounter(r) => serde_json::to_value(r),
             Self::Observation(r) => serde_json::to_value(r),
@@ -188,6 +208,10 @@ pub fn decode_record(nsid: &Nsid, value: serde_json::Value) -> Result<AnyRecord,
         s if s == Bounty::NSID => Ok(AnyRecord::Bounty(from(value)?)),
         s if s == Community::NSID => Ok(AnyRecord::Community(from(value)?)),
         s if s == Correction::NSID => Ok(AnyRecord::Correction(from(value)?)),
+        s if s == Deliberation::NSID => Ok(AnyRecord::Deliberation(from(value)?)),
+        s if s == DeliberationOutcome::NSID => Ok(AnyRecord::DeliberationOutcome(from(value)?)),
+        s if s == DeliberationStatement::NSID => Ok(AnyRecord::DeliberationStatement(from(value)?)),
+        s if s == DeliberationVote::NSID => Ok(AnyRecord::DeliberationVote(from(value)?)),
         s if s == Dialect::NSID => Ok(AnyRecord::Dialect(from(value)?)),
         s if s == Encounter::NSID => Ok(AnyRecord::Encounter(from(value)?)),
         s if s == Observation::NSID => Ok(AnyRecord::Observation(from(value)?)),
@@ -209,6 +233,10 @@ impl RecordFamily for IdiolectFamily {
                 | Bounty::NSID
                 | Community::NSID
                 | Correction::NSID
+                | Deliberation::NSID
+                | DeliberationOutcome::NSID
+                | DeliberationStatement::NSID
+                | DeliberationVote::NSID
                 | Dialect::NSID
                 | Encounter::NSID
                 | Observation::NSID

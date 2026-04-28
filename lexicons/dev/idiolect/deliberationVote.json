@@ -1,0 +1,54 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.deliberationVote",
+  "description": "A stance taken on a `dev.idiolect.deliberationStatement`. Stance is an open-enum slug resolved against a community-published vote-stance vocabulary. Acorn-style three-way votes (agree/pass/disagree) are the canonical default; richer vocabularies (conditional-agree, abstain-with-reason, ranked preference) are expressible by referencing a different vocab. Optional `weight` and `rationale` capture additional signal that observers and orchestrators can fold into outcomes; consumers that don't need them simply ignore them.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A vote on a deliberation statement. The subject pins the exact statement revision via CID so a later edit cannot silently change what was voted on.",
+      "record": {
+        "type": "object",
+        "required": ["subject", "stance", "createdAt"],
+        "properties": {
+          "subject": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#strongRecordRef",
+            "description": "Strong reference (AT-URI + CID) to the `dev.idiolect.deliberationStatement` being voted on."
+          },
+          "stance": {
+            "type": "string",
+            "maxLength": 256,
+            "knownValues": [
+              "agree",
+              "pass",
+              "disagree"
+            ],
+            "description": "Open-enum slug naming the stance. Resolved against `stanceVocab` when present, otherwise against the canonical idiolect vote-stance vocabulary."
+          },
+          "stanceVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `stance` slug resolves against. Omit to use the canonical idiolect default."
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000,
+            "description": "Optional ranking signal scaled by 1000 for the 0.0-1.0 range. Convention follows `pub.chive.graph.edge#weight`. Consumers that aggregate votes uniformly may ignore this; ranked or weighted aggregations consume it."
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 2500,
+            "maxGraphemes": 500,
+            "description": "Optional narrative reason for the stance. Not consumed by tally folds; useful for orchestrator surfaces that show vote provenance."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

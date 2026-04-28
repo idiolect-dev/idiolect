@@ -12,6 +12,10 @@ import type { Belief } from "./dev/idiolect/belief";
 import type { Bounty } from "./dev/idiolect/bounty";
 import type { Community } from "./dev/idiolect/community";
 import type { Correction } from "./dev/idiolect/correction";
+import type { Deliberation } from "./dev/idiolect/deliberation";
+import type { DeliberationOutcome } from "./dev/idiolect/deliberation_outcome";
+import type { DeliberationStatement } from "./dev/idiolect/deliberation_statement";
+import type { DeliberationVote } from "./dev/idiolect/deliberation_vote";
 import type { Dialect } from "./dev/idiolect/dialect";
 import type { Encounter } from "./dev/idiolect/encounter";
 import type { Observation } from "./dev/idiolect/observation";
@@ -38,6 +42,10 @@ export const NSID = {
   bounty: "dev.idiolect.bounty",
   community: "dev.idiolect.community",
   correction: "dev.idiolect.correction",
+  deliberation: "dev.idiolect.deliberation",
+  deliberation_outcome: "dev.idiolect.deliberationOutcome",
+  deliberation_statement: "dev.idiolect.deliberationStatement",
+  deliberation_vote: "dev.idiolect.deliberationVote",
   dialect: "dev.idiolect.dialect",
   encounter: "dev.idiolect.encounter",
   observation: "dev.idiolect.observation",
@@ -58,6 +66,10 @@ export type RecordTypes = {
   [NSID.bounty]: Bounty;
   [NSID.community]: Community;
   [NSID.correction]: Correction;
+  [NSID.deliberation]: Deliberation;
+  [NSID.deliberation_outcome]: DeliberationOutcome;
+  [NSID.deliberation_statement]: DeliberationStatement;
+  [NSID.deliberation_vote]: DeliberationVote;
   [NSID.dialect]: Dialect;
   [NSID.encounter]: Encounter;
   [NSID.observation]: Observation;
@@ -76,6 +88,10 @@ export type AnyRecord =
   | { readonly $nsid: typeof NSID.bounty; readonly value: Bounty }
   | { readonly $nsid: typeof NSID.community; readonly value: Community }
   | { readonly $nsid: typeof NSID.correction; readonly value: Correction }
+  | { readonly $nsid: typeof NSID.deliberation; readonly value: Deliberation }
+  | { readonly $nsid: typeof NSID.deliberation_outcome; readonly value: DeliberationOutcome }
+  | { readonly $nsid: typeof NSID.deliberation_statement; readonly value: DeliberationStatement }
+  | { readonly $nsid: typeof NSID.deliberation_vote; readonly value: DeliberationVote }
   | { readonly $nsid: typeof NSID.dialect; readonly value: Dialect }
   | { readonly $nsid: typeof NSID.encounter; readonly value: Encounter }
   | { readonly $nsid: typeof NSID.observation; readonly value: Observation }
@@ -115,6 +131,26 @@ export function isCommunity(r: AnyRecord): r is { readonly $nsid: typeof NSID.co
 /** True if `r` wraps a `Correction`. */
 export function isCorrection(r: AnyRecord): r is { readonly $nsid: typeof NSID.correction; readonly value: Correction } {
   return r.$nsid === NSID.correction;
+}
+
+/** True if `r` wraps a `Deliberation`. */
+export function isDeliberation(r: AnyRecord): r is { readonly $nsid: typeof NSID.deliberation; readonly value: Deliberation } {
+  return r.$nsid === NSID.deliberation;
+}
+
+/** True if `r` wraps a `DeliberationOutcome`. */
+export function isDeliberationOutcome(r: AnyRecord): r is { readonly $nsid: typeof NSID.deliberation_outcome; readonly value: DeliberationOutcome } {
+  return r.$nsid === NSID.deliberation_outcome;
+}
+
+/** True if `r` wraps a `DeliberationStatement`. */
+export function isDeliberationStatement(r: AnyRecord): r is { readonly $nsid: typeof NSID.deliberation_statement; readonly value: DeliberationStatement } {
+  return r.$nsid === NSID.deliberation_statement;
+}
+
+/** True if `r` wraps a `DeliberationVote`. */
+export function isDeliberationVote(r: AnyRecord): r is { readonly $nsid: typeof NSID.deliberation_vote; readonly value: DeliberationVote } {
+  return r.$nsid === NSID.deliberation_vote;
 }
 
 /** True if `r` wraps a `Dialect`. */
@@ -169,6 +205,10 @@ export const RECORD_NSIDS = [
   NSID.bounty,
   NSID.community,
   NSID.correction,
+  NSID.deliberation,
+  NSID.deliberation_outcome,
+  NSID.deliberation_statement,
+  NSID.deliberation_vote,
   NSID.dialect,
   NSID.encounter,
   NSID.observation,
