@@ -20,7 +20,7 @@ use quote::{format_ident, quote};
 
 use crate::lexicon::{Def, LexiconDoc, module_name_for_nsid};
 
-use super::rust::pascal_case;
+use super::rust::{pascal_case, rust_module_path, walk_up_aliases};
 
 /// Configuration for a single family.
 ///
@@ -71,9 +71,20 @@ pub fn idiolect_family() -> FamilyConfig {
 /// emitter splices into the generated module.
 struct Entry {
     nsid: String,
+    /// Variant ident for the `AnyRecord` enum and local alias the
+    /// imported type is bound to. Disambiguated by
+    /// [`walk_up_aliases`] when two records share a leaf type name,
+    /// so each variant is unique within the enum.
     ident: syn::Ident,
+    /// Type path for `AnyRecord`'s variant body. After the use
+    /// statement binds the disambiguated alias, this is just `ident`.
     ty: syn::Type,
+    /// Path to the per-record module's `NSID` const, routed through
+    /// the disambiguated alias.
     nsid_path: syn::Path,
+    /// `use crate::generated::<…>::<raw_ty> as <ident>;` token
+    /// stream spliced at the top of the rendered file.
+    import: TokenStream,
 }
 
 /// Render the body of `generated/family.rs`.
@@ -151,6 +162,8 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
         " Marker type for the `{id_lit}` family. Implementing\n [`RecordFamily`] makes the family first-class alongside any\n downstream-curated family or composed [`OrFamily`](crate::OrFamily).",
     );
 
+    let record_imports = entries.iter().map(|e| e.import.clone());
+
     let output: TokenStream = quote! {
         #![allow(clippy::large_enum_variant)]
 
@@ -159,6 +172,12 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
         use crate::family::RecordFamily;
         use crate::record::DecodeError;
         use serde::{Serialize, Serializer};
+
+        // Per-record types reached through their full
+        // `crate::generated::…` path, bound to a disambiguated
+        // local alias. Aliases share `mod.rs`'s walk-up logic so
+        // colliding leaf names get unique idents.
+        #(#record_imports)*
 
         #[doc = #marker_doc]
         #[derive(Debug, Clone, Copy)]
@@ -336,22 +355,61 @@ pub fn render_family_rs(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Result<Strin
 }
 
 fn collect_entries(docs: &[LexiconDoc], cfg: &FamilyConfig) -> Vec<Entry> {
-    docs.iter()
+    let mut members: Vec<&LexiconDoc> = docs
+        .iter()
         .filter(|d| matches!(d.defs.get("main"), Some(Def::Record(_))))
         .filter(|d| d.nsid.starts_with(cfg.nsid_prefix.as_ref()))
-        .map(|doc| {
-            let module = module_name_for_nsid(&doc.nsid);
-            let ty_name = pascal_case(&module);
-            let ident = format_ident!("{}", ty_name);
+        .collect();
+    // Stable order so the disambiguator's output, the use statements,
+    // and the AnyRecord variants all align.
+    members.sort_by(|a, b| a.nsid.cmp(&b.nsid));
+
+    let prepared: Vec<(Vec<String>, String)> = members
+        .iter()
+        .map(|d| {
+            (
+                rust_module_path(&d.nsid),
+                pascal_case(&module_name_for_nsid(&d.nsid)),
+            )
+        })
+        .collect();
+    let aliases = walk_up_aliases(&prepared);
+
+    members
+        .into_iter()
+        .enumerate()
+        .map(|(i, doc)| {
+            let (path_segments, raw_ty_name) = &prepared[i];
+            // Disambiguated alias when the leaf TypeName collides
+            // with another in the family, raw PascalCase leaf
+            // otherwise.
+            let ident_name = aliases[i].clone().unwrap_or_else(|| raw_ty_name.clone());
+            let ident = format_ident!("{}", ident_name);
+
+            // Full path through the generated tree, e.g.
+            // `crate::generated::r#pub::layers::changelog::entry`.
+            let raw_ident = format_ident!("{}", raw_ty_name);
+            let joined = path_segments.join("::");
+            let module_path: syn::Path = syn::parse_str(&format!("crate::generated::{joined}"))
+                .expect("generated module path parses");
+
+            // Bind the disambiguated alias locally so every
+            // downstream reference resolves through one ident.
+            let import = quote! {
+                use #module_path::#raw_ident as #ident;
+            };
+
             let ty: syn::Type =
-                syn::parse_str(&format!("crate::{ty_name}")).expect("generated type path parses");
-            let nsid_path: syn::Path = syn::parse_str(&format!("crate::{ty_name}::NSID"))
-                .expect("generated NSID path parses");
+                syn::parse_str(&ident_name).expect("alias ident parses as a type path");
+            let nsid_path: syn::Path =
+                syn::parse_str(&format!("{ident_name}::NSID")).expect("alias::NSID path parses");
+
             Entry {
                 nsid: doc.nsid.clone(),
                 ident,
                 ty,
                 nsid_path,
+                import,
             }
         })
         .collect()

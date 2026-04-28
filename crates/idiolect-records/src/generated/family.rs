@@ -12,6 +12,18 @@
 use crate::Nsid;
 use crate::Record;
 use crate::family::RecordFamily;
+use crate::generated::dev::idiolect::adapter::Adapter;
+use crate::generated::dev::idiolect::belief::Belief;
+use crate::generated::dev::idiolect::bounty::Bounty;
+use crate::generated::dev::idiolect::community::Community;
+use crate::generated::dev::idiolect::correction::Correction;
+use crate::generated::dev::idiolect::dialect::Dialect;
+use crate::generated::dev::idiolect::encounter::Encounter;
+use crate::generated::dev::idiolect::observation::Observation;
+use crate::generated::dev::idiolect::recommendation::Recommendation;
+use crate::generated::dev::idiolect::retrospection::Retrospection;
+use crate::generated::dev::idiolect::verification::Verification;
+use crate::generated::dev::idiolect::vocab::Vocab;
 use crate::record::DecodeError;
 use serde::{Serialize, Serializer};
 /** Marker type for the `dev.idiolect` family. Implementing
@@ -26,47 +38,47 @@ pub struct IdiolectFamily;
 #[derive(Debug, Clone)]
 pub enum AnyRecord {
     /// A `dev.idiolect.adapter` record.
-    Adapter(crate::Adapter),
+    Adapter(Adapter),
     /// A `dev.idiolect.belief` record.
-    Belief(crate::Belief),
+    Belief(Belief),
     /// A `dev.idiolect.bounty` record.
-    Bounty(crate::Bounty),
+    Bounty(Bounty),
     /// A `dev.idiolect.community` record.
-    Community(crate::Community),
+    Community(Community),
     /// A `dev.idiolect.correction` record.
-    Correction(crate::Correction),
+    Correction(Correction),
     /// A `dev.idiolect.dialect` record.
-    Dialect(crate::Dialect),
+    Dialect(Dialect),
     /// A `dev.idiolect.encounter` record.
-    Encounter(crate::Encounter),
+    Encounter(Encounter),
     /// A `dev.idiolect.observation` record.
-    Observation(crate::Observation),
+    Observation(Observation),
     /// A `dev.idiolect.recommendation` record.
-    Recommendation(crate::Recommendation),
+    Recommendation(Recommendation),
     /// A `dev.idiolect.retrospection` record.
-    Retrospection(crate::Retrospection),
+    Retrospection(Retrospection),
     /// A `dev.idiolect.verification` record.
-    Verification(crate::Verification),
+    Verification(Verification),
     /// A `dev.idiolect.vocab` record.
-    Vocab(crate::Vocab),
+    Vocab(Vocab),
 }
 impl AnyRecord {
     /// Canonical NSID string of the contained record.
     #[must_use]
     pub const fn nsid_str(&self) -> &'static str {
         match self {
-            Self::Adapter(_) => crate::Adapter::NSID,
-            Self::Belief(_) => crate::Belief::NSID,
-            Self::Bounty(_) => crate::Bounty::NSID,
-            Self::Community(_) => crate::Community::NSID,
-            Self::Correction(_) => crate::Correction::NSID,
-            Self::Dialect(_) => crate::Dialect::NSID,
-            Self::Encounter(_) => crate::Encounter::NSID,
-            Self::Observation(_) => crate::Observation::NSID,
-            Self::Recommendation(_) => crate::Recommendation::NSID,
-            Self::Retrospection(_) => crate::Retrospection::NSID,
-            Self::Verification(_) => crate::Verification::NSID,
-            Self::Vocab(_) => crate::Vocab::NSID,
+            Self::Adapter(_) => Adapter::NSID,
+            Self::Belief(_) => Belief::NSID,
+            Self::Bounty(_) => Bounty::NSID,
+            Self::Community(_) => Community::NSID,
+            Self::Correction(_) => Correction::NSID,
+            Self::Dialect(_) => Dialect::NSID,
+            Self::Encounter(_) => Encounter::NSID,
+            Self::Observation(_) => Observation::NSID,
+            Self::Recommendation(_) => Recommendation::NSID,
+            Self::Retrospection(_) => Retrospection::NSID,
+            Self::Verification(_) => Verification::NSID,
+            Self::Vocab(_) => Vocab::NSID,
         }
     }
     /// Typed NSID of the contained record. Parses
@@ -171,18 +183,18 @@ pub fn decode_record(nsid: &Nsid, value: serde_json::Value) -> Result<AnyRecord,
     }
     let s = nsid.as_str();
     match s {
-        s if s == crate::Adapter::NSID => Ok(AnyRecord::Adapter(from(value)?)),
-        s if s == crate::Belief::NSID => Ok(AnyRecord::Belief(from(value)?)),
-        s if s == crate::Bounty::NSID => Ok(AnyRecord::Bounty(from(value)?)),
-        s if s == crate::Community::NSID => Ok(AnyRecord::Community(from(value)?)),
-        s if s == crate::Correction::NSID => Ok(AnyRecord::Correction(from(value)?)),
-        s if s == crate::Dialect::NSID => Ok(AnyRecord::Dialect(from(value)?)),
-        s if s == crate::Encounter::NSID => Ok(AnyRecord::Encounter(from(value)?)),
-        s if s == crate::Observation::NSID => Ok(AnyRecord::Observation(from(value)?)),
-        s if s == crate::Recommendation::NSID => Ok(AnyRecord::Recommendation(from(value)?)),
-        s if s == crate::Retrospection::NSID => Ok(AnyRecord::Retrospection(from(value)?)),
-        s if s == crate::Verification::NSID => Ok(AnyRecord::Verification(from(value)?)),
-        s if s == crate::Vocab::NSID => Ok(AnyRecord::Vocab(from(value)?)),
+        s if s == Adapter::NSID => Ok(AnyRecord::Adapter(from(value)?)),
+        s if s == Belief::NSID => Ok(AnyRecord::Belief(from(value)?)),
+        s if s == Bounty::NSID => Ok(AnyRecord::Bounty(from(value)?)),
+        s if s == Community::NSID => Ok(AnyRecord::Community(from(value)?)),
+        s if s == Correction::NSID => Ok(AnyRecord::Correction(from(value)?)),
+        s if s == Dialect::NSID => Ok(AnyRecord::Dialect(from(value)?)),
+        s if s == Encounter::NSID => Ok(AnyRecord::Encounter(from(value)?)),
+        s if s == Observation::NSID => Ok(AnyRecord::Observation(from(value)?)),
+        s if s == Recommendation::NSID => Ok(AnyRecord::Recommendation(from(value)?)),
+        s if s == Retrospection::NSID => Ok(AnyRecord::Retrospection(from(value)?)),
+        s if s == Verification::NSID => Ok(AnyRecord::Verification(from(value)?)),
+        s if s == Vocab::NSID => Ok(AnyRecord::Vocab(from(value)?)),
         other => Err(DecodeError::UnknownNsid(other.to_owned())),
     }
 }
@@ -192,18 +204,18 @@ impl RecordFamily for IdiolectFamily {
     fn contains(nsid: &Nsid) -> bool {
         matches!(
             nsid.as_str(),
-            crate::Adapter::NSID
-                | crate::Belief::NSID
-                | crate::Bounty::NSID
-                | crate::Community::NSID
-                | crate::Correction::NSID
-                | crate::Dialect::NSID
-                | crate::Encounter::NSID
-                | crate::Observation::NSID
-                | crate::Recommendation::NSID
-                | crate::Retrospection::NSID
-                | crate::Verification::NSID
-                | crate::Vocab::NSID
+            Adapter::NSID
+                | Belief::NSID
+                | Bounty::NSID
+                | Community::NSID
+                | Correction::NSID
+                | Dialect::NSID
+                | Encounter::NSID
+                | Observation::NSID
+                | Recommendation::NSID
+                | Retrospection::NSID
+                | Verification::NSID
+                | Vocab::NSID
         )
     }
     fn decode(

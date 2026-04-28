@@ -23,6 +23,12 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.6.1] — 2026-04-28
+
+### Fixed
+
+- `idiolect-codegen`'s family emitter named `AnyRecord` variants and `crate::<TypeName>` paths from the unqualified record type, while `mod.rs`'s walk-up disambiguation aliased colliding leaf names. Two records sharing a leaf TypeName produced duplicate enum variants and dangling `crate::<TypeName>` references that the crate-root re-export never declared. The family emitter now reuses the same disambiguation pass and reaches per-record types through their full `crate::generated::<…>::<TypeName>` path with a local `use … as <UniqueIdent>` binding, so families with cross-prefix leaf-name collisions (e.g. `pub.layers.changelog.entry::Entry` vs `pub.layers.resource.entry::Entry`) emit unique variants and compile. Closes #44.
+
 ## [0.6.0] — 2026-04-28
 
 ### Added
