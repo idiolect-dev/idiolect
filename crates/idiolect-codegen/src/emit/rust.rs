@@ -640,7 +640,11 @@ fn render_mod_rs(docs: &[LexiconDoc]) -> String {
     out
 }
 
-fn rust_module_path(nsid: &str) -> Vec<String> {
+/// `module_path_for_nsid` segments with raw-identifier escaping
+/// applied to any segment that collides with a Rust keyword (`pub`,
+/// `mod`, etc.). Used by every emitter that needs a fully-qualified
+/// `crate::generated::<…>` path to a per-record module.
+pub(super) fn rust_module_path(nsid: &str) -> Vec<String> {
     module_path_for_nsid(nsid)
         .into_iter()
         .map(|s| {
@@ -657,7 +661,7 @@ fn rust_module_path(nsid: &str) -> Vec<String> {
 ///
 /// `aliases[i]` is `Some(prefix + ty)` when `type_name` `i` collides
 /// with another in the slice; `None` when its leaf is unique.
-fn walk_up_aliases(prepared: &[(Vec<String>, String)]) -> Vec<Option<String>> {
+pub(super) fn walk_up_aliases(prepared: &[(Vec<String>, String)]) -> Vec<Option<String>> {
     use std::collections::BTreeMap;
 
     let mut by_ty: BTreeMap<&str, Vec<usize>> = BTreeMap::new();

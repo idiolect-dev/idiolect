@@ -143,12 +143,53 @@ fn emit_rust_picks_up_non_idiolect_family() {
     );
 
     // Sanity: prettyplease still parses what we emitted as valid Rust.
-    let _ = syn::parse_file(&family_rs.contents).unwrap_or_else(|e| {
+    let parsed = syn::parse_file(&family_rs.contents).unwrap_or_else(|e| {
         panic!(
             "rendered family.rs should parse as Rust:\n{}\n\nerror: {e}",
             family_rs.contents
         )
     });
+
+    // Cross-prefix leaf-name collisions (`pub.layers.changelog.entry`
+    // and `pub.layers.resource.entry` both expose `Entry`) must
+    // disambiguate to unique variant idents in the `AnyRecord` enum.
+    let any_record_variants = collect_any_record_variants(&parsed)
+        .expect("AnyRecord enum is present in rendered family.rs");
+    let unique_variants: std::collections::BTreeSet<&String> = any_record_variants.iter().collect();
+    assert_eq!(
+        unique_variants.len(),
+        any_record_variants.len(),
+        "AnyRecord variants must be pairwise unique; got:\n{any_record_variants:?}"
+    );
+
+    for expected in ["ChangelogEntry", "ResourceEntry"] {
+        assert!(
+            any_record_variants.iter().any(|v| v == expected),
+            "AnyRecord should contain disambiguated variant `{expected}`; got:\n{any_record_variants:?}",
+        );
+    }
+
+    // Per-record types must reach through their full
+    // `crate::generated::…` path, not the crate-root re-export
+    // shortcut (which mod.rs aliases on collision and so doesn't
+    // expose under the unqualified leaf name).
+    assert!(
+        !family_rs.contents.contains("crate::Entry"),
+        "family.rs uses an unqualified `crate::Entry`; got:\n{}",
+        family_rs.contents,
+    );
+}
+
+/// Collect the variant identifiers of the `pub enum AnyRecord { ... }`
+/// item in a parsed family.rs file. Returns `None` if no such enum is
+/// present.
+fn collect_any_record_variants(file: &syn::File) -> Option<Vec<String>> {
+    file.items.iter().find_map(|item| match item {
+        syn::Item::Enum(e) if e.ident == "AnyRecord" => {
+            Some(e.variants.iter().map(|v| v.ident.to_string()).collect())
+        }
+        _ => None,
+    })
 }
 
 #[test]
