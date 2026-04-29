@@ -1749,7 +1749,10 @@ mod owl_skos_tests {
             alternate_labels: Some(vec!["Information science".to_owned()]),
             hidden_labels: Some(vec!["informaticks".to_owned()]),
             description: Some("The study of information processing.".to_owned()),
-            scope_note: Some("Use for the academic discipline; see `software-engineering` for the practice.".to_owned()),
+            scope_note: Some(
+                "Use for the academic discipline; see `software-engineering` for the practice."
+                    .to_owned(),
+            ),
             example: Some("Database design, ML pipelines, distributed systems.".to_owned()),
             history_note: Some("Term coined ~1962, displaced 'documentation'.".to_owned()),
             editorial_note: Some("Reviewed 2026-04-28 by R. Smith.".to_owned()),
@@ -1778,7 +1781,10 @@ mod owl_skos_tests {
         assert_eq!(nn.label.as_deref(), Some("Informatics"));
         assert_eq!(nn.alternate_labels, vec!["Information science".to_owned()]);
         assert_eq!(nn.hidden_labels, vec!["informaticks".to_owned()]);
-        assert_eq!(nn.scope_note.as_deref().map(|s| s.contains("academic")), Some(true));
+        assert_eq!(
+            nn.scope_note.as_deref().map(|s| s.contains("academic")),
+            Some(true)
+        );
         assert!(nn.example.is_some());
         assert!(nn.history_note.is_some());
         assert!(nn.editorial_note.is_some());
@@ -2193,10 +2199,7 @@ mod validation_tests {
             ],
             vec![edge("x", "x", "r")],
         );
-        let good = graph(
-            vec![concept_node("y")],
-            vec![],
-        );
+        let good = graph(vec![concept_node("y")], vec![]);
         // Use VocabGraph directly via VocabRegistry::insert (which
         // takes a Vocab); reconstruct via from_vocab is what the
         // registry does too.

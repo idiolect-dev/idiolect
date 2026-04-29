@@ -349,9 +349,7 @@ mod get_deliberation_tests {
     #[test]
     fn returns_none_for_unknown_deliberation() {
         let cat = Catalog::new();
-        assert!(
-            get_deliberation(&cat, "at://did:plc:c/dev.idiolect.deliberation/nope").is_none()
-        );
+        assert!(get_deliberation(&cat, "at://did:plc:c/dev.idiolect.deliberation/nope").is_none());
     }
 
     #[test]
@@ -412,7 +410,10 @@ mod get_deliberation_tests {
         );
 
         let view = get_deliberation(&cat, d_uri).expect("deliberation present");
-        assert_eq!(view.deliberation.record.topic, "Adopt verification policy v2?");
+        assert_eq!(
+            view.deliberation.record.topic,
+            "Adopt verification policy v2?"
+        );
         assert_eq!(view.statements.len(), 2);
         assert_eq!(view.votes.len(), 2);
         let stances: Vec<_> = view

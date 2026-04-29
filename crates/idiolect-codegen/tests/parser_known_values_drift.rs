@@ -29,9 +29,9 @@ fn load_lexicon(rel: &str) -> Value {
 fn pluck(v: &Value, path: &[&str]) -> Value {
     let mut cur = v;
     for seg in path {
-        cur = cur.get(seg).unwrap_or_else(|| {
-            panic!("path {path:?} missing at segment {seg}: {cur}")
-        });
+        cur = cur
+            .get(seg)
+            .unwrap_or_else(|| panic!("path {path:?} missing at segment {seg}: {cur}"));
     }
     cur.clone()
 }

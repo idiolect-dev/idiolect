@@ -116,9 +116,10 @@ impl DeliberationTallyMethod {
     /// source vocab is unknown to the registry, or no `equivalent_to`
     /// path resolves the slug into the canonical vocab.
     fn canonicalize_stance(&self, source_vocab: Option<&str>, slug: &str) -> String {
-        let (Some(registry), Some(canonical_uri)) =
-            (self.registry.as_ref(), self.canonical_stance_vocab.as_deref())
-        else {
+        let (Some(registry), Some(canonical_uri)) = (
+            self.registry.as_ref(),
+            self.canonical_stance_vocab.as_deref(),
+        ) else {
             return slug.to_owned();
         };
         let from_uri = source_vocab.unwrap_or(canonical_uri);
@@ -245,7 +246,12 @@ mod tests {
     use idiolect_records::generated::dev::idiolect::defs::StrongRecordRef;
     use idiolect_records::generated::dev::idiolect::deliberation_vote::DeliberationVoteStance;
 
-    fn vote(statement_uri: &str, statement_cid: &str, stance: DeliberationVoteStance, weight: Option<i64>) -> AnyRecord {
+    fn vote(
+        statement_uri: &str,
+        statement_cid: &str,
+        stance: DeliberationVoteStance,
+        weight: Option<i64>,
+    ) -> AnyRecord {
         AnyRecord::DeliberationVote(DeliberationVote {
             subject: StrongRecordRef {
                 uri: idiolect_records::AtUri::parse(statement_uri).expect("valid at-uri"),
@@ -319,10 +325,16 @@ mod tests {
         let s1 = "at://did:plc:c/dev.idiolect.deliberationStatement/s1";
         let cid = "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm";
         let mut m = DeliberationTallyMethod::new();
-        m.observe(&event(0, vote(s1, cid, DeliberationVoteStance::Agree, Some(750))))
-            .expect("observe");
-        m.observe(&event(1, vote(s1, cid, DeliberationVoteStance::Agree, Some(250))))
-            .expect("observe");
+        m.observe(&event(
+            0,
+            vote(s1, cid, DeliberationVoteStance::Agree, Some(750)),
+        ))
+        .expect("observe");
+        m.observe(&event(
+            1,
+            vote(s1, cid, DeliberationVoteStance::Agree, Some(250)),
+        ))
+        .expect("observe");
         let snap = m.snapshot().expect("snapshot").expect("non-empty");
         let weighted = &snap["statementTallies"][0]["weightedCounts"];
         let agree = weighted
@@ -389,8 +401,7 @@ mod tests {
         reg.insert(bridge_uri, &bridge);
         reg.insert(canonical_uri, &canonical);
 
-        let mut m = DeliberationTallyMethod::new()
-            .with_canonical_stance_vocab(canonical_uri, reg);
+        let mut m = DeliberationTallyMethod::new().with_canonical_stance_vocab(canonical_uri, reg);
 
         // Vote authored against the bridge vocab using the
         // community-extended `endorse` slug. The observer must
@@ -425,7 +436,10 @@ mod tests {
             .expect("agree bucket present");
         assert_eq!(agree["count"], 1);
         let endorse = counts.iter().find(|c| c["stance"] == "endorse");
-        assert!(endorse.is_none(), "endorse should have been canonicalised away");
+        assert!(
+            endorse.is_none(),
+            "endorse should have been canonicalised away"
+        );
     }
 
     #[test]
@@ -434,8 +448,7 @@ mod tests {
         let canonical_uri = "at://did:plc:x/dev.idiolect.vocab/canonical";
         // Empty registry: no vocabs known.
         let reg = VocabRegistry::new();
-        let mut m = DeliberationTallyMethod::new()
-            .with_canonical_stance_vocab(canonical_uri, reg);
+        let mut m = DeliberationTallyMethod::new().with_canonical_stance_vocab(canonical_uri, reg);
 
         let s1 = "at://did:plc:c/dev.idiolect.deliberationStatement/s1";
         let cid = "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm";

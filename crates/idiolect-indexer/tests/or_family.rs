@@ -16,10 +16,7 @@ use idiolect_indexer::{
     InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig, IndexerError,
     IndexerEvent, RawEvent, RecordHandler, drive_indexer,
 };
-use idiolect_records::{
-    IdiolectFamily, Nsid, OrAny, OrFamily, RecordFamily,
-    record::DecodeError,
-};
+use idiolect_records::{IdiolectFamily, Nsid, OrAny, OrFamily, RecordFamily, record::DecodeError};
 use serde_json::Value;
 
 // ---------------------------------------------------------------
@@ -210,7 +207,9 @@ fn or_family_overlap_detector_finds_no_overlap_for_disjoint_families() {
         Nsid::parse(COMMUNITY_POST_NSID).unwrap(),
         Nsid::parse("app.bsky.feed.post").unwrap(),
     ];
-    let overlaps =
-        detect_or_family_overlap::<IdiolectFamily, StubCommunityFamily>(&probe);
-    assert!(overlaps.is_empty(), "no NSID overlap expected: {overlaps:?}");
+    let overlaps = detect_or_family_overlap::<IdiolectFamily, StubCommunityFamily>(&probe);
+    assert!(
+        overlaps.is_empty(),
+        "no NSID overlap expected: {overlaps:?}"
+    );
 }
