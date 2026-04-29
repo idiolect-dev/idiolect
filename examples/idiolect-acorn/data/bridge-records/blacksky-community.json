@@ -10,8 +10,12 @@
   "appviewEndpoint": "https://blacksky.community",
   "coreSchemas": [
     { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.feed.post" },
-    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.conversation" },
-    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.statement" },
+    {
+      "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.conversation"
+    },
+    {
+      "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.statement"
+    },
     { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.vote" }
   ],
   "createdAt": "2026-04-28T00:00:00.000Z"

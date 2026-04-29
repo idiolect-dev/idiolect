@@ -170,12 +170,17 @@ fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
             version: None,
             violation_threshold: None,
         }),
+        VerificationKind::Other(_) => VerificationProperty::LpRoundtrip(LpRoundtrip {
+            domain: "extended".into(),
+            generator: None,
+        }),
     };
     Verification {
         basis: None,
         counterexample: None,
         dependencies: None,
         kind,
+        kind_vocab: None,
         lens: l_ref(lens_uri),
         occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
             .expect("valid datetime"),
