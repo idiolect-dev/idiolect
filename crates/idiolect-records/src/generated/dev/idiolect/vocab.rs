@@ -7,7 +7,8 @@
     missing_docs,
     clippy::doc_markdown,
     clippy::struct_excessive_bools,
-    clippy::derive_partial_eq_without_eq
+    clippy::derive_partial_eq_without_eq,
+    clippy::large_enum_variant
 )]
 use serde::{Deserialize, Serialize};
 
@@ -110,10 +111,10 @@ pub struct RelationMetadata {
     /// A rel B implies NOT (B rel A). Declarative; consumers may use this to validate that no edge contradicts the asymmetry. Mutually exclusive with `symmetric` (declaring both is a config error).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub asymmetric: Option<bool>,
-    /// Each source has at most one target under this relation. Currently advisory.
+    /// Each source has at most one target under this relation. Validated by `VocabGraph::validate`; sources with multiple outbound edges of a functional relation surface as a violation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub functional: Option<bool>,
-    /// Each target has at most one source under this relation. Currently advisory; useful for declaring identifier-like relations (e.g. `has_isbn`).
+    /// Each target has at most one source under this relation. Validated by `VocabGraph::validate`; useful for declaring identifier-like relations (e.g. `has_isbn`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inverse_functional: Option<bool>,
     /// Slug of the inverse relation (e.g. `narrower_than` for `broader_than`). Edges in this relation imply mirror-inverse edges in the named relation.

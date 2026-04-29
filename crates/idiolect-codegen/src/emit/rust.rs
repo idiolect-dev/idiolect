@@ -245,7 +245,8 @@ fn render_lexicon_file(doc: &LexiconDoc) -> Result<String, EmitError> {
          missing_docs,\n    \
          clippy::doc_markdown,\n    \
          clippy::struct_excessive_bools,\n    \
-         clippy::derive_partial_eq_without_eq\n\
+         clippy::derive_partial_eq_without_eq,\n    \
+         clippy::large_enum_variant\n\
          )]\n",
     );
     out.push_str("use serde::{Deserialize, Serialize};\n\n");

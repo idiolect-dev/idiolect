@@ -131,11 +131,11 @@ export interface RelationMetadata {
   */
   asymmetric?: boolean;
   /**
-  * Each source has at most one target under this relation. Currently advisory.
+  * Each source has at most one target under this relation. Validated by `VocabGraph::validate`; sources with multiple outbound edges of a functional relation surface as a violation.
   */
   functional?: boolean;
   /**
-  * Each target has at most one source under this relation. Currently advisory; useful for declaring identifier-like relations (e.g. `has_isbn`).
+  * Each target has at most one source under this relation. Validated by `VocabGraph::validate`; useful for declaring identifier-like relations (e.g. `has_isbn`).
   */
   inverseFunctional?: boolean;
   /**

@@ -351,11 +351,11 @@
         },
         "functional": {
           "type": "boolean",
-          "description": "Each source has at most one target under this relation. Currently advisory."
+          "description": "Each source has at most one target under this relation. Validated by `VocabGraph::validate`; sources with multiple outbound edges of a functional relation surface as a violation."
         },
         "inverseFunctional": {
           "type": "boolean",
-          "description": "Each target has at most one source under this relation. Currently advisory; useful for declaring identifier-like relations (e.g. `has_isbn`)."
+          "description": "Each target has at most one source under this relation. Validated by `VocabGraph::validate`; useful for declaring identifier-like relations (e.g. `has_isbn`)."
         },
         "inverseOf": {
           "type": "string",

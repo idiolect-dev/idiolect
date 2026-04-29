@@ -126,10 +126,14 @@ pub struct RelationProperties {
     /// with `reflexive`. Consumers may validate that no self-loop
     /// edge exists.
     pub irreflexive: bool,
-    /// Each `A` has at most one `B` with `A R B`. Currently advisory.
+    /// Each `A` has at most one `B` with `A R B`. Validated by
+    /// [`VocabGraph::validate`]: a source with multiple outbound
+    /// edges of a functional relation surfaces as a
+    /// [`VocabViolation::FunctionalEdgeViolation`].
     pub functional: bool,
-    /// Each `B` has at most one `A` with `A R B`. Currently advisory;
-    /// useful for declaring identifier-like relations.
+    /// Each `B` has at most one `A` with `A R B`. Validated by
+    /// [`VocabGraph::validate`]; useful for declaring
+    /// identifier-like relations (e.g. `has_isbn`).
     pub inverse_functional: bool,
 }
 
@@ -155,6 +159,61 @@ impl RelationProperties {
         }
         out
     }
+}
+
+/// One OWL Lite property characteristic violation found while
+/// validating a [`VocabGraph`]. Returned by
+/// [`VocabGraph::validate`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VocabViolation {
+    /// A relation declared `functional` has a node with two or more
+    /// outbound edges of that relation. Functional relations must
+    /// have at most one target per source.
+    FunctionalEdgeViolation {
+        /// Slug of the relation that was declared functional.
+        relation: String,
+        /// Source node with multiple outbound edges.
+        source: String,
+        /// All targets the source reaches under this relation.
+        targets: Vec<String>,
+    },
+    /// A relation declared `inverseFunctional` has a node with two
+    /// or more inbound edges of that relation. Inverse-functional
+    /// relations must have at most one source per target.
+    InverseFunctionalEdgeViolation {
+        /// Slug of the relation that was declared inverse-functional.
+        relation: String,
+        /// Target node with multiple inbound edges.
+        target: String,
+        /// All sources reaching the target under this relation.
+        sources: Vec<String>,
+    },
+    /// A relation declared `irreflexive` has a self-loop.
+    IrreflexiveSelfLoop {
+        /// Slug of the relation declared irreflexive.
+        relation: String,
+        /// Node carrying the self-loop edge.
+        node: String,
+    },
+    /// A relation declared `asymmetric` has a `(source, target)`
+    /// pair plus a corresponding `(target, source)` pair.
+    AsymmetricMutualEdge {
+        /// Slug of the relation declared asymmetric.
+        relation: String,
+        /// One endpoint of the mutual pair.
+        a: String,
+        /// The other endpoint.
+        b: String,
+    },
+    /// A relation's [`RelationProperties::contradictions`] flagged
+    /// the declaration itself (e.g. both `symmetric` and
+    /// `asymmetric`).
+    PropertyContradiction {
+        /// Slug of the relation.
+        relation: String,
+        /// Tag from `contradictions()`.
+        tag: &'static str,
+    },
 }
 
 impl VocabGraph {
@@ -411,6 +470,112 @@ impl VocabGraph {
         None
     }
 
+    /// Validate every authored relation against its declared OWL
+    /// Lite property characteristics. Returns the list of
+    /// violations found; empty when the vocab is internally
+    /// consistent. Consumers loading vocabs from external sources
+    /// (community records on the firehose, file imports) should run
+    /// this and either reject inconsistent vocabs or surface the
+    /// violations to operators.
+    ///
+    /// Validations performed:
+    /// - `functional` relations: at most one outbound edge per source.
+    /// - `inverseFunctional` relations: at most one inbound edge per
+    ///   target.
+    /// - `irreflexive` relations: no self-loops.
+    /// - `asymmetric` relations: no mutual `(A, B)` and `(B, A)` pair.
+    /// - Property contradictions: `symmetric+asymmetric` and
+    ///   `reflexive+irreflexive`.
+    ///
+    /// Note: `transitive` and `reflexive` are positive-direction
+    /// closure properties and are honoured by `walk_relation` rather
+    /// than checked here — there is no concrete violation to find,
+    /// only the absence of declared closure edges (which is
+    /// expected when the vocab relies on the runtime walk).
+    #[must_use]
+    pub fn validate(&self) -> Vec<VocabViolation> {
+        let mut out = Vec::new();
+        for (slug, props) in &self.relations {
+            // Property contradictions stand alone — surface every
+            // contradiction tag.
+            for tag in props.contradictions() {
+                out.push(VocabViolation::PropertyContradiction {
+                    relation: slug.clone(),
+                    tag,
+                });
+            }
+            // Functional check: each source has at most one target.
+            if props.functional {
+                for ((source, relation), targets) in &self.out_edges {
+                    if relation == slug && targets.len() > 1 {
+                        out.push(VocabViolation::FunctionalEdgeViolation {
+                            relation: slug.clone(),
+                            source: source.clone(),
+                            targets: targets.clone(),
+                        });
+                    }
+                }
+            }
+            // Inverse-functional: each target has at most one source.
+            if props.inverse_functional {
+                for ((target, relation), sources) in &self.in_edges {
+                    if relation == slug && sources.len() > 1 {
+                        out.push(VocabViolation::InverseFunctionalEdgeViolation {
+                            relation: slug.clone(),
+                            target: target.clone(),
+                            sources: sources.clone(),
+                        });
+                    }
+                }
+            }
+            // Irreflexive: no self-loops.
+            if props.irreflexive {
+                for ((source, relation), targets) in &self.out_edges {
+                    if relation == slug && targets.iter().any(|t| t == source) {
+                        out.push(VocabViolation::IrreflexiveSelfLoop {
+                            relation: slug.clone(),
+                            node: source.clone(),
+                        });
+                    }
+                }
+            }
+            // Asymmetric: forbid mutual edges. Compare each ordered
+            // pair against its reverse; emit one violation per
+            // unordered mutual pair.
+            if props.asymmetric {
+                let mut emitted_pairs: BTreeSet<(String, String)> = BTreeSet::new();
+                for ((source, relation), targets) in &self.out_edges {
+                    if relation != slug {
+                        continue;
+                    }
+                    for target in targets {
+                        if source == target {
+                            continue; // a self-loop is irreflexive territory
+                        }
+                        let reverse = self.direct_targets(target, slug);
+                        if reverse.iter().any(|n| n == source) {
+                            // Order endpoints to dedupe (a,b) and
+                            // (b,a) into one violation.
+                            let (a, b) = if source <= target {
+                                (source.clone(), target.clone())
+                            } else {
+                                (target.clone(), source.clone())
+                            };
+                            if emitted_pairs.insert((a.clone(), b.clone())) {
+                                out.push(VocabViolation::AsymmetricMutualEdge {
+                                    relation: slug.clone(),
+                                    a,
+                                    b,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        out
+    }
+
     /// Top derived with the explicit `Vocab.top` field as the
     /// authoritative override. Use this when normalizing a [`Vocab`]
     /// record into a runtime cache; falls back to graph derivation
@@ -527,6 +692,24 @@ impl VocabRegistry {
         let from = self.by_uri.get(from_uri)?;
         let to = self.by_uri.get(to_uri)?;
         from.equivalent_in(slug, to)
+    }
+
+    /// Validate every registered vocabulary against its declared
+    /// OWL Lite property characteristics. Returns a map keyed by
+    /// AT-URI with the violations found in each vocab; an empty
+    /// returned map means every registered vocab is consistent.
+    /// Wraps [`VocabGraph::validate`] for batch checking at catalog-
+    /// sync time.
+    #[must_use]
+    pub fn validate(&self) -> BTreeMap<String, Vec<VocabViolation>> {
+        let mut out = BTreeMap::new();
+        for (uri, graph) in &self.by_uri {
+            let violations = graph.validate();
+            if !violations.is_empty() {
+                out.insert(uri.clone(), violations);
+            }
+        }
+        out
     }
 }
 
@@ -1718,5 +1901,310 @@ mod owl_skos_tests {
         let mut sorted = members.to_vec();
         sorted.sort();
         assert_eq!(sorted, vec!["container".to_owned(), "process".to_owned()]);
+    }
+}
+
+#[cfg(test)]
+mod validation_tests {
+    use super::*;
+    use crate::Datetime;
+    use crate::generated::dev::idiolect::vocab::{
+        RelationMetadata, VocabEdge, VocabEdgeRelationSlug, VocabNode, VocabNodeKind, VocabWorld,
+    };
+
+    fn relation_node(id: &str, props: RelationProperties) -> VocabNode {
+        VocabNode {
+            id: id.to_owned(),
+            kind: Some(VocabNodeKind::Relation),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            hidden_labels: None,
+            description: None,
+            scope_note: None,
+            example: None,
+            history_note: None,
+            editorial_note: None,
+            change_note: None,
+            notation: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: Some(RelationMetadata {
+                symmetric: Some(props.symmetric),
+                asymmetric: Some(props.asymmetric),
+                transitive: Some(props.transitive),
+                reflexive: Some(props.reflexive),
+                irreflexive: Some(props.irreflexive),
+                functional: Some(props.functional),
+                inverse_functional: Some(props.inverse_functional),
+                inverse_of: None,
+                world: None,
+            }),
+        }
+    }
+
+    fn concept_node(id: &str) -> VocabNode {
+        VocabNode {
+            id: id.to_owned(),
+            kind: Some(VocabNodeKind::Concept),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            hidden_labels: None,
+            description: None,
+            scope_note: None,
+            example: None,
+            history_note: None,
+            editorial_note: None,
+            change_note: None,
+            notation: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: None,
+        }
+    }
+
+    fn edge(source: &str, target: &str, slug: &str) -> VocabEdge {
+        VocabEdge {
+            source: source.to_owned(),
+            target: target.to_owned(),
+            relation_slug: VocabEdgeRelationSlug::Other(slug.to_owned()),
+            relation_vocab: None,
+            relation_uri: None,
+            weight: None,
+            metadata: None,
+        }
+    }
+
+    fn graph(nodes: Vec<VocabNode>, edges: Vec<VocabEdge>) -> VocabGraph {
+        let v = Vocab {
+            name: "v".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            nodes: Some(nodes),
+            edges: Some(edges),
+        };
+        VocabGraph::from_vocab(&v)
+    }
+
+    #[test]
+    fn validate_reports_functional_violation() {
+        // `has_isbn` declared functional, but `book1` has two
+        // outbound edges. Validation must catch this.
+        let g = graph(
+            vec![
+                concept_node("book1"),
+                concept_node("isbn-a"),
+                concept_node("isbn-b"),
+                relation_node(
+                    "has_isbn",
+                    RelationProperties {
+                        functional: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![
+                edge("book1", "isbn-a", "has_isbn"),
+                edge("book1", "isbn-b", "has_isbn"),
+            ],
+        );
+        let v = g.validate();
+        assert!(
+            matches!(
+                v.as_slice(),
+                [VocabViolation::FunctionalEdgeViolation { relation, source, .. }]
+                    if relation == "has_isbn" && source == "book1"
+            ),
+            "expected FunctionalEdgeViolation, got {v:?}"
+        );
+    }
+
+    #[test]
+    fn validate_reports_inverse_functional_violation() {
+        // Two distinct books both claim the same ISBN under an
+        // inverse-functional relation: violation.
+        let g = graph(
+            vec![
+                concept_node("book-a"),
+                concept_node("book-b"),
+                concept_node("isbn-1"),
+                relation_node(
+                    "has_isbn",
+                    RelationProperties {
+                        inverse_functional: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![
+                edge("book-a", "isbn-1", "has_isbn"),
+                edge("book-b", "isbn-1", "has_isbn"),
+            ],
+        );
+        let v = g.validate();
+        assert!(
+            matches!(
+                v.as_slice(),
+                [VocabViolation::InverseFunctionalEdgeViolation { relation, target, .. }]
+                    if relation == "has_isbn" && target == "isbn-1"
+            ),
+            "expected InverseFunctionalEdgeViolation, got {v:?}"
+        );
+    }
+
+    #[test]
+    fn validate_reports_irreflexive_self_loop() {
+        // `parent_of` declared irreflexive, but a self-loop is
+        // present.
+        let g = graph(
+            vec![
+                concept_node("alice"),
+                relation_node(
+                    "parent_of",
+                    RelationProperties {
+                        irreflexive: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![edge("alice", "alice", "parent_of")],
+        );
+        let v = g.validate();
+        assert!(
+            matches!(
+                v.as_slice(),
+                [VocabViolation::IrreflexiveSelfLoop { relation, node }]
+                    if relation == "parent_of" && node == "alice"
+            ),
+            "expected IrreflexiveSelfLoop, got {v:?}"
+        );
+    }
+
+    #[test]
+    fn validate_reports_asymmetric_mutual_edge() {
+        // `parent_of` declared asymmetric, but a mutual pair is
+        // declared.
+        let g = graph(
+            vec![
+                concept_node("alice"),
+                concept_node("bob"),
+                relation_node(
+                    "parent_of",
+                    RelationProperties {
+                        asymmetric: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![
+                edge("alice", "bob", "parent_of"),
+                edge("bob", "alice", "parent_of"),
+            ],
+        );
+        let v = g.validate();
+        // Exactly one violation: the unordered pair (alice, bob).
+        assert_eq!(v.len(), 1, "expected exactly one violation, got {v:?}");
+        assert!(
+            matches!(
+                &v[0],
+                VocabViolation::AsymmetricMutualEdge { relation, a, b }
+                    if relation == "parent_of" && a == "alice" && b == "bob"
+            ),
+            "got {:?}",
+            &v[0]
+        );
+    }
+
+    #[test]
+    fn validate_reports_property_contradictions() {
+        let g = graph(
+            vec![
+                concept_node("a"),
+                relation_node(
+                    "weird",
+                    RelationProperties {
+                        symmetric: true,
+                        asymmetric: true,
+                        reflexive: true,
+                        irreflexive: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![],
+        );
+        let v = g.validate();
+        let tags: Vec<&'static str> = v
+            .iter()
+            .filter_map(|x| match x {
+                VocabViolation::PropertyContradiction { tag, .. } => Some(*tag),
+                _ => None,
+            })
+            .collect();
+        assert!(tags.contains(&"symmetric+asymmetric"));
+        assert!(tags.contains(&"reflexive+irreflexive"));
+    }
+
+    #[test]
+    fn validate_consistent_vocab_returns_empty() {
+        let g = graph(
+            vec![
+                concept_node("a"),
+                concept_node("b"),
+                relation_node(
+                    "broader_than",
+                    RelationProperties {
+                        transitive: true,
+                        asymmetric: true,
+                        irreflexive: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![edge("a", "b", "broader_than")],
+        );
+        assert!(g.validate().is_empty());
+    }
+
+    #[test]
+    fn registry_validate_returns_per_uri_violations() {
+        let bad = graph(
+            vec![
+                concept_node("x"),
+                relation_node(
+                    "r",
+                    RelationProperties {
+                        irreflexive: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![edge("x", "x", "r")],
+        );
+        let good = graph(
+            vec![concept_node("y")],
+            vec![],
+        );
+        // Use VocabGraph directly via VocabRegistry::insert (which
+        // takes a Vocab); reconstruct via from_vocab is what the
+        // registry does too.
+        let mut reg = VocabRegistry::default();
+        reg.by_uri.insert("at://x/v/bad".to_owned(), bad);
+        reg.by_uri.insert("at://x/v/good".to_owned(), good);
+        let report = reg.validate();
+        assert!(report.contains_key("at://x/v/bad"));
+        assert!(!report.contains_key("at://x/v/good"));
     }
 }
