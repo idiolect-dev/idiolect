@@ -122,8 +122,8 @@
         "kind": {
           "type": "string",
           "maxLength": 256,
-          "knownValues": ["concept", "relation", "instance", "type"],
-          "description": "Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass. Consumers dispatch on this; resolved against `kindVocab` when present."
+          "knownValues": ["concept", "relation", "instance", "type", "collection"],
+          "description": "Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass; `collection` is a SKOS-style grouping of concepts (members declared via `member_of` edges). Consumers dispatch on this; resolved against `kindVocab` when present."
         },
         "kindVocab": {
           "type": "ref",
@@ -143,13 +143,49 @@
         "alternateLabels": {
           "type": "array",
           "maxLength": 50,
-          "description": "Synonyms, translations, or alternate spellings.",
+          "description": "Synonyms, translations, or alternate spellings (SKOS `altLabel`).",
+          "items": { "type": "string", "maxLength": 500 }
+        },
+        "hiddenLabels": {
+          "type": "array",
+          "maxLength": 50,
+          "description": "SKOS `hiddenLabel`: searchable but not displayed. Useful for misspellings, deprecated forms, lookup synonyms.",
           "items": { "type": "string", "maxLength": 500 }
         },
         "description": {
           "type": "string",
           "maxGraphemes": 2000,
-          "description": "Optional scope note or detailed description."
+          "description": "SKOS `definition`: a complete explanation of what the concept means."
+        },
+        "scopeNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `scopeNote`: guidance on how the concept should be used. Distinct from `description` (definition) — scopeNote covers application boundaries, common pitfalls, when to prefer a sibling concept."
+        },
+        "example": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `example`: a concrete instance or usage example."
+        },
+        "historyNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `historyNote`: significant changes in the concept's history."
+        },
+        "editorialNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `editorialNote`: management-level annotations not visible to end users."
+        },
+        "changeNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `changeNote`: a fine-grained record of a single change."
+        },
+        "notation": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "SKOS `notation`: a non-text identifier (e.g. a Dewey decimal code, an ISO designator). Distinct from `id`: notation is for display and indexing in legacy classification systems; `id` is the slug used internally."
         },
         "externalIds": {
           "type": "array",
@@ -209,7 +245,8 @@
             "polar_opposite_of",
             "related_to",
             "instance_of",
-            "part_of"
+            "part_of",
+            "member_of"
           ],
           "description": "Open-enum relation-type slug. The canonical default vocabulary seeds the values shown; communities extend by referencing `relationVocab`."
         },
@@ -290,23 +327,35 @@
     },
     "relationMetadata": {
       "type": "object",
-      "description": "Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction.",
+      "description": "Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction. The full OWL Lite property-characteristic set is supported (symmetric, asymmetric, transitive, reflexive, irreflexive, functional, inverseFunctional, inverseOf).",
       "properties": {
         "symmetric": {
           "type": "boolean",
-          "description": "A rel B implies B rel A."
+          "description": "A rel B implies B rel A. Walks traverse outbound and inbound edges as one set."
+        },
+        "asymmetric": {
+          "type": "boolean",
+          "description": "A rel B implies NOT (B rel A). Declarative; consumers may use this to validate that no edge contradicts the asymmetry. Mutually exclusive with `symmetric` (declaring both is a config error)."
         },
         "transitive": {
           "type": "boolean",
-          "description": "A rel B and B rel C implies A rel C."
+          "description": "A rel B and B rel C imply A rel C. Walks compute the transitive closure."
         },
         "reflexive": {
           "type": "boolean",
-          "description": "A rel A holds for every node."
+          "description": "A rel A holds for every A. Reflected in the `reflexive` argument of walks."
+        },
+        "irreflexive": {
+          "type": "boolean",
+          "description": "NOT (A rel A) for any A. Declarative; consumers may use this to validate that no self-loop edge exists. Mutually exclusive with `reflexive`."
         },
         "functional": {
           "type": "boolean",
-          "description": "Each source has at most one target under this relation."
+          "description": "Each source has at most one target under this relation. Currently advisory."
+        },
+        "inverseFunctional": {
+          "type": "boolean",
+          "description": "Each target has at most one source under this relation. Currently advisory; useful for declaring identifier-like relations (e.g. `has_isbn`)."
         },
         "inverseOf": {
           "type": "string",

@@ -103,23 +103,32 @@ pub struct ExternalId {
     pub uri: Option<idiolect_records::Uri>,
 }
 
-/// Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction.
+/// Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction. The full OWL Lite property-characteristic set is supported (symmetric, asymmetric, transitive, reflexive, irreflexive, functional, inverseFunctional, inverseOf).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RelationMetadata {
-    /// Each source has at most one target under this relation.
+    /// A rel B implies NOT (B rel A). Declarative; consumers may use this to validate that no edge contradicts the asymmetry. Mutually exclusive with `symmetric` (declaring both is a config error).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asymmetric: Option<bool>,
+    /// Each source has at most one target under this relation. Currently advisory.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub functional: Option<bool>,
+    /// Each target has at most one source under this relation. Currently advisory; useful for declaring identifier-like relations (e.g. `has_isbn`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inverse_functional: Option<bool>,
     /// Slug of the inverse relation (e.g. `narrower_than` for `broader_than`). Edges in this relation imply mirror-inverse edges in the named relation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inverse_of: Option<String>,
-    /// A rel A holds for every node.
+    /// NOT (A rel A) for any A. Declarative; consumers may use this to validate that no self-loop edge exists. Mutually exclusive with `reflexive`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub irreflexive: Option<bool>,
+    /// A rel A holds for every A. Reflected in the `reflexive` argument of walks.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reflexive: Option<bool>,
-    /// A rel B implies B rel A.
+    /// A rel B implies B rel A. Walks traverse outbound and inbound edges as one set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub symmetric: Option<bool>,
-    /// A rel B and B rel C implies A rel C.
+    /// A rel B and B rel C imply A rel C. Walks compute the transitive closure.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub transitive: Option<bool>,
     /// Per-relation world override. Closed enum: meta-policy.
@@ -155,21 +164,36 @@ pub struct VocabEdge {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VocabNode {
-    /// Synonyms, translations, or alternate spellings.
+    /// Synonyms, translations, or alternate spellings (SKOS `altLabel`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub alternate_labels: Option<Vec<String>>,
+    /// SKOS `changeNote`: a fine-grained record of a single change.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub change_note: Option<String>,
     /// AT-URI of the node that supersedes this one, when status=deprecated.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deprecated_by: Option<idiolect_records::AtUri>,
-    /// Optional scope note or detailed description.
+    /// SKOS `definition`: a complete explanation of what the concept means.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    /// SKOS `editorialNote`: management-level annotations not visible to end users.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub editorial_note: Option<String>,
+    /// SKOS `example`: a concrete instance or usage example.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub example: Option<String>,
     /// External identifier mappings into non-ATProto knowledge bases (Wikidata, ROR, ORCID, ...). Enables cross-system translation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub external_ids: Option<Vec<ExternalId>>,
+    /// SKOS `hiddenLabel`: searchable but not displayed. Useful for misspellings, deprecated forms, lookup synonyms.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hidden_labels: Option<Vec<String>>,
+    /// SKOS `historyNote`: significant changes in the concept's history.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub history_note: Option<String>,
     /// Stable node identifier (slug). Used as the source/target of edges within the same vocabulary.
     pub id: String,
-    /// Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass. Consumers dispatch on this; resolved against `kindVocab` when present.
+    /// Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass; `collection` is a SKOS-style grouping of concepts (members declared via `member_of` edges). Consumers dispatch on this; resolved against `kindVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<VocabNodeKind>,
     /// Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default.
@@ -178,9 +202,15 @@ pub struct VocabNode {
     /// Primary human-readable label.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
+    /// SKOS `notation`: a non-text identifier (e.g. a Dewey decimal code, an ISO designator). Distinct from `id`: notation is for display and indexing in legacy classification systems; `id` is the slug used internally.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notation: Option<String>,
     /// Algebraic metadata, populated only when this node represents a relation type (kind=relation).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub relation_metadata: Option<RelationMetadata>,
+    /// SKOS `scopeNote`: guidance on how the concept should be used. Distinct from `description` (definition) — scopeNote covers application boundaries, common pitfalls, when to prefer a sibling concept.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope_note: Option<String>,
     /// Open-enum lifecycle status. Resolved against `statusVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<VocabNodeStatus>,
@@ -380,6 +410,7 @@ pub enum VocabEdgeRelationSlug {
     RelatedTo,
     InstanceOf,
     PartOf,
+    MemberOf,
     /// Community-extended slug not present in the lexicon's
     /// `knownValues`. Resolves through the sibling
     /// `*Vocab` field on the containing record.
@@ -399,6 +430,7 @@ impl VocabEdgeRelationSlug {
             Self::RelatedTo => "related_to",
             Self::InstanceOf => "instance_of",
             Self::PartOf => "part_of",
+            Self::MemberOf => "member_of",
             Self::Other(s) => s.as_str(),
         }
     }
@@ -414,6 +446,7 @@ impl From<String> for VocabEdgeRelationSlug {
             "related_to" => Self::RelatedTo,
             "instance_of" => Self::InstanceOf,
             "part_of" => Self::PartOf,
+            "member_of" => Self::MemberOf,
             _ => Self::Other(s),
         }
     }
@@ -429,6 +462,7 @@ impl From<&str> for VocabEdgeRelationSlug {
             "related_to" => Self::RelatedTo,
             "instance_of" => Self::InstanceOf,
             "part_of" => Self::PartOf,
+            "member_of" => Self::MemberOf,
             _ => Self::Other(s.to_owned()),
         }
     }
@@ -458,6 +492,7 @@ pub enum VocabNodeKind {
     Relation,
     Instance,
     Type,
+    Collection,
     /// Community-extended slug not present in the lexicon's
     /// `knownValues`. Resolves through the sibling
     /// `*Vocab` field on the containing record.
@@ -473,6 +508,7 @@ impl VocabNodeKind {
             Self::Relation => "relation",
             Self::Instance => "instance",
             Self::Type => "type",
+            Self::Collection => "collection",
             Self::Other(s) => s.as_str(),
         }
     }
@@ -484,6 +520,7 @@ impl From<String> for VocabNodeKind {
             "relation" => Self::Relation,
             "instance" => Self::Instance,
             "type" => Self::Type,
+            "collection" => Self::Collection,
             _ => Self::Other(s),
         }
     }
@@ -495,6 +532,7 @@ impl From<&str> for VocabNodeKind {
             "relation" => Self::Relation,
             "instance" => Self::Instance,
             "type" => Self::Type,
+            "collection" => Self::Collection,
             _ => Self::Other(s.to_owned()),
         }
     }

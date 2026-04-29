@@ -58,19 +58,41 @@ pub struct VocabGraph {
     relations: BTreeMap<String, RelationProperties>,
 }
 
-/// Normalized node view. Holds the same fields as [`VocabNode`] plus
-/// the synthesized id from the legacy form's `id`.
-#[derive(Debug, Clone)]
+/// Normalized node view. Carries the SKOS-aligned attribute set
+/// (label, alternateLabels, hiddenLabels, description-as-definition,
+/// scopeNote, example, historyNote, editorialNote, changeNote,
+/// notation) plus the kind discriminator. Legacy `actionEntry`
+/// lifts populate `id` and `description` only; everything else
+/// defaults to `None`.
+#[derive(Debug, Clone, Default)]
 pub struct NormalizedNode {
     /// Node identifier within the vocab.
     pub id: String,
-    /// Optional human-readable label.
-    pub label: Option<String>,
-    /// Optional description.
-    pub description: Option<String>,
-    /// Node kind slug (`concept`, `relation`, `instance`, `type`, or
-    /// a community-extended value). `None` for legacy entries.
+    /// Node kind slug (`concept`, `relation`, `instance`, `type`,
+    /// `collection`, or a community-extended value).
     pub kind: Option<String>,
+    /// Primary human-readable label (SKOS `prefLabel`).
+    pub label: Option<String>,
+    /// Synonyms / translations (SKOS `altLabel`).
+    pub alternate_labels: Vec<String>,
+    /// Searchable but not displayed (SKOS `hiddenLabel`).
+    pub hidden_labels: Vec<String>,
+    /// Definition (SKOS `definition`). The full explanation of the
+    /// concept's meaning.
+    pub description: Option<String>,
+    /// Application guidance (SKOS `scopeNote`).
+    pub scope_note: Option<String>,
+    /// Concrete usage example (SKOS `example`).
+    pub example: Option<String>,
+    /// History annotation (SKOS `historyNote`).
+    pub history_note: Option<String>,
+    /// Editorial annotation (SKOS `editorialNote`).
+    pub editorial_note: Option<String>,
+    /// Change-log annotation (SKOS `changeNote`).
+    pub change_note: Option<String>,
+    /// Non-text identifier from a legacy classification system
+    /// (SKOS `notation`; e.g. a Dewey decimal code).
+    pub notation: Option<String>,
 }
 
 /// Algebraic properties of a relation. Mirrors the lexicon's
@@ -78,6 +100,11 @@ pub struct NormalizedNode {
 /// every property has a definite reading at traversal time. Defaults
 /// to all-false when the relation node is unauthored or its metadata
 /// is missing.
+///
+/// Covers the full OWL Lite property-characteristic set: symmetric /
+/// asymmetric, transitive, reflexive / irreflexive, functional /
+/// inverseFunctional, plus inverseOf (carried separately on the
+/// vocab node, not in this struct).
 #[allow(clippy::struct_excessive_bools)]
 // Each bool corresponds to a distinct algebraic property; collapsing into a bitfield would obscure the API.
 #[derive(Debug, Clone, Copy, Default)]
@@ -85,14 +112,49 @@ pub struct RelationProperties {
     /// `A R B` implies `B R A`. Walks traverse outbound and inbound
     /// edges as one set.
     pub symmetric: bool,
+    /// `A R B` implies NOT (`B R A`). Declarative; mutually
+    /// exclusive with `symmetric`. Consumers may validate that no
+    /// edge in the vocab contradicts the asymmetry.
+    pub asymmetric: bool,
     /// `A R B` and `B R C` imply `A R C`. Walks compute the
     /// transitive closure (the default `walk_relation` behavior).
     pub transitive: bool,
     /// `A R A` for every `A`. Reflected in the `reflexive` argument
     /// of `walk_relation`.
     pub reflexive: bool,
+    /// NOT (`A R A`) for any `A`. Declarative; mutually exclusive
+    /// with `reflexive`. Consumers may validate that no self-loop
+    /// edge exists.
+    pub irreflexive: bool,
     /// Each `A` has at most one `B` with `A R B`. Currently advisory.
     pub functional: bool,
+    /// Each `B` has at most one `A` with `A R B`. Currently advisory;
+    /// useful for declaring identifier-like relations.
+    pub inverse_functional: bool,
+}
+
+impl RelationProperties {
+    /// Validate the property combination for OWL Lite consistency.
+    /// Returns the list of contradiction tags found, empty when the
+    /// declaration is internally consistent.
+    ///
+    /// Contradictions:
+    /// - `symmetric+asymmetric` — a relation cannot be both.
+    /// - `reflexive+irreflexive` — a relation cannot be both.
+    ///
+    /// Consumers loading vocabs should warn or reject on
+    /// non-empty results.
+    #[must_use]
+    pub fn contradictions(&self) -> Vec<&'static str> {
+        let mut out = Vec::new();
+        if self.symmetric && self.asymmetric {
+            out.push("symmetric+asymmetric");
+        }
+        if self.reflexive && self.irreflexive {
+            out.push("reflexive+irreflexive");
+        }
+        out
+    }
 }
 
 impl VocabGraph {
@@ -115,9 +177,9 @@ impl VocabGraph {
                     .entry(entry.id.clone())
                     .or_insert_with(|| NormalizedNode {
                         id: entry.id.clone(),
-                        label: None,
-                        description: entry.description.clone(),
                         kind: Some("concept".to_owned()),
+                        description: entry.description.clone(),
+                        ..NormalizedNode::default()
                     });
                 for parent in &entry.parents {
                     insert_edge(
@@ -131,9 +193,8 @@ impl VocabGraph {
                         .entry(parent.clone())
                         .or_insert_with(|| NormalizedNode {
                             id: parent.clone(),
-                            label: None,
-                            description: None,
                             kind: Some("concept".to_owned()),
+                            ..NormalizedNode::default()
                         });
                 }
             }
@@ -200,8 +261,8 @@ impl VocabGraph {
             return RelationProperties {
                 transitive: true,
                 reflexive: true,
-                symmetric: false,
-                functional: false,
+                irreflexive: false,
+                ..RelationProperties::default()
             };
         }
         RelationProperties::default()
@@ -365,12 +426,124 @@ impl VocabGraph {
     }
 }
 
+/// Long-lived cache of vocabularies keyed by canonical AT-URI.
+///
+/// Most consumers want one of three queries:
+///
+/// - "is `x` subsumed by `y` under vocab `V`?" — the legacy
+///   subsumption check, generalised.
+/// - "does `x` satisfy `y` under relation `R` in vocab `V`?" — the
+///   open question for any directed relation (e.g. `stronger_than`,
+///   `provides_at_least`). A bounty requiring `property-test`
+///   accepts a `formal-proof` because the verification-kinds vocab
+///   declares `formal-proof stronger_than property-test`.
+/// - "translate slug `x` from vocab `V1` into vocab `V2`" — handled
+///   by `idiolect_lens::map_enum::map_enum_graphs`.
+///
+/// The registry stores [`VocabGraph`]s by AT-URI string so the
+/// graph build cost is paid once per vocab. Consumers register
+/// vocabs as they encounter them (typically at catalog ingest) and
+/// then run subsumption / satisfaction queries in O(walk).
+#[derive(Debug, Clone, Default)]
+pub struct VocabRegistry {
+    by_uri: BTreeMap<String, VocabGraph>,
+}
+
+impl VocabRegistry {
+    /// Empty registry.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Register or replace the vocabulary at `uri`. Overwrites any
+    /// prior entry; consumers calling this after a vocab record
+    /// revision will see the new graph immediately.
+    pub fn insert(&mut self, uri: impl Into<String>, vocab: &Vocab) {
+        self.by_uri
+            .insert(uri.into(), VocabGraph::from_vocab(vocab));
+    }
+
+    /// Look up a registered vocab graph.
+    #[must_use]
+    pub fn get(&self, uri: &str) -> Option<&VocabGraph> {
+        self.by_uri.get(uri)
+    }
+
+    /// Number of registered vocabularies.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.by_uri.len()
+    }
+
+    /// Whether the registry has no vocabularies.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.by_uri.is_empty()
+    }
+
+    /// Whether `x` satisfies the requirement of `y` under the named
+    /// `relation` in the vocab at `uri`. The directional reading is:
+    /// "is `y` reachable from `x` by walking forward along
+    /// `relation`?"
+    ///
+    /// Examples:
+    /// - `satisfies(verification_kinds_uri, "formal-proof", "stronger_than", "property-test")`
+    ///   → `Some(true)` (formal-proof stronger_than property-test).
+    /// - `satisfies(community_roles_uri, "moderator", "subsumed_by", "member")`
+    ///   → `Some(true)` (moderator is a member).
+    ///
+    /// Returns `None` when the vocab is not registered. Returns
+    /// `Some(false)` when both `x` and `y` are known but no path
+    /// exists, or when one is unknown.
+    #[must_use]
+    pub fn satisfies(&self, uri: &str, x: &str, relation: &str, y: &str) -> Option<bool> {
+        let graph = self.by_uri.get(uri)?;
+        if x == y {
+            return Some(true);
+        }
+        Some(
+            graph
+                .walk_relation(x, relation, false)
+                .iter()
+                .any(|n| n == y),
+        )
+    }
+
+    /// Whether `specific` is subsumed by `general` in the named
+    /// vocab. Convenience wrapper for the most common
+    /// [`satisfies`](Self::satisfies) call.
+    #[must_use]
+    pub fn is_subsumed_by(&self, uri: &str, specific: &str, general: &str) -> Option<bool> {
+        self.satisfies(uri, specific, "subsumed_by", general)
+    }
+
+    /// Resolve `slug` from the vocab at `from_uri` into a slug the
+    /// vocab at `to_uri` knows. Routes through
+    /// [`VocabGraph::equivalent_in`]. Returns `None` when either
+    /// vocab is unregistered or no translation can be found.
+    #[must_use]
+    pub fn translate(&self, from_uri: &str, to_uri: &str, slug: &str) -> Option<String> {
+        let from = self.by_uri.get(from_uri)?;
+        let to = self.by_uri.get(to_uri)?;
+        from.equivalent_in(slug, to)
+    }
+}
+
 fn normalize_node(n: &VocabNode) -> NormalizedNode {
     NormalizedNode {
         id: n.id.clone(),
-        label: n.label.clone(),
-        description: n.description.clone(),
         kind: n.kind.as_ref().map(|k| k.as_str().to_owned()),
+        label: n.label.clone(),
+        alternate_labels: n.alternate_labels.clone().unwrap_or_default(),
+        hidden_labels: n.hidden_labels.clone().unwrap_or_default(),
+        description: n.description.clone(),
+        scope_note: n.scope_note.clone(),
+        example: n.example.clone(),
+        history_note: n.history_note.clone(),
+        editorial_note: n.editorial_note.clone(),
+        change_note: n.change_note.clone(),
+        notation: n.notation.clone(),
     }
 }
 
@@ -384,9 +557,12 @@ fn relation_properties_from(n: &VocabNode) -> RelationProperties {
     };
     RelationProperties {
         symmetric: meta.symmetric.unwrap_or(false),
+        asymmetric: meta.asymmetric.unwrap_or(false),
         transitive: meta.transitive.unwrap_or(false),
         reflexive: meta.reflexive.unwrap_or(false),
+        irreflexive: meta.irreflexive.unwrap_or(false),
         functional: meta.functional.unwrap_or(false),
+        inverse_functional: meta.inverse_functional.unwrap_or(false),
     }
 }
 
@@ -459,6 +635,13 @@ mod tests {
             label: None,
             alternate_labels: None,
             description: None,
+            change_note: None,
+            editorial_note: None,
+            example: None,
+            hidden_labels: None,
+            history_note: None,
+            notation: None,
+            scope_note: None,
             external_ids: None,
             status: None,
             status_vocab: None,
@@ -476,15 +659,25 @@ mod tests {
             label: None,
             alternate_labels: None,
             description: None,
+            change_note: None,
+            editorial_note: None,
+            example: None,
+            hidden_labels: None,
+            history_note: None,
+            notation: None,
+            scope_note: None,
             external_ids: None,
             status: None,
             status_vocab: None,
             deprecated_by: None,
             relation_metadata: Some(RelationMetadata {
                 symmetric: Some(props.symmetric),
+                asymmetric: Some(props.asymmetric),
                 transitive: Some(props.transitive),
                 reflexive: Some(props.reflexive),
+                irreflexive: Some(props.irreflexive),
                 functional: Some(props.functional),
+                inverse_functional: Some(props.inverse_functional),
                 inverse_of: None,
                 world: None,
             }),
@@ -646,6 +839,7 @@ mod tests {
                     RelationProperties {
                         transitive: true,
                         reflexive: true,
+                        irreflexive: false,
                         ..RelationProperties::default()
                     },
                 ),
@@ -680,9 +874,12 @@ mod tests {
                     "equivalent_to",
                     RelationProperties {
                         symmetric: true,
+                        asymmetric: false,
                         transitive: true,
                         reflexive: false,
+                        irreflexive: false,
                         functional: false,
+                        inverse_functional: false,
                     },
                 ),
             ],
@@ -710,6 +907,7 @@ mod tests {
                     "equivalent_to",
                     RelationProperties {
                         symmetric: true,
+                        asymmetric: false,
                         ..RelationProperties::default()
                     },
                 ),
@@ -750,6 +948,7 @@ mod tests {
                     "equivalent_to",
                     RelationProperties {
                         symmetric: true,
+                        asymmetric: false,
                         ..RelationProperties::default()
                     },
                 ),
@@ -791,6 +990,13 @@ mod tests {
             label: Some("Train".to_owned()),
             alternate_labels: None,
             description: Some("authored".to_owned()),
+            change_note: None,
+            editorial_note: None,
+            example: None,
+            hidden_labels: None,
+            history_note: None,
+            notation: None,
+            scope_note: None,
             external_ids: None,
             status: None,
             status_vocab: None,
@@ -809,8 +1015,110 @@ mod edge_case_tests {
     use super::*;
     use crate::Datetime;
     use crate::generated::dev::idiolect::vocab::{
-        ActionEntry, VocabEdgeRelationSlug, VocabNodeKind, VocabWorld,
+        ActionEntry, RelationMetadata, VocabEdge, VocabEdgeRelationSlug, VocabNode, VocabNodeKind,
+        VocabWorld,
     };
+
+    fn graph_node(id: &str, kind: VocabNodeKind) -> VocabNode {
+        VocabNode {
+            id: id.to_owned(),
+            kind: Some(kind),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            description: None,
+            change_note: None,
+            editorial_note: None,
+            example: None,
+            hidden_labels: None,
+            history_note: None,
+            notation: None,
+            scope_note: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: None,
+        }
+    }
+
+    fn relation_node(id: &str, props: RelationProperties) -> VocabNode {
+        VocabNode {
+            id: id.to_owned(),
+            kind: Some(VocabNodeKind::Relation),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            description: None,
+            change_note: None,
+            editorial_note: None,
+            example: None,
+            hidden_labels: None,
+            history_note: None,
+            notation: None,
+            scope_note: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: Some(RelationMetadata {
+                symmetric: Some(props.symmetric),
+                asymmetric: Some(props.asymmetric),
+                transitive: Some(props.transitive),
+                reflexive: Some(props.reflexive),
+                irreflexive: Some(props.irreflexive),
+                functional: Some(props.functional),
+                inverse_functional: Some(props.inverse_functional),
+                inverse_of: None,
+                world: None,
+            }),
+        }
+    }
+
+    fn graph_vocab(nodes: Vec<VocabNode>, edges: Vec<VocabEdge>) -> Vocab {
+        Vocab {
+            name: "g".to_owned(),
+            description: None,
+            world: VocabWorld::ClosedWithDefault,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: Some(edges),
+            nodes: Some(nodes),
+        }
+    }
+
+    fn legacy_vocab() -> Vocab {
+        Vocab {
+            name: "t".to_owned(),
+            description: None,
+            world: VocabWorld::ClosedWithDefault,
+            top: Some("any".to_owned()),
+            actions: Some(vec![
+                ActionEntry {
+                    id: "any".to_owned(),
+                    parents: vec![],
+                    class: None,
+                    description: None,
+                },
+                ActionEntry {
+                    id: "fine_tune".to_owned(),
+                    parents: vec!["any".to_owned()],
+                    class: None,
+                    description: None,
+                },
+            ]),
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
+        }
+    }
 
     fn cyclic_vocab() -> Vocab {
         // a subsumed_by b subsumed_by a — a directed cycle.
@@ -898,6 +1206,131 @@ mod edge_case_tests {
     }
 
     #[test]
+    fn vocab_registry_subsumption_query() {
+        let mut reg = VocabRegistry::new();
+        reg.insert("at://x/v/legacy", &legacy_vocab());
+        assert_eq!(
+            reg.is_subsumed_by("at://x/v/legacy", "fine_tune", "any"),
+            Some(true)
+        );
+        assert_eq!(
+            reg.is_subsumed_by("at://x/v/legacy", "any", "fine_tune"),
+            Some(false)
+        );
+        assert_eq!(
+            reg.is_subsumed_by("at://x/v/missing", "a", "b"),
+            None,
+            "unregistered vocab returns None"
+        );
+    }
+
+    #[test]
+    fn vocab_registry_satisfies_under_arbitrary_relation() {
+        // Build a vocab with stronger_than edges:
+        // formal-proof stronger_than property-test stronger_than roundtrip-test.
+        let v = graph_vocab(
+            vec![
+                graph_node("roundtrip-test", VocabNodeKind::Concept),
+                graph_node("property-test", VocabNodeKind::Concept),
+                graph_node("formal-proof", VocabNodeKind::Concept),
+                relation_node(
+                    "stronger_than",
+                    RelationProperties {
+                        transitive: true,
+                        ..RelationProperties::default()
+                    },
+                ),
+            ],
+            vec![
+                VocabEdge {
+                    source: "formal-proof".to_owned(),
+                    target: "property-test".to_owned(),
+                    relation_slug: VocabEdgeRelationSlug::Other("stronger_than".to_owned()),
+                    relation_vocab: None,
+                    relation_uri: None,
+                    weight: None,
+                    metadata: None,
+                },
+                VocabEdge {
+                    source: "property-test".to_owned(),
+                    target: "roundtrip-test".to_owned(),
+                    relation_slug: VocabEdgeRelationSlug::Other("stronger_than".to_owned()),
+                    relation_vocab: None,
+                    relation_uri: None,
+                    weight: None,
+                    metadata: None,
+                },
+            ],
+        );
+        let mut reg = VocabRegistry::new();
+        reg.insert("at://x/v/verifs", &v);
+        // formal-proof satisfies the property-test requirement.
+        assert_eq!(
+            reg.satisfies(
+                "at://x/v/verifs",
+                "formal-proof",
+                "stronger_than",
+                "property-test"
+            ),
+            Some(true)
+        );
+        // formal-proof transitively satisfies roundtrip-test.
+        assert_eq!(
+            reg.satisfies(
+                "at://x/v/verifs",
+                "formal-proof",
+                "stronger_than",
+                "roundtrip-test"
+            ),
+            Some(true)
+        );
+        // property-test does NOT satisfy formal-proof (weaker).
+        assert_eq!(
+            reg.satisfies(
+                "at://x/v/verifs",
+                "property-test",
+                "stronger_than",
+                "formal-proof"
+            ),
+            Some(false)
+        );
+        // Reflexive: anything satisfies itself.
+        assert_eq!(
+            reg.satisfies(
+                "at://x/v/verifs",
+                "formal-proof",
+                "stronger_than",
+                "formal-proof"
+            ),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn vocab_registry_translate_routes_to_equivalent_in() {
+        let mut reg = VocabRegistry::new();
+        let v1 = graph_vocab(vec![graph_node("agree", VocabNodeKind::Concept)], vec![]);
+        let v2 = graph_vocab(
+            vec![
+                graph_node("agree", VocabNodeKind::Concept),
+                graph_node("disagree", VocabNodeKind::Concept),
+            ],
+            vec![],
+        );
+        reg.insert("at://x/v/a", &v1);
+        reg.insert("at://x/v/b", &v2);
+        assert_eq!(
+            reg.translate("at://x/v/a", "at://x/v/b", "agree"),
+            Some("agree".to_owned())
+        );
+        assert_eq!(reg.translate("at://x/v/a", "at://x/v/b", "missing"), None);
+        assert_eq!(
+            reg.translate("at://x/v/missing", "at://x/v/b", "agree"),
+            None
+        );
+    }
+
+    #[test]
     fn graph_node_authored_relation_kind_carries_metadata_into_walks() {
         // A symmetric authored relation must propagate to walk
         // semantics even without a kind="relation" on the legacy
@@ -920,6 +1353,13 @@ mod edge_case_tests {
                     label: None,
                     alternate_labels: None,
                     description: None,
+                    change_note: None,
+                    editorial_note: None,
+                    example: None,
+                    hidden_labels: None,
+                    history_note: None,
+                    notation: None,
+                    scope_note: None,
                     external_ids: None,
                     status: None,
                     status_vocab: None,
@@ -934,6 +1374,13 @@ mod edge_case_tests {
                     label: None,
                     alternate_labels: None,
                     description: None,
+                    change_note: None,
+                    editorial_note: None,
+                    example: None,
+                    hidden_labels: None,
+                    history_note: None,
+                    notation: None,
+                    scope_note: None,
                     external_ids: None,
                     status: None,
                     status_vocab: None,
@@ -948,6 +1395,13 @@ mod edge_case_tests {
                     label: None,
                     alternate_labels: None,
                     description: None,
+                    change_note: None,
+                    editorial_note: None,
+                    example: None,
+                    hidden_labels: None,
+                    history_note: None,
+                    notation: None,
+                    scope_note: None,
                     external_ids: None,
                     status: None,
                     status_vocab: None,
@@ -955,9 +1409,12 @@ mod edge_case_tests {
                     relation_metadata: Some(
                         crate::generated::dev::idiolect::vocab::RelationMetadata {
                             symmetric: Some(true),
+                            asymmetric: None,
                             transitive: None,
                             reflexive: None,
+                            irreflexive: None,
                             functional: None,
+                            inverse_functional: None,
                             inverse_of: None,
                             world: None,
                         },
@@ -982,5 +1439,282 @@ mod edge_case_tests {
             from_b.iter().any(|x| x == "a"),
             "symmetric authored relation should permit reverse walk: {from_b:?}"
         );
+    }
+}
+
+#[cfg(test)]
+mod owl_skos_tests {
+    use super::*;
+    use crate::Datetime;
+    use crate::generated::dev::idiolect::vocab::{
+        RelationMetadata, VocabNode, VocabNodeKind, VocabWorld,
+    };
+
+    #[test]
+    fn relation_properties_contradictions_detect_symmetric_asymmetric() {
+        let p = RelationProperties {
+            symmetric: true,
+            asymmetric: true,
+            ..RelationProperties::default()
+        };
+        let bad = p.contradictions();
+        assert_eq!(bad, vec!["symmetric+asymmetric"]);
+    }
+
+    #[test]
+    fn relation_properties_contradictions_detect_reflexive_irreflexive() {
+        let p = RelationProperties {
+            reflexive: true,
+            irreflexive: true,
+            ..RelationProperties::default()
+        };
+        let bad = p.contradictions();
+        assert_eq!(bad, vec!["reflexive+irreflexive"]);
+    }
+
+    #[test]
+    fn relation_properties_contradictions_returns_both_when_double_violation() {
+        let p = RelationProperties {
+            symmetric: true,
+            asymmetric: true,
+            reflexive: true,
+            irreflexive: true,
+            ..RelationProperties::default()
+        };
+        let bad = p.contradictions();
+        assert_eq!(bad, vec!["symmetric+asymmetric", "reflexive+irreflexive"]);
+    }
+
+    #[test]
+    fn relation_properties_consistent_returns_empty() {
+        let p = RelationProperties {
+            symmetric: true,
+            transitive: true,
+            ..RelationProperties::default()
+        };
+        assert!(p.contradictions().is_empty());
+    }
+
+    #[test]
+    fn full_owl_lite_metadata_lifts_to_relation_properties() {
+        // Author a relation node with every OWL Lite flag set (in
+        // a not-self-contradictory combination).
+        let node = VocabNode {
+            id: "has_isbn".to_owned(),
+            kind: Some(VocabNodeKind::Relation),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: None,
+            alternate_labels: None,
+            hidden_labels: None,
+            description: None,
+            scope_note: None,
+            example: None,
+            history_note: None,
+            editorial_note: None,
+            change_note: None,
+            notation: None,
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: Some(RelationMetadata {
+                symmetric: Some(false),
+                asymmetric: Some(true),
+                transitive: Some(false),
+                reflexive: Some(false),
+                irreflexive: Some(true),
+                functional: Some(true),
+                inverse_functional: Some(true),
+                inverse_of: Some("isbn_of".to_owned()),
+                world: None,
+            }),
+        };
+        let v = Vocab {
+            name: "isbn".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: Some(vec![node]),
+        };
+        let g = VocabGraph::from_vocab(&v);
+        let props = g.relation_properties("has_isbn");
+        assert!(!props.symmetric);
+        assert!(props.asymmetric);
+        assert!(!props.transitive);
+        assert!(!props.reflexive);
+        assert!(props.irreflexive);
+        assert!(props.functional);
+        assert!(props.inverse_functional);
+        assert!(props.contradictions().is_empty());
+    }
+
+    #[test]
+    fn skos_fields_lift_into_normalized_node() {
+        let n = VocabNode {
+            id: "informatics".to_owned(),
+            kind: Some(VocabNodeKind::Concept),
+            kind_vocab: None,
+            subkind_uri: None,
+            label: Some("Informatics".to_owned()),
+            alternate_labels: Some(vec!["Information science".to_owned()]),
+            hidden_labels: Some(vec!["informaticks".to_owned()]),
+            description: Some("The study of information processing.".to_owned()),
+            scope_note: Some("Use for the academic discipline; see `software-engineering` for the practice.".to_owned()),
+            example: Some("Database design, ML pipelines, distributed systems.".to_owned()),
+            history_note: Some("Term coined ~1962, displaced 'documentation'.".to_owned()),
+            editorial_note: Some("Reviewed 2026-04-28 by R. Smith.".to_owned()),
+            change_note: Some("Added scope_note 2026-04-28.".to_owned()),
+            notation: Some("004".to_owned()),
+            external_ids: None,
+            status: None,
+            status_vocab: None,
+            deprecated_by: None,
+            relation_metadata: None,
+        };
+        let v = Vocab {
+            name: "library".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: Some(vec![n]),
+        };
+        let g = VocabGraph::from_vocab(&v);
+        let nn = g.node("informatics").expect("node present");
+        assert_eq!(nn.label.as_deref(), Some("Informatics"));
+        assert_eq!(nn.alternate_labels, vec!["Information science".to_owned()]);
+        assert_eq!(nn.hidden_labels, vec!["informaticks".to_owned()]);
+        assert_eq!(nn.scope_note.as_deref().map(|s| s.contains("academic")), Some(true));
+        assert!(nn.example.is_some());
+        assert!(nn.history_note.is_some());
+        assert!(nn.editorial_note.is_some());
+        assert!(nn.change_note.is_some());
+        assert_eq!(nn.notation.as_deref(), Some("004"));
+    }
+
+    #[test]
+    fn skos_collection_kind_walks_member_of_relation() {
+        // A SKOS Collection groups concepts via member_of edges.
+        let v = Vocab {
+            name: "policies".to_owned(),
+            description: None,
+            world: VocabWorld::Open,
+            top: None,
+            actions: None,
+            supersedes: None,
+            occurred_at: Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime"),
+            default_relation: None,
+            nodes: Some(vec![
+                VocabNode {
+                    id: "isolation_policies".to_owned(),
+                    kind: Some(VocabNodeKind::Other("collection".to_owned())),
+                    kind_vocab: None,
+                    subkind_uri: None,
+                    label: Some("Isolation policies".to_owned()),
+                    alternate_labels: None,
+                    hidden_labels: None,
+                    description: None,
+                    scope_note: None,
+                    example: None,
+                    history_note: None,
+                    editorial_note: None,
+                    change_note: None,
+                    notation: None,
+                    external_ids: None,
+                    status: None,
+                    status_vocab: None,
+                    deprecated_by: None,
+                    relation_metadata: None,
+                },
+                VocabNode {
+                    id: "process".to_owned(),
+                    kind: Some(VocabNodeKind::Concept),
+                    kind_vocab: None,
+                    subkind_uri: None,
+                    label: None,
+                    alternate_labels: None,
+                    hidden_labels: None,
+                    description: None,
+                    scope_note: None,
+                    example: None,
+                    history_note: None,
+                    editorial_note: None,
+                    change_note: None,
+                    notation: None,
+                    external_ids: None,
+                    status: None,
+                    status_vocab: None,
+                    deprecated_by: None,
+                    relation_metadata: None,
+                },
+                VocabNode {
+                    id: "container".to_owned(),
+                    kind: Some(VocabNodeKind::Concept),
+                    kind_vocab: None,
+                    subkind_uri: None,
+                    label: None,
+                    alternate_labels: None,
+                    hidden_labels: None,
+                    description: None,
+                    scope_note: None,
+                    example: None,
+                    history_note: None,
+                    editorial_note: None,
+                    change_note: None,
+                    notation: None,
+                    external_ids: None,
+                    status: None,
+                    status_vocab: None,
+                    deprecated_by: None,
+                    relation_metadata: None,
+                },
+            ]),
+            edges: Some(vec![
+                crate::generated::dev::idiolect::vocab::VocabEdge {
+                    source: "process".to_owned(),
+                    target: "isolation_policies".to_owned(),
+                    relation_slug:
+                        crate::generated::dev::idiolect::vocab::VocabEdgeRelationSlug::MemberOf,
+                    relation_vocab: None,
+                    relation_uri: None,
+                    weight: None,
+                    metadata: None,
+                },
+                crate::generated::dev::idiolect::vocab::VocabEdge {
+                    source: "container".to_owned(),
+                    target: "isolation_policies".to_owned(),
+                    relation_slug:
+                        crate::generated::dev::idiolect::vocab::VocabEdgeRelationSlug::MemberOf,
+                    relation_vocab: None,
+                    relation_uri: None,
+                    weight: None,
+                    metadata: None,
+                },
+            ]),
+        };
+        let g = VocabGraph::from_vocab(&v);
+        // Both members reach the collection via member_of.
+        for member in ["process", "container"] {
+            let targets = g.direct_targets(member, "member_of");
+            assert!(
+                targets.iter().any(|t| t == "isolation_policies"),
+                "{member} should be a member_of isolation_policies, got {targets:?}"
+            );
+        }
+        // The collection has both members as inbound member_of edges.
+        let members = g.direct_sources("isolation_policies", "member_of");
+        let mut sorted = members.to_vec();
+        sorted.sort();
+        assert_eq!(sorted, vec!["container".to_owned(), "process".to_owned()]);
     }
 }

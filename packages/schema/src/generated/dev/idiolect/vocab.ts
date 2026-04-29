@@ -123,27 +123,39 @@ export interface ExternalId {
 }
 
 /**
-* Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction.
+* Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction. The full OWL Lite property-characteristic set is supported (symmetric, asymmetric, transitive, reflexive, irreflexive, functional, inverseFunctional, inverseOf).
 */
 export interface RelationMetadata {
   /**
-  * Each source has at most one target under this relation.
+  * A rel B implies NOT (B rel A). Declarative; consumers may use this to validate that no edge contradicts the asymmetry. Mutually exclusive with `symmetric` (declaring both is a config error).
+  */
+  asymmetric?: boolean;
+  /**
+  * Each source has at most one target under this relation. Currently advisory.
   */
   functional?: boolean;
+  /**
+  * Each target has at most one source under this relation. Currently advisory; useful for declaring identifier-like relations (e.g. `has_isbn`).
+  */
+  inverseFunctional?: boolean;
   /**
   * Slug of the inverse relation (e.g. `narrower_than` for `broader_than`). Edges in this relation imply mirror-inverse edges in the named relation.
   */
   inverseOf?: string;
   /**
-  * A rel A holds for every node.
+  * NOT (A rel A) for any A. Declarative; consumers may use this to validate that no self-loop edge exists. Mutually exclusive with `reflexive`.
+  */
+  irreflexive?: boolean;
+  /**
+  * A rel A holds for every A. Reflected in the `reflexive` argument of walks.
   */
   reflexive?: boolean;
   /**
-  * A rel B implies B rel A.
+  * A rel B implies B rel A. Walks traverse outbound and inbound edges as one set.
   */
   symmetric?: boolean;
   /**
-  * A rel B and B rel C implies A rel C.
+  * A rel B and B rel C imply A rel C. Walks compute the transitive closure.
   */
   transitive?: boolean;
   /**
@@ -191,27 +203,47 @@ export interface VocabEdge {
 */
 export interface VocabNode {
   /**
-  * Synonyms, translations, or alternate spellings.
+  * Synonyms, translations, or alternate spellings (SKOS `altLabel`).
   */
   alternateLabels?: string[];
+  /**
+  * SKOS `changeNote`: a fine-grained record of a single change.
+  */
+  changeNote?: string;
   /**
   * AT-URI of the node that supersedes this one, when status=deprecated.
   */
   deprecatedBy?: string;
   /**
-  * Optional scope note or detailed description.
+  * SKOS `definition`: a complete explanation of what the concept means.
   */
   description?: string;
+  /**
+  * SKOS `editorialNote`: management-level annotations not visible to end users.
+  */
+  editorialNote?: string;
+  /**
+  * SKOS `example`: a concrete instance or usage example.
+  */
+  example?: string;
   /**
   * External identifier mappings into non-ATProto knowledge bases (Wikidata, ROR, ORCID, ...). Enables cross-system translation.
   */
   externalIds?: ExternalId[];
   /**
+  * SKOS `hiddenLabel`: searchable but not displayed. Useful for misspellings, deprecated forms, lookup synonyms.
+  */
+  hiddenLabels?: string[];
+  /**
+  * SKOS `historyNote`: significant changes in the concept's history.
+  */
+  historyNote?: string;
+  /**
   * Stable node identifier (slug). Used as the source/target of edges within the same vocabulary.
   */
   id: string;
   /**
-  * Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass. Consumers dispatch on this; resolved against `kindVocab` when present.
+  * Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass; `collection` is a SKOS-style grouping of concepts (members declared via `member_of` edges). Consumers dispatch on this; resolved against `kindVocab` when present.
   */
   kind?: VocabNodeKind;
   /**
@@ -223,9 +255,17 @@ export interface VocabNode {
   */
   label?: string;
   /**
+  * SKOS `notation`: a non-text identifier (e.g. a Dewey decimal code, an ISO designator). Distinct from `id`: notation is for display and indexing in legacy classification systems; `id` is the slug used internally.
+  */
+  notation?: string;
+  /**
   * Algebraic metadata, populated only when this node represents a relation type (kind=relation).
   */
   relationMetadata?: RelationMetadata;
+  /**
+  * SKOS `scopeNote`: guidance on how the concept should be used. Distinct from `description` (definition) — scopeNote covers application boundaries, common pitfalls, when to prefer a sibling concept.
+  */
+  scopeNote?: string;
   /**
   * Open-enum lifecycle status. Resolved against `statusVocab` when present.
   */
@@ -246,9 +286,9 @@ export type ExternalIdSystem = "wikidata" | "ror" | "orcid" | "isni" | "viaf" | 
 
 export type RelationMetadataWorld = "closed-with-default" | "open" | "hierarchy-closed";
 
-export type VocabEdgeRelationSlug = "subsumed_by" | "broader_than" | "narrower_than" | "equivalent_to" | "polar_opposite_of" | "related_to" | "instance_of" | "part_of" | string & {};
+export type VocabEdgeRelationSlug = "subsumed_by" | "broader_than" | "narrower_than" | "equivalent_to" | "polar_opposite_of" | "related_to" | "instance_of" | "part_of" | "member_of" | string & {};
 
-export type VocabNodeKind = "concept" | "relation" | "instance" | "type" | string & {};
+export type VocabNodeKind = "concept" | "relation" | "instance" | "type" | "collection" | string & {};
 
 export type VocabNodeStatus = "proposed" | "provisional" | "established" | "deprecated" | string & {};
 
