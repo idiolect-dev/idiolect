@@ -19,5 +19,7 @@ export interface PanprotoRefUpdate {
 export interface BreakingChange {
   description: string;
   element: string;
-  kind: string;
+  kind: BreakingChangeKind;
 }
+
+export type BreakingChangeKind = "vertexRemoved" | "edgeRemoved" | "constraintTightened" | "requiredFieldAdded" | "typeChanged" | "arityChanged" | "variantRemoved" | "semanticChange" | string & {};

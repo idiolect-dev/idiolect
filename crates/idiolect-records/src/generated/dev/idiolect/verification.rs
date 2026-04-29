@@ -7,7 +7,8 @@
     missing_docs,
     clippy::doc_markdown,
     clippy::struct_excessive_bools,
-    clippy::derive_partial_eq_without_eq
+    clippy::derive_partial_eq_without_eq,
+    clippy::large_enum_variant
 )]
 use serde::{Deserialize, Serialize};
 
@@ -24,8 +25,11 @@ pub struct Verification {
     /// Other verifications this one depends on (e.g. a proof assuming a lemma).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dependencies: Option<Vec<idiolect_records::AtUri>>,
-    /// Fixed taxonomy at the Lexicon level. Each kind has its own trust semantics.
+    /// Open-enum verification-kind slug. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary; each kind has its own trust semantics.
     pub kind: VerificationKind,
+    /// Vocabulary the `kind` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// The lens whose property is being asserted.
     pub lens: crate::generated::dev::idiolect::defs::LensRef,
     pub occurred_at: idiolect_records::Datetime,
@@ -34,8 +38,11 @@ pub struct Verification {
     pub proof_artifact: Option<idiolect_records::Cid>,
     /// Structured statement of what the verification asserts, dispatched on the variant: RoundtripDomain for roundtrip-test, GeneratorSpec for property-test, Theorem for formal-proof, ConformanceStandard for conformance-test, StaticCheckerConfig for static-check, ConvergenceClaim for convergence-preserving. See dev.idiolect.theory.lens_property.
     pub property: VerificationProperty,
-    /// Assertion outcome. Falsified verifications are first-class records; they are how the community learns a lens is wrong.
+    /// Open-enum assertion outcome. Resolved against `resultVocab` when present; falsified verifications are first-class records and are how the community learns a lens is wrong.
     pub result: VerificationResult,
+    /// Vocabulary the `result` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub result_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Tool and version used to establish the verification.
     pub tool: crate::generated::dev::idiolect::defs::Tool,
     /// DID of the party asserting the verification.
@@ -66,9 +73,8 @@ pub enum VerificationProperty {
     LpCoercionLaw(crate::generated::dev::idiolect::defs::LpCoercionLaw),
 }
 
-/// VerificationKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// VerificationKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum VerificationKind {
     RoundtripTest,
     PropertyTest,
@@ -77,13 +83,226 @@ pub enum VerificationKind {
     StaticCheck,
     ConvergencePreserving,
     CoercionLaw,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl VerificationKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::RoundtripTest => "roundtrip-test",
+            Self::PropertyTest => "property-test",
+            Self::FormalProof => "formal-proof",
+            Self::ConformanceTest => "conformance-test",
+            Self::StaticCheck => "static-check",
+            Self::ConvergencePreserving => "convergence-preserving",
+            Self::CoercionLaw => "coercion-law",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for VerificationKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            "coercion-law" => Self::CoercionLaw,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for VerificationKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            "coercion-law" => Self::CoercionLaw,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for VerificationKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for VerificationKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
-/// VerificationResult.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// VerificationResult. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum VerificationResult {
     Holds,
     Falsified,
     Inconclusive,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl VerificationResult {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Holds => "holds",
+            Self::Falsified => "falsified",
+            Self::Inconclusive => "inconclusive",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for VerificationResult {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "holds" => Self::Holds,
+            "falsified" => Self::Falsified,
+            "inconclusive" => Self::Inconclusive,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for VerificationResult {
+    fn from(s: &str) -> Self {
+        match s {
+            "holds" => Self::Holds,
+            "falsified" => Self::Falsified,
+            "inconclusive" => Self::Inconclusive,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for VerificationResult {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for VerificationResult {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

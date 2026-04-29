@@ -7,7 +7,8 @@
     missing_docs,
     clippy::doc_markdown,
     clippy::struct_excessive_bools,
-    clippy::derive_partial_eq_without_eq
+    clippy::derive_partial_eq_without_eq,
+    clippy::large_enum_variant
 )]
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +51,11 @@ pub struct RetrospectionFinding {
     /// Structured witness for the finding. See dev.idiolect.theory.finding.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub evidence: Option<RetrospectionFindingEvidence>,
+    /// Open-enum finding-kind slug. Resolved against `kindVocab` when present.
     pub kind: RetrospectionFindingKind,
+    /// Vocabulary the `kind` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
 }
 /// RetrospectionFindingEvidence tagged union.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -63,12 +68,115 @@ pub enum RetrospectionFindingEvidence {
     #[serde(rename = "dev.idiolect.defs#evidenceMismatch")]
     EvidenceMismatch(crate::generated::dev::idiolect::defs::EvidenceMismatch),
 }
-/// RetrospectionFindingKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// RetrospectionFindingKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RetrospectionFindingKind {
     MergeDivergence,
     DataLoss,
     ReconciliationMismatch,
     Other,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Extended(String),
+}
+impl RetrospectionFindingKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::MergeDivergence => "merge-divergence",
+            Self::DataLoss => "data-loss",
+            Self::ReconciliationMismatch => "reconciliation-mismatch",
+            Self::Other => "other",
+            Self::Extended(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for RetrospectionFindingKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "merge-divergence" => Self::MergeDivergence,
+            "data-loss" => Self::DataLoss,
+            "reconciliation-mismatch" => Self::ReconciliationMismatch,
+            "other" => Self::Other,
+            _ => Self::Extended(s),
+        }
+    }
+}
+impl From<&str> for RetrospectionFindingKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "merge-divergence" => Self::MergeDivergence,
+            "data-loss" => Self::DataLoss,
+            "reconciliation-mismatch" => Self::ReconciliationMismatch,
+            "other" => Self::Other,
+            _ => Self::Extended(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for RetrospectionFindingKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for RetrospectionFindingKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

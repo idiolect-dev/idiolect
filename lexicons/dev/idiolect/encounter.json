@@ -41,8 +41,14 @@
           },
           "downstreamResult": {
             "type": "string",
-            "enum": ["success", "corrected", "rejected", "unknown"],
-            "description": "Outcome as assessed by the invoking party at record time. 'corrected' signals a follow-up correction record is expected or exists."
+            "maxLength": 256,
+            "knownValues": ["success", "corrected", "rejected", "unknown"],
+            "description": "Open-enum outcome slug as assessed by the invoking party at record time. Resolved against `downstreamResultVocab` when present; `corrected` signals a follow-up correction record is expected or exists."
+          },
+          "downstreamResultVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `downstreamResult` slug resolves against."
           },
           "annotations": {
             "type": "string",
@@ -61,14 +67,20 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
+            "maxLength": 256,
+            "knownValues": [
               "invocation-log",
               "curated",
               "roundtrip-verified",
               "production",
               "adversarial"
             ],
-            "description": "Fixed taxonomy at the Lexicon level. Observers declare how they weight each kind."
+            "description": "Open-enum corpus-kind slug. Resolved against `kindVocab` when present; observers declare how they weight each kind."
+          },
+          "kindVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `kind` slug resolves against."
           },
           "visibility": {
             "type": "ref",

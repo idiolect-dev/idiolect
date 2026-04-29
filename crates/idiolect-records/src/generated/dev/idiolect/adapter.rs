@@ -7,7 +7,8 @@
     missing_docs,
     clippy::doc_markdown,
     clippy::struct_excessive_bools,
-    clippy::derive_partial_eq_without_eq
+    clippy::derive_partial_eq_without_eq,
+    clippy::large_enum_variant
 )]
 use serde::{Deserialize, Serialize};
 
@@ -45,62 +46,487 @@ pub struct AdapterInvocationProtocol {
     /// Schema of the adapter's input.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub input_schema: Option<crate::generated::dev::idiolect::defs::SchemaRef>,
-    /// Transport protocol.
+    /// Open-enum transport protocol slug. Resolved against `kindVocab` when present, otherwise against the canonical idiolect invocation-protocols vocabulary.
     pub kind: AdapterInvocationProtocolKind,
+    /// Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Schema of the adapter's output.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output_schema: Option<crate::generated::dev::idiolect::defs::SchemaRef>,
 }
-/// AdapterInvocationProtocolKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// AdapterInvocationProtocolKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AdapterInvocationProtocolKind {
     Subprocess,
     Http,
     Wasm,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl AdapterInvocationProtocolKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Subprocess => "subprocess",
+            Self::Http => "http",
+            Self::Wasm => "wasm",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for AdapterInvocationProtocolKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "subprocess" => Self::Subprocess,
+            "http" => Self::Http,
+            "wasm" => Self::Wasm,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for AdapterInvocationProtocolKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "subprocess" => Self::Subprocess,
+            "http" => Self::Http,
+            "wasm" => Self::Wasm,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for AdapterInvocationProtocolKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for AdapterInvocationProtocolKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 /// Sandboxing requirements the orchestrator must honour.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdapterIsolation {
-    /// What filesystem access the adapter is allowed.
+    /// Open-enum filesystem-access policy. Resolved against `filesystemPolicyVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filesystem_policy: Option<AdapterIsolationFilesystemPolicy>,
+    /// Vocabulary the `filesystemPolicy` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filesystem_policy_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
+    /// Open-enum isolation kind. Resolved against `kindVocab` when present.
     pub kind: AdapterIsolationKind,
-    /// What network access the adapter is allowed.
+    /// Vocabulary the `kind` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
+    /// Open-enum network-access policy. Resolved against `networkPolicyVocab` when present.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub network_policy: Option<AdapterIsolationNetworkPolicy>,
+    /// Vocabulary the `networkPolicy` slug resolves against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub network_policy_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resource_limits: Option<AdapterIsolationResourceLimits>,
 }
-/// AdapterIsolationFilesystemPolicy.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// AdapterIsolationFilesystemPolicy. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AdapterIsolationFilesystemPolicy {
     Readonly,
     Scratch,
     WritableSubtree,
     Full,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
 }
-/// AdapterIsolationKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+impl AdapterIsolationFilesystemPolicy {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Readonly => "readonly",
+            Self::Scratch => "scratch",
+            Self::WritableSubtree => "writable-subtree",
+            Self::Full => "full",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for AdapterIsolationFilesystemPolicy {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "readonly" => Self::Readonly,
+            "scratch" => Self::Scratch,
+            "writable-subtree" => Self::WritableSubtree,
+            "full" => Self::Full,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for AdapterIsolationFilesystemPolicy {
+    fn from(s: &str) -> Self {
+        match s {
+            "readonly" => Self::Readonly,
+            "scratch" => Self::Scratch,
+            "writable-subtree" => Self::WritableSubtree,
+            "full" => Self::Full,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for AdapterIsolationFilesystemPolicy {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for AdapterIsolationFilesystemPolicy {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
+}
+/// AdapterIsolationKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AdapterIsolationKind {
     None,
     Process,
     Container,
     Vm,
     WasmSandbox,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
 }
-/// AdapterIsolationNetworkPolicy.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+impl AdapterIsolationKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::None => "none",
+            Self::Process => "process",
+            Self::Container => "container",
+            Self::Vm => "vm",
+            Self::WasmSandbox => "wasm-sandbox",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for AdapterIsolationKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "none" => Self::None,
+            "process" => Self::Process,
+            "container" => Self::Container,
+            "vm" => Self::Vm,
+            "wasm-sandbox" => Self::WasmSandbox,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for AdapterIsolationKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "none" => Self::None,
+            "process" => Self::Process,
+            "container" => Self::Container,
+            "vm" => Self::Vm,
+            "wasm-sandbox" => Self::WasmSandbox,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for AdapterIsolationKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for AdapterIsolationKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
+}
+/// AdapterIsolationNetworkPolicy. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AdapterIsolationNetworkPolicy {
     None,
     EgressDenylist,
     EgressAllowlist,
     Full,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl AdapterIsolationNetworkPolicy {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::None => "none",
+            Self::EgressDenylist => "egress-denylist",
+            Self::EgressAllowlist => "egress-allowlist",
+            Self::Full => "full",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for AdapterIsolationNetworkPolicy {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "none" => Self::None,
+            "egress-denylist" => Self::EgressDenylist,
+            "egress-allowlist" => Self::EgressAllowlist,
+            "full" => Self::Full,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for AdapterIsolationNetworkPolicy {
+    fn from(s: &str) -> Self {
+        match s {
+            "none" => Self::None,
+            "egress-denylist" => Self::EgressDenylist,
+            "egress-allowlist" => Self::EgressAllowlist,
+            "full" => Self::Full,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for AdapterIsolationNetworkPolicy {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for AdapterIsolationNetworkPolicy {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

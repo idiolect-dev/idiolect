@@ -1,0 +1,107 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "isolation-kinds-v1",
+  "description": "Canonical sandbox-isolation vocabulary for `dev.idiolect.adapter#isolation.kind`. Stronger isolation subsumes weaker (a `vm` provides at-least-as-strong guarantees as `container`); the orchestrator uses subsumption to satisfy a 'requires at least X' constraint.",
+  "world": "closed-with-default",
+  "nodes": [
+    {
+      "id": "any_isolation",
+      "kind": "concept",
+      "label": "Any isolation kind"
+    },
+    {
+      "id": "none",
+      "kind": "concept",
+      "label": "None",
+      "description": "No sandboxing."
+    },
+    {
+      "id": "process",
+      "kind": "concept",
+      "label": "OS process boundary"
+    },
+    {
+      "id": "container",
+      "kind": "concept",
+      "label": "Container",
+      "description": "Namespace + cgroup isolation."
+    },
+    {
+      "id": "vm",
+      "kind": "concept",
+      "label": "Virtual machine"
+    },
+    {
+      "id": "wasm-sandbox",
+      "kind": "concept",
+      "label": "WASM sandbox"
+    },
+    {
+      "id": "provides_at_least",
+      "kind": "relation",
+      "label": "provides isolation at least as strong as",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true,
+        "inverseOf": "weaker_than"
+      }
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "process",
+      "target": "none",
+      "relationSlug": "provides_at_least"
+    },
+    {
+      "source": "container",
+      "target": "process",
+      "relationSlug": "provides_at_least"
+    },
+    {
+      "source": "vm",
+      "target": "container",
+      "relationSlug": "provides_at_least"
+    },
+    {
+      "source": "wasm-sandbox",
+      "target": "process",
+      "relationSlug": "provides_at_least"
+    },
+    {
+      "source": "none",
+      "target": "any_isolation",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "process",
+      "target": "any_isolation",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "container",
+      "target": "any_isolation",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "vm",
+      "target": "any_isolation",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "wasm-sandbox",
+      "target": "any_isolation",
+      "relationSlug": "subsumed_by"
+    }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}

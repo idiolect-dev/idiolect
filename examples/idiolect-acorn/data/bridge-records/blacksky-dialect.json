@@ -1,0 +1,32 @@
+{
+  "$nsid": "dev.idiolect.dialect",
+  "owningCommunity": "at://did:plc:blacksky/dev.idiolect.community/main",
+  "name": "blacksky-acorn-v1",
+  "description": "Blacksky's dialect: the bundle of community.blacksky.* schemas Blacksky treats as canonical, paired with the bridging lenses that translate them to dev.idiolect.deliberation*. Consumers reading this dialect record can resolve any Acorn assembly record into the idiolect attitudinal framework without authoring per-field translation code.",
+  "version": "1",
+  "idiolects": [
+    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.feed.post" },
+    {
+      "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.conversation"
+    },
+    {
+      "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.statement"
+    },
+    { "uri": "at://did:plc:blacksky/dev.panproto.schema.schema/community.blacksky.assembly.vote" }
+  ],
+  "preferredLenses": [
+    {
+      "uri": "at://did:plc:idiolect-acorn/dev.idiolect.lens/conversation-to-deliberation-v1",
+      "direction": "bidirectional"
+    },
+    {
+      "uri": "at://did:plc:idiolect-acorn/dev.idiolect.lens/statement-to-deliberation-statement-v1",
+      "direction": "bidirectional"
+    },
+    {
+      "uri": "at://did:plc:idiolect-acorn/dev.idiolect.lens/vote-to-deliberation-vote-v1",
+      "direction": "bidirectional"
+    }
+  ],
+  "createdAt": "2026-04-28T00:00:00.000Z"
+}

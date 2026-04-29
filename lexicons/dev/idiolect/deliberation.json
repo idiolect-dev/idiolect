@@ -1,0 +1,87 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.deliberation",
+  "description": "A community-scoped question or proposal under collective consideration. Companion records `dev.idiolect.deliberationStatement` carry participant utterances, `dev.idiolect.deliberationVote` carries stances on those statements, and `dev.idiolect.deliberationOutcome` carries the observer-aggregated tally. Deliberations are intentionally process-shaped: they represent the *unsettled* moment, distinct from `dev.idiolect.belief` (settled doxastic) and `dev.idiolect.recommendation` (settled normative). A deliberation that closes can name an outcome record so consumers can read the conclusion without re-folding the votes.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A deliberation: a topic or question owned by a community, optionally bracketed by a status and classification. Topic and description carry the human framing; classification and status are open-enum slugs resolved through community-published vocabularies, so a community can decline to take a stance on those axes simply by omitting them.",
+      "record": {
+        "type": "object",
+        "required": ["owningCommunity", "topic", "createdAt"],
+        "properties": {
+          "owningCommunity": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT-URI of the `dev.idiolect.community` record whose membership is deliberating. Consumers resolve membership/permissions through that record."
+          },
+          "topic": {
+            "type": "string",
+            "maxLength": 1000,
+            "maxGraphemes": 200,
+            "description": "Human-readable topic or question."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000,
+            "maxGraphemes": 1000,
+            "description": "Extended framing or context for the deliberation."
+          },
+          "authRequired": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether participation requires the participant be an authenticated member of `owningCommunity`. False permits drive-by statements."
+          },
+          "classification": {
+            "type": "string",
+            "maxLength": 256,
+            "knownValues": [
+              "question",
+              "proposal",
+              "grievance",
+              "retrospective"
+            ],
+            "description": "Open-enum slug naming the deliberation's shape. Resolved against `classificationVocab` when present, otherwise against the canonical idiolect vocabulary."
+          },
+          "classificationVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `classification` slug resolves against. Omit to use the canonical idiolect default."
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 256,
+            "knownValues": [
+              "open",
+              "closed",
+              "tabled",
+              "adopted",
+              "rejected"
+            ],
+            "description": "Open-enum lifecycle marker. Resolved against `statusVocab` when present."
+          },
+          "statusVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `status` slug resolves against."
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When the deliberation moved out of an open status. Optional; absent means open or never explicitly closed."
+          },
+          "outcome": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT-URI of a `dev.idiolect.deliberationOutcome` record summarising the resolved stance. Set after closure when an outcome exists; consumers can read it without re-folding the vote stream."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

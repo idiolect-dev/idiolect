@@ -248,6 +248,10 @@ const fn kind_tag(record: &AnyRecord) -> &'static str {
         AnyRecord::Retrospection(_) => "retrospection",
         AnyRecord::Belief(_) => "belief",
         AnyRecord::Vocab(_) => "vocab",
+        AnyRecord::Deliberation(_) => "deliberation",
+        AnyRecord::DeliberationStatement(_) => "deliberationStatement",
+        AnyRecord::DeliberationVote(_) => "deliberationVote",
+        AnyRecord::DeliberationOutcome(_) => "deliberationOutcome",
     }
 }
 
@@ -266,6 +270,10 @@ fn serialize_record_body(record: &AnyRecord) -> OrchestratorResult<String> {
         AnyRecord::Retrospection(r) => serde_json::to_string(r),
         AnyRecord::Belief(r) => serde_json::to_string(r),
         AnyRecord::Vocab(r) => serde_json::to_string(r),
+        AnyRecord::Deliberation(r) => serde_json::to_string(r),
+        AnyRecord::DeliberationStatement(r) => serde_json::to_string(r),
+        AnyRecord::DeliberationVote(r) => serde_json::to_string(r),
+        AnyRecord::DeliberationOutcome(r) => serde_json::to_string(r),
     };
     value.map_err(|e| OrchestratorError::Ingest(format!("serialize: {e}")))
 }
@@ -290,6 +298,10 @@ fn deserialize_record_body(kind: &str, body: &str) -> OrchestratorResult<AnyReco
         "retrospection" => AnyRecord::Retrospection(from(body)?),
         "belief" => AnyRecord::Belief(from(body)?),
         "vocab" => AnyRecord::Vocab(from(body)?),
+        "deliberation" => AnyRecord::Deliberation(from(body)?),
+        "deliberationStatement" => AnyRecord::DeliberationStatement(from(body)?),
+        "deliberationVote" => AnyRecord::DeliberationVote(from(body)?),
+        "deliberationOutcome" => AnyRecord::DeliberationOutcome(from(body)?),
         other => return Err(OrchestratorError::Ingest(format!("unknown kind `{other}`"))),
     })
 }

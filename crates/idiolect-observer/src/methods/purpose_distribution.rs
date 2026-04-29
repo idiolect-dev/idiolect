@@ -21,6 +21,7 @@ use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
 use idiolect_records::generated::dev::idiolect::vocab::{Vocab, VocabWorld};
+use idiolect_records::vocab::VocabGraph;
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;
@@ -63,33 +64,26 @@ impl PurposeDistributionMethod {
     }
 
     /// Register a purpose vocabulary at its canonical at-uri.
+    /// Routes through [`VocabGraph`] so both legacy tree-shape and
+    /// new graph-shape vocabs produce equivalent ancestor closures.
     pub fn register_vocabulary(&mut self, uri: impl Into<String>, vocab: &Vocab) {
-        let mut parents: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for entry in &vocab.actions {
-            parents
-                .entry(entry.id.clone())
-                .or_default()
-                .extend(entry.parents.iter().cloned());
-        }
+        let graph = VocabGraph::from_vocab(vocab);
         let mut ancestors: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for id in parents.keys() {
-            let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-            let mut frontier: Vec<String> =
-                parents.get(id).into_iter().flatten().cloned().collect();
-            while let Some(p) = frontier.pop() {
-                if seen.insert(p.clone())
-                    && let Some(gp) = parents.get(&p)
-                {
-                    frontier.extend(gp.iter().cloned());
-                }
+        for n in graph.nodes() {
+            if n.kind.as_deref() == Some("relation") {
+                continue;
             }
-            ancestors.insert(id.clone(), seen.into_iter().collect());
+            ancestors.insert(
+                n.id.clone(),
+                graph.walk_relation(&n.id, "subsumed_by", false),
+            );
         }
+        let top = graph.top_with(vocab.top.as_deref()).unwrap_or_default();
         self.vocabularies.insert(
             uri.into(),
             InternalVocab {
                 world: vocab.world,
-                top: vocab.top.clone(),
+                top,
                 ancestors,
             },
         );
@@ -142,6 +136,7 @@ impl ObservationMethod for PurposeDistributionMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -242,8 +237,10 @@ mod tests {
                 annotations: None,
                 basis: None,
                 downstream_result: None,
+                downstream_result_vocab: None,
                 holder: None,
                 kind: EncounterKind::Production,
+                kind_vocab: None,
                 lens: LensRef {
                     cid: None,
                     direction: None,
@@ -289,8 +286,8 @@ mod tests {
             name: "p".into(),
             description: None,
             world: VocabWorld::ClosedWithDefault,
-            top: "any_purpose".into(),
-            actions: vec![
+            top: Some("any_purpose".into()),
+            actions: Some(vec![
                 ActionEntry {
                     id: "any_purpose".into(),
                     parents: vec![],
@@ -309,10 +306,13 @@ mod tests {
                     description: None,
                     class: None,
                 },
-            ],
+            ]),
             supersedes: None,
             occurred_at: idiolect_records::Datetime::parse("2026-04-23T00:00:00Z")
                 .expect("valid datetime"),
+            default_relation: None,
+            edges: None,
+            nodes: None,
         }
     }
 

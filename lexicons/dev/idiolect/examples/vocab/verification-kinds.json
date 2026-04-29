@@ -1,0 +1,119 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "verification-kinds-v1",
+  "description": "Canonical verification-kind vocabulary used by `dev.idiolect.verification.kind`, `community.conventionVerificationReq.kind`, `bounty.wantVerification.kind`, and `bounty.constraintConformance.kind`. Stronger verifications subsume weaker (a formal-proof entails the property-test claim), so a community requiring `property-test` is satisfied by a `formal-proof`.",
+  "world": "closed-with-default",
+  "nodes": [
+    {
+      "id": "any_verification",
+      "kind": "concept",
+      "label": "Any verification"
+    },
+    {
+      "id": "roundtrip-test",
+      "kind": "concept",
+      "label": "Round-trip test"
+    },
+    {
+      "id": "property-test",
+      "kind": "concept",
+      "label": "Property-based test"
+    },
+    {
+      "id": "formal-proof",
+      "kind": "concept",
+      "label": "Formal proof"
+    },
+    {
+      "id": "conformance-test",
+      "kind": "concept",
+      "label": "Conformance test"
+    },
+    {
+      "id": "static-check",
+      "kind": "concept",
+      "label": "Static check"
+    },
+    {
+      "id": "convergence-preserving",
+      "kind": "concept",
+      "label": "Convergence-preserving"
+    },
+    {
+      "id": "coercion-law",
+      "kind": "concept",
+      "label": "Coercion-law check"
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    },
+    {
+      "id": "stronger_than",
+      "kind": "relation",
+      "label": "stronger than",
+      "relationMetadata": {
+        "transitive": true,
+        "inverseOf": "weaker_than"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "roundtrip-test",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "property-test",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "formal-proof",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "conformance-test",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "static-check",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "convergence-preserving",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "coercion-law",
+      "target": "any_verification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "formal-proof",
+      "target": "property-test",
+      "relationSlug": "stronger_than"
+    },
+    {
+      "source": "property-test",
+      "target": "roundtrip-test",
+      "relationSlug": "stronger_than"
+    },
+    {
+      "source": "coercion-law",
+      "target": "static-check",
+      "relationSlug": "stronger_than"
+    }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}

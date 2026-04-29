@@ -63,6 +63,7 @@ pub mod language;
 pub mod nsid;
 pub mod record;
 pub mod uri;
+pub mod vocab;
 
 pub use at_uri::{AtUri, AtUriError};
 pub use cid::{Cid, CidError};

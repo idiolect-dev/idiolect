@@ -34,8 +34,14 @@
             "properties": {
               "kind": {
                 "type": "string",
-                "enum": ["subprocess", "http", "wasm"],
-                "description": "Transport protocol."
+                "maxLength": 256,
+                "knownValues": ["subprocess", "http", "wasm"],
+                "description": "Open-enum transport protocol slug. Resolved against `kindVocab` when present, otherwise against the canonical idiolect invocation-protocols vocabulary."
+              },
+              "kindVocab": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#vocabRef",
+                "description": "Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default."
               },
               "entryPoint": {
                 "type": "string",
@@ -60,17 +66,36 @@
             "properties": {
               "kind": {
                 "type": "string",
-                "enum": ["none", "process", "container", "vm", "wasm-sandbox"]
+                "maxLength": 256,
+                "knownValues": ["none", "process", "container", "vm", "wasm-sandbox"],
+                "description": "Open-enum isolation kind. Resolved against `kindVocab` when present."
+              },
+              "kindVocab": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#vocabRef",
+                "description": "Vocabulary the `kind` slug resolves against."
               },
               "networkPolicy": {
                 "type": "string",
-                "enum": ["none", "egress-denylist", "egress-allowlist", "full"],
-                "description": "What network access the adapter is allowed."
+                "maxLength": 256,
+                "knownValues": ["none", "egress-denylist", "egress-allowlist", "full"],
+                "description": "Open-enum network-access policy. Resolved against `networkPolicyVocab` when present."
+              },
+              "networkPolicyVocab": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#vocabRef",
+                "description": "Vocabulary the `networkPolicy` slug resolves against."
               },
               "filesystemPolicy": {
                 "type": "string",
-                "enum": ["readonly", "scratch", "writable-subtree", "full"],
-                "description": "What filesystem access the adapter is allowed."
+                "maxLength": 256,
+                "knownValues": ["readonly", "scratch", "writable-subtree", "full"],
+                "description": "Open-enum filesystem-access policy. Resolved against `filesystemPolicyVocab` when present."
+              },
+              "filesystemPolicyVocab": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#vocabRef",
+                "description": "Vocabulary the `filesystemPolicy` slug resolves against."
               },
               "resourceLimits": {
                 "type": "object",

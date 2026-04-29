@@ -45,12 +45,16 @@ fn adapter_for(framework: &str) -> Adapter {
             input_schema: None,
             kind: AdapterInvocationProtocolKind::Subprocess,
             output_schema: None,
+            kind_vocab: None,
         },
         isolation: AdapterIsolation {
             kind: AdapterIsolationKind::Process,
             filesystem_policy: None,
             network_policy: None,
             resource_limits: None,
+            filesystem_policy_vocab: None,
+            kind_vocab: None,
+            network_policy_vocab: None,
         },
         occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
             .expect("valid datetime"),
@@ -70,6 +74,7 @@ fn bounty_want_lens(src: &str, tgt: &str) -> Bounty {
         requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
+        status_vocab: None,
         wants: BountyWants::WantLens(WantLens {
             bidirectional: None,
             source: s_ref(src),
@@ -96,6 +101,10 @@ fn community(members: &[&str]) -> Community {
         ),
         membership_roll: None,
         name: "Test".into(),
+        appview_endpoint: None,
+        member_role_vocab: None,
+        record_hosting: None,
+        role_assignments: None,
     }
 }
 
@@ -161,18 +170,24 @@ fn verification_holds(lens_uri: &str, kind: VerificationKind) -> Verification {
             version: None,
             violation_threshold: None,
         }),
+        VerificationKind::Other(_) => VerificationProperty::LpRoundtrip(LpRoundtrip {
+            domain: "extended".into(),
+            generator: None,
+        }),
     };
     Verification {
         basis: None,
         counterexample: None,
         dependencies: None,
         kind,
+        kind_vocab: None,
         lens: l_ref(lens_uri),
         occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
             .expect("valid datetime"),
         proof_artifact: None,
         property,
         result: VerificationResult::Holds,
+        result_vocab: None,
         tool: Tool {
             commit: None,
             name: "coq".into(),

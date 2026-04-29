@@ -48,8 +48,10 @@ fn encounter(
         annotations: None,
         basis: None,
         downstream_result: result,
+        downstream_result_vocab: None,
         holder: None,
         kind,
+        kind_vocab: None,
         lens: LensRef {
             uri: Some(idiolect_records::AtUri::parse(lens).expect("valid at-uri")),
             cid: None,
@@ -95,6 +97,7 @@ fn correction(encounter_uri: &str) -> AnyRecord {
         path: "/text".to_owned(),
         rationale: None,
         reason: CorrectionReason::LensError,
+        reason_vocab: None,
         visibility: Visibility::PublicDetailed,
     })
 }
@@ -117,6 +120,7 @@ fn verification(
             },
         ),
         kind,
+        kind_vocab: None,
         lens: LensRef {
             uri: Some(idiolect_records::AtUri::parse(lens).expect("valid at-uri")),
             cid: None,
@@ -125,6 +129,7 @@ fn verification(
         occurred_at: idiolect_records::Datetime::parse("2026-04-20T11:00:00Z").expect("valid datetime"),
         proof_artifact: None,
         result,
+        result_vocab: None,
         tool: idiolect_records::generated::dev::idiolect::defs::Tool {
             name: "coq".to_owned(),
             version: "8.18".to_owned(),

@@ -64,10 +64,11 @@
               },
               "encounterKinds": {
                 "type": "array",
-                "description": "Which encounter kinds this observation weights and includes. Observer must disclose this or the claim is uninterpretable.",
+                "description": "Which encounter kinds this observation weights and includes. Observer must disclose this or the claim is uninterpretable. Slugs are open-enum and resolved against `encounterKindsVocab`.",
                 "items": {
                   "type": "string",
-                  "enum": [
+                  "maxLength": 256,
+                  "knownValues": [
                     "invocation-log",
                     "curated",
                     "roundtrip-verified",
@@ -75,6 +76,11 @@
                     "adversarial"
                   ]
                 }
+              },
+              "encounterKindsVocab": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#vocabRef",
+                "description": "Vocabulary the `encounterKinds` slugs resolve against."
               },
               "window": {
                 "type": "object",

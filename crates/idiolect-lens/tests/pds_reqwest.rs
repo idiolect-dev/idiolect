@@ -252,6 +252,7 @@ async fn publisher_and_fetcher_round_trip_via_wiremock() {
         requester: idiolect_records::Did::parse("did:plc:alice").expect("valid DID"),
         reward: None,
         status: Some(BountyStatus::Open),
+        status_vocab: None,
         wants: BountyWants::WantAdapter(WantAdapter {
             framework: "hasura".into(),
             version_range: None,

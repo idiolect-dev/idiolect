@@ -1,0 +1,75 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "statement-classifications-v1",
+  "description": "Argumentative-role vocabulary for `dev.idiolect.deliberationStatement.classification`. Distinguishes claims (truth-apt assertions), proposals (action-oriented suggestions), dissent (rejecting another statement), clarifications (scoping/interpretation), and questions (information-seeking). Carefully chosen so deliberation observers can fold votes per role.",
+  "world": "closed-with-default",
+  "nodes": [
+    {
+      "id": "any_classification",
+      "kind": "concept",
+      "label": "Any classification"
+    },
+    {
+      "id": "claim",
+      "kind": "concept",
+      "label": "Claim"
+    },
+    {
+      "id": "proposal",
+      "kind": "concept",
+      "label": "Proposal"
+    },
+    {
+      "id": "dissent",
+      "kind": "concept",
+      "label": "Dissent"
+    },
+    {
+      "id": "clarification",
+      "kind": "concept",
+      "label": "Clarification"
+    },
+    {
+      "id": "question",
+      "kind": "concept",
+      "label": "Question"
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "claim",
+      "target": "any_classification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "proposal",
+      "target": "any_classification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "dissent",
+      "target": "any_classification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "clarification",
+      "target": "any_classification",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "question",
+      "target": "any_classification",
+      "relationSlug": "subsumed_by"
+    }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}

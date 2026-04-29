@@ -245,7 +245,8 @@ fn render_lexicon_file(doc: &LexiconDoc) -> Result<String, EmitError> {
          missing_docs,\n    \
          clippy::doc_markdown,\n    \
          clippy::struct_excessive_bools,\n    \
-         clippy::derive_partial_eq_without_eq\n\
+         clippy::derive_partial_eq_without_eq,\n    \
+         clippy::large_enum_variant\n\
          )]\n",
     );
     out.push_str("use serde::{Deserialize, Serialize};\n\n");
@@ -360,6 +361,188 @@ fn emit_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
     }
 }
 
+#[allow(clippy::too_many_lines)] // Single coherent codegen pipeline; splitting fragments the quote! macro and obscures the emitted shape.
+fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
+    let ty_ident = format_ident!("{}", ty_name);
+    let doc_text = def.description.clone().unwrap_or_else(|| {
+        format!(
+            "{ty_name}. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`."
+        )
+    });
+    let doc = doc_attr(&doc_text);
+
+    // Sanitize each slug, then disambiguate any collisions by
+    // appending a numeric suffix. Two distinct slugs that
+    // pascal-case to the same identifier (e.g. `foo-bar` and
+    // `foo_bar`) would otherwise emit a duplicate-variant Rust
+    // enum that fails to compile.
+    let known_idents: Vec<Ident> = {
+        let mut seen: std::collections::BTreeMap<String, u32> = std::collections::BTreeMap::new();
+        def.values
+            .iter()
+            .map(|v| {
+                let base = sanitize_variant_ident(v);
+                let count = seen.entry(base.clone()).or_insert(0);
+                *count += 1;
+                let unique = if *count == 1 {
+                    base
+                } else {
+                    format!("{base}{count}")
+                };
+                format_ident!("{}", unique)
+            })
+            .collect()
+    };
+    let known_kebab: Vec<&str> = def.values.iter().map(String::as_str).collect();
+    // The fallback variant carries a community-extended slug. Try
+    // common names in order; pick the first that does not collide
+    // with any known variant. Final fallback uses a numeric suffix
+    // to guarantee uniqueness even for pathological enums whose
+    // knownValues already include `Other`, `Extended`, `Custom`,
+    // and `Variant`.
+    let candidate_fallbacks = ["Other", "Extended", "Custom", "Variant"];
+    let fallback_name: String = if let Some(name) = candidate_fallbacks
+        .iter()
+        .find(|c| !known_idents.iter().any(|i| i == *c))
+    {
+        (*name).to_owned()
+    } else {
+        // Numeric-suffixed fallback. Bounded to a sane ceiling so
+        // pathological inputs (every integer name taken) error
+        // loudly rather than spinning forever.
+        (0u32..1024)
+            .map(|n| format!("Other{n}"))
+            .find(|c| !known_idents.iter().any(|i| i == c))
+            .expect("ceiling is high enough for any plausible enum")
+    };
+    let fallback_ident = format_ident!("{}", fallback_name);
+
+    let variants = known_idents.iter().map(|ident| quote! { #ident, });
+
+    let to_str_arms: Vec<TokenStream> = known_idents
+        .iter()
+        .zip(&known_kebab)
+        .map(|(ident, kebab)| quote! { Self::#ident => #kebab, })
+        .collect();
+    let from_str_arms: Vec<TokenStream> = known_idents
+        .iter()
+        .zip(&known_kebab)
+        .map(|(ident, kebab)| quote! { #kebab => Self::#ident, })
+        .collect();
+    let from_str_arms_dup = from_str_arms.clone();
+
+    quote! {
+        #doc
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum #ty_ident {
+            #(#variants)*
+            /// Community-extended slug not present in the lexicon's
+            /// `knownValues`. Resolves through the sibling
+            /// `*Vocab` field on the containing record.
+            #fallback_ident(String),
+        }
+
+        impl #ty_ident {
+            /// Wire-form slug for this value. Known variants render
+            /// kebab-case; the fallback variant passes through verbatim.
+            #[must_use]
+            pub fn as_str(&self) -> &str {
+                match self {
+                    #(#to_str_arms)*
+                    Self::#fallback_ident(s) => s.as_str(),
+                }
+            }
+
+            /// Whether this slug is subsumed by `ancestor` under the
+            /// `subsumed_by` relation in the supplied vocab. Reflexive:
+            /// every slug is subsumed by itself.
+            #[must_use]
+            pub fn is_subsumed_by(
+                &self,
+                vocab: &idiolect_records::vocab::VocabGraph,
+                ancestor: &str,
+            ) -> bool {
+                vocab.is_subsumed_by(self.as_str(), ancestor)
+            }
+
+            /// Whether this slug satisfies a requirement of `target`
+            /// under the named `relation` in the supplied vocab.
+            /// Generalises `is_subsumed_by` to any directed relation
+            /// (e.g. `stronger_than`, `provides_at_least`,
+            /// `equivalent_to`). Reflexive: a slug satisfies itself.
+            #[must_use]
+            pub fn satisfies(
+                &self,
+                vocab: &idiolect_records::vocab::VocabGraph,
+                relation: &str,
+                target: &str,
+            ) -> bool {
+                if self.as_str() == target {
+                    return true;
+                }
+                vocab
+                    .walk_relation(self.as_str(), relation, false)
+                    .iter()
+                    .any(|n| n == target)
+            }
+
+            /// Translate this slug across vocabularies via
+            /// `equivalent_to` edges. Returns the translated slug as
+            /// a target enum value when a translation exists, `None`
+            /// when no path is found (callers fall back to passing
+            /// the slug through verbatim, which is wire-compatible).
+            #[must_use]
+            pub fn translate_to<T: From<String>>(
+                &self,
+                src_vocab_uri: &str,
+                tgt_vocab_uri: &str,
+                registry: &idiolect_records::vocab::VocabRegistry,
+            ) -> Option<T> {
+                registry
+                    .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+                    .map(T::from)
+            }
+        }
+
+        impl From<String> for #ty_ident {
+            fn from(s: String) -> Self {
+                match s.as_str() {
+                    #(#from_str_arms)*
+                    _ => Self::#fallback_ident(s),
+                }
+            }
+        }
+
+        impl From<&str> for #ty_ident {
+            fn from(s: &str) -> Self {
+                match s {
+                    #(#from_str_arms_dup)*
+                    _ => Self::#fallback_ident(s.to_owned()),
+                }
+            }
+        }
+
+        impl serde::Serialize for #ty_ident {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                serializer.serialize_str(self.as_str())
+            }
+        }
+
+        impl<'de> serde::Deserialize<'de> for #ty_ident {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                let s = String::deserialize(deserializer)?;
+                Ok(Self::from(s))
+            }
+        }
+    }
+}
+
 fn emit_union(ty_name: &str, current_nsid: &str, def: &UnionDef) -> TokenStream {
     let ty_ident = format_ident!("{}", ty_name);
     let doc_text = def
@@ -402,6 +585,11 @@ enum InlineType {
         description: Option<String>,
         values: Vec<String>,
     },
+    OpenStringEnum {
+        name: String,
+        description: Option<String>,
+        values: Vec<String>,
+    },
     Object {
         name: String,
         description: Option<String>,
@@ -420,7 +608,7 @@ impl InlineType {
     fn category_order(&self) -> u8 {
         match self {
             Self::Union { .. } => 0,
-            Self::StringEnum { .. } => 1,
+            Self::StringEnum { .. } | Self::OpenStringEnum { .. } => 1,
             Self::Object { .. } => 2,
         }
     }
@@ -433,6 +621,17 @@ fn render_inline(inline: &InlineType, current_nsid: &str) -> TokenStream {
             description,
             values,
         } => emit_string_enum(
+            name,
+            &StringEnumDef {
+                description: description.clone(),
+                values: values.clone(),
+            },
+        ),
+        InlineType::OpenStringEnum {
+            name,
+            description,
+            values,
+        } => emit_open_string_enum(
             name,
             &StringEnumDef {
                 description: description.clone(),
@@ -503,6 +702,16 @@ fn resolve_prop_type(
             let name = format!("{}{}", parent_ty, pascal_case(prop_name));
             let name_ident = format_ident!("{}", &name);
             let inline = InlineType::StringEnum {
+                name,
+                description: None,
+                values: values.clone(),
+            };
+            (quote! { #name_ident }, Some(inline))
+        }
+        PropType::InlineOpenStringEnum(values) => {
+            let name = format!("{}{}", parent_ty, pascal_case(prop_name));
+            let name_ident = format_ident!("{}", &name);
+            let inline = InlineType::OpenStringEnum {
                 name,
                 description: None,
                 values: values.clone(),
@@ -863,6 +1072,35 @@ fn doc_attr(text: &str) -> TokenStream {
     quote! { #[doc = #padded] }
 }
 
+/// Pascal-case a slug for use as an open-enum variant identifier,
+/// stripping characters that are not legal in a Rust identifier
+/// (dots, slashes, colons, etc.). The original slug is preserved
+/// at the wire-form match arm; this is purely the in-source name.
+fn sanitize_variant_ident(slug: &str) -> String {
+    let mut out = String::with_capacity(slug.len());
+    let mut upper_next = true;
+    for ch in slug.chars() {
+        if ch.is_ascii_alphanumeric() {
+            if upper_next {
+                out.push(ch.to_ascii_uppercase());
+                upper_next = false;
+            } else {
+                out.push(ch);
+            }
+        } else {
+            // Any non-alphanumeric (`-`, `_`, ` `, `.`, `/`, `:`, …)
+            // becomes a word boundary; the next alpha is uppercased.
+            upper_next = true;
+        }
+    }
+    if out.is_empty() || out.starts_with(|c: char| c.is_ascii_digit()) {
+        // Pure-numeric or empty slugs need a prefix to be valid idents.
+        format!("V{out}")
+    } else {
+        out
+    }
+}
+
 pub(crate) fn pascal_case(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut upper_next = true;
@@ -958,5 +1196,174 @@ mod re_export_tests {
             out.contains("pub use r#pub::layers::resource::entry::Entry as ResourceEntry;\n"),
             "missing disambiguated resource alias:\n{out}"
         );
+    }
+}
+
+#[cfg(test)]
+mod sanitize_tests {
+    use super::sanitize_variant_ident;
+
+    #[test]
+    fn alphanumeric_pascal_cases() {
+        assert_eq!(sanitize_variant_ident("foo-bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("foo_bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("FooBar"), "FooBar");
+    }
+
+    #[test]
+    fn dotted_slug_strips_punctuation() {
+        // The layers-pub fixture has knownValue "chive.pub"; the
+        // dot must not leak into the Rust ident.
+        assert_eq!(sanitize_variant_ident("chive.pub"), "ChivePub");
+    }
+
+    #[test]
+    fn slash_and_colon_are_separators() {
+        assert_eq!(sanitize_variant_ident("foo/bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("foo:bar"), "FooBar");
+    }
+
+    #[test]
+    fn leading_separator_pascal_cases_first_alpha() {
+        assert_eq!(sanitize_variant_ident("-foo"), "Foo");
+        assert_eq!(sanitize_variant_ident("..foo"), "Foo");
+    }
+
+    #[test]
+    fn consecutive_separators_collapse() {
+        assert_eq!(sanitize_variant_ident("foo--bar"), "FooBar");
+        assert_eq!(sanitize_variant_ident("foo. .bar"), "FooBar");
+    }
+
+    #[test]
+    fn digit_leading_slug_gets_v_prefix() {
+        // Slugs starting with a digit produce invalid idents
+        // without a prefix; the sanitizer adds `V`.
+        assert_eq!(sanitize_variant_ident("123abc"), "V123abc");
+        assert_eq!(sanitize_variant_ident("9"), "V9");
+    }
+
+    #[test]
+    fn empty_after_strip_becomes_v() {
+        assert_eq!(sanitize_variant_ident("..."), "V");
+        assert_eq!(sanitize_variant_ident(""), "V");
+    }
+
+    #[test]
+    fn unicode_is_treated_as_separator() {
+        // Non-ASCII chars are stripped (treated as separators) so
+        // the emitted ident is always a valid Rust identifier even
+        // if the original slug carried Greek or CJK characters.
+        assert_eq!(sanitize_variant_ident("αβγ"), "V");
+        assert_eq!(sanitize_variant_ident("foo-αβ-bar"), "FooBar");
+    }
+}
+
+#[cfg(test)]
+mod open_enum_tests {
+    use super::*;
+    use crate::lexicon::StringEnumDef;
+
+    fn render(values: &[&str]) -> String {
+        let def = StringEnumDef {
+            description: None,
+            values: values.iter().map(|s| (*s).to_owned()).collect(),
+        };
+        let tokens = emit_open_string_enum("TestKind", &def);
+        tokens.to_string()
+    }
+
+    #[test]
+    fn fallback_is_other_when_no_collision() {
+        let out = render(&["foo", "bar"]);
+        assert!(
+            out.contains("Other (String)"),
+            "expected Other variant in:\n{out}"
+        );
+        assert!(!out.contains("Extended (String)"));
+    }
+
+    #[test]
+    fn fallback_falls_back_to_extended_on_other_collision() {
+        let out = render(&["other", "foo"]);
+        assert!(
+            out.contains("Extended (String)"),
+            "expected Extended fallback in:\n{out}"
+        );
+        // The known `Other` variant must remain.
+        assert!(out.contains("Other ,"));
+    }
+
+    #[test]
+    fn fallback_falls_back_to_custom_on_other_and_extended_collision() {
+        let out = render(&["other", "extended"]);
+        assert!(
+            out.contains("Custom (String)"),
+            "expected Custom fallback in:\n{out}"
+        );
+    }
+
+    #[test]
+    fn known_value_serializes_to_original_kebab() {
+        // Ensures underscored / kebab slugs preserve their wire form
+        // through as_str arms.
+        let out = render(&["subsumed_by", "broader-than"]);
+        assert!(
+            out.contains("Self :: SubsumedBy => \"subsumed_by\""),
+            "expected verbatim wire form for underscored slug:\n{out}"
+        );
+        assert!(
+            out.contains("Self :: BroaderThan => \"broader-than\""),
+            "expected verbatim wire form for kebab slug:\n{out}"
+        );
+    }
+
+    #[test]
+    fn dotted_slug_renders_distinct_variant() {
+        let out = render(&["chive.pub", "wikidata"]);
+        assert!(
+            out.contains("ChivePub ,"),
+            "expected ChivePub variant from dotted slug:\n{out}"
+        );
+        assert!(
+            out.contains("\"chive.pub\""),
+            "expected verbatim chive.pub wire form:\n{out}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod open_enum_collision_tests {
+    use super::*;
+    use crate::lexicon::StringEnumDef;
+
+    fn render(values: &[&str]) -> String {
+        let def = StringEnumDef {
+            description: None,
+            values: values.iter().map(|s| (*s).to_owned()).collect(),
+        };
+        emit_open_string_enum("TestKind", &def).to_string()
+    }
+
+    #[test]
+    fn ident_collisions_get_numeric_suffix() {
+        // foo-bar and foo_bar both pascal-case to FooBar; the
+        // second occurrence must be disambiguated to compile.
+        let out = render(&["foo-bar", "foo_bar", "baz"]);
+        assert!(
+            out.contains("FooBar ,"),
+            "first collision keeps the bare ident:\n{out}"
+        );
+        assert!(
+            out.contains("FooBar2 ,"),
+            "second collision gets a numeric suffix:\n{out}"
+        );
+        assert!(
+            out.contains("Baz ,"),
+            "non-colliding ident is unaffected:\n{out}"
+        );
+        // Wire-form arms must preserve the original slugs verbatim.
+        assert!(out.contains("\"foo-bar\""));
+        assert!(out.contains("\"foo_bar\""));
     }
 }

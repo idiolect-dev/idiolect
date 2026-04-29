@@ -147,6 +147,7 @@ impl ObservationMethod for BasisDistributionMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -234,8 +235,10 @@ mod tests {
                 annotations: None,
                 basis,
                 downstream_result: None,
+                downstream_result_vocab: None,
                 holder: None,
                 kind: EncounterKind::InvocationLog,
+                kind_vocab: None,
                 lens: LensRef {
                     cid: None,
                     direction: None,

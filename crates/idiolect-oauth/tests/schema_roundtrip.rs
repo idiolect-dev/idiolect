@@ -112,7 +112,7 @@ async fn identity_lens_round_trips_oauth_session_body() {
             .expect("valid datetime"),
         laws_verified: Some(true),
         object_hash: "sha256:deadbeef".to_owned(),
-        round_trip_class: Some("isomorphism".to_owned()),
+        round_trip_class: Some("isomorphism".into()),
         source_schema: idiolect_records::AtUri::parse(&src_hash).expect("valid at-uri"),
         target_schema: idiolect_records::AtUri::parse(&tgt_hash).expect("valid at-uri"),
     };

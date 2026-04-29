@@ -1,0 +1,59 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "community-roles-v1",
+  "description": "Canonical community-role vocabulary used by `dev.idiolect.community#roleAssignment.role`. The default role is `member`; specific roles such as `moderator`, `delegate`, `author` are subsumed by `member`. Role-bearing operations (e.g., publishing on behalf of the community) typically check subsumption rather than equality.",
+  "world": "closed-with-default",
+  "top": "member",
+  "nodes": [
+    {
+      "id": "member",
+      "kind": "concept",
+      "label": "Member"
+    },
+    {
+      "id": "moderator",
+      "kind": "concept",
+      "label": "Moderator",
+      "description": "Authorized to apply the community's moderation policies."
+    },
+    {
+      "id": "delegate",
+      "kind": "concept",
+      "label": "Delegate",
+      "description": "Authorized to act on the community's behalf in a defined scope."
+    },
+    {
+      "id": "author",
+      "kind": "concept",
+      "label": "Author",
+      "description": "Recognized contributor of records owned by the community."
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "moderator",
+      "target": "member",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "delegate",
+      "target": "member",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "author",
+      "target": "member",
+      "relationSlug": "subsumed_by"
+    }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}

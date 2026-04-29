@@ -22,12 +22,16 @@ fn adapter(framework: &str) -> Adapter {
             input_schema: None,
             kind: AdapterInvocationProtocolKind::Subprocess,
             output_schema: None,
+            kind_vocab: None,
         },
         isolation: AdapterIsolation {
             kind: AdapterIsolationKind::Process,
             filesystem_policy: None,
             network_policy: None,
             resource_limits: None,
+            filesystem_policy_vocab: None,
+            kind_vocab: None,
+            network_policy_vocab: None,
         },
         occurred_at: idiolect_records::Datetime::parse("2026-04-21T00:00:00Z")
             .expect("valid datetime"),

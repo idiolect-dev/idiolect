@@ -157,6 +157,14 @@ enum TsDecl {
         description: Option<String>,
         values: Vec<String>,
     },
+    /// Open-enum string union: `"a" | "b" | (string & {})`. The
+    /// trailing `string & {}` keeps the literal arms surfacing in
+    /// `IntelliSense` while permitting any string at the type level.
+    OpenStringLiteralUnion {
+        name: String,
+        description: Option<String>,
+        values: Vec<String>,
+    },
     TaggedUnion {
         name: String,
         description: Option<String>,
@@ -327,6 +335,21 @@ fn render_decl(allocator: &Allocator, ab: AstBuilder<'_>, decl: &TsDecl) -> Stri
             name,
             description.as_deref(),
             values,
+            false,
+        ),
+        TsDecl::OpenStringLiteralUnion {
+            name,
+            description,
+            values,
+        } => build_string_literal_union_stmt(
+            ab,
+            &mut source_text,
+            &mut comments,
+            &mut next_id,
+            name,
+            description.as_deref(),
+            values,
+            true,
         ),
         TsDecl::TaggedUnion {
             name,
@@ -474,6 +497,7 @@ fn build_interface_stmt<'a>(
     Statement::ExportNamedDeclaration(export)
 }
 
+#[allow(clippy::too_many_arguments)] // Builder uses positional args for symmetry with sibling stmt builders; the open flag is the only late addition.
 fn build_string_literal_union_stmt<'a>(
     ab: AstBuilder<'a>,
     source_text: &mut String,
@@ -482,17 +506,27 @@ fn build_string_literal_union_stmt<'a>(
     name: &str,
     description: Option<&str>,
     values: &[String],
+    open: bool,
 ) -> Statement<'a> {
     let alias_id = fresh_id(next_id);
     if let Some(desc) = description {
         push_jsdoc(source_text, comments, alias_id, desc);
     }
 
-    let types = ab.vec_from_iter(
-        values
-            .iter()
-            .map(|v| ab.ts_type_literal_type(SPAN, literal_string(ab, v))),
-    );
+    let mut arms: Vec<TSType<'a>> = values
+        .iter()
+        .map(|v| ab.ts_type_literal_type(SPAN, literal_string(ab, v)))
+        .collect();
+    if open {
+        // `string & {}` keeps known-value IntelliSense surfacing while
+        // admitting any string at the type level. Build it as
+        // `string` intersected with an empty type literal.
+        let string_ty = ab.ts_type_string_keyword(SPAN);
+        let empty_obj = ab.ts_type_type_literal(SPAN, ab.vec());
+        let intersection_members = ab.vec_from_iter([string_ty, empty_obj]);
+        arms.push(ab.ts_type_intersection_type(SPAN, intersection_members));
+    }
+    let types = ab.vec_from_iter(arms);
     // single-element unions still print cleanly through the union
     // builder, so there's no need to special-case `types.len() == 1`.
     let union_ty = ab.ts_type_union_type(SPAN, types);
@@ -707,6 +741,11 @@ enum Inline {
         description: Option<String>,
         values: Vec<String>,
     },
+    OpenStringEnum {
+        name: String,
+        description: Option<String>,
+        values: Vec<String>,
+    },
     Object {
         name: String,
         description: Option<String>,
@@ -723,7 +762,7 @@ impl Inline {
     fn category_order(&self) -> u8 {
         match self {
             Self::Union { .. } => 0,
-            Self::StringEnum { .. } => 1,
+            Self::StringEnum { .. } | Self::OpenStringEnum { .. } => 1,
             Self::Object { .. } => 2,
         }
     }
@@ -742,6 +781,15 @@ fn render_inline(inline: &Inline, current_nsid: &str) -> Vec<TsDecl> {
                 values: values.clone(),
             },
         )],
+        Inline::OpenStringEnum {
+            name,
+            description,
+            values,
+        } => vec![TsDecl::OpenStringLiteralUnion {
+            name: name.clone(),
+            description: description.clone(),
+            values: values.clone(),
+        }],
         Inline::Object {
             name,
             description,
@@ -808,6 +856,19 @@ fn resolve_prop_type(
                 import_from: None,
             };
             let inline = Inline::StringEnum {
+                name,
+                description: None,
+                values: values.clone(),
+            };
+            (ty, Some(inline))
+        }
+        PropType::InlineOpenStringEnum(values) => {
+            let name = format!("{parent_ty}{}", pascal_case(prop_name));
+            let ty = TsType::Ref {
+                name: name.clone(),
+                import_from: None,
+            };
+            let inline = Inline::OpenStringEnum {
                 name,
                 description: None,
                 values: values.clone(),
@@ -885,7 +946,7 @@ fn collect_imports(decls: &[TsDecl]) -> BTreeMap<String, BTreeSet<String>> {
                     }
                 }
             }
-            TsDecl::StringLiteralUnion { .. } => {}
+            TsDecl::StringLiteralUnion { .. } | TsDecl::OpenStringLiteralUnion { .. } => {}
         }
     }
     out

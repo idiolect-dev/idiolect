@@ -408,7 +408,13 @@ const fn parser_param_description(p: ParserKind) -> Option<&'static str> {
 /// For enum-shaped parsers, return the set of accepted tokens so
 /// emitted XRPC lexicons can declare `knownValues`. `None` means the
 /// param is an unbounded string and no `knownValues` should be set.
-const fn parser_known_values(p: ParserKind) -> Option<&'static [&'static str]> {
+///
+/// These values are hand-mirrored from the source lexicon's
+/// `knownValues` (or `enum`); the
+/// [`parser_known_values_match_lexicons`](`tests::parser_known_values_match_lexicons`)
+/// test guards against drift by comparing this list against the
+/// actual lexicon JSON at test time.
+pub(crate) const fn parser_known_values(p: ParserKind) -> Option<&'static [&'static str]> {
     match p {
         ParserKind::String | ParserKind::SchemaRefFromUri | ParserKind::LensRefFromUri => None,
         ParserKind::VerificationKind => Some(&[

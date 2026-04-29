@@ -65,7 +65,7 @@ pub async fn cmd_encounter_record(args: &[String]) -> Result<ExitCode> {
         "sourceSchema": SchemaRef { uri: Some(source_schema_uri), cid: None, language: None },
         "targetSchema": target_schema_uri.map(|u| SchemaRef { uri: Some(u), cid: None, language: None }),
         "use": use_value,
-        "kind": encounter_kind_wire(kind),
+        "kind": kind.as_str(),
         "visibility": visibility_wire(visibility),
         "occurredAt": now,
     });
@@ -103,16 +103,6 @@ fn parse_kind(raw: &str) -> Result<EncounterKind> {
         "production" => Ok(EncounterKind::Production),
         "adversarial" => Ok(EncounterKind::Adversarial),
         other => bail!("unknown --kind: {other}"),
-    }
-}
-
-const fn encounter_kind_wire(k: EncounterKind) -> &'static str {
-    match k {
-        EncounterKind::InvocationLog => "invocation-log",
-        EncounterKind::Curated => "curated",
-        EncounterKind::RoundtripVerified => "roundtrip-verified",
-        EncounterKind::Production => "production",
-        EncounterKind::Adversarial => "adversarial",
     }
 }
 
@@ -218,14 +208,15 @@ async fn fetch_vocabulary(uri: &str) -> Result<Vocab> {
 }
 
 fn prompt_action_from_vocabulary(vocab: &Vocab) -> Result<String> {
+    let actions: &[_] = vocab.actions.as_deref().unwrap_or(&[]);
     let mut stderr = io::stderr().lock();
     writeln!(
         stderr,
         "vocabulary: {} ({} actions)",
         vocab.name,
-        vocab.actions.len()
+        actions.len()
     )?;
-    for (i, entry) in vocab.actions.iter().enumerate() {
+    for (i, entry) in actions.iter().enumerate() {
         writeln!(stderr, "  {:>3}. {}", i + 1, entry.id)?;
     }
     stderr.flush().ok();
@@ -233,12 +224,12 @@ fn prompt_action_from_vocabulary(vocab: &Vocab) -> Result<String> {
     let line = prompt_required("action number or id")?;
     if let Ok(n) = line.parse::<usize>()
         && n >= 1
-        && n <= vocab.actions.len()
+        && n <= actions.len()
     {
-        return Ok(vocab.actions[n - 1].id.clone());
+        return Ok(actions[n - 1].id.clone());
     }
     // fall through: treat the line as an action id and look it up.
-    if let Some(hit) = vocab.actions.iter().find(|e| e.id == line) {
+    if let Some(hit) = actions.iter().find(|e| e.id == line) {
         return Ok(hit.id.clone());
     }
     bail!("no action matching {line:?} in vocabulary {}", vocab.name);

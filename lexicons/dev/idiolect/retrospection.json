@@ -28,12 +28,19 @@
             "properties": {
               "kind": {
                 "type": "string",
-                "enum": [
+                "maxLength": 256,
+                "knownValues": [
                   "merge-divergence",
                   "data-loss",
                   "reconciliation-mismatch",
                   "other"
-                ]
+                ],
+                "description": "Open-enum finding-kind slug. Resolved against `kindVocab` when present."
+              },
+              "kindVocab": {
+                "type": "ref",
+                "ref": "dev.idiolect.defs#vocabRef",
+                "description": "Vocabulary the `kind` slug resolves against."
               },
               "detail": {
                 "type": "string",

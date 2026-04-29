@@ -1,0 +1,79 @@
+{
+  "$nsid": "dev.idiolect.vocab",
+  "name": "blacksky-vote-stances-v1",
+  "description": "Bridge vocabulary mapping Blacksky's integer-encoded assembly votes (-1/0/1) onto idiolect's canonical vote-stances-v1 slugs. Acorn's lexicon documents -1=agree, 0=pass, 1=disagree (per community.blacksky.assembly.vote#main.record.properties.value.description). The mapping is captured here as `equivalent_to` edges so map_enum can translate the slug-form of an Acorn vote into the canonical idiolect stance.",
+  "world": "closed-with-default",
+  "nodes": [
+    {
+      "id": "any_stance",
+      "kind": "concept",
+      "label": "Any Blacksky stance"
+    },
+    {
+      "id": "agree",
+      "kind": "concept",
+      "label": "Blacksky agree (value=-1)"
+    },
+    {
+      "id": "pass",
+      "kind": "concept",
+      "label": "Blacksky pass (value=0)"
+    },
+    {
+      "id": "disagree",
+      "kind": "concept",
+      "label": "Blacksky disagree (value=1)"
+    },
+    {
+      "id": "subsumed_by",
+      "kind": "relation",
+      "label": "subsumed by",
+      "relationMetadata": {
+        "transitive": true,
+        "reflexive": true
+      }
+    },
+    {
+      "id": "equivalent_to",
+      "kind": "relation",
+      "label": "equivalent to",
+      "relationMetadata": {
+        "symmetric": true,
+        "transitive": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "agree",
+      "target": "any_stance",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "pass",
+      "target": "any_stance",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "disagree",
+      "target": "any_stance",
+      "relationSlug": "subsumed_by"
+    },
+    {
+      "source": "agree",
+      "target": "agree",
+      "relationSlug": "equivalent_to"
+    },
+    {
+      "source": "pass",
+      "target": "pass",
+      "relationSlug": "equivalent_to"
+    },
+    {
+      "source": "disagree",
+      "target": "disagree",
+      "relationSlug": "equivalent_to"
+    }
+  ],
+  "occurredAt": "2026-04-28T00:00:00.000Z"
+}

@@ -69,6 +69,7 @@ pub mod caching_resolver;
 pub mod dpop_p256;
 pub mod error;
 pub mod fetcher;
+pub mod map_enum;
 #[cfg(feature = "pds-atrium")]
 pub mod pds_atrium;
 #[cfg(feature = "pds-reqwest")]

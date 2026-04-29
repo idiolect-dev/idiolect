@@ -16,7 +16,6 @@ use std::collections::BTreeMap;
 
 use idiolect_indexer::IndexerEvent;
 use idiolect_records::AnyRecord;
-use idiolect_records::generated::dev::idiolect::correction::CorrectionReason;
 use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
@@ -62,19 +61,6 @@ impl CorrectionRateMethod {
     pub fn new() -> Self {
         Self::default()
     }
-
-    /// Serialize a correction reason into its kebab-case form for
-    /// output keys.
-    const fn reason_key(reason: CorrectionReason) -> &'static str {
-        match reason {
-            CorrectionReason::LensError => "lens-error",
-            CorrectionReason::DomainDifference => "domain-difference",
-            CorrectionReason::SourceError => "source-error",
-            CorrectionReason::DownstreamIdiosyncrasy => "downstream-idiosyncrasy",
-            CorrectionReason::UserMistake => "user-mistake",
-            CorrectionReason::Retrospective => "retrospective",
-        }
-    }
 }
 
 impl ObservationMethod for CorrectionRateMethod {
@@ -106,6 +92,7 @@ impl ObservationMethod for CorrectionRateMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -157,8 +144,8 @@ impl ObservationMethod for CorrectionRateMethod {
                 let scope_key = format!("encounter:{encounter_uri}");
                 let stats = self.lenses.entry(scope_key).or_default();
                 stats.corrections = stats.corrections.saturating_add(1);
-                let reason = Self::reason_key(correction.reason);
-                *stats.by_reason.entry(reason.to_owned()).or_insert(0) += 1;
+                let reason = correction.reason.as_str().to_owned();
+                *stats.by_reason.entry(reason).or_insert(0) += 1;
             }
             // retrospections and verifications would feed a richer
             // reference method; the rate aggregator does not care.

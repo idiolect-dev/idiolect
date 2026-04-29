@@ -7,7 +7,8 @@
     missing_docs,
     clippy::doc_markdown,
     clippy::struct_excessive_bools,
-    clippy::derive_partial_eq_without_eq
+    clippy::derive_partial_eq_without_eq,
+    clippy::large_enum_variant
 )]
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +16,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Community {
+    /// URL of the community AppView, when `recordHosting` is `community-hosted` or `hybrid`. Consumers route XRPC reads through this endpoint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub appview_endpoint: Option<idiolect_records::Uri>,
     /// Structured community conventions the decidable subset. Review cadence, verification requirements, deprecation policies. Style/tone norms live in `conventionsText`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conventions: Option<Vec<CommunityConventions>>,
@@ -33,6 +37,9 @@ pub struct Community {
     /// Other communities this community recognises as legitimate interlocutors. Endorsement is not transitive.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub endorsed_communities: Option<Vec<idiolect_records::AtUri>>,
+    /// Vocabulary the role slugs in `roleAssignments[].role` resolve against. Omit to use the canonical idiolect community-roles vocabulary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub member_role_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Inline list of member DIDs, for small communities. Use membershipRoll instead for communities above ~200 members.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub members: Option<Vec<idiolect_records::Did>>,
@@ -41,6 +48,12 @@ pub struct Community {
     pub membership_roll: Option<idiolect_records::AtUri>,
     /// Human-readable community name.
     pub name: String,
+    /// Where the community's records live. `member-hosted` (default ATProto) means records live on individual member PDSes. `community-hosted` (Acorn-style) means records live on a community AppView, gated by membership. `hybrid` means both. Consumers crawling for community records use this to choose a surface.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub record_hosting: Option<CommunityRecordHosting>,
+    /// Sparse role assignments for members. Only members whose role differs from the implicit default need an entry; the default role is named on the role vocabulary's top node. A DID may appear multiple times when the role vocabulary supports multiple roles per member.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role_assignments: Option<Vec<RoleAssignment>>,
 }
 
 impl crate::Record for Community {
@@ -73,15 +86,28 @@ pub struct ConventionReviewCadence {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConventionVerificationReq {
+    /// Open-enum slug naming the verification kind. Resolved against `kindVocab` when present, otherwise against the canonical idiolect verification-kinds vocabulary.
     pub kind: ConventionVerificationReqKind,
+    /// Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind_vocab: Option<crate::generated::dev::idiolect::defs::VocabRef>,
     /// Optional specific property required.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub property: Option<crate::generated::dev::idiolect::defs::LensProperty>,
 }
 
-/// ConventionVerificationReqKind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+/// A role assignment for a single member DID. The role slug resolves through the community record's `memberRoleVocab` (or the canonical idiolect default when unset).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoleAssignment {
+    /// DID of the member receiving the role.
+    pub did: idiolect_records::Did,
+    /// Open-enum role slug. The default vocabulary seeds `member` (top), `moderator`, `delegate`, `author`; communities extend by referencing a custom `memberRoleVocab`.
+    pub role: RoleAssignmentRole,
+}
+
+/// ConventionVerificationReqKind. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ConventionVerificationReqKind {
     RoundtripTest,
     PropertyTest,
@@ -89,6 +115,229 @@ pub enum ConventionVerificationReqKind {
     ConformanceTest,
     StaticCheck,
     ConvergencePreserving,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl ConventionVerificationReqKind {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::RoundtripTest => "roundtrip-test",
+            Self::PropertyTest => "property-test",
+            Self::FormalProof => "formal-proof",
+            Self::ConformanceTest => "conformance-test",
+            Self::StaticCheck => "static-check",
+            Self::ConvergencePreserving => "convergence-preserving",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for ConventionVerificationReqKind {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for ConventionVerificationReqKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "roundtrip-test" => Self::RoundtripTest,
+            "property-test" => Self::PropertyTest,
+            "formal-proof" => Self::FormalProof,
+            "conformance-test" => Self::ConformanceTest,
+            "static-check" => Self::StaticCheck,
+            "convergence-preserving" => Self::ConvergencePreserving,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for ConventionVerificationReqKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for ConventionVerificationReqKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
+}
+
+/// RoleAssignmentRole. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum RoleAssignmentRole {
+    Member,
+    Moderator,
+    Delegate,
+    Author,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl RoleAssignmentRole {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Member => "member",
+            Self::Moderator => "moderator",
+            Self::Delegate => "delegate",
+            Self::Author => "author",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for RoleAssignmentRole {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "member" => Self::Member,
+            "moderator" => Self::Moderator,
+            "delegate" => Self::Delegate,
+            "author" => Self::Author,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for RoleAssignmentRole {
+    fn from(s: &str) -> Self {
+        match s {
+            "member" => Self::Member,
+            "moderator" => Self::Moderator,
+            "delegate" => Self::Delegate,
+            "author" => Self::Author,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for RoleAssignmentRole {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for RoleAssignmentRole {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 /// CommunityConventions tagged union.
@@ -101,4 +350,113 @@ pub enum CommunityConventions {
     ConventionVerificationReq(ConventionVerificationReq),
     #[serde(rename = "dev.idiolect.community#conventionDeprecationPolicy")]
     ConventionDeprecationPolicy(ConventionDeprecationPolicy),
+}
+
+/// CommunityRecordHosting. Open-enum slug; known values are kebab-cased; community-extended values pass through as `Other(String)`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum CommunityRecordHosting {
+    MemberHosted,
+    CommunityHosted,
+    Hybrid,
+    /// Community-extended slug not present in the lexicon's
+    /// `knownValues`. Resolves through the sibling
+    /// `*Vocab` field on the containing record.
+    Other(String),
+}
+impl CommunityRecordHosting {
+    /// Wire-form slug for this value. Known variants render
+    /// kebab-case; the fallback variant passes through verbatim.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::MemberHosted => "member-hosted",
+            Self::CommunityHosted => "community-hosted",
+            Self::Hybrid => "hybrid",
+            Self::Other(s) => s.as_str(),
+        }
+    }
+    /// Whether this slug is subsumed by `ancestor` under the
+    /// `subsumed_by` relation in the supplied vocab. Reflexive:
+    /// every slug is subsumed by itself.
+    #[must_use]
+    pub fn is_subsumed_by(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        ancestor: &str,
+    ) -> bool {
+        vocab.is_subsumed_by(self.as_str(), ancestor)
+    }
+    /// Whether this slug satisfies a requirement of `target`
+    /// under the named `relation` in the supplied vocab.
+    /// Generalises `is_subsumed_by` to any directed relation
+    /// (e.g. `stronger_than`, `provides_at_least`,
+    /// `equivalent_to`). Reflexive: a slug satisfies itself.
+    #[must_use]
+    pub fn satisfies(
+        &self,
+        vocab: &idiolect_records::vocab::VocabGraph,
+        relation: &str,
+        target: &str,
+    ) -> bool {
+        if self.as_str() == target {
+            return true;
+        }
+        vocab
+            .walk_relation(self.as_str(), relation, false)
+            .iter()
+            .any(|n| n == target)
+    }
+    /// Translate this slug across vocabularies via
+    /// `equivalent_to` edges. Returns the translated slug as
+    /// a target enum value when a translation exists, `None`
+    /// when no path is found (callers fall back to passing
+    /// the slug through verbatim, which is wire-compatible).
+    #[must_use]
+    pub fn translate_to<T: From<String>>(
+        &self,
+        src_vocab_uri: &str,
+        tgt_vocab_uri: &str,
+        registry: &idiolect_records::vocab::VocabRegistry,
+    ) -> Option<T> {
+        registry
+            .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+            .map(T::from)
+    }
+}
+impl From<String> for CommunityRecordHosting {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "member-hosted" => Self::MemberHosted,
+            "community-hosted" => Self::CommunityHosted,
+            "hybrid" => Self::Hybrid,
+            _ => Self::Other(s),
+        }
+    }
+}
+impl From<&str> for CommunityRecordHosting {
+    fn from(s: &str) -> Self {
+        match s {
+            "member-hosted" => Self::MemberHosted,
+            "community-hosted" => Self::CommunityHosted,
+            "hybrid" => Self::Hybrid,
+            _ => Self::Other(s.to_owned()),
+        }
+    }
+}
+impl serde::Serialize for CommunityRecordHosting {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'de> serde::Deserialize<'de> for CommunityRecordHosting {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }

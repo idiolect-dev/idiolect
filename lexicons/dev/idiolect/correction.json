@@ -31,7 +31,8 @@
           },
           "reason": {
             "type": "string",
-            "enum": [
+            "maxLength": 256,
+            "knownValues": [
               "lens-error",
               "domain-difference",
               "source-error",
@@ -39,7 +40,12 @@
               "user-mistake",
               "retrospective"
             ],
-            "description": "Fixed taxonomy at the Lexicon level. Aggregators filter or weight by reason; corrections of different reasons signal different things about a lens."
+            "description": "Open-enum reason slug. Resolved against `reasonVocab` when present; aggregators filter or weight by reason."
+          },
+          "reasonVocab": {
+            "type": "ref",
+            "ref": "dev.idiolect.defs#vocabRef",
+            "description": "Vocabulary the `reason` slug resolves against. Omit to use the canonical idiolect default."
           },
           "rationale": {
             "type": "string",

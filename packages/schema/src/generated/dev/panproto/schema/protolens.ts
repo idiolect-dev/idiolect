@@ -3,11 +3,15 @@
 
 export interface PanprotoProtolens {
   blob?: unknown;
-  complementConstructor?: string;
+  complementConstructor?: PanprotoProtolensComplementConstructor;
   createdAt: string;
   description?: string;
   isLossless?: boolean;
   name: string;
   objectHash: string;
-  opticKind?: string;
+  opticKind?: PanprotoProtolensOpticKind;
 }
+
+export type PanprotoProtolensComplementConstructor = "empty" | "droppedSortData" | "droppedOpData" | "droppedEdge" | "natTransKernel" | "addedElement" | "coercedSortData" | "composite" | "scoped" | string & {};
+
+export type PanprotoProtolensOpticKind = "lens" | "prism" | "traversal" | "iso" | "affine" | string & {};

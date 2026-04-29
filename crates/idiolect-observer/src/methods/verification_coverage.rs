@@ -19,9 +19,6 @@ use idiolect_records::AnyRecord;
 use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
-use idiolect_records::generated::dev::idiolect::verification::{
-    VerificationKind, VerificationResult,
-};
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;
@@ -38,9 +35,9 @@ struct LensCoverage {
     /// Total verifications against this lens.
     total: u64,
     /// Counts by verification kind.
-    by_kind: BTreeMap<&'static str, u64>,
+    by_kind: BTreeMap<String, u64>,
     /// Counts by result.
-    by_result: BTreeMap<&'static str, u64>,
+    by_result: BTreeMap<String, u64>,
     /// Distinct verifier DIDs, for a coarse "independent attestations"
     /// signal. `BTreeSet` would be heavier; we use a map-as-set so the
     /// value can be the attestation count per verifier if a richer
@@ -61,28 +58,6 @@ impl VerificationCoverageMethod {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Serialize [`VerificationKind`] into its kebab-case wire form.
-    const fn kind_key(kind: VerificationKind) -> &'static str {
-        match kind {
-            VerificationKind::RoundtripTest => "roundtrip-test",
-            VerificationKind::PropertyTest => "property-test",
-            VerificationKind::FormalProof => "formal-proof",
-            VerificationKind::ConformanceTest => "conformance-test",
-            VerificationKind::StaticCheck => "static-check",
-            VerificationKind::ConvergencePreserving => "convergence-preserving",
-            VerificationKind::CoercionLaw => "coercion-law",
-        }
-    }
-
-    /// Serialize [`VerificationResult`] into its kebab-case wire form.
-    const fn result_key(result: VerificationResult) -> &'static str {
-        match result {
-            VerificationResult::Holds => "holds",
-            VerificationResult::Falsified => "falsified",
-            VerificationResult::Inconclusive => "inconclusive",
-        }
     }
 }
 
@@ -113,6 +88,7 @@ impl ObservationMethod for VerificationCoverageMethod {
         ObservationScope {
             communities: None,
             encounter_kinds: None,
+            encounter_kinds_vocab: None,
             lenses: None,
             window: None,
         }
@@ -143,11 +119,11 @@ impl ObservationMethod for VerificationCoverageMethod {
         entry.total = entry.total.saturating_add(1);
         *entry
             .by_kind
-            .entry(Self::kind_key(verification.kind))
+            .entry(verification.kind.as_str().to_owned())
             .or_insert(0) += 1;
         *entry
             .by_result
-            .entry(Self::result_key(verification.result))
+            .entry(verification.result.as_str().to_owned())
             .or_insert(0) += 1;
         *entry
             .verifiers
@@ -167,12 +143,12 @@ impl ObservationMethod for VerificationCoverageMethod {
             let by_kind: serde_json::Map<String, serde_json::Value> = coverage
                 .by_kind
                 .iter()
-                .map(|(k, v)| ((*k).to_owned(), serde_json::Value::Number((*v).into())))
+                .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
                 .collect();
             let by_result: serde_json::Map<String, serde_json::Value> = coverage
                 .by_result
                 .iter()
-                .map(|(k, v)| ((*k).to_owned(), serde_json::Value::Number((*v).into())))
+                .map(|(k, v)| (k.clone(), serde_json::Value::Number((*v).into())))
                 .collect();
             let distinct_verifiers = coverage.verifiers.len();
             lenses_map.insert(

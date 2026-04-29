@@ -114,6 +114,13 @@ pub enum PropType {
     Array(Box<Self>),
     /// Inline closed enum — `{"type": "string", "enum": [...]}`.
     InlineStringEnum(Vec<String>),
+    /// Inline open enum — `{"type": "string", "knownValues": [...]}`.
+    /// Emits as a Rust enum with an `Other(String)` arm so consumers
+    /// can carry community-extended slugs through serde without a
+    /// custom string type. Round-trips through serde via manual
+    /// `Serialize`/`Deserialize` impls; known values serialize to
+    /// kebab-case, the `Other` arm passes through verbatim.
+    InlineOpenStringEnum(Vec<String>),
     /// Inline union — `{"type": "union", "refs": [...]}`.
     InlineUnion(Vec<RefTarget>),
     /// Inline object — `{"type": "object", "properties": {...}}`
@@ -302,6 +309,13 @@ fn parse_prop_type(current_nsid: &str, def: &Value) -> Result<PropType> {
                     .filter_map(|v| v.as_str().map(str::to_owned))
                     .collect();
                 return Ok(PropType::InlineStringEnum(values));
+            }
+            if let Some(known_values) = def.get("knownValues").and_then(Value::as_array) {
+                let values = known_values
+                    .iter()
+                    .filter_map(|v| v.as_str().map(str::to_owned))
+                    .collect();
+                return Ok(PropType::InlineOpenStringEnum(values));
             }
             // Dispatch on `format`. Unknown formats fall through to
             // `PropType::String` so the codegen stays forward-

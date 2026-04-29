@@ -1,15 +1,15 @@
 {
   "lexicon": 1,
   "id": "dev.idiolect.vocab",
-  "description": "A community-published vocabulary for ThUse — either an action hierarchy or a purpose hierarchy, depending on what the community is publishing. Structures the subsumption lattice so `action_subsumed_by` and `purpose_subsumed_by` have a shared semantics. Communities fork, extend, and re-publish under their own record id. The `world` field pins the intended subsumption discipline so consumers reason about undeclared ids consistently.",
+  "description": "A community-published vocabulary. Two compatible shapes are supported: (1) the legacy single-relation tree (`actions` + `top` + `world`), where every entry declares its direct subsumers and the world pins the inference discipline; and (2) the typed multi-relation knowledge graph (`nodes` + `edges`), where every node is first-class and edges carry a relation slug. Authors choose either; consumers normalize the legacy tree to the graph form at access time by lifting each `actionEntry` to a node and each `parents` entry to a `subsumed_by` edge. New vocabularies should prefer the graph shape; the tree stays valid for backward compatibility and remains the right shape for pure subsumption hierarchies. Modeled after `pub.chive.graph.{node,edge}` so cross-vocabulary translation, SKOS-style `broader_than`/`narrower_than` mappings, and external-id alignment (Wikidata, ROR, ORCID, ...) are first-class.",
   "defs": {
     "main": {
       "type": "record",
       "key": "tid",
-      "description": "A vocabulary: a set of actions in a subsumption hierarchy, a chosen `world` discipline, and the identity of the publishing DID. Vocabularies are declarative charters over action space; observers/orchestrators resolve `action` identifiers against the referenced vocabulary record.",
+      "description": "A vocabulary record. Carries a name, world discipline, optional default relation, and either a tree-shaped `actions` set, a graph-shaped `nodes`+`edges` pair, or both. When both are present, consumers union them after lifting the tree to graph form.",
       "record": {
         "type": "object",
-        "required": ["name", "world", "top", "actions", "occurredAt"],
+        "required": ["name", "world", "occurredAt"],
         "properties": {
           "name": {
             "type": "string",
@@ -28,20 +28,43 @@
               "open",
               "hierarchy-closed"
             ],
-            "description": "Subsumption world discipline. 'closed-with-default' — every undeclared action is subsumed by `top` and nothing else. 'open' — undeclared actions are incomparable to every declared action; consumers must fall back to string equality. 'hierarchy-closed' — only the declared edges exist; undeclared actions do not subsume anything."
+            "description": "Default subsumption world discipline (applies to the `subsumed_by` relation when not overridden per-relation). 'closed-with-default' — every undeclared id is subsumed by `top` and nothing else. 'open' — undeclared ids are incomparable to every declared id. 'hierarchy-closed' — only the declared edges exist. Closed enum: meta-policy on the inference engine, not a domain term."
+          },
+          "defaultRelation": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "Optional pointer to the relation-kind node that consumers should treat as canonical when no relation is specified (typically the `subsumed_by` node). Lets graph-shaped vocabularies recover tree-style queries without a hard-coded relation."
           },
           "top": {
             "type": "string",
             "maxLength": 256,
-            "description": "Identifier of the vocabulary's top action. For 'closed-with-default', every action is transitively subsumed by `top`."
+            "description": "Identifier of the vocabulary's top action under `subsumed_by`. Required when `actions` is populated and `world=closed-with-default`. Recoverable from the graph form as the unique node with no outbound `subsumed_by` edge."
           },
           "actions": {
             "type": "array",
             "maxLength": 4096,
-            "description": "Every action declared in the vocabulary, with its direct parents (declared subsumers). Edges transitively form the subsumption hierarchy.",
+            "description": "Legacy tree shape: actions with their direct subsumers. Equivalent to a graph in which every action is a node and every parent is a `subsumed_by` edge. Consumers should normalize this to the graph form when reading.",
             "items": {
               "type": "ref",
               "ref": "#actionEntry"
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "maxLength": 4096,
+            "description": "Graph shape: typed nodes. Each node is a concept, an instance, a relation kind, or any other subkind. Relation-kind nodes carry `relationMetadata` (symmetric/transitive/reflexive/functional/inverseOf).",
+            "items": {
+              "type": "ref",
+              "ref": "#vocabNode"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "maxLength": 16384,
+            "description": "Graph shape: typed edges between nodes. Each edge carries a relation slug (e.g. `subsumed_by`, `equivalent_to`, `broader_than`, `narrower_than`).",
+            "items": {
+              "type": "ref",
+              "ref": "#vocabEdge"
             }
           },
           "supersedes": {
@@ -58,7 +81,7 @@
     },
     "actionEntry": {
       "type": "object",
-      "description": "One action in the vocabulary's hierarchy: an identifier, its direct parents (actions that subsume it), and optionally the attitudinal composition class it's an instance of.",
+      "description": "Legacy tree-shape entry: one action with its direct subsumers. Equivalent to a `vocabNode` plus a `subsumed_by` edge per parent. Retained for backwards compatibility.",
       "required": ["id", "parents"],
       "properties": {
         "id": {
@@ -77,12 +100,299 @@
         "class": {
           "type": "string",
           "maxLength": 256,
-          "description": "Identifier of the attitudinal composition this action is an instance of (e.g. 'dev.idiolect.asserted_use', 'dev.idiolect.intended_use'). Consumers dispatch on both the action's position in the hierarchy and its attitudinal shape. Omit to inherit the vocabulary's default stance; consumers treat the class as asserted_use when absent."
+          "description": "Identifier of the attitudinal composition this action is an instance of. Consumers dispatch on both the action's position in the hierarchy and its attitudinal shape. Omit to inherit the vocabulary's default stance; consumers treat the class as asserted_use when absent."
         },
         "description": {
           "type": "string",
           "maxGraphemes": 500,
-          "description": "Optional human-readable description. Consumers do not match on this field; it is annotation for readers."
+          "description": "Optional human-readable description. Not matched on; annotation for readers."
+        }
+      }
+    },
+    "vocabNode": {
+      "type": "object",
+      "description": "A typed node in a knowledge-graph-shaped vocabulary. Mirrors `pub.chive.graph.node`: nodes carry stable ids, optional human-readable labels, optional external-id mappings, and a status. Relation-kind nodes additionally carry `relationMetadata`.",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Stable node identifier (slug). Used as the source/target of edges within the same vocabulary."
+        },
+        "kind": {
+          "type": "string",
+          "maxLength": 256,
+          "knownValues": ["concept", "relation", "instance", "type", "collection"],
+          "description": "Open-enum slug naming the node kind. `relation` means this node represents a relation type; `concept` is a domain category; `instance` is an individual; `type` is a metaclass; `collection` is a SKOS-style grouping of concepts (members declared via `member_of` edges). Consumers dispatch on this; resolved against `kindVocab` when present."
+        },
+        "kindVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `kind` slug resolves against. Omit to use the canonical idiolect default."
+        },
+        "subkindUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "Optional pointer to another node identifying this node's subkind. Enables typed vocabularies (e.g., a node tagged as `attitudinal-class`)."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Primary human-readable label."
+        },
+        "alternateLabels": {
+          "type": "array",
+          "maxLength": 50,
+          "description": "Synonyms, translations, or alternate spellings (SKOS `altLabel`).",
+          "items": { "type": "string", "maxLength": 500 }
+        },
+        "hiddenLabels": {
+          "type": "array",
+          "maxLength": 50,
+          "description": "SKOS `hiddenLabel`: searchable but not displayed. Useful for misspellings, deprecated forms, lookup synonyms.",
+          "items": { "type": "string", "maxLength": 500 }
+        },
+        "description": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `definition`: a complete explanation of what the concept means."
+        },
+        "scopeNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `scopeNote`: guidance on how the concept should be used. Distinct from `description` (definition) — scopeNote covers application boundaries, common pitfalls, when to prefer a sibling concept."
+        },
+        "example": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `example`: a concrete instance or usage example."
+        },
+        "historyNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `historyNote`: significant changes in the concept's history."
+        },
+        "editorialNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `editorialNote`: management-level annotations not visible to end users."
+        },
+        "changeNote": {
+          "type": "string",
+          "maxGraphemes": 2000,
+          "description": "SKOS `changeNote`: a fine-grained record of a single change."
+        },
+        "notation": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "SKOS `notation`: a non-text identifier (e.g. a Dewey decimal code, an ISO designator). Distinct from `id`: notation is for display and indexing in legacy classification systems; `id` is the slug used internally."
+        },
+        "externalIds": {
+          "type": "array",
+          "maxLength": 20,
+          "description": "External identifier mappings into non-ATProto knowledge bases (Wikidata, ROR, ORCID, ...). Enables cross-system translation.",
+          "items": {
+            "type": "ref",
+            "ref": "#externalId"
+          }
+        },
+        "status": {
+          "type": "string",
+          "maxLength": 256,
+          "knownValues": ["proposed", "provisional", "established", "deprecated"],
+          "description": "Open-enum lifecycle status. Resolved against `statusVocab` when present."
+        },
+        "statusVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `status` slug resolves against."
+        },
+        "deprecatedBy": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT-URI of the node that supersedes this one, when status=deprecated."
+        },
+        "relationMetadata": {
+          "type": "ref",
+          "ref": "#relationMetadata",
+          "description": "Algebraic metadata, populated only when this node represents a relation type (kind=relation)."
+        }
+      }
+    },
+    "vocabEdge": {
+      "type": "object",
+      "description": "A typed directed edge between two nodes. The relation is identified both by slug (`relationSlug`, for indexing) and optionally by AT-URI pointer to a relation-kind node.",
+      "required": ["source", "target", "relationSlug"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Source node id within the same vocabulary, or an AT-URI for a cross-vocabulary edge."
+        },
+        "target": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Target node id within the same vocabulary, or an AT-URI for a cross-vocabulary edge."
+        },
+        "relationSlug": {
+          "type": "string",
+          "maxLength": 256,
+          "knownValues": [
+            "subsumed_by",
+            "broader_than",
+            "narrower_than",
+            "equivalent_to",
+            "polar_opposite_of",
+            "related_to",
+            "instance_of",
+            "part_of",
+            "member_of"
+          ],
+          "description": "Open-enum relation-type slug. The canonical default vocabulary seeds the values shown; communities extend by referencing `relationVocab`."
+        },
+        "relationVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `relationSlug` resolves against."
+        },
+        "relationUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "Optional pointer to the relation-kind node (typically a node with kind=relation) backing this edge."
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "Optional edge weight scaled by 1000 for the 0.0-1.0 range. Convention follows `pub.chive.graph.edge#weight`."
+        },
+        "metadata": {
+          "type": "ref",
+          "ref": "#edgeMetadata",
+          "description": "Optional edge-specific metadata (confidence, temporal validity, source attestation)."
+        }
+      }
+    },
+    "externalId": {
+      "type": "object",
+      "description": "Mapping from a vocab node to its identifier in an external knowledge base.",
+      "required": ["system", "identifier"],
+      "properties": {
+        "system": {
+          "type": "string",
+          "maxLength": 256,
+          "knownValues": [
+            "wikidata",
+            "ror",
+            "orcid",
+            "isni",
+            "viaf",
+            "lcsh",
+            "fast",
+            "skos",
+            "dublin-core",
+            "schema-org",
+            "mesh",
+            "aat"
+          ],
+          "description": "Open-enum identifier-system slug. Resolved against `systemVocab` when present."
+        },
+        "systemVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `system` slug resolves against."
+        },
+        "identifier": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Identifier value within the named system (e.g. a Wikidata QID, a ROR id)."
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional full URI for the external identifier."
+        },
+        "matchType": {
+          "type": "string",
+          "maxLength": 256,
+          "knownValues": ["exact", "close", "broader", "narrower", "related"],
+          "description": "Open-enum SKOS-style match strength. Resolved against `matchTypeVocab` when present."
+        },
+        "matchTypeVocab": {
+          "type": "ref",
+          "ref": "dev.idiolect.defs#vocabRef",
+          "description": "Vocabulary the `matchType` slug resolves against."
+        }
+      }
+    },
+    "relationMetadata": {
+      "type": "object",
+      "description": "Algebraic metadata for a relation-kind node. Consumers reasoning over edges of this relation can rely on these properties to lift queries: e.g., a transitive relation supports closure walks; a symmetric relation lets queries traverse in either direction. The full OWL Lite property-characteristic set is supported (symmetric, asymmetric, transitive, reflexive, irreflexive, functional, inverseFunctional, inverseOf).",
+      "properties": {
+        "symmetric": {
+          "type": "boolean",
+          "description": "A rel B implies B rel A. Walks traverse outbound and inbound edges as one set."
+        },
+        "asymmetric": {
+          "type": "boolean",
+          "description": "A rel B implies NOT (B rel A). Declarative; consumers may use this to validate that no edge contradicts the asymmetry. Mutually exclusive with `symmetric` (declaring both is a config error)."
+        },
+        "transitive": {
+          "type": "boolean",
+          "description": "A rel B and B rel C imply A rel C. Walks compute the transitive closure."
+        },
+        "reflexive": {
+          "type": "boolean",
+          "description": "A rel A holds for every A. Reflected in the `reflexive` argument of walks."
+        },
+        "irreflexive": {
+          "type": "boolean",
+          "description": "NOT (A rel A) for any A. Declarative; consumers may use this to validate that no self-loop edge exists. Mutually exclusive with `reflexive`."
+        },
+        "functional": {
+          "type": "boolean",
+          "description": "Each source has at most one target under this relation. Validated by `VocabGraph::validate`; sources with multiple outbound edges of a functional relation surface as a violation."
+        },
+        "inverseFunctional": {
+          "type": "boolean",
+          "description": "Each target has at most one source under this relation. Validated by `VocabGraph::validate`; useful for declaring identifier-like relations (e.g. `has_isbn`)."
+        },
+        "inverseOf": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Slug of the inverse relation (e.g. `narrower_than` for `broader_than`). Edges in this relation imply mirror-inverse edges in the named relation."
+        },
+        "world": {
+          "type": "string",
+          "enum": ["closed-with-default", "open", "hierarchy-closed"],
+          "description": "Per-relation world override. Closed enum: meta-policy."
+        }
+      }
+    },
+    "edgeMetadata": {
+      "type": "object",
+      "description": "Optional edge-specific metadata. Consumers ignore unknown fields.",
+      "properties": {
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "Confidence score scaled by 1000 (0.0-1.0). Useful for inferred or weakly-attested edges."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Temporal start of the relationship's validity."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Temporal end of the relationship's validity."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Free-form source attestation (citation, pointer to derivation provenance)."
         }
       }
     }
