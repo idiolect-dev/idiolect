@@ -13,6 +13,20 @@ if you depend on this project, and read this file before bumping.
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.7.0] — 2026-04-29
+
+### Added
+
 - `dev.idiolect.deliberation`, `dev.idiolect.deliberationStatement`, `dev.idiolect.deliberationVote`, and `dev.idiolect.deliberationOutcome` lexicons. The four together model community-scoped deliberation as a process-shaped concept distinct from settled belief or recommendation, and subsume Acorn's `community.blacksky.assembly.*` records (conversation / statement / vote) losslessly. Stance, classification, and status fields are open-enum slugs resolved through community-published vocabularies; the canonical defaults seed `agree`/`pass`/`disagree`, `claim`/`proposal`/`dissent`/`clarification`/`question`, and `open`/`closed`/`tabled`/`adopted`/`rejected`. `deliberationOutcome` is observer-published and carries per-statement per-stance tallies plus optional weighted aggregates so consumers reading a closed deliberation can fetch the resolution without re-folding every vote.
 - Knowledge-graph shape on `dev.idiolect.vocab`. Vocabularies now carry typed `nodes` (with open-enum `kind` discriminator: `concept`, `relation`, `instance`, `type`, `collection`) and typed `edges` (`{source, target, relationSlug}`), in addition to the legacy single-relation tree (`actions` + `parents`). The legacy shape stays valid; consumers normalise both into the same read-side view. Modeled on `pub.chive.graph.{node,edge}`.
 - Full OWL Lite property-characteristic set on `relationMetadata`: `symmetric`, `asymmetric`, `transitive`, `reflexive`, `irreflexive`, `functional`, `inverseFunctional`, plus `inverseOf` and a per-relation `world` override. `RelationProperties::contradictions` flags `symmetric+asymmetric` and `reflexive+irreflexive`; `VocabGraph::validate` and `VocabRegistry::validate` walk authored relations and emit concrete `VocabViolation` values for `FunctionalEdgeViolation`, `InverseFunctionalEdgeViolation`, `IrreflexiveSelfLoop`, `AsymmetricMutualEdge`, and `PropertyContradiction`. The flags are enforceable, not advisory.
