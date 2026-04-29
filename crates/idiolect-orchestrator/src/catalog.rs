@@ -33,7 +33,8 @@
 use std::collections::HashMap;
 
 use idiolect_records::{
-    Adapter, AnyRecord, Belief, Bounty, Community, Dialect, Recommendation, Verification, Vocab,
+    Adapter, AnyRecord, Belief, Bounty, Community, Deliberation, DeliberationOutcome,
+    DeliberationStatement, DeliberationVote, Dialect, Recommendation, Verification, Vocab,
 };
 
 /// Cataloged record, keyed by at-uri in the parent maps.
@@ -65,6 +66,10 @@ pub struct Catalog {
     beliefs: HashMap<String, Entry<Belief>>,
     bounties: HashMap<String, Entry<Bounty>>,
     communities: HashMap<String, Entry<Community>>,
+    deliberations: HashMap<String, Entry<Deliberation>>,
+    deliberation_statements: HashMap<String, Entry<DeliberationStatement>>,
+    deliberation_votes: HashMap<String, Entry<DeliberationVote>>,
+    deliberation_outcomes: HashMap<String, Entry<DeliberationOutcome>>,
     dialects: HashMap<String, Entry<Dialect>>,
     recommendations: HashMap<String, Entry<Recommendation>>,
     verifications: HashMap<String, Entry<Verification>>,
@@ -183,6 +188,50 @@ impl Catalog {
                     },
                 );
             }
+            AnyRecord::Deliberation(d) => {
+                self.deliberations.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: d,
+                    },
+                );
+            }
+            AnyRecord::DeliberationStatement(s) => {
+                self.deliberation_statements.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: s,
+                    },
+                );
+            }
+            AnyRecord::DeliberationVote(v) => {
+                self.deliberation_votes.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: v,
+                    },
+                );
+            }
+            AnyRecord::DeliberationOutcome(o) => {
+                self.deliberation_outcomes.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: o,
+                    },
+                );
+            }
             _ => {}
         }
     }
@@ -195,6 +244,10 @@ impl Catalog {
         self.beliefs.remove(uri);
         self.bounties.remove(uri);
         self.communities.remove(uri);
+        self.deliberations.remove(uri);
+        self.deliberation_statements.remove(uri);
+        self.deliberation_votes.remove(uri);
+        self.deliberation_outcomes.remove(uri);
         self.dialects.remove(uri);
         self.recommendations.remove(uri);
         self.verifications.remove(uri);
@@ -239,6 +292,32 @@ impl Catalog {
     /// Immutable view of all cataloged verifications.
     pub fn verifications(&self) -> impl Iterator<Item = &Entry<Verification>> {
         self.verifications.values()
+    }
+
+    /// Immutable view of all cataloged deliberations.
+    pub fn deliberations(&self) -> impl Iterator<Item = &Entry<Deliberation>> {
+        self.deliberations.values()
+    }
+
+    /// Immutable view of all cataloged deliberation statements.
+    pub fn deliberation_statements(&self) -> impl Iterator<Item = &Entry<DeliberationStatement>> {
+        self.deliberation_statements.values()
+    }
+
+    /// Immutable view of all cataloged deliberation votes.
+    pub fn deliberation_votes(&self) -> impl Iterator<Item = &Entry<DeliberationVote>> {
+        self.deliberation_votes.values()
+    }
+
+    /// Immutable view of all cataloged deliberation outcomes.
+    pub fn deliberation_outcomes(&self) -> impl Iterator<Item = &Entry<DeliberationOutcome>> {
+        self.deliberation_outcomes.values()
+    }
+
+    /// Look up a deliberation by at-uri.
+    #[must_use]
+    pub fn deliberation(&self, uri: &str) -> Option<&Entry<Deliberation>> {
+        self.deliberations.get(uri)
     }
 
     /// Look up a single record by at-uri. Scans every kind; `None`

@@ -17,12 +17,14 @@
 //! matching predicate in `crate::predicates`, and run
 //! `cargo run -p idiolect-codegen -- generate`.
 
-use idiolect_records::Dialect;
 use idiolect_records::generated::dev::idiolect::defs::LensRef;
 use idiolect_records::generated::dev::idiolect::recommendation::RecommendationRequiredVerifications;
 use idiolect_records::generated::dev::idiolect::verification::VerificationResult;
+use idiolect_records::{
+    Deliberation, DeliberationOutcome, DeliberationStatement, DeliberationVote, Dialect,
+};
 
-use crate::catalog::Catalog;
+use crate::catalog::{Catalog, Entry};
 
 // -----------------------------------------------------------------
 // Re-exports: the spec-driven taxonomy.
@@ -164,11 +166,68 @@ pub fn catalog_stats(catalog: &Catalog) -> CatalogStats {
         beliefs: catalog.beliefs().count(),
         bounties: catalog.bounties().count(),
         communities: catalog.communities().count(),
+        deliberations: catalog.deliberations().count(),
+        deliberation_statements: catalog.deliberation_statements().count(),
+        deliberation_votes: catalog.deliberation_votes().count(),
+        deliberation_outcomes: catalog.deliberation_outcomes().count(),
         dialects: catalog.dialects().count(),
         recommendations: catalog.recommendations().count(),
         verifications: catalog.verifications().count(),
         vocabularies: catalog.vocabularies().count(),
     }
+}
+
+/// Resolve a deliberation by AT-URI to the full deliberation view
+/// — the deliberation record plus every statement that strong-refs
+/// it, plus every vote whose subject is one of those statements,
+/// plus the latest published outcome (when one exists).
+///
+/// Statements and votes are returned in catalog-iteration order
+/// (BTreeMap order on at-uri); consumers wanting a different order
+/// (e.g. by vote count, by createdAt) sort downstream.
+///
+/// Returns `None` when the deliberation at `uri` is not in the
+/// catalog. Returns `Some(view)` with empty statement / vote lists
+/// when the deliberation exists but has no associated records yet.
+#[must_use]
+pub fn get_deliberation<'c>(catalog: &'c Catalog, uri: &str) -> Option<DeliberationView<'c>> {
+    let deliberation = catalog.deliberation(uri)?;
+    let statements: Vec<&Entry<DeliberationStatement>> = catalog
+        .deliberation_statements()
+        .filter(|s| s.record.deliberation.uri.as_str() == uri)
+        .collect();
+    let statement_uris: std::collections::BTreeSet<&str> =
+        statements.iter().map(|s| s.uri.as_str()).collect();
+    let votes: Vec<&Entry<DeliberationVote>> = catalog
+        .deliberation_votes()
+        .filter(|v| statement_uris.contains(v.record.subject.uri.as_str()))
+        .collect();
+    // Outcomes that strong-ref this deliberation. Multiple outcomes
+    // are allowed; consumers pick by computedAt.
+    let outcomes: Vec<&Entry<DeliberationOutcome>> = catalog
+        .deliberation_outcomes()
+        .filter(|o| o.record.deliberation.uri.as_str() == uri)
+        .collect();
+    Some(DeliberationView {
+        deliberation,
+        statements,
+        votes,
+        outcomes,
+    })
+}
+
+/// Composed view returned by [`get_deliberation`].
+#[derive(Debug)]
+pub struct DeliberationView<'c> {
+    /// The deliberation record itself.
+    pub deliberation: &'c Entry<Deliberation>,
+    /// Every statement strong-refing this deliberation.
+    pub statements: Vec<&'c Entry<DeliberationStatement>>,
+    /// Every vote whose subject is one of those statements.
+    pub votes: Vec<&'c Entry<DeliberationVote>>,
+    /// Outcome records for this deliberation. Multiple are
+    /// permitted; consumers select by `computedAt`.
+    pub outcomes: Vec<&'c Entry<DeliberationOutcome>>,
 }
 
 /// Return value of [`catalog_stats`]. Each field is the count of
@@ -184,6 +243,14 @@ pub struct CatalogStats {
     pub bounties: usize,
     /// Count of `Community` records.
     pub communities: usize,
+    /// Count of `Deliberation` records.
+    pub deliberations: usize,
+    /// Count of `DeliberationStatement` records.
+    pub deliberation_statements: usize,
+    /// Count of `DeliberationVote` records.
+    pub deliberation_votes: usize,
+    /// Count of `DeliberationOutcome` records.
+    pub deliberation_outcomes: usize,
     /// Count of `Dialect` records.
     pub dialects: usize,
     /// Count of `Recommendation` records.
@@ -202,9 +269,159 @@ impl CatalogStats {
             + self.beliefs
             + self.bounties
             + self.communities
+            + self.deliberations
+            + self.deliberation_statements
+            + self.deliberation_votes
+            + self.deliberation_outcomes
             + self.dialects
             + self.recommendations
             + self.verifications
             + self.vocabularies
+    }
+}
+
+#[cfg(test)]
+mod get_deliberation_tests {
+    use super::*;
+    use idiolect_records::generated::dev::idiolect::defs::StrongRecordRef;
+    use idiolect_records::generated::dev::idiolect::deliberation_vote::DeliberationVoteStance;
+    use idiolect_records::{
+        AnyRecord, Datetime, Deliberation, DeliberationStatement, DeliberationVote,
+    };
+
+    fn datetime() -> Datetime {
+        Datetime::parse("2026-04-29T00:00:00Z").expect("valid datetime")
+    }
+
+    fn cid() -> idiolect_records::Cid {
+        idiolect_records::Cid::parse("bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm")
+            .expect("valid cid")
+    }
+
+    fn at_uri(s: &str) -> idiolect_records::AtUri {
+        idiolect_records::AtUri::parse(s).expect("valid at-uri")
+    }
+
+    fn deliberation_record() -> Deliberation {
+        Deliberation {
+            owning_community: at_uri("at://did:plc:c/dev.idiolect.community/main"),
+            topic: "Adopt verification policy v2?".to_owned(),
+            description: None,
+            auth_required: None,
+            classification: None,
+            classification_vocab: None,
+            status: None,
+            status_vocab: None,
+            closed_at: None,
+            outcome: None,
+            created_at: datetime(),
+        }
+    }
+
+    fn statement(deliberation_uri: &str, text: &str) -> DeliberationStatement {
+        DeliberationStatement {
+            deliberation: StrongRecordRef {
+                uri: at_uri(deliberation_uri),
+                cid: cid(),
+            },
+            text: text.to_owned(),
+            classification: None,
+            classification_vocab: None,
+            anonymous: None,
+            created_at: datetime(),
+        }
+    }
+
+    fn vote(statement_uri: &str, stance: DeliberationVoteStance) -> DeliberationVote {
+        DeliberationVote {
+            subject: StrongRecordRef {
+                uri: at_uri(statement_uri),
+                cid: cid(),
+            },
+            stance,
+            stance_vocab: None,
+            weight: None,
+            rationale: None,
+            created_at: datetime(),
+        }
+    }
+
+    #[test]
+    fn returns_none_for_unknown_deliberation() {
+        let cat = Catalog::new();
+        assert!(
+            get_deliberation(&cat, "at://did:plc:c/dev.idiolect.deliberation/nope").is_none()
+        );
+    }
+
+    #[test]
+    fn assembles_deliberation_with_statements_and_votes() {
+        let mut cat = Catalog::new();
+        let d_uri = "at://did:plc:c/dev.idiolect.deliberation/d1";
+        let s1_uri = "at://did:plc:c/dev.idiolect.deliberationStatement/s1";
+        let s2_uri = "at://did:plc:c/dev.idiolect.deliberationStatement/s2";
+        let v1_uri = "at://did:plc:voter/dev.idiolect.deliberationVote/v1";
+        let v2_uri = "at://did:plc:voter/dev.idiolect.deliberationVote/v2";
+        cat.upsert(
+            d_uri.to_owned(),
+            "did:plc:c".to_owned(),
+            "rev1".to_owned(),
+            AnyRecord::Deliberation(deliberation_record()),
+        );
+        cat.upsert(
+            s1_uri.to_owned(),
+            "did:plc:c".to_owned(),
+            "rev2".to_owned(),
+            AnyRecord::DeliberationStatement(statement(d_uri, "Require formal proofs.")),
+        );
+        cat.upsert(
+            s2_uri.to_owned(),
+            "did:plc:c".to_owned(),
+            "rev3".to_owned(),
+            AnyRecord::DeliberationStatement(statement(d_uri, "Property tests are sufficient.")),
+        );
+        cat.upsert(
+            v1_uri.to_owned(),
+            "did:plc:voter".to_owned(),
+            "rev4".to_owned(),
+            AnyRecord::DeliberationVote(vote(s1_uri, DeliberationVoteStance::Agree)),
+        );
+        cat.upsert(
+            v2_uri.to_owned(),
+            "did:plc:voter".to_owned(),
+            "rev5".to_owned(),
+            AnyRecord::DeliberationVote(vote(s2_uri, DeliberationVoteStance::Disagree)),
+        );
+        // Add a stray vote on an unrelated statement; must NOT
+        // appear in the view.
+        let unrelated_s = "at://did:plc:other/dev.idiolect.deliberationStatement/x";
+        cat.upsert(
+            unrelated_s.to_owned(),
+            "did:plc:other".to_owned(),
+            "revx".to_owned(),
+            AnyRecord::DeliberationStatement(statement(
+                "at://did:plc:other/dev.idiolect.deliberation/other",
+                "Unrelated.",
+            )),
+        );
+        cat.upsert(
+            "at://did:plc:other/dev.idiolect.deliberationVote/x".to_owned(),
+            "did:plc:voter".to_owned(),
+            "revy".to_owned(),
+            AnyRecord::DeliberationVote(vote(unrelated_s, DeliberationVoteStance::Pass)),
+        );
+
+        let view = get_deliberation(&cat, d_uri).expect("deliberation present");
+        assert_eq!(view.deliberation.record.topic, "Adopt verification policy v2?");
+        assert_eq!(view.statements.len(), 2);
+        assert_eq!(view.votes.len(), 2);
+        let stances: Vec<_> = view
+            .votes
+            .iter()
+            .map(|v| v.record.stance.as_str())
+            .collect();
+        assert!(stances.contains(&"agree"));
+        assert!(stances.contains(&"disagree"));
+        assert!(view.outcomes.is_empty());
     }
 }
