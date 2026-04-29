@@ -360,6 +360,7 @@ fn emit_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
     }
 }
 
+#[allow(clippy::too_many_lines)] // Single coherent codegen pipeline; splitting fragments the quote! macro and obscures the emitted shape.
 fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
     let ty_ident = format_ident!("{}", ty_name);
     let doc_text = def.description.clone().unwrap_or_else(|| {
@@ -449,6 +450,56 @@ fn emit_open_string_enum(ty_name: &str, def: &StringEnumDef) -> TokenStream {
                     #(#to_str_arms)*
                     Self::#fallback_ident(s) => s.as_str(),
                 }
+            }
+
+            /// Whether this slug is subsumed by `ancestor` under the
+            /// `subsumed_by` relation in the supplied vocab. Reflexive:
+            /// every slug is subsumed by itself.
+            #[must_use]
+            pub fn is_subsumed_by(
+                &self,
+                vocab: &idiolect_records::vocab::VocabGraph,
+                ancestor: &str,
+            ) -> bool {
+                vocab.is_subsumed_by(self.as_str(), ancestor)
+            }
+
+            /// Whether this slug satisfies a requirement of `target`
+            /// under the named `relation` in the supplied vocab.
+            /// Generalises `is_subsumed_by` to any directed relation
+            /// (e.g. `stronger_than`, `provides_at_least`,
+            /// `equivalent_to`). Reflexive: a slug satisfies itself.
+            #[must_use]
+            pub fn satisfies(
+                &self,
+                vocab: &idiolect_records::vocab::VocabGraph,
+                relation: &str,
+                target: &str,
+            ) -> bool {
+                if self.as_str() == target {
+                    return true;
+                }
+                vocab
+                    .walk_relation(self.as_str(), relation, false)
+                    .iter()
+                    .any(|n| n == target)
+            }
+
+            /// Translate this slug across vocabularies via
+            /// `equivalent_to` edges. Returns the translated slug as
+            /// a target enum value when a translation exists, `None`
+            /// when no path is found (callers fall back to passing
+            /// the slug through verbatim, which is wire-compatible).
+            #[must_use]
+            pub fn translate_to<T: From<String>>(
+                &self,
+                src_vocab_uri: &str,
+                tgt_vocab_uri: &str,
+                registry: &idiolect_records::vocab::VocabRegistry,
+            ) -> Option<T> {
+                registry
+                    .translate(src_vocab_uri, tgt_vocab_uri, self.as_str())
+                    .map(T::from)
             }
         }
 

@@ -183,7 +183,7 @@ pub fn catalog_stats(catalog: &Catalog) -> CatalogStats {
 /// plus the latest published outcome (when one exists).
 ///
 /// Statements and votes are returned in catalog-iteration order
-/// (BTreeMap order on at-uri); consumers wanting a different order
+/// (`BTreeMap` order on at-uri); consumers wanting a different order
 /// (e.g. by vote count, by createdAt) sort downstream.
 ///
 /// Returns `None` when the deliberation at `uri` is not in the

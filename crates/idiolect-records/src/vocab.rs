@@ -489,7 +489,7 @@ impl VocabRegistry {
     ///
     /// Examples:
     /// - `satisfies(verification_kinds_uri, "formal-proof", "stronger_than", "property-test")`
-    ///   → `Some(true)` (formal-proof stronger_than property-test).
+    ///   → `Some(true)` (`formal-proof stronger_than property-test`).
     /// - `satisfies(community_roles_uri, "moderator", "subsumed_by", "member")`
     ///   → `Some(true)` (moderator is a member).
     ///
@@ -1331,6 +1331,7 @@ mod edge_case_tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)] // Test fixture has many literal struct fields.
     fn graph_node_authored_relation_kind_carries_metadata_into_walks() {
         // A symmetric authored relation must propagate to walk
         // semantics even without a kind="relation" on the legacy
@@ -1603,6 +1604,7 @@ mod owl_skos_tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)] // Test fixture has many literal struct fields.
     fn skos_collection_kind_walks_member_of_relation() {
         // A SKOS Collection groups concepts via member_of edges.
         let v = Vocab {

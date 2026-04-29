@@ -427,3 +427,115 @@ fn open_enum_with_underscored_slug_roundtrips() {
     assert_eq!(edges_out[0]["relationSlug"], "subsumed_by");
     assert_eq!(edges_out[1]["relationSlug"], "equivalent_to");
 }
+
+#[test]
+fn open_enum_is_subsumed_by_walks_vocab_subsumption() {
+    use idiolect_records::Vocab;
+    use idiolect_records::generated::dev::idiolect::deliberation::DeliberationStatus;
+    use idiolect_records::vocab::VocabGraph;
+    // Build a status vocab where `tabled` is subsumed by `closed`,
+    // `closed` is subsumed by `any_status`.
+    let vocab: Vocab = serde_json::from_value(json!({
+        "name":  "statuses",
+        "world": "closed-with-default",
+        "nodes": [
+            { "id": "any_status", "kind": "concept" },
+            { "id": "open",       "kind": "concept" },
+            { "id": "closed",     "kind": "concept" },
+            { "id": "tabled",     "kind": "concept" },
+        ],
+        "edges": [
+            { "source": "open",   "target": "any_status", "relationSlug": "subsumed_by" },
+            { "source": "closed", "target": "any_status", "relationSlug": "subsumed_by" },
+            { "source": "tabled", "target": "closed",     "relationSlug": "subsumed_by" },
+        ],
+        "occurredAt": "2026-04-29T00:00:00.000Z",
+    }))
+    .expect("vocab parses");
+    let g = VocabGraph::from_vocab(&vocab);
+    let tabled = DeliberationStatus::Tabled;
+    assert!(tabled.is_subsumed_by(&g, "closed"));
+    assert!(tabled.is_subsumed_by(&g, "any_status"));
+    assert!(tabled.is_subsumed_by(&g, "tabled"), "reflexive");
+    assert!(!tabled.is_subsumed_by(&g, "open"));
+}
+
+#[test]
+fn open_enum_satisfies_walks_arbitrary_relation() {
+    use idiolect_records::Vocab;
+    use idiolect_records::generated::dev::idiolect::verification::VerificationKind;
+    use idiolect_records::vocab::VocabGraph;
+    let vocab: Vocab = serde_json::from_value(json!({
+        "name":  "verifs",
+        "world": "open",
+        "nodes": [
+            { "id": "roundtrip-test", "kind": "concept" },
+            { "id": "property-test",  "kind": "concept" },
+            { "id": "formal-proof",   "kind": "concept" },
+            { "id": "stronger_than", "kind": "relation",
+              "relationMetadata": { "transitive": true } },
+        ],
+        "edges": [
+            { "source": "formal-proof",  "target": "property-test",  "relationSlug": "stronger_than" },
+            { "source": "property-test", "target": "roundtrip-test", "relationSlug": "stronger_than" },
+        ],
+        "occurredAt": "2026-04-29T00:00:00.000Z",
+    }))
+    .expect("vocab parses");
+    let g = VocabGraph::from_vocab(&vocab);
+    let formal = VerificationKind::FormalProof;
+    // Direct edge.
+    assert!(formal.satisfies(&g, "stronger_than", "property-test"));
+    // Transitive.
+    assert!(formal.satisfies(&g, "stronger_than", "roundtrip-test"));
+    // Reflexive.
+    assert!(formal.satisfies(&g, "stronger_than", "formal-proof"));
+    // The other direction does not hold.
+    let prop = VerificationKind::PropertyTest;
+    assert!(!prop.satisfies(&g, "stronger_than", "formal-proof"));
+}
+
+#[test]
+fn open_enum_translate_to_routes_through_registry() {
+    use idiolect_records::Vocab;
+    use idiolect_records::generated::dev::idiolect::deliberation_vote::DeliberationVoteStance;
+    use idiolect_records::vocab::VocabRegistry;
+    // Two vocabs: one where `endorse` equivalent_to `agree`; one
+    // canonical with just `agree`. Translate `endorse` to the
+    // canonical `agree`.
+    let bridge: Vocab = serde_json::from_value(json!({
+        "name":  "bridge",
+        "world": "open",
+        "nodes": [
+            { "id": "endorse", "kind": "concept" },
+            { "id": "agree",   "kind": "concept" },
+            { "id": "equivalent_to", "kind": "relation",
+              "relationMetadata": { "symmetric": true, "transitive": true } },
+        ],
+        "edges": [
+            { "source": "endorse", "target": "agree", "relationSlug": "equivalent_to" },
+        ],
+        "occurredAt": "2026-04-29T00:00:00.000Z",
+    }))
+    .expect("bridge parses");
+    let canonical: Vocab = serde_json::from_value(json!({
+        "name":  "canonical",
+        "world": "open",
+        "nodes": [{ "id": "agree", "kind": "concept" }],
+        "occurredAt": "2026-04-29T00:00:00.000Z",
+    }))
+    .expect("canonical parses");
+    let mut reg = VocabRegistry::new();
+    reg.insert("at://x/v/bridge", &bridge);
+    reg.insert("at://x/v/canonical", &canonical);
+    // The bridge's "endorse" stance translates to canonical "agree".
+    let bridge_endorse = DeliberationVoteStance::Other("endorse".to_owned());
+    let canonical_stance: Option<DeliberationVoteStance> =
+        bridge_endorse.translate_to("at://x/v/bridge", "at://x/v/canonical", &reg);
+    assert_eq!(canonical_stance, Some(DeliberationVoteStance::Agree));
+    // A slug with no equivalence path returns None.
+    let unknown = DeliberationVoteStance::Other("unknown".to_owned());
+    let no_match: Option<DeliberationVoteStance> =
+        unknown.translate_to("at://x/v/bridge", "at://x/v/canonical", &reg);
+    assert_eq!(no_match, None);
+}

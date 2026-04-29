@@ -88,6 +88,7 @@ impl Catalog {
     /// vendored panproto types) are silently ignored — orchestrators
     /// and observers both see the same firehose, so the catalog has to
     /// tolerate records it does not care about.
+    #[allow(clippy::too_many_lines)] // Mechanical match-and-insert per record kind; not factorable without obscuring the wire mapping.
     pub fn upsert(&mut self, uri: String, author: String, rev: String, record: AnyRecord) {
         // In atproto, record at-uris are already scoped by collection
         // (`at://<did>/<collection>/<rkey>`), so two distinct kinds

@@ -7,12 +7,17 @@
 //! deliberationOutcome record without re-shaping.
 //!
 //! Stance slugs are taken verbatim from the vote's `stance` field
-//! (an open-enum slug). When two votes carry equivalent stances
-//! under different vocabularies (`agree` in one dialect, `endorse`
-//! in another), a future revision will route them through
-//! `VocabRegistry::translate` against the deliberation's declared
-//! `stanceVocab`. For now slugs are compared by identity, matching
-//! the canonical `vote-stances-v1` discipline.
+//! when no canonical vocabulary is configured. When the consumer
+//! wires a [`VocabRegistry`] plus a canonical-vocab AT-URI via
+//! [`DeliberationTallyMethod::with_canonical_stance_vocab`], every
+//! incoming vote's stance is translated via `equivalent_to` edges
+//! into the canonical slug before counting. That keeps tallies
+//! comparable across dialects: a vote authored as `endorse` against
+//! a community vocab that declares `endorse equivalent_to agree`
+//! lands in the same `agree` bucket as a canonical-vocab vote.
+//! Untranslated slugs (no path in the registry) pass through
+//! verbatim, so the bucket label still tells consumers what the
+//! original wire form was.
 
 use std::collections::BTreeMap;
 
@@ -21,6 +26,7 @@ use idiolect_records::AnyRecord;
 use idiolect_records::generated::dev::idiolect::observation::{
     ObservationMethod as ObservationMethodDescriptor, ObservationScope,
 };
+use idiolect_records::vocab::VocabRegistry;
 
 use crate::error::ObserverResult;
 use crate::method::ObservationMethod;
@@ -40,11 +46,11 @@ struct StatementTally {
     /// the latest cid the aggregator has seen so the published
     /// outcome record can carry a strong ref.
     cid: Option<String>,
-    /// Stance slug → count. BTreeMap so serialized output is in
+    /// Stance slug → count. `BTreeMap` so serialized output is in
     /// stable key order.
     counts: BTreeMap<String, u64>,
     /// Stance slug → weighted-count sum (scaled by 1000 per the
-    /// deliberationVote.weight convention). Populated only for
+    /// `deliberationVote.weight` convention). Populated only for
     /// votes that carried `weight`.
     weighted_counts: BTreeMap<String, u64>,
 }
@@ -56,19 +62,69 @@ pub struct DeliberationTallyMethod {
     statements: BTreeMap<String, StatementTally>,
     /// Total votes observed.
     total_votes: u64,
+    /// Optional canonical vocabulary AT-URI. When set together with
+    /// [`Self::registry`], every incoming vote's stance is
+    /// translated into the canonical slug before counting; otherwise
+    /// stances pass through verbatim.
+    canonical_stance_vocab: Option<String>,
+    /// Vocab registry used for stance translation. Present together
+    /// with [`Self::canonical_stance_vocab`].
+    registry: Option<VocabRegistry>,
 }
 
 impl DeliberationTallyMethod {
-    /// Construct an empty aggregator.
+    /// Construct an empty aggregator. Stance slugs are kept
+    /// verbatim; consumers that want cross-dialect canonicalisation
+    /// chain [`Self::with_canonical_stance_vocab`].
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Configure cross-dialect canonicalisation. Every incoming
+    /// vote's stance slug is run through
+    /// [`VocabRegistry::translate`] from the vote's stance vocab
+    /// into the supplied `canonical_uri` before counting. The
+    /// registry must already contain both the source and target
+    /// vocabs at the moment a vote is observed; missing vocabs
+    /// degrade gracefully (the verbatim slug is used).
+    ///
+    /// The vote's source vocab is taken from the vote's
+    /// `stanceVocab` field when set, otherwise defaulting to the
+    /// canonical AT-URI itself (i.e. the vote is assumed to already
+    /// be authored in the canonical vocab).
+    #[must_use]
+    pub fn with_canonical_stance_vocab(
+        mut self,
+        canonical_uri: impl Into<String>,
+        registry: VocabRegistry,
+    ) -> Self {
+        self.canonical_stance_vocab = Some(canonical_uri.into());
+        self.registry = Some(registry);
+        self
     }
 
     /// Total votes observed since construction.
     #[must_use]
     pub const fn total_votes(&self) -> u64 {
         self.total_votes
+    }
+
+    /// Map a wire-form stance slug to its canonical form when a
+    /// registry + canonical vocab are configured. Falls through to
+    /// the verbatim slug when no canonicalisation is configured, the
+    /// source vocab is unknown to the registry, or no `equivalent_to`
+    /// path resolves the slug into the canonical vocab.
+    fn canonicalize_stance(&self, source_vocab: Option<&str>, slug: &str) -> String {
+        let (Some(registry), Some(canonical_uri)) =
+            (self.registry.as_ref(), self.canonical_stance_vocab.as_deref())
+        else {
+            return slug.to_owned();
+        };
+        let from_uri = source_vocab.unwrap_or(canonical_uri);
+        registry
+            .translate(from_uri, canonical_uri, slug)
+            .unwrap_or_else(|| slug.to_owned())
     }
 }
 
@@ -111,7 +167,13 @@ impl ObservationMethod for DeliberationTallyMethod {
         };
         self.total_votes = self.total_votes.saturating_add(1);
         let statement_uri = vote.subject.uri.as_str().to_owned();
-        let stance = vote.stance.as_str().to_owned();
+        let raw_stance = vote.stance.as_str();
+        let source_vocab_uri = vote
+            .stance_vocab
+            .as_ref()
+            .and_then(|v| v.uri.as_ref())
+            .map(idiolect_records::AtUri::as_str);
+        let stance = self.canonicalize_stance(source_vocab_uri, raw_stance);
         let bucket = self.statements.entry(statement_uri).or_default();
         if bucket.cid.is_none() {
             bucket.cid = Some(vote.subject.cid.as_str().to_owned());
@@ -121,8 +183,8 @@ impl ObservationMethod for DeliberationTallyMethod {
             // Lexicon constrains weight to 0..=1000; saturate
             // defensively in case a malformed record sneaks through.
             let w: u64 = u64::try_from(weight.max(0)).unwrap_or(0);
-            *bucket.weighted_counts.entry(stance).or_insert(0) =
-                bucket.weighted_counts.get(&stance).copied().unwrap_or(0).saturating_add(w);
+            let slot = bucket.weighted_counts.entry(stance).or_insert(0);
+            *slot = slot.saturating_add(w);
         }
         Ok(())
     }
@@ -275,9 +337,7 @@ mod tests {
     #[test]
     fn other_record_kinds_are_ignored() {
         // Encountering a non-vote record must not crash or count.
-        let m = DeliberationTallyMethod::new();
-        let mut m2 = m;
-        // Pass an event with no record at all.
+        let mut m = DeliberationTallyMethod::new();
         let ev = IndexerEvent {
             seq: 0,
             live: true,
@@ -290,7 +350,106 @@ mod tests {
             cid: None,
             record: None,
         };
-        m2.observe(&ev).expect("observe ignores non-vote events");
-        assert_eq!(m2.total_votes(), 0);
+        m.observe(&ev).expect("observe ignores non-vote events");
+        assert_eq!(m.total_votes(), 0);
+    }
+
+    #[test]
+    fn canonicalises_stance_via_registry_when_configured() {
+        use idiolect_records::Vocab;
+        use idiolect_records::generated::dev::idiolect::defs::VocabRef;
+        use idiolect_records::vocab::VocabRegistry;
+
+        let bridge: Vocab = serde_json::from_value(serde_json::json!({
+            "name":  "blacksky",
+            "world": "open",
+            "nodes": [
+                { "id": "endorse", "kind": "concept" },
+                { "id": "agree",   "kind": "concept" },
+                { "id": "equivalent_to", "kind": "relation",
+                  "relationMetadata": { "symmetric": true, "transitive": true } },
+            ],
+            "edges": [
+                { "source": "endorse", "target": "agree", "relationSlug": "equivalent_to" },
+            ],
+            "occurredAt": "2026-04-29T00:00:00.000Z",
+        }))
+        .expect("bridge parses");
+        let canonical: Vocab = serde_json::from_value(serde_json::json!({
+            "name":  "canonical",
+            "world": "open",
+            "nodes": [{ "id": "agree", "kind": "concept" }],
+            "occurredAt": "2026-04-29T00:00:00.000Z",
+        }))
+        .expect("canonical parses");
+
+        let bridge_uri = "at://did:plc:x/dev.idiolect.vocab/bridge";
+        let canonical_uri = "at://did:plc:x/dev.idiolect.vocab/canonical";
+        let mut reg = VocabRegistry::new();
+        reg.insert(bridge_uri, &bridge);
+        reg.insert(canonical_uri, &canonical);
+
+        let mut m = DeliberationTallyMethod::new()
+            .with_canonical_stance_vocab(canonical_uri, reg);
+
+        // Vote authored against the bridge vocab using the
+        // community-extended `endorse` slug. The observer must
+        // canonicalise it to `agree` before counting.
+        let s1 = "at://did:plc:c/dev.idiolect.deliberationStatement/s1";
+        let cid = "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm";
+        let vote_record = AnyRecord::DeliberationVote(DeliberationVote {
+            subject: StrongRecordRef {
+                uri: idiolect_records::AtUri::parse(s1).expect("valid at-uri"),
+                cid: idiolect_records::Cid::parse(cid).expect("valid cid"),
+            },
+            stance: DeliberationVoteStance::Other("endorse".to_owned()),
+            stance_vocab: Some(VocabRef {
+                uri: Some(idiolect_records::AtUri::parse(bridge_uri).expect("valid at-uri")),
+                cid: None,
+            }),
+            weight: None,
+            rationale: None,
+            created_at: idiolect_records::Datetime::parse("2026-04-29T00:00:00Z")
+                .expect("valid datetime"),
+        });
+
+        m.observe(&event(0, vote_record)).expect("observe");
+        let snap = m.snapshot().expect("snapshot").expect("non-empty");
+        // The tally bucket should now be `agree`, not `endorse`.
+        let counts = snap["statementTallies"][0]["counts"]
+            .as_array()
+            .expect("array");
+        let agree = counts
+            .iter()
+            .find(|c| c["stance"] == "agree")
+            .expect("agree bucket present");
+        assert_eq!(agree["count"], 1);
+        let endorse = counts.iter().find(|c| c["stance"] == "endorse");
+        assert!(endorse.is_none(), "endorse should have been canonicalised away");
+    }
+
+    #[test]
+    fn unknown_source_vocab_falls_through_with_verbatim_slug() {
+        use idiolect_records::vocab::VocabRegistry;
+        let canonical_uri = "at://did:plc:x/dev.idiolect.vocab/canonical";
+        // Empty registry: no vocabs known.
+        let reg = VocabRegistry::new();
+        let mut m = DeliberationTallyMethod::new()
+            .with_canonical_stance_vocab(canonical_uri, reg);
+
+        let s1 = "at://did:plc:c/dev.idiolect.deliberationStatement/s1";
+        let cid = "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm";
+        m.observe(&event(
+            0,
+            vote(s1, cid, DeliberationVoteStance::Agree, None),
+        ))
+        .expect("observe");
+        let snap = m.snapshot().expect("snapshot").expect("non-empty");
+        // Slug passes through verbatim because the registry knows
+        // nothing.
+        let counts = snap["statementTallies"][0]["counts"]
+            .as_array()
+            .expect("array");
+        assert!(counts.iter().any(|c| c["stance"] == "agree"));
     }
 }
