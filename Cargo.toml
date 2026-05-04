@@ -87,7 +87,7 @@ anyhow = "1.0.100"
 # the typescript emitter through oxc's arena-allocated ast plus its ast-to-
 # source printer instead of composing strings by hand.
 oxc_allocator = "0.126"
-oxc_ast       = "0.126"
+oxc_ast       = "0.128"
 oxc_codegen   = "0.126"
 oxc_span      = "0.126"
 
