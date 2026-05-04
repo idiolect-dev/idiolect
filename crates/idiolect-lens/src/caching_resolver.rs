@@ -91,40 +91,47 @@ impl<R> CachingResolver<R> {
 }
 
 impl<R: Resolver> Resolver for CachingResolver<R> {
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-        let key = uri.to_string();
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            let key = uri.to_string();
 
-        // Fast path: fresh hit.
-        if self.ttl > Duration::ZERO {
-            let entries = self
-                .entries
-                .lock()
-                .map_err(|e| LensError::Transport(format!("cache poisoned: {e}")))?;
-            if let Some(entry) = entries.get(&key)
-                && entry.inserted_at.elapsed() < self.ttl
-            {
-                return Ok(entry.lens.clone());
+            // Fast path: fresh hit.
+            if self.ttl > Duration::ZERO {
+                let entries = self
+                    .entries
+                    .lock()
+                    .map_err(|e| LensError::Transport(format!("cache poisoned: {e}")))?;
+                if let Some(entry) = entries.get(&key)
+                    && entry.inserted_at.elapsed() < self.ttl
+                {
+                    return Ok(entry.lens.clone());
+                }
             }
-        }
 
-        // Miss or expired: resolve, then insert.
-        let lens = self.inner.resolve(uri).await?;
+            // Miss or expired: resolve, then insert.
+            let lens = self.inner.resolve(uri).await?;
 
-        if self.ttl > Duration::ZERO {
-            let mut entries = self
-                .entries
-                .lock()
-                .map_err(|e| LensError::Transport(format!("cache poisoned: {e}")))?;
-            entries.insert(
-                key,
-                CacheEntry {
-                    lens: lens.clone(),
-                    inserted_at: Instant::now(),
-                },
-            );
-        }
+            if self.ttl > Duration::ZERO {
+                let mut entries = self
+                    .entries
+                    .lock()
+                    .map_err(|e| LensError::Transport(format!("cache poisoned: {e}")))?;
+                entries.insert(
+                    key,
+                    CacheEntry {
+                        lens: lens.clone(),
+                        inserted_at: Instant::now(),
+                    },
+                );
+            }
 
-        Ok(lens)
+            Ok(lens)
+        })
     }
 }
 
@@ -141,9 +148,16 @@ mod tests {
     }
 
     impl Resolver for CountingResolver {
-        async fn resolve(&self, _uri: &AtUri) -> Result<PanprotoLens, LensError> {
-            self.calls.fetch_add(1, Ordering::SeqCst);
-            Ok(self.response.clone())
+        fn resolve<'a>(
+            &'a self,
+            _uri: &'a AtUri,
+        ) -> std::pin::Pin<
+            Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+        > {
+            Box::pin(async move {
+                self.calls.fetch_add(1, Ordering::SeqCst);
+                Ok(self.response.clone())
+            })
         }
     }
 
@@ -153,9 +167,16 @@ mod tests {
     }
 
     impl Resolver for FailingResolver {
-        async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-            self.calls.fetch_add(1, Ordering::SeqCst);
-            Err(LensError::NotFound(uri.to_string()))
+        fn resolve<'a>(
+            &'a self,
+            uri: &'a AtUri,
+        ) -> std::pin::Pin<
+            Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+        > {
+            Box::pin(async move {
+                self.calls.fetch_add(1, Ordering::SeqCst);
+                Err(LensError::NotFound(uri.to_string()))
+            })
         }
     }
 

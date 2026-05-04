@@ -21,7 +21,6 @@ use crate::error::LensError;
 /// Implementations should return [`LensError::NotFound`] when no
 /// schema matches the given hash and [`LensError::Transport`] for
 /// backend-level failures.
-#[allow(async_fn_in_trait)]
 pub trait SchemaLoader: Send + Sync {
     /// Load the schema whose content-addressed hash is `object_hash`.
     ///
@@ -31,9 +30,9 @@ pub trait SchemaLoader: Send + Sync {
     /// schema unioned across many files (`getProjectSchema`), or
     /// anything content-addressed and deserialisable as a panproto
     /// `Schema`. Dialects routinely span several source schemas, so
-    /// the runtime intentionally avoids assuming a particular scope —
-    /// it asks the loader for "the schema at this hash" and instantiates
-    /// against whatever it gets back.
+    /// the runtime intentionally avoids assuming a particular scope.
+    /// It asks the loader for "the schema at this hash" and
+    /// instantiates against whatever it gets back.
     ///
     /// # Errors
     ///
@@ -41,7 +40,10 @@ pub trait SchemaLoader: Send + Sync {
     /// unknown; `Transport` when the backend fails; `LexiconParse`
     /// when the backend returned bytes that were not a valid
     /// panproto schema graph.
-    async fn load(&self, object_hash: &str) -> Result<Schema, LensError>;
+    fn load<'a>(
+        &'a self,
+        object_hash: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Schema, LensError>> + Send + 'a>>;
 }
 
 /// A `HashMap`-backed schema loader, keyed by `object_hash`.
@@ -81,18 +83,28 @@ impl InMemorySchemaLoader {
 }
 
 impl SchemaLoader for InMemorySchemaLoader {
-    async fn load(&self, object_hash: &str) -> Result<Schema, LensError> {
-        self.entries
-            .get(object_hash)
-            .cloned()
-            .ok_or_else(|| LensError::NotFound(format!("schema:{object_hash}")))
+    fn load<'a>(
+        &'a self,
+        object_hash: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Schema, LensError>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            self.entries
+                .get(object_hash)
+                .cloned()
+                .ok_or_else(|| LensError::NotFound(format!("schema:{object_hash}")))
+        })
     }
 }
 
 /// Forward [`SchemaLoader`] through a shared `Arc<T>`.
 impl<T: SchemaLoader + ?Sized> SchemaLoader for std::sync::Arc<T> {
-    async fn load(&self, object_hash: &str) -> Result<Schema, LensError> {
-        (**self).load(object_hash).await
+    fn load<'a>(
+        &'a self,
+        object_hash: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Schema, LensError>> + Send + 'a>>
+    {
+        (**self).load(object_hash)
     }
 }
 
@@ -155,24 +167,30 @@ impl FilesystemSchemaLoader {
 }
 
 impl SchemaLoader for FilesystemSchemaLoader {
-    async fn load(&self, object_hash: &str) -> Result<Schema, LensError> {
-        let path = self.path_for(object_hash);
-        let bytes = match std::fs::read(&path) {
-            Ok(b) => b,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                return Err(LensError::NotFound(format!("schema:{object_hash}")));
-            }
-            Err(e) => {
-                return Err(LensError::Transport(format!(
-                    "read {}: {e}",
-                    path.display()
-                )));
-            }
-        };
-        let value: serde_json::Value = serde_json::from_slice(&bytes)
-            .map_err(|e| LensError::Transport(format!("parse {}: {e}", path.display())))?;
-        panproto_protocols::web_document::atproto::parse_lexicon(&value)
-            .map_err(|e| LensError::Transport(format!("lexicon parse {object_hash}: {e}")))
+    fn load<'a>(
+        &'a self,
+        object_hash: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Schema, LensError>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            let path = self.path_for(object_hash);
+            let bytes = match std::fs::read(&path) {
+                Ok(b) => b,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                    return Err(LensError::NotFound(format!("schema:{object_hash}")));
+                }
+                Err(e) => {
+                    return Err(LensError::Transport(format!(
+                        "read {}: {e}",
+                        path.display()
+                    )));
+                }
+            };
+            let value: serde_json::Value = serde_json::from_slice(&bytes)
+                .map_err(|e| LensError::Transport(format!("parse {}: {e}", path.display())))?;
+            panproto_protocols::web_document::atproto::parse_lexicon(&value)
+                .map_err(|e| LensError::Transport(format!("lexicon parse {object_hash}: {e}")))
+        })
     }
 }
 
@@ -226,6 +244,14 @@ mod tests {
         let loader = FilesystemSchemaLoader::new(dir.path()).unwrap();
         let err = loader.load("sha256:absent").await.unwrap_err();
         assert!(matches!(err, LensError::NotFound(_)));
+    }
+
+    #[test]
+    fn schema_loader_trait_object_future_is_send() {
+        fn assert_send<T: Send>(_: &T) {}
+        let l: std::sync::Arc<dyn SchemaLoader> = std::sync::Arc::new(InMemorySchemaLoader::new());
+        let fut = l.load("sha256:abc");
+        assert_send(&fut);
     }
 
     #[tokio::test]
