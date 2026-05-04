@@ -89,7 +89,7 @@ anyhow = "1.0.100"
 oxc_allocator = "0.126"
 oxc_ast       = "0.126"
 oxc_codegen   = "0.126"
-oxc_span      = "0.126"
+oxc_span      = "0.128"
 
 [profile.release]
 lto = "thin"
