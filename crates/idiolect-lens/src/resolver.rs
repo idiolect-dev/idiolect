@@ -48,11 +48,10 @@ use crate::error::LensError;
 /// test double for a live PDS client changes a constructor arg, not a
 /// call site.
 ///
-/// The trait uses native async fn; `async_fn_in_trait` is allowed at
-/// the crate level. `Send + Sync` bounds are required so the
-/// resolver can be shared across tokio tasks and its futures stay
-/// `Send`.
-#[allow(async_fn_in_trait)]
+/// The trait returns boxed `Send` futures so it stays object-safe
+/// (`Arc<dyn Resolver>`) and so [`apply_lens`](crate::apply_lens)'s
+/// composed future is `Send` when called from inside another async
+/// trait method.
 pub trait Resolver: Send + Sync {
     /// Fetch the lens record identified by `uri`.
     ///
@@ -62,7 +61,12 @@ pub trait Resolver: Send + Sync {
     /// produces. Backend-specific errors are wrapped into one of those
     /// variants at the resolver layer; callers never pattern-match on
     /// transport types.
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError>;
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    >;
 }
 
 // -----------------------------------------------------------------
@@ -106,11 +110,18 @@ impl InMemoryResolver {
 }
 
 impl Resolver for InMemoryResolver {
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-        self.entries
-            .get(&uri.to_string())
-            .cloned()
-            .ok_or_else(|| LensError::NotFound(uri.to_string()))
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            self.entries
+                .get(&uri.to_string())
+                .cloned()
+                .ok_or_else(|| LensError::NotFound(uri.to_string()))
+        })
     }
 }
 
@@ -118,8 +129,13 @@ impl Resolver for InMemoryResolver {
 /// resolver instance be shared across the lens runtime, the caching
 /// layer, and any other consumer without a manual delegate impl.
 impl<T: Resolver + ?Sized> Resolver for std::sync::Arc<T> {
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-        (**self).resolve(uri).await
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    > {
+        (**self).resolve(uri)
     }
 }
 
@@ -134,7 +150,6 @@ impl<T: Resolver + ?Sized> Resolver for std::sync::Arc<T> {
 /// the http request. The returned json is the raw record body
 /// (the `value` field of the xrpc response, not the response
 /// envelope).
-#[allow(async_fn_in_trait)]
 pub trait PdsClient: Send + Sync {
     /// Fetch a record's body json by repo / collection / rkey.
     ///
@@ -145,18 +160,18 @@ pub trait PdsClient: Send + Sync {
     /// [`LensError::Transport`] for any other failure. Decode errors
     /// are surfaced by the caller (`PdsResolver::resolve`), not by the
     /// client itself, since the client returns raw json.
-    async fn get_record(
+    fn get_record(
         &self,
         did: &str,
         collection: &str,
         rkey: &str,
-    ) -> Result<serde_json::Value, LensError>;
+    ) -> impl std::future::Future<Output = Result<serde_json::Value, LensError>> + Send;
 
     /// List records in a repo + collection, paginated.
     ///
     /// Mirrors `com.atproto.repo.listRecords`. Returns
     /// `(records, next_cursor)` where each record is the xrpc
-    /// response's `records[i]` shape — `{ uri, cid, value }` — and
+    /// response's `records[i]` shape (`{ uri, cid, value }`), and
     /// `next_cursor` is `Some(s)` when more records exist.
     ///
     /// The default implementation returns
@@ -169,16 +184,18 @@ pub trait PdsClient: Send + Sync {
     ///
     /// Returns [`LensError::Transport`] for backend failures. A
     /// `repo not found` returns [`LensError::NotFound`].
-    async fn list_records(
+    fn list_records(
         &self,
         _did: &str,
         _collection: &str,
         _limit: Option<u32>,
         _cursor: Option<&str>,
-    ) -> Result<ListRecordsResponse, LensError> {
-        Err(LensError::Transport(
-            "list_records not implemented on this PdsClient".into(),
-        ))
+    ) -> impl std::future::Future<Output = Result<ListRecordsResponse, LensError>> + Send {
+        async {
+            Err(LensError::Transport(
+                "list_records not implemented on this PdsClient".into(),
+            ))
+        }
     }
 }
 
@@ -258,13 +275,20 @@ impl<T: PdsClient + ?Sized> PdsClient for std::sync::Arc<T> {
 }
 
 impl<C: PdsClient> Resolver for PdsResolver<C> {
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-        let body = self
-            .client
-            .get_record(uri.did().as_str(), uri.collection().as_str(), uri.rkey())
-            .await?;
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            let body = self
+                .client
+                .get_record(uri.did().as_str(), uri.collection().as_str(), uri.rkey())
+                .await?;
 
-        serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
+            serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
+        })
     }
 }
 
@@ -435,7 +459,6 @@ impl<T: PdsWriter + ?Sized> PdsWriter for std::sync::Arc<T> {
 /// (`listTheories` / `listAlignments`). Concrete impls in scope for
 /// idiolect: a live client that speaks the xrpc surface, and the
 /// [`InMemoryVcsClient`] fixture shipped below.
-#[allow(async_fn_in_trait)]
 pub trait PanprotoVcsClient: Send + Sync {
     /// Fetch the content-addressed object identified by `object_hash`.
     ///
@@ -443,7 +466,10 @@ pub trait PanprotoVcsClient: Send + Sync {
     ///
     /// Return [`LensError::NotFound`] when no object matches the hash
     /// and [`LensError::Transport`] for any backend-level failure.
-    async fn get_object(&self, object_hash: &str) -> Result<serde_json::Value, LensError>;
+    fn get_object(
+        &self,
+        object_hash: &str,
+    ) -> impl std::future::Future<Output = Result<serde_json::Value, LensError>> + Send;
 
     /// Resolve a ref name to its current object hash, or `None` if
     /// the ref does not exist.
@@ -451,14 +477,21 @@ pub trait PanprotoVcsClient: Send + Sync {
     /// # Errors
     ///
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn get_ref(&self, name: &str) -> Result<Option<String>, LensError>;
+    fn get_ref(
+        &self,
+        name: &str,
+    ) -> impl std::future::Future<Output = Result<Option<String>, LensError>> + Send;
 
     /// Point `name` at `object_hash`. Creates the ref if absent.
     ///
     /// # Errors
     ///
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn set_ref(&self, name: &str, object_hash: &str) -> Result<(), LensError>;
+    fn set_ref(
+        &self,
+        name: &str,
+        object_hash: &str,
+    ) -> impl std::future::Future<Output = Result<(), LensError>> + Send;
 
     /// List every `(name, object_hash)` ref the store knows about.
     /// Order is implementation-defined.
@@ -466,7 +499,9 @@ pub trait PanprotoVcsClient: Send + Sync {
     /// # Errors
     ///
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn list_refs(&self) -> Result<Vec<(String, String)>, LensError>;
+    fn list_refs(
+        &self,
+    ) -> impl std::future::Future<Output = Result<Vec<(String, String)>, LensError>> + Send;
 
     /// Walk the commit chain starting at `ref_name`'s head, oldest-
     /// to-newest. `limit = None` means "every commit reachable".
@@ -476,11 +511,11 @@ pub trait PanprotoVcsClient: Send + Sync {
     ///
     /// [`LensError::NotFound`] when the ref is unknown,
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn list_commits(
+    fn list_commits(
         &self,
         ref_name: &str,
         limit: Option<u32>,
-    ) -> Result<Vec<String>, LensError>;
+    ) -> impl std::future::Future<Output = Result<Vec<String>, LensError>> + Send;
 
     /// Object hash of the most recent commit at `ref_name`, or `None`
     /// when the ref is empty.
@@ -488,7 +523,10 @@ pub trait PanprotoVcsClient: Send + Sync {
     /// # Errors
     ///
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn get_head(&self, ref_name: &str) -> Result<Option<String>, LensError>;
+    fn get_head(
+        &self,
+        ref_name: &str,
+    ) -> impl std::future::Future<Output = Result<Option<String>, LensError>> + Send;
 
     /// Fetch the cst-shaped schema tree rooted at `object_hash`.
     /// Used by the lens runtime when it needs the structural view of
@@ -498,14 +536,19 @@ pub trait PanprotoVcsClient: Send + Sync {
     ///
     /// [`LensError::NotFound`] when the tree is missing,
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn get_schema_tree(&self, object_hash: &str) -> Result<serde_json::Value, LensError>;
+    fn get_schema_tree(
+        &self,
+        object_hash: &str,
+    ) -> impl std::future::Future<Output = Result<serde_json::Value, LensError>> + Send;
 
     /// List every theory id the store recognises (registry view).
     ///
     /// # Errors
     ///
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn list_theories(&self) -> Result<Vec<String>, LensError>;
+    fn list_theories(
+        &self,
+    ) -> impl std::future::Future<Output = Result<Vec<String>, LensError>> + Send;
 
     /// List every theory-alignment id the store recognises (registry
     /// view used by the verify runners to find proof artifacts).
@@ -513,7 +556,9 @@ pub trait PanprotoVcsClient: Send + Sync {
     /// # Errors
     ///
     /// [`LensError::Transport`] for any backend-level failure.
-    async fn list_alignments(&self) -> Result<Vec<String>, LensError>;
+    fn list_alignments(
+        &self,
+    ) -> impl std::future::Future<Output = Result<Vec<String>, LensError>> + Send;
 }
 
 /// Resolves lens records by asking a [`PanprotoVcsClient`] for the
@@ -554,17 +599,24 @@ impl<C: PanprotoVcsClient> PanprotoVcsResolver<C> {
 }
 
 impl<C: PanprotoVcsClient> Resolver for PanprotoVcsResolver<C> {
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-        let key = uri.to_string();
-        let object_hash = self
-            .client
-            .get_ref(&key)
-            .await?
-            .ok_or(LensError::NotFound(key))?;
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            let key = uri.to_string();
+            let object_hash = self
+                .client
+                .get_ref(&key)
+                .await?
+                .ok_or(LensError::NotFound(key))?;
 
-        let body = self.client.get_object(&object_hash).await?;
+            let body = self.client.get_object(&object_hash).await?;
 
-        serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
+            serde_json::from_value::<PanprotoLens>(body).map_err(LensError::from)
+        })
     }
 }
 
@@ -796,6 +848,19 @@ mod tests {
 
         let err = r.resolve(&uri).await.unwrap_err();
         assert!(matches!(err, LensError::NotFound(_)));
+    }
+
+    /// Pins the cross-task contract: `Arc<dyn Resolver>` is object-safe
+    /// and its `resolve` future is `Send`, so downstream callers can
+    /// hold a resolver behind a trait object and `.await` it inside an
+    /// async-trait method without losing `Send` on the composed future.
+    #[test]
+    fn resolver_trait_object_future_is_send() {
+        fn assert_send<T: Send>(_: &T) {}
+        let r: std::sync::Arc<dyn Resolver> = std::sync::Arc::new(InMemoryResolver::new());
+        let uri = crate::AtUri::parse("at://did:plc:x/dev.panproto.schema.lens/l1").unwrap();
+        let fut = r.resolve(&uri);
+        assert_send(&fut);
     }
 
     struct StaticPdsClient(serde_json::Value);

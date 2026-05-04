@@ -23,6 +23,12 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.8.0] — 2026-05-04
+
+### Changed
+
+- `idiolect_lens::Resolver::resolve` and `idiolect_lens::SchemaLoader::load` now return `Pin<Box<dyn Future<...> + Send + '_>>` instead of bare `async fn`. The traits are object-safe (`Arc<dyn Resolver>`, `Arc<dyn SchemaLoader>`) and `apply_lens(...)`'s composed future is `Send`, so downstream callers can hold these behind a trait object and call `apply_lens` from inside an `#[async_trait]` impl without losing `Send` on the resulting future. `idiolect_lens::PdsClient` and `idiolect_lens::PanprotoVcsClient` tighten to `impl Future<...> + Send` on every method (RPITIT) so impls of `Resolver` that delegate to them stay `Send`. `dyn`-style impls of `Resolver` / `SchemaLoader` wrap their body in `Box::pin(async move { ... })`; `async fn` impls of `PdsClient` / `PanprotoVcsClient` whose bodies are already `Send` compile unchanged. Closes idiolect-dev/idiolect#53.
+
 ## [0.7.0] — 2026-04-29
 
 ### Added

@@ -227,31 +227,38 @@ impl<R> VerifyingResolver<R, Sha256Hasher> {
 }
 
 impl<R: Resolver, H: Hasher> Resolver for VerifyingResolver<R, H> {
-    async fn resolve(&self, uri: &AtUri) -> Result<PanprotoLens, LensError> {
-        let lens = self.inner.resolve(uri).await?;
+    fn resolve<'a>(
+        &'a self,
+        uri: &'a AtUri,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<PanprotoLens, LensError>> + Send + 'a>,
+    > {
+        Box::pin(async move {
+            let lens = self.inner.resolve(uri).await?;
 
-        let (algo, expected) = split_hash(&lens.object_hash).ok_or_else(|| {
-            LensError::Transport(format!(
-                "malformed object_hash (expected `<algo>:<hex>`): {}",
-                lens.object_hash
-            ))
-        })?;
-        if algo != self.hasher.algorithm() {
-            return Err(LensError::Transport(format!(
-                "object_hash algorithm {algo} does not match verifier algorithm {}",
-                self.hasher.algorithm()
-            )));
-        }
+            let (algo, expected) = split_hash(&lens.object_hash).ok_or_else(|| {
+                LensError::Transport(format!(
+                    "malformed object_hash (expected `<algo>:<hex>`): {}",
+                    lens.object_hash
+                ))
+            })?;
+            if algo != self.hasher.algorithm() {
+                return Err(LensError::Transport(format!(
+                    "object_hash algorithm {algo} does not match verifier algorithm {}",
+                    self.hasher.algorithm()
+                )));
+            }
 
-        let bytes = canonical_blob_bytes(&lens)?;
-        let actual = self.hasher.hash_hex(&bytes);
-        if actual != expected {
-            return Err(LensError::Transport(format!(
-                "content hash mismatch for {uri}: declared {algo}:{expected}, computed {algo}:{actual}"
-            )));
-        }
+            let bytes = canonical_blob_bytes(&lens)?;
+            let actual = self.hasher.hash_hex(&bytes);
+            if actual != expected {
+                return Err(LensError::Transport(format!(
+                    "content hash mismatch for {uri}: declared {algo}:{expected}, computed {algo}:{actual}"
+                )));
+            }
 
-        Ok(lens)
+            Ok(lens)
+        })
     }
 }
 

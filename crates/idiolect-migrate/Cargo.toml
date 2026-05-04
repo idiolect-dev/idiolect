@@ -18,8 +18,8 @@ publish = false
 workspace = true
 
 [dependencies]
-idiolect-records = { version = "0.7.0", path = "../idiolect-records" }
-idiolect-lens    = { version = "0.7.0", path = "../idiolect-lens" }
+idiolect-records = { version = "0.8.0", path = "../idiolect-records" }
+idiolect-lens    = { version = "0.8.0", path = "../idiolect-lens" }
 
 panproto-schema    = { workspace = true }
 panproto-protocols = { workspace = true }
