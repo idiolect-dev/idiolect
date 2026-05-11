@@ -1,0 +1,137 @@
+# Build and deploy the mdbook to GitHub Pages.
+#
+# The book lives in `docs/book/` and is built with `mdbook` plus the
+# `mdbook-katex` and `mdbook-mermaid` preprocessors. Its `book.toml`
+# pins `site-url = "/book/"`, so internal links resolve under the
+# `/book/` subpath; the deploy step arranges the upload artifact so
+# the rendered tree is served at `<custom-domain>/book/`.
+#
+# Target: idiolect.dev/book/
+#
+# How the custom domain works:
+#
+# - The artifact root contains a `CNAME` file with `idiolect.dev`.
+#   GitHub Pages reads it on deploy and serves the artifact at the
+#   custom domain (caller must own the DNS, with `idiolect.dev`
+#   pointed at `<owner>.github.io` per GitHub's docs).
+# - The book HTML lives under `book/` inside the artifact root, so
+#   final URLs are `https://idiolect.dev/book/...`.
+# - The artifact root also carries a small `index.html` that
+#   307-redirects `/` to `/book/`, so a bare `idiolect.dev/` lands
+#   somewhere useful instead of 404.
+#
+# If `idiolect.dev` is currently served by a different host (Cloudflare
+# Pages, Vercel, Netlify, ...), enabling this workflow plus pointing
+# DNS at GitHub Pages will move the site to Pages. If a coexisting
+# host is needed, route only `idiolect.dev/book/*` to the GitHub Pages
+# CNAME at the DNS / edge layer instead.
+
+name: book
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/book/**"
+      - ".github/workflows/book.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  # Allow at most one in-flight deploy per ref; a second push waits.
+  # Pages itself serialises deploys, but this saves CI minutes when
+  # several doc-only commits land in quick succession.
+  group: book-${{ github.ref }}
+  cancel-in-progress: false
+
+# The deploy job uses the `pages` deployment environment, which
+# requires `pages: write` plus `id-token: write` for OIDC attestation.
+# Read access on contents is implicit.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # ---------------------------------------------------------------
+  # Build the book and pack the artifact so the rendered tree is
+  # served under `/book/` at the custom domain.
+  # ---------------------------------------------------------------
+  build:
+    name: build book
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # mdbook + preprocessors are installed via `cargo install`. We
+      # could grab prebuilt binaries from each upstream release, but
+      # the URL shape drifts across releases and cargo install is
+      # boring + cached on rerun. Pinned versions keep CI
+      # reproducible; bump deliberately when the book exercises a
+      # newer feature.
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Distinct cache from the main CI rust jobs so a cargo-install
+          # bump here does not invalidate the workspace cache.
+          shared-key: book-mdbook
+
+      - name: install mdbook + preprocessors
+        run: |
+          set -euo pipefail
+          cargo install --locked mdbook         --version "0.4.40"
+          cargo install --locked mdbook-katex   --version "0.9.2"
+          cargo install --locked mdbook-mermaid --version "0.14.0"
+
+      - name: build mdbook
+        working-directory: docs/book
+        run: mdbook build
+
+      # Pack the artifact so it's served from `/book/` and the bare
+      # custom domain redirects there.
+      - name: arrange artifact
+        run: |
+          set -euo pipefail
+          mkdir -p _site/book
+          cp -R docs/book/book/. _site/book/
+          # CNAME file Pages reads to set the custom domain.
+          echo "idiolect.dev" > _site/CNAME
+          # Redirect bare `/` to `/book/`. Pages serves `index.html`
+          # at the root automatically.
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>idiolect</title>
+              <meta http-equiv="refresh" content="0; url=/book/">
+              <link rel="canonical" href="/book/">
+            </head>
+            <body>
+              <p>Redirecting to <a href="/book/">the book</a>.</p>
+            </body>
+          </html>
+          HTML
+
+      - name: upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  # ---------------------------------------------------------------
+  # Deploy to GitHub Pages. The `pages` environment is auto-created
+  # by `actions/deploy-pages` on first run; subsequent runs reuse it.
+  # ---------------------------------------------------------------
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

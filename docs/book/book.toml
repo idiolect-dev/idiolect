@@ -1,0 +1,40 @@
+[book]
+title = "idiolect"
+description = "Mutual intelligibility for schema idiolects on ATProto."
+authors = ["Aaron White"]
+language = "en"
+src = "src"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/idiolect-dev/idiolect"
+edit-url-template = "https://github.com/idiolect-dev/idiolect/edit/main/docs/book/{path}"
+site-url = "/book/"
+additional-css = ["theme/custom.css"]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[preprocessor.katex]
+command = "mdbook-katex"
+after = ["links"]
+# Render math at build time so static HTML carries the equations.
+no-css = false
+include-src = false
+macros = "./theme/katex-macros.txt"
+block-delimiter = { left = "$$", right = "$$" }
+inline-delimiter = { left = "$", right = "$" }

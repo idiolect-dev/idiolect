@@ -1,0 +1,76 @@
+# Summary
+
+[Introduction](./index.md)
+
+# Tutorial
+
+- [Overview](./tutorial/index.md)
+- [Install and resolve a record](./tutorial/01-install.md)
+- [Validate against the lexicon](./tutorial/02-validate.md)
+- [Apply a lens](./tutorial/03-apply-lens.md)
+- [Run a verification](./tutorial/04-verify.md)
+- [Publish a recommendation](./tutorial/05-publish.md)
+
+# Guides
+
+- [Overview](./guide/index.md)
+- [Index a firehose](./guide/index-firehose.md)
+- [Run the orchestrator HTTP API](./guide/orchestrator.md)
+- [Run the observer daemon](./guide/observer.md)
+- [Author a verification runner](./guide/verify.md)
+- [Publish and resolve a lens](./guide/publish-lens.md)
+- [Migrate records across a revision](./guide/migrate.md)
+- [Configure OAuth sessions](./guide/oauth.md)
+- [Run codegen](./guide/codegen.md)
+- [Author a community vocabulary](./guide/vocabulary.md)
+- [Bundle records into a dialect](./guide/dialect.md)
+
+# Concepts
+
+- [Overview](./concepts/index.md)
+- [Idiolect, dialect, language](./concepts/idiolect-dialect-language.md)
+- [The dev.idiolect.* lexicon family](./concepts/lexicon-family.md)
+- [Records as content-addressed signed data](./concepts/atproto-records.md)
+- [Lens semantics and laws](./concepts/lens-laws.md)
+- [Open enums and vocabularies](./concepts/open-enums.md)
+- [The vocabulary knowledge graph](./concepts/vocab-graph.md)
+- [Deliberation](./concepts/deliberation.md)
+- [Observer protocol](./concepts/observer.md)
+- [Lexicon evolution policy](./concepts/lexicon-evolution.md)
+
+# Reference
+
+- [Overview](./reference/index.md)
+- [Crates](./reference/crates/index.md)
+  - [idiolect-records](./reference/crates/idiolect-records.md)
+  - [idiolect-codegen](./reference/crates/idiolect-codegen.md)
+  - [idiolect-lens](./reference/crates/idiolect-lens.md)
+  - [idiolect-identity](./reference/crates/idiolect-identity.md)
+  - [idiolect-indexer](./reference/crates/idiolect-indexer.md)
+  - [idiolect-oauth](./reference/crates/idiolect-oauth.md)
+  - [idiolect-observer](./reference/crates/idiolect-observer.md)
+  - [idiolect-orchestrator](./reference/crates/idiolect-orchestrator.md)
+  - [idiolect-verify](./reference/crates/idiolect-verify.md)
+  - [idiolect-migrate](./reference/crates/idiolect-migrate.md)
+  - [idiolect-cli](./reference/crates/idiolect-cli.md)
+- [Lexicons](./reference/lexicons/index.md)
+  - [adapter](./reference/lexicons/adapter.md)
+  - [belief](./reference/lexicons/belief.md)
+  - [bounty](./reference/lexicons/bounty.md)
+  - [community](./reference/lexicons/community.md)
+  - [correction](./reference/lexicons/correction.md)
+  - [defs](./reference/lexicons/defs.md)
+  - [deliberation](./reference/lexicons/deliberation.md)
+  - [deliberationStatement](./reference/lexicons/deliberationStatement.md)
+  - [deliberationVote](./reference/lexicons/deliberationVote.md)
+  - [deliberationOutcome](./reference/lexicons/deliberationOutcome.md)
+  - [dialect](./reference/lexicons/dialect.md)
+  - [encounter](./reference/lexicons/encounter.md)
+  - [observation](./reference/lexicons/observation.md)
+  - [recommendation](./reference/lexicons/recommendation.md)
+  - [retrospection](./reference/lexicons/retrospection.md)
+  - [verification](./reference/lexicons/verification.md)
+  - [vocab](./reference/lexicons/vocab.md)
+- [CLI](./reference/cli.md)
+- [HTTP query API](./reference/http-api.md)
+- [Stability and versioning](./reference/stability.md)

@@ -1,0 +1,6 @@
+/* Tighten code in tables, keep mermaid diagrams centered. */
+table code { white-space: nowrap; }
+.mermaid { text-align: center; margin: 1em 0; }
+
+/* KaTeX block math gets a little vertical breathing room. */
+.katex-display { margin: 1em 0; }
