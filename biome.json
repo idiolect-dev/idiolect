@@ -14,7 +14,8 @@
       "!**/target",
       "!**/packages/*/src/generated",
       "!lexicons",
-      "!crates/*/tests/fixtures"
+      "!crates/*/tests/fixtures",
+      "!docs/book"
     ]
   },
   "formatter": {
