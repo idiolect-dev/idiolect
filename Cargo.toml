@@ -88,7 +88,7 @@ anyhow = "1.0.100"
 # source printer instead of composing strings by hand.
 oxc_allocator = "0.126"
 oxc_ast       = "0.126"
-oxc_codegen   = "0.126"
+oxc_codegen   = "0.129"
 oxc_span      = "0.126"
 
 [profile.release]
