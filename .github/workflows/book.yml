@@ -1,30 +1,20 @@
-# Build and deploy the mdbook to GitHub Pages.
+# Build the mdbook and sync it into idiolect-dev/idiolect-dev.github.io
+# under /book/, so it lands at idiolect.dev/book/.
 #
-# The book lives in `docs/book/` and is built with `mdbook` plus the
-# `mdbook-katex` and `mdbook-mermaid` preprocessors. Its `book.toml`
-# pins `site-url = "/book/"`, so internal links resolve under the
-# `/book/` subpath; the deploy step arranges the upload artifact so
-# the rendered tree is served at `<custom-domain>/book/`.
+# The org's landing-page repo (idiolect-dev/idiolect-dev.github.io)
+# owns the custom domain `idiolect.dev` via its Pages CNAME claim;
+# it serves from `main` branch root in "legacy" Pages mode. To put
+# the book at idiolect.dev/book/ we commit the rendered tree into
+# that repo's `/book/` subdirectory; Pages picks it up on push.
 #
-# Target: idiolect.dev/book/
+# Cross-repo write needs a token with `contents: write` on
+# idiolect-dev/idiolect-dev.github.io. The workflow reads it from
+# the repo secret `LANDING_PAGE_PAT`. Operator setup:
 #
-# How the custom domain works:
-#
-# - The artifact root contains a `CNAME` file with `idiolect.dev`.
-#   GitHub Pages reads it on deploy and serves the artifact at the
-#   custom domain (caller must own the DNS, with `idiolect.dev`
-#   pointed at `<owner>.github.io` per GitHub's docs).
-# - The book HTML lives under `book/` inside the artifact root, so
-#   final URLs are `https://idiolect.dev/book/...`.
-# - The artifact root also carries a small `index.html` that
-#   307-redirects `/` to `/book/`, so a bare `idiolect.dev/` lands
-#   somewhere useful instead of 404.
-#
-# If `idiolect.dev` is currently served by a different host (Cloudflare
-# Pages, Vercel, Netlify, ...), enabling this workflow plus pointing
-# DNS at GitHub Pages will move the site to Pages. If a coexisting
-# host is needed, route only `idiolect.dev/book/*` to the GitHub Pages
-# CNAME at the DNS / edge layer instead.
+#   1. Create a fine-grained PAT scoped to
+#      idiolect-dev/idiolect-dev.github.io with `contents: write`.
+#   2. Add as a repo secret on idiolect-dev/idiolect named
+#      `LANDING_PAGE_PAT`.
 
 name: book
 
@@ -37,45 +27,25 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  # Allow at most one in-flight deploy per ref; a second push waits.
-  # Pages itself serialises deploys, but this saves CI minutes when
-  # several doc-only commits land in quick succession.
   group: book-${{ github.ref }}
   cancel-in-progress: false
 
-# The deploy job uses the `pages` deployment environment, which
-# requires `pages: write` plus `id-token: write` for OIDC attestation.
-# Read access on contents is implicit.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  # ---------------------------------------------------------------
-  # Build the book and pack the artifact so the rendered tree is
-  # served under `/book/` at the custom domain.
-  # ---------------------------------------------------------------
-  build:
-    name: build book
+  build-and-sync:
+    name: build + sync to landing-page repo
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      # mdbook + preprocessors are installed via `cargo install`. We
-      # could grab prebuilt binaries from each upstream release, but
-      # the URL shape drifts across releases and cargo install is
-      # boring + cached on rerun. Pinned versions keep CI
-      # reproducible; bump deliberately when the book exercises a
-      # newer feature.
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
         with:
-          # Distinct cache from the main CI rust jobs so a cargo-install
-          # bump here does not invalidate the workspace cache.
           shared-key: book-mdbook
 
       - name: install mdbook + preprocessors
@@ -89,49 +59,38 @@ jobs:
         working-directory: docs/book
         run: mdbook build
 
-      # Pack the artifact so it's served from `/book/` and the bare
-      # custom domain redirects there.
-      - name: arrange artifact
+      # Check out the landing-page repo into a sibling directory.
+      # We use a separate PAT (not GITHUB_TOKEN, which is scoped to
+      # this repo only) so we can push back.
+      - name: checkout landing-page repo
+        uses: actions/checkout@v4
+        with:
+          repository: idiolect-dev/idiolect-dev.github.io
+          token: ${{ secrets.LANDING_PAGE_PAT }}
+          path: landing
+          fetch-depth: 1
+
+      # Replace landing/book/ with the freshly built tree. Using
+      # rsync with --delete keeps the destination identical to the
+      # build output — no stale files survive a renamed page.
+      - name: sync book into landing/book/
         run: |
           set -euo pipefail
-          mkdir -p _site/book
-          cp -R docs/book/book/. _site/book/
-          # CNAME file Pages reads to set the custom domain.
-          echo "idiolect.dev" > _site/CNAME
-          # Redirect bare `/` to `/book/`. Pages serves `index.html`
-          # at the root automatically.
-          cat > _site/index.html <<'HTML'
-          <!doctype html>
-          <html lang="en">
-            <head>
-              <meta charset="utf-8">
-              <title>idiolect</title>
-              <meta http-equiv="refresh" content="0; url=/book/">
-              <link rel="canonical" href="/book/">
-            </head>
-            <body>
-              <p>Redirecting to <a href="/book/">the book</a>.</p>
-            </body>
-          </html>
-          HTML
+          mkdir -p landing/book
+          rsync -a --delete docs/book/book/ landing/book/
 
-      - name: upload pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  # ---------------------------------------------------------------
-  # Deploy to GitHub Pages. The `pages` environment is auto-created
-  # by `actions/deploy-pages` on first run; subsequent runs reuse it.
-  # ---------------------------------------------------------------
-  deploy:
-    name: deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: commit + push if changed
+        working-directory: landing
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add book
+          if git diff --cached --quiet; then
+            echo "no book changes to publish"
+            exit 0
+          fi
+          # Pin the source commit so an operator looking at the
+          # landing-page repo can find the build's input.
+          git commit -m "book: sync from idiolect@${GITHUB_SHA::12}"
+          git push

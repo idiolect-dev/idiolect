@@ -26,25 +26,20 @@ Watches `src/` and `theme/` and live-reloads.
 ## Deploy
 
 `.github/workflows/book.yml` builds on every push to `main` that
-touches `docs/book/` (or the workflow itself) and deploys to
-GitHub Pages. The artifact is packed so the rendered tree is
-served at `idiolect.dev/book/`, with the bare custom-domain root
-redirecting there.
+touches `docs/book/` (or the workflow itself) and syncs the
+rendered tree into `idiolect-dev/idiolect-dev.github.io` under
+`/book/`. That sibling repo owns the `idiolect.dev` custom domain
+on its GitHub Pages site and serves from its `main` branch root,
+so a commit lands as `idiolect.dev/book/...` on the next Pages
+refresh.
 
-For the workflow to actually publish:
+Operator setup (one-time):
 
-1. **Enable Pages** for this repo: Settings → Pages → "Build and
-   deployment" source = "GitHub Actions".
-2. **Point DNS** at `<owner>.github.io` per GitHub's
-   [custom-domain docs](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site).
-   The workflow's artifact carries a `CNAME` file with
-   `idiolect.dev`, so Pages will pick it up on first deploy.
-
-If something other than GitHub Pages currently serves
-`idiolect.dev`, the workflow as written would conflict; route only
-`idiolect.dev/book/*` to the Pages CNAME at the DNS / edge layer
-instead, or change the workflow to push the built tree somewhere
-else.
+1. Create a fine-grained personal access token scoped to
+   `idiolect-dev/idiolect-dev.github.io` with `contents: write`.
+2. Add it as a repo secret on `idiolect-dev/idiolect` named
+   `LANDING_PAGE_PAT`. The workflow reads it to push back into
+   the landing-page repo.
 
 ## Structure
 
