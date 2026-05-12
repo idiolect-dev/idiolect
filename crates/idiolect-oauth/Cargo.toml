@@ -54,7 +54,7 @@ store-sqlite = ["dep:rusqlite"]
 idiolect-lens = { path = "../idiolect-lens" }
 idiolect-records = { path = "../idiolect-records" }
 panproto-lens = { workspace = true }
-tokio = { version = "1.48", default-features = false, features = ["macros", "rt"] }
+tokio = { version = "1.52", default-features = false, features = ["macros", "rt"] }
 tempfile = "3.13"
 # the session expiry tests use `time::macros::datetime!` to build
 # OffsetDateTime literals inline.
