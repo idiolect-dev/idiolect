@@ -38,7 +38,7 @@ let rec = Recommendation {
     conditions: vec![/* condition variants */],
     preconditions: vec![],
     lens_path: vec![AtUri::parse(
-        "at://did:plc:idiolect.dev/dev.panproto.schema.lens/example",
+        "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/example",
     )?],
     caveats: vec![],
     required_verifications: vec![/* lens-property variants */],

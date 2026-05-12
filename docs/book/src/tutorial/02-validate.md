@@ -20,17 +20,25 @@ exports one Rust type per record kind plus the
 
 ## Decode a record by NSID
 
-Save the JSON from chapter 1 to `dialect.json`. Then:
+The crate ships minimally-valid fixtures for every record kind
+under `idiolect_records::examples`. They are real records: same
+shape the codec emits for a wire-format publish, same
+constraints, same `Record` impl. Use them to exercise the
+decode path without depending on what's on the network.
+
+In `src/main.rs`:
 
 ```rust
-use idiolect_records::{decode_record, AnyRecord, Dialect, Nsid, Record};
+use idiolect_records::{decode_record, examples, AnyRecord, Dialect, Record};
 
 fn main() -> anyhow::Result<()> {
-    let bytes = std::fs::read("dialect.json")?;
-    let value: serde_json::Value = serde_json::from_slice(&bytes)?;
+    // The fixture is a typed value; serialise it back to JSON
+    // and decode through the dispatcher to exercise the same
+    // path a firehose handler would take.
+    let dialect = examples::dialect();
+    let value = serde_json::to_value(&dialect)?;
 
-    let nsid = Dialect::nsid();
-    let rec = decode_record(&nsid, value)?;
+    let rec = decode_record(&Dialect::nsid(), value)?;
 
     match rec {
         AnyRecord::Dialect(d) => println!(
@@ -39,16 +47,37 @@ fn main() -> anyhow::Result<()> {
             d.idiolects.as_ref().map_or(0, |v| v.len()),
             d.preferred_lenses.as_ref().map_or(0, |v| v.len()),
         ),
-        other => anyhow::bail!("expected a dialect, got {}", other.nsid_str()),
+        other => anyhow::bail!(
+            "expected a dialect, got {}",
+            other.nsid_str(),
+        ),
     }
     Ok(())
 }
 ```
 
-`decode_record` is the dispatch primitive: it takes an NSID and a
-JSON value, looks up the matching `Record` impl, and hands back an
-`AnyRecord`. If the JSON does not match the schema, it returns an
-error pointing at the first invalid field.
+Run it:
+
+```bash
+cargo run
+```
+
+```text
+ud-en-2026: 0 idiolects, 0 preferred lenses
+```
+
+`decode_record` is the dispatch primitive: it takes an NSID and
+a JSON value, looks up the matching `Record` impl, and hands
+back an `AnyRecord`. If the JSON does not match the schema, it
+returns an error pointing at the first invalid field.
+
+The same path works for a JSON file fetched from a PDS, once
+some party publishes a `dev.idiolect.dialect` record on the
+network: read the bytes from disk (or from the
+`com.atproto.repo.getRecord` body), parse as
+`serde_json::Value`, hand to `decode_record`. The fixture
+shortcut is just a way to make this chapter not depend on
+network state.
 
 ## Validation is structural, not just type-shaped
 
@@ -97,9 +126,11 @@ The generated tree mirrors the lexicons one-to-one. As of v0.8.0:
 | `Verification` | `verification` | `dev.idiolect.verification` |
 | `Vocab` | `vocab` | `dev.idiolect.vocab` |
 
-For each record kind a fixture is exported under
-`idiolect_records::examples::*`. Fixtures are minimally-valid: they
-satisfy every required field and pass the codec round-trip.
+Fixtures are exported under `idiolect_records::examples::*` for
+every record kind except the four deliberation lexicons, which
+are recent additions still awaiting bundled fixtures. The
+shipped fixtures are minimally-valid: every required field is
+present and the codec round-trip is a no-op.
 
 ## Reusable trait surface
 

@@ -1,0 +1,28 @@
+[package]
+name        = "publish-tutorial-lens"
+version     = "0.0.0"
+edition     = "2024"
+publish     = false
+description = "One-shot publisher that puts a working source schema, target schema, and rename-sort lens on the project DID so docs/book/src/tutorial/03-apply-lens.md actually runs against the network."
+
+[[bin]]
+name = "publish-tutorial-lens"
+path = "src/main.rs"
+
+[[bin]]
+name = "apply-tutorial-lens"
+path = "src/apply.rs"
+
+[dependencies]
+anyhow            = "1"
+base64            = "0.22"
+hex               = "0.4"
+reqwest           = { version = "0.12", features = ["json"] }
+serde             = { version = "1", features = ["derive"] }
+serde_json        = "1"
+sha2              = "0.10"
+tokio             = { version = "1", features = ["macros", "rt-multi-thread"] }
+idiolect-records  = { path = "../../crates/idiolect-records" }
+idiolect-lens     = { path = "../../crates/idiolect-lens", features = ["pds-reqwest"] }
+panproto-lens     = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
+panproto-schema   = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }

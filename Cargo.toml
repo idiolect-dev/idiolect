@@ -13,6 +13,12 @@ members = [
     "crates/idiolect-records",
     "crates/idiolect-verify",
 ]
+exclude = [
+    # One-shot publisher binary. Standalone so it does not pull
+    # script-only deps (anyhow, hex, base64, reqwest) into the
+    # workspace's resolver or the supply-chain audit.
+    "scripts/publish-tutorial-lens",
+]
 
 [workspace.package]
 version = "0.8.0"

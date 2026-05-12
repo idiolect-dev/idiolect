@@ -35,16 +35,18 @@ idiolect 0.8.0
 The first thing the runtime does on any record fetch is resolve a
 DID to its PDS. `idiolect resolve` exposes that step on its own:
 
+The project's own DID is a good first target:
+
 ```bash
-idiolect resolve did:plc:idiolect.dev
+idiolect resolve did:plc:wdl4nnvxxdy4mc5vddxlm6f3
 ```
 
 ```json
 {
-  "did": "did:plc:idiolect.dev",
+  "did": "did:plc:wdl4nnvxxdy4mc5vddxlm6f3",
   "method": "Plc",
   "handle": "idiolect.dev",
-  "pds_url": "https://shimeji.us-east.host.bsky.network",
+  "pds_url": "https://jellybaby.us-east.host.bsky.network",
   "also_known_as": ["at://idiolect.dev"]
 }
 ```
@@ -63,25 +65,23 @@ plus the underlying transport message).
 ## Fetch a record
 
 `idiolect fetch` takes an at-uri and returns the raw record body
-(the `value` field of the xrpc response, not the response envelope):
+(the `value` field of the xrpc response, not the response
+envelope). The project DID has a tutorial lens record published;
+fetching it exercises the runtime path end to end:
 
 ```bash
 idiolect fetch \
-  at://did:plc:idiolect.dev/dev.idiolect.dialect/canonical
+  at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text
 ```
 
-```json
-{
-  "$type": "dev.idiolect.dialect",
-  "name": "idiolect canonical",
-  "issuingCommunity": "at://did:plc:idiolect.dev/dev.idiolect.community/canonical",
-  "...": "..."
-}
-```
+The response is a `dev.panproto.schema.lens` body carrying the
+protolens chain (`blob`), the source and target schema at-uris,
+the optic class (`iso`), and the content hash. Chapter 3 takes
+this exact record and runs it through `apply_lens`.
 
-The fetch goes through the same `PdsClient` impl `apply_lens` uses,
-so anything you can fetch this way you can also feed into the lens
-runtime in [chapter 3](./03-apply-lens.md).
+The fetch goes through the same `PdsClient` impl `apply_lens`
+uses, so any record you can fetch this way you can also feed
+into the lens runtime.
 
 ## Where things are stored
 
