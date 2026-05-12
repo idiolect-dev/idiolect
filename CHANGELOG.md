@@ -23,7 +23,7 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
-## [0.10.0] — 2026-05-04
+## [0.10.0] — 2026-05-12
 
 ### Added
 
