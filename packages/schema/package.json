@@ -41,7 +41,7 @@
     "lint": "biome check src tests scripts"
   },
   "dependencies": {
-    "@atproto/lexicon": "0.4.8",
+    "@atproto/lexicon": "0.6.2",
     "@atproto/syntax": "0.3.4"
   },
   "devDependencies": {
