@@ -92,7 +92,7 @@ anyhow = "1.0.100"
 # oxc: rust-native javascript/typescript toolchain. idiolect-codegen drives
 # the typescript emitter through oxc's arena-allocated ast plus its ast-to-
 # source printer instead of composing strings by hand.
-oxc_allocator = "0.126"
+oxc_allocator = "0.130"
 oxc_ast       = "0.126"
 oxc_codegen   = "0.126"
 oxc_span      = "0.126"
