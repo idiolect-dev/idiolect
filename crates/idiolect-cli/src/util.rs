@@ -24,9 +24,7 @@ pub fn now_datetime() -> Result<Datetime> {
     let hour = (time_of_day / 3600) as u32;
     let minute = ((time_of_day % 3600) / 60) as u32;
     let second = (time_of_day % 60) as u32;
-    let s = format!(
-        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis:03}Z"
-    );
+    let s = format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis:03}Z");
     Datetime::parse(s).map_err(|e| anyhow!("parse datetime: {e}"))
 }
 

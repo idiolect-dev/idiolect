@@ -18,8 +18,8 @@ use std::process::ExitCode;
 use anyhow::{Context, Result, anyhow, bail};
 use idiolect_records::{
     Adapter, Belief, Bounty, Community, Correction, Deliberation, DeliberationOutcome,
-    DeliberationStatement, DeliberationVote, Dialect, Encounter, Nsid, Observation, Record,
-    Recommendation, Retrospection, Verification, Vocab, decode_record,
+    DeliberationStatement, DeliberationVote, Dialect, Encounter, Nsid, Observation, Recommendation,
+    Record, Retrospection, Verification, Vocab, decode_record,
 };
 use serde::Serialize;
 
@@ -77,10 +77,9 @@ pub async fn dispatch(args: &[String]) -> Result<ExitCode> {
     // Parse + validate the record body through `decode_record`. This
     // surfaces a structured error pointing at the first invalid
     // field, before we round-trip to wire form.
-    let bytes = std::fs::read(&record_path)
-        .with_context(|| format!("read record file {record_path}"))?;
-    let value: serde_json::Value =
-        serde_json::from_slice(&bytes).context("parse record JSON")?;
+    let bytes =
+        std::fs::read(&record_path).with_context(|| format!("read record file {record_path}"))?;
+    let value: serde_json::Value = serde_json::from_slice(&bytes).context("parse record JSON")?;
     let _any = decode_record(&nsid, value.clone()).map_err(|e| {
         anyhow!(
             "record body did not validate against {}: {e}",
@@ -191,10 +190,7 @@ fn nsid_for_kind(input: &str) -> Result<Nsid> {
     Nsid::parse(&qualified)
         .with_context(|| format!("parse NSID `{qualified}`"))
         .and_then(|n| {
-            if shipped_kinds()
-                .iter()
-                .any(|s| *s == short_name(n.as_str()))
-            {
+            if shipped_kinds().iter().any(|s| *s == short_name(n.as_str())) {
                 Ok(n)
             } else {
                 Err(anyhow!(

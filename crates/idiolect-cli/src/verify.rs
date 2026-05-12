@@ -116,18 +116,23 @@ fn target_from(pds: &PdsFlags) -> Result<VerificationTarget> {
             cid: None,
             direction: None,
         },
-        verifier: pds
-            .verifier_did
-            .parse()
-            .context("parse --verifier-did")?,
+        verifier: pds.verifier_did.parse().context("parse --verifier-did")?,
         occurred_at: now_datetime()?,
         tool_override: None,
     })
 }
 
-fn pds_resolver_loader(pds_url: &str) -> (PdsResolver<ReqwestPdsClient>, PdsSchemaLoader<ReqwestPdsClient>) {
+fn pds_resolver_loader(
+    pds_url: &str,
+) -> (
+    PdsResolver<ReqwestPdsClient>,
+    PdsSchemaLoader<ReqwestPdsClient>,
+) {
     let client = ReqwestPdsClient::with_service_url(pds_url);
-    (PdsResolver::new(client.clone()), PdsSchemaLoader::new(client))
+    (
+        PdsResolver::new(client.clone()),
+        PdsSchemaLoader::new(client),
+    )
 }
 
 fn print_and_exit(verification: &Verification) -> Result<ExitCode> {
@@ -145,8 +150,7 @@ fn print_and_exit(verification: &Verification) -> Result<ExitCode> {
 /// or JSON Lines (one record per line).
 fn load_corpus(path: &str) -> Result<Vec<serde_json::Value>> {
     let bytes = std::fs::read(path).with_context(|| format!("read corpus {path}"))?;
-    if let Ok(serde_json::Value::Array(items)) =
-        serde_json::from_slice::<serde_json::Value>(&bytes)
+    if let Ok(serde_json::Value::Array(items)) = serde_json::from_slice::<serde_json::Value>(&bytes)
     {
         return Ok(items);
     }

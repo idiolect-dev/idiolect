@@ -49,13 +49,22 @@ async fn run() -> Result<ExitCode> {
     while let Some(flag) = iter.next() {
         match flag.as_str() {
             "--lens" => {
-                lens_uri = Some(iter.next().ok_or_else(|| anyhow!("--lens requires a value"))?);
+                lens_uri = Some(
+                    iter.next()
+                        .ok_or_else(|| anyhow!("--lens requires a value"))?,
+                );
             }
             "--in" => {
-                in_dir = Some(iter.next().ok_or_else(|| anyhow!("--in requires a value"))?);
+                in_dir = Some(
+                    iter.next()
+                        .ok_or_else(|| anyhow!("--in requires a value"))?,
+                );
             }
             "--out" => {
-                out_dir = Some(iter.next().ok_or_else(|| anyhow!("--out requires a value"))?);
+                out_dir = Some(
+                    iter.next()
+                        .ok_or_else(|| anyhow!("--out requires a value"))?,
+                );
             }
             "--pds-url" => {
                 pds_url = iter
@@ -83,8 +92,7 @@ async fn run() -> Result<ExitCode> {
 
     let mut ok: u32 = 0;
     let mut failed: u32 = 0;
-    for entry in std::fs::read_dir(&in_dir).with_context(|| format!("read {}", in_dir.display()))?
-    {
+    for entry in std::fs::read_dir(&in_dir).with_context(|| format!("read {}", in_dir.display()))? {
         let entry = entry?;
         let path = entry.path();
         if path.extension().and_then(|e| e.to_str()) != Some("json") {

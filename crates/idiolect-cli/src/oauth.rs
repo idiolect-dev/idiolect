@@ -64,8 +64,8 @@ impl CliSession {
     /// Load the session for `did` from disk.
     pub fn load(did: &str) -> Result<Self> {
         let path = Self::path_for(did)?;
-        let bytes = std::fs::read(&path)
-            .with_context(|| format!("read session at {}", path.display()))?;
+        let bytes =
+            std::fs::read(&path).with_context(|| format!("read session at {}", path.display()))?;
         let session: Self = serde_json::from_slice(&bytes)
             .with_context(|| format!("parse session at {}", path.display()))?;
         Ok(session)
@@ -180,10 +180,7 @@ async fn cmd_login(args: &[String]) -> Result<ExitCode> {
         let body = resp.text().await.unwrap_or_default();
         bail!("createSession returned {status}: {body}");
     }
-    let resp: CreateSessionResponse = resp
-        .json()
-        .await
-        .context("decode createSession response")?;
+    let resp: CreateSessionResponse = resp.json().await.context("decode createSession response")?;
 
     let session = CliSession {
         did: resp.did.clone(),
