@@ -85,12 +85,21 @@ and forwards to the configured `PdsWriter`. The signing path
 goes through `SigningPdsWriter` plus a `DpopProver` from the
 `pds-reqwest` and (optionally) `dpop-p256` features.
 
-## Planned functionality
+## CLI surface
 
-- An `idiolect verify <kind>` CLI subcommand that runs any
-  shipped `VerificationRunner` and publishes the result via
-  `RecordPublisher`. Not shipped at v0.8.0; runners are
-  library-only.
-- A bundled corpus loader. Each shipped runner takes whatever
-  target shape it needs; a unified corpus-loading API across
-  runners is plausible future work, not shipped at v0.8.0.
+The `idiolect verify <kind>` subcommand wraps each shipped
+runner against a live PDS via `PdsResolver` + `PdsSchemaLoader`:
+
+```text
+idiolect verify roundtrip-test  --lens AT_URI [--corpus PATH]
+idiolect verify property-test   --lens AT_URI  --corpus PATH  [--budget N]
+idiolect verify static-check    --lens AT_URI
+idiolect verify coercion-law    --lens AT_URI  --vcs-url URL  --standard STD
+```
+
+Corpus files may be JSON arrays or JSON Lines. The
+`property-test` generator cycles through the corpus by index;
+`--budget` controls case count. The CLI prints the typed
+`Verification` record as JSON and exits non-zero on `Falsified`
+or `Inconclusive`. Publishing the result is a separate step;
+pipe to `idiolect publish verification --record -`.

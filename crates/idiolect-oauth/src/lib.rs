@@ -81,6 +81,7 @@
 //! # }
 //! ```
 
+pub mod refresh;
 pub mod schema;
 pub mod session;
 pub mod store;
@@ -90,6 +91,7 @@ pub mod store_fs;
 #[cfg(feature = "store-sqlite")]
 pub mod store_sqlite;
 
+pub use refresh::{DEFAULT_REFRESH_THRESHOLD_SECS, RefreshError, Refresher, refresh_if_needed};
 pub use schema::{
     SESSION_LEXICON_JSON, SESSION_NSID, SchemaError, session_body_vertex, session_schema,
 };

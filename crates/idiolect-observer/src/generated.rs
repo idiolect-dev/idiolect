@@ -78,6 +78,12 @@ pub const METHODS: &[MethodDescriptor] = &[
         description: "Counts of dev.idiolect.belief records by holder DID and by subject at-uri. Surfaces labeler coverage over the firehose and records that attract many third-party attributions.",
         form: MethodForm::Record,
     },
+    MethodDescriptor {
+        name: crate::methods::deliberation_tally::METHOD_NAME,
+        version: crate::methods::deliberation_tally::METHOD_VERSION,
+        description: "Per-statement per-stance vote counts across dev.idiolect.deliberationVote records. The data shape a dev.idiolect.deliberationOutcome record carries, emitted as an observation for visibility into in-progress deliberations.",
+        form: MethodForm::Record,
+    },
 ];
 /// Fresh instances of every bundled record-form method, in spec order.
 ///
@@ -96,5 +102,6 @@ pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
         Box::new(crate::methods::purpose_distribution::PurposeDistributionMethod::new()),
         Box::new(crate::methods::basis_distribution::BasisDistributionMethod::new()),
         Box::new(crate::methods::attribution_chains::AttributionChainsMethod::new()),
+        Box::new(crate::methods::deliberation_tally::DeliberationTallyMethod::new()),
     ]
 }

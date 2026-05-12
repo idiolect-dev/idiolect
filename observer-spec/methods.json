@@ -49,6 +49,12 @@
       "module": "attribution_chains",
       "struct": "AttributionChainsMethod",
       "description": "Counts of dev.idiolect.belief records by holder DID and by subject at-uri. Surfaces labeler coverage over the firehose and records that attract many third-party attributions."
+    },
+    {
+      "name": "deliberation-tally",
+      "module": "deliberation_tally",
+      "struct": "DeliberationTallyMethod",
+      "description": "Per-statement per-stance vote counts across dev.idiolect.deliberationVote records. The data shape a dev.idiolect.deliberationOutcome record carries, emitted as an observation for visibility into in-progress deliberations."
     }
   ]
 }

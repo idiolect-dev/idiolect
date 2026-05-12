@@ -22,9 +22,9 @@ crate is library-only; runners are invoked programmatically.
 
 ```toml
 # in Cargo.toml
-idiolect-verify = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0" }
-idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0", features = ["pds-reqwest"] }
-idiolect-records = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0" }
+idiolect-verify = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.10.0" }
+idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.10.0", features = ["pds-reqwest"] }
+idiolect-records = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.10.0" }
 panproto-schema  = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
 tokio            = { version = "1", features = ["full"] }
 ```
@@ -134,16 +134,27 @@ lens: query the verifier registry, accept the verifications they
 trust, reject the rest, and proceed only if the surviving set
 covers the properties their use case requires.
 
-## Planned functionality
+## From the CLI
 
-A future `idiolect verify <kind>` CLI subcommand would let
-operators run a runner without writing Rust. It is not shipped
-yet; runners are library-only. The four shipped runner kinds
-(`roundtrip-test`, `property-test`, `static-check`,
-`coercion-law`) cover the shape; additional kinds in the
-lexicon's `verification.kind` enum (`formal-proof`,
-`conformance-test`, `convergence-preserving`) are recognised
-slugs awaiting community-contributed runners.
+The library code above is also exposed as a CLI subcommand for
+quick operator runs. All four shipped runner kinds are wrapped:
+
+```bash
+idiolect verify roundtrip-test --lens at://.../tutorial-rename-sort-string-to-text
+idiolect verify property-test  --lens at://.../tutorial-rename-sort-string-to-text --corpus ./samples.jsonl
+idiolect verify static-check   --lens at://.../tutorial-rename-sort-string-to-text
+idiolect verify coercion-law   --lens at://... --vcs-url https://vcs.example --standard atproto-lexicon
+```
+
+The CLI prints the typed `Verification` record as JSON and
+exits non-zero on `Falsified` or `Inconclusive`, which makes it
+suitable for CI gates.
+
+Additional kinds in the lexicon's `verification.kind` enum
+(`formal-proof`, `conformance-test`, `convergence-preserving`)
+are recognised slugs awaiting community-contributed runners;
+authoring one is the
+[Author a verification runner](../guide/verify.md) loop.
 
 The next chapter publishes a `dev.idiolect.recommendation` that
 endorses a lens path under specific applicability conditions.

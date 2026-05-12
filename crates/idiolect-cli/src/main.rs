@@ -34,6 +34,10 @@ use tracing_subscriber::EnvFilter;
 
 mod encounter;
 mod generated;
+mod oauth;
+mod publish;
+mod util;
+mod verify;
 
 const DEFAULT_ORCHESTRATOR_URL: &str = "http://localhost:8787";
 
@@ -73,6 +77,18 @@ async fn parse_and_run() -> Result<ExitCode> {
                 "record" => encounter::cmd_encounter_record(&nested[1..]).await,
                 other => bail!("unknown encounter subcommand: {other}"),
             }
+        }
+        "oauth" => {
+            let nested: Vec<String> = args.collect();
+            oauth::dispatch(&nested).await
+        }
+        "publish" => {
+            let nested: Vec<String> = args.collect();
+            publish::dispatch(&nested).await
+        }
+        "verify" => {
+            let nested: Vec<String> = args.collect();
+            verify::dispatch(&nested).await
         }
         "version" | "--version" | "-V" => {
             println!("idiolect {}", env!("CARGO_PKG_VERSION"));

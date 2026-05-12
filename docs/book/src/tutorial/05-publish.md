@@ -26,7 +26,7 @@ the combinator set defined inside
 ## Author the record
 
 ```toml
-idiolect-records = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0" }
+idiolect-records = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.10.0" }
 reqwest          = { version = "0.12", features = ["json"] }
 serde            = { version = "1", features = ["derive"] }
 tokio            = { version = "1", features = ["full"] }
@@ -222,19 +222,29 @@ machine-checkable verifications attached (chapter 4 produced
 the orchestrator can fetch both, evaluate the conditions, and
 decide whether to invoke.
 
-## Planned functionality
+## From the CLI
 
-Two related CLI subcommands are planned but not shipped:
+The CLI ships both pieces of this flow:
 
-- `idiolect oauth login --handle <HANDLE>` would walk the OAuth
-  dance via `atrium-oauth-client` and persist the resulting
-  session through an `OAuthTokenStore`. Today the dance is
-  programmatic; the app-password path above is the easier
-  alternative.
-- `idiolect publish <kind> --record <path>` would load a JSON
-  file and publish it under the active session. Today publishing
-  goes through `RecordPublisher::create` (or the hand-rolled
-  client above) from Rust.
+```bash
+# 1. Authenticate (app password; legacy Bearer mode).
+idiolect oauth login --handle yourhandle.bsky.social
+# password from --app-password or env
+
+# 2. Publish a record from a JSON file.
+idiolect publish recommendation --record ./tutorial-rename-sort.json
+```
+
+`idiolect oauth login` exchanges credentials via
+`com.atproto.server.createSession` and stores the resulting
+session as a JSON file. `idiolect publish <kind>` validates the
+JSON against the typed `Record` impl, splices in `$type`, and
+POSTs `com.atproto.repo.createRecord` under the stored session.
+
+ATProto is moving off app passwords toward OAuth + DPoP; the
+next-iteration CLI wraps `atrium-oauth`'s browser-handoff dance
+and persists the resulting DPoP-bound session through the same
+`OAuthTokenStore`. The publish path is unchanged.
 
 That is the full loop. Where to go next:
 

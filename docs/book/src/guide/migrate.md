@@ -122,10 +122,22 @@ covers that case. The authoring loop is:
 Each step is mechanical and gated; the policy is what makes
 migrations reviewable.
 
-## What is not in this crate
+## Batch migration
 
-A streaming batch CLI that takes a directory of records and
-writes a migrated directory is not currently shipped. Callers
-that want one wire `migrate_record` into their own loop. The
-shape is small enough that a per-deployment script is usually
-the right answer.
+The crate ships an `idiolect-migrate` binary (behind the `cli`
+feature) that walks a directory of JSON records and writes a
+migrated directory:
+
+```bash
+cargo install --path crates/idiolect-migrate --features cli
+idiolect-migrate \
+    --lens   at://did:plc:.../dev.panproto.schema.lens/example \
+    --in     ./records-v1/ \
+    --out    ./records-v2/ \
+   [--pds-url URL]
+```
+
+Records stream one at a time so the working set stays bounded
+even on multi-million-record corpora. Failed migrations log to
+stderr and the binary's exit code reflects the worst case (0 if
+every file succeeded, 1 if any failed).
