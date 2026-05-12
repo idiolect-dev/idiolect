@@ -29,75 +29,35 @@ path, when working inside the workspace):
 
 ```toml
 # in Cargo.toml
-idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["pds-reqwest"] }
-tokio = { version = "1", features = ["full"] }
+idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0", features = ["pds-reqwest"] }
+panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
+tokio           = { version = "1", features = ["full"] }
 ```
 
-A `SchemaLoader` impl that fetches `dev.panproto.schema.schema`
-records from a PDS does not ship in v0.8.0 (the shipped
-`FilesystemSchemaLoader` reads ATProto lexicons; the records
-this tutorial uses carry serialized panproto `Schema` graphs).
-The contract is small, so we write one in the program. Add
-`reqwest` to the dependencies:
+The lens runtime needs three pieces: a `Resolver` (fetches the
+lens record by at-uri), a `SchemaLoader` (turns the
+`dev.panproto.schema.schema` at-uris on the lens record into
+typed `panproto_schema::Schema` values), and a `Protocol`. v0.9
+ships `PdsSchemaLoader` to pair with `PdsResolver`; both share a
+`ReqwestPdsClient`.
 
-```toml
-reqwest = { version = "0.12", features = ["json"] }
-```
-
-Then `src/main.rs`:
+`src/main.rs`:
 
 ```rust
-use std::pin::Pin;
-
 use idiolect_lens::{
-    apply_lens, ApplyLensInput, AtUri, LensError, PdsResolver,
-    ReqwestPdsClient, SchemaLoader,
+    apply_lens, ApplyLensInput, AtUri, PdsResolver, PdsSchemaLoader,
+    ReqwestPdsClient,
 };
-use panproto_schema::{Protocol, Schema};
+use panproto_schema::Protocol;
 
-const PDS: &str = "https://jellybaby.us-east.host.bsky.network";
+const PDS:  &str = "https://jellybaby.us-east.host.bsky.network";
 const LENS: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text";
-
-struct PdsSchemaLoader { http: reqwest::Client }
-
-impl PdsSchemaLoader {
-    fn new() -> Self { Self { http: reqwest::Client::new() } }
-}
-
-impl SchemaLoader for PdsSchemaLoader {
-    fn load<'a>(
-        &'a self,
-        at_uri: &'a str,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<Schema, LensError>> + Send + 'a>> {
-        Box::pin(async move {
-            let rest = at_uri.strip_prefix("at://").ok_or_else(|| {
-                LensError::Transport(format!("not an at-uri: {at_uri}"))
-            })?;
-            let mut parts = rest.splitn(3, '/');
-            let (did, coll, rkey) = match (parts.next(), parts.next(), parts.next()) {
-                (Some(d), Some(c), Some(r)) => (d, c, r),
-                _ => return Err(LensError::Transport(format!("malformed at-uri: {at_uri}"))),
-            };
-            let url = format!(
-                "{PDS}/xrpc/com.atproto.repo.getRecord?repo={did}&collection={coll}&rkey={rkey}"
-            );
-            let body: serde_json::Value = self.http.get(&url).send().await
-                .map_err(|e| LensError::Transport(format!("{e}")))?
-                .json().await
-                .map_err(|e| LensError::Transport(format!("{e}")))?;
-            let blob = body.get("value").and_then(|v| v.get("blob")).cloned()
-                .ok_or_else(|| LensError::LexiconParse("no blob".into()))?;
-            serde_json::from_value(blob)
-                .map_err(|e| LensError::LexiconParse(e.to_string()))
-        })
-    }
-}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let client   = ReqwestPdsClient::with_service_url(PDS);
-    let resolver = PdsResolver::new(client);
-    let loader   = PdsSchemaLoader::new();
+    let resolver = PdsResolver::new(client.clone());
+    let loader   = PdsSchemaLoader::new(client);
     let protocol = Protocol::default();
 
     let lens_uri = AtUri::parse(LENS)?;

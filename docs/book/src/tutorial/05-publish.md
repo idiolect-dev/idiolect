@@ -25,98 +25,183 @@ the combinator set defined inside
 
 ## Author the record
 
-Construct the typed record directly:
+```toml
+idiolect-records = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0" }
+reqwest          = { version = "0.12", features = ["json"] }
+serde            = { version = "1", features = ["derive"] }
+tokio            = { version = "1", features = ["full"] }
+```
 
 ```rust
-use idiolect_records::{Recommendation, AtUri, Datetime};
-// Plus the inline def types: Condition, Caveat, LensProperty.
-
-let rec = Recommendation {
-    issuing_community: AtUri::parse(
-        "at://did:plc:tutorial.dev/dev.idiolect.community/canonical",
-    )?,
-    conditions: vec![/* condition variants */],
-    preconditions: vec![],
-    lens_path: vec![AtUri::parse(
-        "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/example",
-    )?],
-    caveats: vec![],
-    required_verifications: vec![/* lens-property variants */],
-    annotations: None,
-    caveats_text: None,
-    occurred_at: Datetime::parse("2026-04-19T00:00:00.000Z").unwrap(),
+use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
+use idiolect_records::generated::dev::idiolect::recommendation::{
+    ConditionSourceIs, Recommendation, RecommendationConditions,
 };
+use idiolect_records::{Datetime, Record};
+
+const LENS_URI: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text";
+const SRC_SCHEMA_URI: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.schema/tutorial-post-body-v1";
+
+fn build_recommendation(community_did: &str) -> anyhow::Result<Recommendation> {
+    let community = format!("at://{community_did}/dev.idiolect.community/canonical");
+    Ok(Recommendation {
+        issuing_community: community.parse()?,
+        conditions: vec![RecommendationConditions::ConditionSourceIs(
+            ConditionSourceIs {
+                schema: SchemaRef {
+                    cid: None,
+                    language: None,
+                    uri: Some(SRC_SCHEMA_URI.parse()?),
+                },
+            },
+        )],
+        preconditions: None,
+        lens_path: vec![LensRef {
+            uri: Some(LENS_URI.parse()?),
+            cid: None,
+            direction: None,
+        }],
+        caveats: None,
+        caveats_text: None,
+        annotations: Some(
+            "Endorses the rename-sort tutorial lens for source \
+             records matching the v1 tutorial post-body schema."
+                .to_owned(),
+        ),
+        required_verifications: None,
+        basis: None,
+        occurred_at: Datetime::parse("2026-05-12T00:00:00.000Z")?,
+        supersedes: None,
+    })
+}
 ```
 
 Every required field is type-checked at construction. Optional
-fields are `Option<...>`. Open-enum slugs round-trip through
-their `*Vocab` siblings as covered in
-[Open enums and vocabularies](../concepts/open-enums.md).
-
-The exact field names and the inline `Condition` /
-`Caveat` / `LensProperty` shapes are in
-`crates/idiolect-records/src/generated/dev/idiolect/recommendation.rs`.
-Consult the generated source for the present field set.
+fields are `Option<...>`. The open-enum slugs in `Condition*`
+variants round-trip through their `*Vocab` siblings as covered
+in [Open enums and vocabularies](../concepts/open-enums.md).
 
 ## Get an authenticated session
 
-You need an OAuth session for the DID you want to publish under.
-The OAuth dance itself is `atrium-oauth-client`'s job; the
-resulting session is stored via an
-[`idiolect_oauth::OAuthTokenStore`](../guide/oauth.md):
+The simplest auth path is an app password (legacy Bearer mode,
+not OAuth + DPoP). Generate one at
+<https://bsky.app/settings/app-passwords> for the account you
+want to publish under, then load it via env vars:
 
 ```rust
-use idiolect_oauth::{FilesystemOAuthTokenStore, OAuthTokenStore};
+use serde::{Deserialize, Serialize};
 
-let store = FilesystemOAuthTokenStore::open("./sessions/")?;
-let session = store.load(my_did).await?
-    .ok_or_else(|| anyhow::anyhow!("no session for {my_did}"))?;
+#[derive(Serialize)]
+struct CreateSessionRequest<'a> {
+    identifier: &'a str,
+    password: &'a str,
+}
+
+#[derive(Deserialize)]
+struct Session {
+    did: String,
+    #[serde(rename = "accessJwt")]
+    access_jwt: String,
+}
+
+async fn create_session(
+    http: &reqwest::Client,
+    pds: &str,
+    handle: &str,
+    password: &str,
+) -> anyhow::Result<Session> {
+    let resp = http
+        .post(format!("{pds}/xrpc/com.atproto.server.createSession"))
+        .json(&CreateSessionRequest { identifier: handle, password })
+        .send().await?;
+    if !resp.status().is_success() {
+        anyhow::bail!("createSession {}: {}", resp.status(), resp.text().await?);
+    }
+    Ok(resp.json().await?)
+}
 ```
 
-Driving the dance and refreshing on expiry is the application's
-responsibility; the crate ships `OAuthSession::is_expired` and
-`OAuthSession::needs_refresh(now, threshold)` for the timing
-decision.
+OAuth + DPoP is the recommended path for production. The
+machinery lives in `idiolect-lens` under the `dpop-p256` feature
+plus `idiolect-oauth`'s session stores. For tutorial purposes
+the Bearer path is enough.
 
 ## Sign and publish
 
-With a session in hand, construct a `SigningPdsWriter` paired
-with a `DpopProver` and wrap it in `RecordPublisher`. The DPoP
-prover needs the session's private key; converting the JWK
-stored in `OAuthSession.dpop_private_key_jwk` to a PKCS8 PEM
-suitable for `P256DpopProver::from_pkcs8_pem` is the caller's
-responsibility (e.g. via the `josekit` or `jsonwebtoken` crate).
-The shape of the publish call:
+The PDS accepts a typed record body plus a `$type` discriminator
+on a `com.atproto.repo.createRecord` call:
 
 ```rust
-use idiolect_lens::{
-    P256DpopProver, RecordPublisher, ReqwestPdsClient, SigningPdsWriter,
-};
+#[derive(Serialize)]
+struct CreateRecordRequest<'a> {
+    repo: &'a str,
+    collection: &'a str,
+    rkey: &'a str,
+    record: serde_json::Value,
+}
 
-let client = ReqwestPdsClient::with_service_url(&session.pds_url);
-let prover = P256DpopProver::from_pkcs8_pem(&pkcs8_pem)?; // converted from JWK
-let writer = SigningPdsWriter::new(
-    client,
-    session.access_jwt.clone(),
-    prover,
-    session.dpop_nonce.clone(),
-);
-let publisher = RecordPublisher::new(writer, session.did.clone());
+async fn publish(
+    http: &reqwest::Client,
+    pds: &str,
+    bearer: &str,
+    repo: &str,
+    rec: &Recommendation,
+    rkey: &str,
+) -> anyhow::Result<()> {
+    let mut value = serde_json::to_value(rec)?;
+    if let serde_json::Value::Object(ref mut map) = value {
+        map.insert(
+            "$type".to_owned(),
+            serde_json::Value::String(Recommendation::NSID.to_owned()),
+        );
+    }
+    let resp = http
+        .post(format!("{pds}/xrpc/com.atproto.repo.createRecord"))
+        .bearer_auth(bearer)
+        .json(&CreateRecordRequest {
+            repo,
+            collection: Recommendation::NSID,
+            rkey,
+            record: value,
+        })
+        .send().await?;
+    if !resp.status().is_success() {
+        anyhow::bail!("createRecord {}: {}", resp.status(), resp.text().await?);
+    }
+    Ok(())
+}
 
-let resp = publisher.create(&rec).await?;
-println!("published: {}", resp.uri);
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let pds      = std::env::var("PDS_URL")?;
+    let handle   = std::env::var("ATPROTO_HANDLE")?;
+    let password = std::env::var("ATPROTO_PASSWORD")?;
+
+    let http = reqwest::Client::new();
+    let sess = create_session(&http, &pds, &handle, &password).await?;
+    let rec  = build_recommendation(&sess.did)?;
+    publish(&http, &pds, &sess.access_jwt, &sess.did, &rec,
+            "tutorial-rename-sort").await?;
+    println!("published at://{}/{}/tutorial-rename-sort",
+             sess.did, Recommendation::NSID);
+    Ok(())
+}
 ```
 
-The exact field set on `OAuthSession` and the `SigningPdsWriter`
-constructor are in `crates/idiolect-oauth/src/session.rs` and
-`crates/idiolect-lens/src/signing_writer.rs`; consult the source
-for the present surface. The `pds-reqwest` and `dpop-p256`
-features on `idiolect-lens` enable the writer + prover.
-
-## Verify it round-trips
+Run with credentials in the env:
 
 ```bash
-idiolect fetch "$RECOMMENDATION_URI" | jq .
+PDS_URL=https://bsky.social \
+ATPROTO_HANDLE=yourhandle.bsky.social \
+ATPROTO_PASSWORD='xxxx-xxxx-xxxx-xxxx' \
+cargo run
+```
+
+The project DID has already published this exact record:
+
+```bash
+idiolect fetch \
+  at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.idiolect.recommendation/tutorial-rename-sort
 ```
 
 If the record decodes and the `issuingCommunity` resolves to a
@@ -132,23 +217,24 @@ flowchart LR
 ```
 
 The community has expressed an opinion. The lens has
-machine-checkable verifications attached. A consumer querying
+machine-checkable verifications attached (chapter 4 produced
+`Holds` for the `roundtrip-test` property). A consumer querying
 the orchestrator can fetch both, evaluate the conditions, and
 decide whether to invoke.
 
 ## Planned functionality
 
-The CLI does not currently expose the publishing path. Two
-related subcommands are planned but not shipped at v0.8.0:
+Two related CLI subcommands are planned but not shipped:
 
-- An `idiolect oauth login --handle <HANDLE>` subcommand that
-  runs the OAuth dance and stores the session via the
-  configured `OAuthTokenStore`. Today the dance is driven via
-  `atrium-oauth-client` programmatically.
-- An `idiolect publish <kind> --record <path>` subcommand that
-  loads a JSON file and publishes it under the active session.
-  Today publishing goes through `RecordPublisher::create` from
-  Rust.
+- `idiolect oauth login --handle <HANDLE>` would walk the OAuth
+  dance via `atrium-oauth-client` and persist the resulting
+  session through an `OAuthTokenStore`. Today the dance is
+  programmatic; the app-password path above is the easier
+  alternative.
+- `idiolect publish <kind> --record <path>` would load a JSON
+  file and publish it under the active session. Today publishing
+  goes through `RecordPublisher::create` (or the hand-rolled
+  client above) from Rust.
 
 That is the full loop. Where to go next:
 

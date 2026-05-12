@@ -108,7 +108,9 @@ pub use runtime::{
     SymmetricDirection, apply_lens, apply_lens_get_edit, apply_lens_put, apply_lens_put_edit,
     apply_lens_symmetric,
 };
-pub use schema_loader::{FilesystemSchemaLoader, InMemorySchemaLoader, SchemaLoader};
+pub use schema_loader::{
+    FilesystemSchemaLoader, InMemorySchemaLoader, PdsSchemaLoader, SchemaLoader,
+};
 #[cfg(feature = "pds-reqwest")]
 pub use signing_writer::{
     AuthScheme, DpopProver, NoOpDpopProver, SigningPdsWriter, StaticDpopProver,

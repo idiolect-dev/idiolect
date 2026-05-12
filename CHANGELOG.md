@@ -23,6 +23,17 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.9.0] — 2026-05-12
+
+### Added
+
+- `idiolect_lens::PdsSchemaLoader<C>` — `SchemaLoader` impl that fetches `dev.panproto.schema.schema` records via any `PdsClient` and pulls the typed `panproto_schema::Schema` out of the record's `blob` field. The natural pair to `PdsResolver` when a lens references on-network schemas; the shipped `FilesystemSchemaLoader` only reads ATProto Lexicon JSON, which doesn't cover the `dev.panproto.schema.schema` shape. Three unit tests cover the happy path, no-blob, and malformed-at-uri cases.
+- `scripts/publish-tutorial-lens/` — workspace-excluded binary suite that publishes a working tutorial demonstration to the project DID (source schema, target schema, rename-sort lens, recommendation) and a paired apply / verify bin that exercises them end-to-end against the live PDS. The tutorial chapters reference the records this suite publishes.
+
+### Changed
+
+- Panproto pin bumped v0.39.0 → v0.47.0 across all workspace crates. No source changes were required; the panproto API surface idiolect uses (SchemaBuilder, protolens elementary constructors, Lens runtime, panproto-check) is stable across the eight intervening minor versions. All tests pass on the new pin and the live-PDS records published under v0.39 still apply cleanly with v0.47.
+
 ## [0.8.0] — 2026-05-04
 
 ### Changed

@@ -732,6 +732,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "idiolect-verify"
+version = "0.8.0"
+dependencies = [
+ "idiolect-lens",
+ "idiolect-records",
+ "panproto-schema",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "idna"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1019,8 +1032,8 @@ checksum = "d211803b9b6b570f68772237e415a029d5a50c65d382910b879fb19d3271f94d"
 
 [[package]]
 name = "panproto-expr"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -1029,8 +1042,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-gat"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "miette",
  "panproto-expr",
@@ -1041,8 +1054,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-inst"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "bumpalo",
  "panproto-expr",
@@ -1057,8 +1070,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-lens"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -1074,8 +1087,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-mig"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -1089,8 +1102,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-protocols"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "blake3",
  "panproto-gat",
@@ -1104,8 +1117,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-schema"
-version = "0.39.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.39.0#02158abb80252378a21bb1a9bee839d053a21795"
+version = "0.47.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -1185,6 +1198,7 @@ dependencies = [
  "hex",
  "idiolect-lens",
  "idiolect-records",
+ "idiolect-verify",
  "panproto-lens",
  "panproto-schema",
  "reqwest",
@@ -1875,7 +1889,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100"
 dependencies = [
  "pin-project-lite",
+ "tracing-attributes",
  "tracing-core",
+]
+
+[[package]]
+name = "tracing-attributes"
+version = "0.1.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
