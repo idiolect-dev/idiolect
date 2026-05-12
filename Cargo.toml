@@ -21,7 +21,7 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.8.0"
+version = "0.9.0"
 edition = "2024"
 rust-version = "1.95"
 license = "MIT"
@@ -78,14 +78,14 @@ language-tags = "0.3"
 
 # panproto: idiolect dogfoods panproto for schema codegen, breaking-change
 # detection, and lens compilation. pinned to the same tag cospan uses.
-panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
+panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
 
 anyhow = "1.0.100"
 

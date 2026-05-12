@@ -263,3 +263,176 @@ mod tests {
         assert!(matches!(err, LensError::Transport(_)));
     }
 }
+
+// -----------------------------------------------------------------
+// PDS-backed schema loader
+// -----------------------------------------------------------------
+
+/// PDS-backed [`SchemaLoader`].
+///
+/// The `dev.panproto.schema.schema` lexicon carries a serialised
+/// [`panproto_schema::Schema`] in its `blob` field. This loader
+/// reads the at-uri the lens runtime passes to
+/// [`SchemaLoader::load`], fetches the record body via any
+/// [`PdsClient`](crate::resolver::PdsClient), and pulls the
+/// `blob` out.
+///
+/// The runtime always calls `load` with an at-uri (the value of
+/// the lens record's `source_schema` or `target_schema` field), so
+/// this loader is the natural pair for a [`PdsResolver`](crate::PdsResolver):
+///
+/// ```ignore
+/// use idiolect_lens::{PdsResolver, PdsSchemaLoader, ReqwestPdsClient};
+///
+/// let client = ReqwestPdsClient::with_service_url("https://example.host.bsky.network");
+/// let resolver = PdsResolver::new(client.clone());
+/// let loader   = PdsSchemaLoader::new(client);
+/// // resolver + loader both speak the PDS XRPC surface.
+/// ```
+///
+/// Generic over `C: PdsClient` so tests can pair it with an
+/// in-memory PDS mock.
+#[derive(Debug, Clone)]
+pub struct PdsSchemaLoader<C> {
+    client: C,
+}
+
+impl<C> PdsSchemaLoader<C> {
+    /// Wrap any [`PdsClient`](crate::resolver::PdsClient).
+    #[must_use]
+    pub const fn new(client: C) -> Self {
+        Self { client }
+    }
+
+    /// Borrow the underlying client, e.g. to inspect it in a test.
+    #[must_use]
+    pub const fn client(&self) -> &C {
+        &self.client
+    }
+}
+
+impl<C: crate::resolver::PdsClient> SchemaLoader for PdsSchemaLoader<C> {
+    fn load<'a>(
+        &'a self,
+        at_uri: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Schema, LensError>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            let (did, collection, rkey) = split_at_uri(at_uri)?;
+            let body = self.client.get_record(did, collection, rkey).await?;
+            let blob = body.get("blob").cloned().ok_or_else(|| {
+                LensError::LexiconParse(format!("schema record at {at_uri} has no `blob` field"))
+            })?;
+            serde_json::from_value::<Schema>(blob).map_err(|e| {
+                LensError::LexiconParse(format!("decode schema blob at {at_uri}: {e}"))
+            })
+        })
+    }
+}
+
+/// Split an `at://<did>/<collection>/<rkey>` string into its three
+/// parts. Returns a `LensError::Transport` on malformed input.
+fn split_at_uri(at_uri: &str) -> Result<(&str, &str, &str), LensError> {
+    let rest = at_uri
+        .strip_prefix("at://")
+        .ok_or_else(|| LensError::Transport(format!("not an at-uri: {at_uri}")))?;
+    let mut parts = rest.splitn(3, '/');
+    match (parts.next(), parts.next(), parts.next()) {
+        (Some(d), Some(c), Some(r)) if !d.is_empty() && !c.is_empty() && !r.is_empty() => {
+            Ok((d, c, r))
+        }
+        _ => Err(LensError::Transport(format!("malformed at-uri: {at_uri}"))),
+    }
+}
+
+#[cfg(test)]
+mod pds_loader_tests {
+    use super::*;
+    use crate::resolver::{ListRecordsResponse, PdsClient};
+
+    struct StubPds {
+        body: serde_json::Value,
+    }
+
+    impl PdsClient for StubPds {
+        async fn get_record(
+            &self,
+            _did: &str,
+            _collection: &str,
+            _rkey: &str,
+        ) -> Result<serde_json::Value, LensError> {
+            Ok(self.body.clone())
+        }
+
+        async fn list_records(
+            &self,
+            _did: &str,
+            _collection: &str,
+            _limit: Option<u32>,
+            _cursor: Option<&str>,
+        ) -> Result<ListRecordsResponse, LensError> {
+            Err(LensError::Transport("not implemented in stub".into()))
+        }
+    }
+
+    /// Build a real `Schema` via the panproto `SchemaBuilder` and
+    /// serialise it, so the loader's deserialize step exercises a
+    /// shape the panproto runtime actually produces. Smallest
+    /// non-trivial schema: a single "post" object vertex with a
+    /// "string" child reached by a "text" edge.
+    fn minimal_schema_blob() -> serde_json::Value {
+        let proto = panproto_schema::Protocol::default();
+        let schema = panproto_schema::SchemaBuilder::new(&proto)
+            .entry("post")
+            .vertex("post", "object", None)
+            .unwrap()
+            .vertex("post.text", "string", None)
+            .unwrap()
+            .edge("post", "post.text", "prop", Some("text"))
+            .unwrap()
+            .build()
+            .unwrap();
+        serde_json::to_value(&schema).expect("serialise Schema")
+    }
+
+    #[tokio::test]
+    async fn pds_loader_extracts_blob_field() {
+        let stub = StubPds {
+            body: serde_json::json!({
+                "blob":       minimal_schema_blob(),
+                "objectHash": "sha256:deadbeef",
+                "protocol":   "atproto",
+                "createdAt":  "2026-04-19T00:00:00.000Z",
+            }),
+        };
+        let loader = PdsSchemaLoader::new(stub);
+        let schema = loader
+            .load("at://did:plc:x/dev.panproto.schema.schema/abc")
+            .await
+            .unwrap();
+        assert!(!schema.vertices.is_empty());
+    }
+
+    #[tokio::test]
+    async fn pds_loader_rejects_record_with_no_blob() {
+        let stub = StubPds {
+            body: serde_json::json!({ "objectHash": "sha256:x", "protocol": "atproto" }),
+        };
+        let loader = PdsSchemaLoader::new(stub);
+        let err = loader
+            .load("at://did:plc:x/dev.panproto.schema.schema/abc")
+            .await
+            .unwrap_err();
+        assert!(matches!(err, LensError::LexiconParse(_)));
+    }
+
+    #[tokio::test]
+    async fn pds_loader_rejects_malformed_at_uri() {
+        let stub = StubPds {
+            body: serde_json::json!({}),
+        };
+        let loader = PdsSchemaLoader::new(stub);
+        let err = loader.load("not-an-at-uri").await.unwrap_err();
+        assert!(matches!(err, LensError::Transport(_)));
+    }
+}

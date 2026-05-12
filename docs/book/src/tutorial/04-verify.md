@@ -16,53 +16,83 @@ ships four runner kinds:
   checker against any `CoerceType` step.
 
 Each ships as a struct implementing `VerificationRunner`. The
-crate is library-only at v0.8.0; runners are invoked
-programmatically.
+crate is library-only; runners are invoked programmatically.
 
 ## Wire up a runner
 
-`idiolect-verify` and `idiolect-lens` are `publish = false`;
-depend on them via git:
-
 ```toml
 # in Cargo.toml
-idiolect-verify = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0" }
-idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["pds-reqwest"] }
-tokio = { version = "1", features = ["full"] }
+idiolect-verify = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0" }
+idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0", features = ["pds-reqwest"] }
+idiolect-records = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0" }
+panproto-schema  = { git = "https://github.com/panproto/panproto.git", tag = "v0.47.0" }
+tokio            = { version = "1", features = ["full"] }
 ```
 
+`src/main.rs`:
+
 ```rust
-use idiolect_lens::{
-    InMemoryResolver, FilesystemSchemaLoader, PdsResolver, ReqwestPdsClient,
-};
+use idiolect_lens::{PdsResolver, PdsSchemaLoader, ReqwestPdsClient};
+use idiolect_records::Datetime;
+use idiolect_records::generated::dev::idiolect::defs::LensRef;
 use idiolect_verify::{
     RoundtripTestRunner, VerificationRunner, VerificationTarget,
 };
+use panproto_schema::Protocol;
+
+const PDS:      &str = "https://jellybaby.us-east.host.bsky.network";
+const LENS_URI: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = ReqwestPdsClient::with_service_url("https://bsky.social");
-    let resolver = PdsResolver::new(client);
-    let loader = FilesystemSchemaLoader::new("./schema-cache")?;
-    // Construct the runner. The exact constructor and the
-    // `VerificationTarget` shape are documented in the
-    // `idiolect-verify` source; load the corpus, lens, and
-    // schema-loader handles into the target.
-    let runner = RoundtripTestRunner::new(/* corpus and config */);
+    let client   = ReqwestPdsClient::with_service_url(PDS);
+    let resolver = PdsResolver::new(client.clone());
+    let loader   = PdsSchemaLoader::new(client);
+
+    // Small corpus matching the lens's source schema (single
+    // `text` string child on a `post:body` object).
+    let corpus = vec![
+        serde_json::json!({ "text": "hello, world" }),
+        serde_json::json!({ "text": "" }),
+        serde_json::json!({ "text": "líneas con tildes y emoji 🦀" }),
+    ];
+
+    let runner = RoundtripTestRunner::new(resolver, loader, Protocol::default(), corpus);
+
     let target = VerificationTarget {
-        // lens, schema_loader, sampling config, ...
+        lens: LensRef {
+            uri: Some(LENS_URI.parse()?),
+            cid: None,
+            direction: None,
+        },
+        verifier: "did:plc:wdl4nnvxxdy4mc5vddxlm6f3".parse()?,
+        occurred_at: Datetime::parse("2026-05-12T00:00:00.000Z")?,
+        tool_override: None,
     };
 
     let verification = runner.run(&target).await?;
-    println!("{:?}", verification.result); // Holds / Falsified / Inconclusive
+    println!("result = {:?}", verification.result);
+    println!("kind   = {:?}", verification.kind);
+    println!("tool   = {} {}",
+             verification.tool.name, verification.tool.version);
     Ok(())
 }
 ```
 
-A runner returns a `Verification` record. The `result` field is
-the headline; falsifying runs additionally carry a
-`counterexample` content reference and (for property tests) a
-shrunk witness.
+```bash
+cargo run
+```
+
+```text
+result = Holds
+kind   = RoundtripTest
+tool   = idiolect-verify/roundtrip-test 0.9.0
+```
+
+The runner walked the corpus, applied the rename-sort lens
+forward then backward, and confirmed every record round-tripped
+byte-for-byte. A single counterexample would have produced
+`result = Falsified`.
 
 ## Falsified is a record, not an error
 
@@ -81,34 +111,20 @@ returned record.
 
 ## Publish the result
 
-Once you have a `Verification`, publish it through
-`idiolect_lens::RecordPublisher`:
-
-```rust
-use idiolect_lens::RecordPublisher;
-
-let publisher = RecordPublisher::new(writer, my_did);
-let resp = publisher.create(&verification).await?;
-println!("published: {}", resp.uri);
-```
-
-`writer` is any `PdsWriter` impl. The shipped path is
-`SigningPdsWriter` (DPoP-bound, behind the `pds-reqwest` feature)
-plus a `DpopProver` (typically `P256DpopProver` from the
-`dpop-p256` feature, paired with an OAuth session loaded from an
-`idiolect_oauth::OAuthTokenStore`). Authentication is the
-caller's responsibility: see
-[Configure OAuth sessions](../guide/oauth.md) for the session
-side.
+The `verification` value the runner returned is a typed
+`Verification` record ready to publish. The publishing path
+goes through `idiolect_lens::RecordPublisher`; see [chapter 5
+on publishing](./05-publish.md) for the wire-up.
 
 ## Reading verifications back
 
 The orchestrator's HTTP API exposes
 `GET /v1/verifications?lens_uri=...` for "every verification on
-this lens". From the CLI:
+this lens":
 
 ```bash
-idiolect orchestrator verifications --lens_uri at://did:plc:.../lens/example
+idiolect orchestrator verifications \
+  --lens_uri at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text
 ```
 
 The orchestrator reads its catalog (populated by the indexer)
@@ -122,8 +138,8 @@ covers the properties their use case requires.
 
 A future `idiolect verify <kind>` CLI subcommand would let
 operators run a runner without writing Rust. It is not shipped
-at v0.8.0; runners are library-only. The four shipped runner
-kinds (`roundtrip-test`, `property-test`, `static-check`,
+yet; runners are library-only. The four shipped runner kinds
+(`roundtrip-test`, `property-test`, `static-check`,
 `coercion-law`) cover the shape; additional kinds in the
 lexicon's `verification.kind` enum (`formal-proof`,
 `conformance-test`, `convergence-preserving`) are recognised
