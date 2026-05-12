@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@atproto/lexicon": "0.4.8",
-    "@atproto/syntax": "0.3.4"
+    "@atproto/syntax": "0.5.4"
   },
   "devDependencies": {
     "@types/bun": "1.2.2",
