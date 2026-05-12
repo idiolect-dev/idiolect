@@ -67,7 +67,7 @@ tapped = { version = "0.3", optional = true }
 
 # tokio is a hard requirement of the tapped adapter because tapped
 # itself is async-only. the core crate does not require tokio.
-tokio = { version = "1.48", optional = true, default-features = false }
+tokio = { version = "1.52", optional = true, default-features = false }
 
 # Bundled sqlite for the optional `cursor-sqlite` feature. `bundled` pulls
 # sqlite into the build so the crate works on platforms without a system
@@ -80,5 +80,5 @@ futures-util = { version = "0.3", optional = true, default-features = false, fea
 url = { version = "2.5", optional = true }
 
 [dev-dependencies]
-tokio = { version = "1.48", default-features = false, features = ["macros", "rt", "sync"] }
+tokio = { version = "1.52", default-features = false, features = ["macros", "rt", "sync"] }
 tempfile = "3.13"
