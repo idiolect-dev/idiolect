@@ -84,7 +84,7 @@ idiolect-identity  = { version = "0.10.0", path = "../idiolect-identity", option
 p256   = { version = "0.13", optional = true, default-features = false, features = ["ecdsa", "pem", "std"] }
 sha2   = { version = "0.10", optional = true, default-features = false, features = ["std"] }
 base64 = { version = "0.22", optional = true, default-features = false, features = ["std"] }
-rand   = { version = "0.8", optional = true, default-features = false, features = ["std", "std_rng"] }
+rand   = { version = "0.9", optional = true, default-features = false, features = ["std", "std_rng"] }
 
 [dev-dependencies]
 tokio = { version = "1.48", default-features = false, features = ["macros", "rt", "net", "time"] }
