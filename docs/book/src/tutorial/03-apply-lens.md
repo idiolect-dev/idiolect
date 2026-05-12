@@ -29,7 +29,7 @@ path, when working inside the workspace):
 
 ```toml
 # in Cargo.toml
-idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.9.0", features = ["pds-reqwest"] }
+idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.10.0", features = ["pds-reqwest"] }
 panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
 tokio           = { version = "1", features = ["full"] }
 ```

@@ -17,9 +17,27 @@ publish = false
 [lints]
 workspace = true
 
+[features]
+default = []
+# `idiolect-migrate` binary: streaming batch migration from a
+# directory of JSON records through a lens at-uri, against a live
+# PDS. Pulls in tokio + reqwest + the lens crate's PDS-reqwest
+# transport.
+cli = [
+    "dep:anyhow",
+    "dep:tokio",
+    "dep:tracing-subscriber",
+    "idiolect-lens/pds-reqwest",
+]
+
+[[bin]]
+name = "idiolect-migrate"
+path = "src/bin/idiolect_migrate.rs"
+required-features = ["cli"]
+
 [dependencies]
-idiolect-records = { version = "0.9.0", path = "../idiolect-records" }
-idiolect-lens    = { version = "0.9.0", path = "../idiolect-lens" }
+idiolect-records = { version = "0.10.0", path = "../idiolect-records" }
+idiolect-lens    = { version = "0.10.0", path = "../idiolect-lens" }
 
 panproto-schema    = { workspace = true }
 panproto-protocols = { workspace = true }
@@ -31,6 +49,10 @@ serde      = { workspace = true }
 serde_json = { workspace = true }
 thiserror  = { workspace = true }
 tracing    = "0.1"
+
+anyhow             = { version = "1", optional = true }
+tokio              = { version = "1.48", default-features = false, features = ["macros", "rt-multi-thread"], optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.48", default-features = false, features = ["macros", "rt"] }

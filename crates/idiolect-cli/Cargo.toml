@@ -18,9 +18,11 @@ path = "src/main.rs"
 workspace = true
 
 [dependencies]
-idiolect-records  = { version = "0.9.0", path = "../idiolect-records" }
-idiolect-identity = { version = "0.9.0", path = "../idiolect-identity", features = ["resolver-reqwest"] }
-idiolect-lens     = { version = "0.9.0", path = "../idiolect-lens",     features = ["pds-reqwest", "pds-resolve"] }
+idiolect-records  = { version = "0.10.0", path = "../idiolect-records" }
+idiolect-identity = { version = "0.10.0", path = "../idiolect-identity", features = ["resolver-reqwest"] }
+idiolect-lens     = { version = "0.10.0", path = "../idiolect-lens",     features = ["pds-reqwest", "pds-resolve"] }
+idiolect-verify   = { version = "0.10.0", path = "../idiolect-verify" }
+panproto-schema   = { workspace = true }
 
 serde      = { workspace = true }
 serde_json = { workspace = true }

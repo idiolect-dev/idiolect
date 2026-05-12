@@ -48,13 +48,13 @@ daemon = [
 pds-atrium = ["idiolect-lens/pds-atrium"]
 
 [dependencies]
-idiolect-records = { version = "0.9.0", path = "../idiolect-records" }
-idiolect-indexer = { version = "0.9.0", path = "../idiolect-indexer" }
+idiolect-records = { version = "0.10.0", path = "../idiolect-records" }
+idiolect-indexer = { version = "0.10.0", path = "../idiolect-indexer" }
 # `idiolect-lens` exposes the `PdsWriter` trait the PDS publisher
 # depends on. pulling it in unconditionally keeps the publisher trait
 # definition transport-agnostic (no feature gate on the trait itself);
 # the atrium implementation is still gated on `pds-atrium`.
-idiolect-lens    = { version = "0.9.0", path = "../idiolect-lens" }
+idiolect-lens    = { version = "0.10.0", path = "../idiolect-lens" }
 
 # Used by InstanceMethodAdapter to parse record JSON into WInstance
 # before dispatching to a graph-form observation method.

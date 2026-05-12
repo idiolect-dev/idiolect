@@ -23,6 +23,17 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.10.0] — 2026-05-04
+
+### Added
+
+- `idiolect oauth login`, `idiolect oauth list`, `idiolect oauth logout` CLI subcommands. `login` exchanges a handle plus app password for an access JWT via `com.atproto.server.createSession` and persists the resulting session as a JSON file under `$IDIOLECT_SESSION_DIR` (default `~/.config/idiolect/sessions/`); `list` enumerates stored sessions; `logout` deletes one by DID. This path uses app passwords in legacy Bearer mode as a transitional step (ATProto is moving off app passwords in favour of OAuth + DPoP). The `OAuthSession` shape carries the DPoP private key field already; switching flows in a follow-up branch is a CLI substitution, not a session-shape change.
+- `idiolect publish <kind> --record <path> [--rkey RKEY] [--did DID]` CLI subcommand. Validates the JSON file against the typed `Record` impl (`decode_record(&nsid, value)`), splices in `$type`, and POSTs `com.atproto.repo.createRecord` under a stored session. Short kind names (e.g. `recommendation`) map to NSIDs (`dev.idiolect.recommendation`); rkey defaults to a TID-shaped value generated at publish time.
+- `idiolect verify roundtrip-test | property-test | static-check | coercion-law` CLI subcommands wrapping each of the four shipped `VerificationRunner` impls against a live PDS via `PdsResolver` plus `PdsSchemaLoader`. Corpus files may be JSON arrays or JSON Lines; `property-test` cycles the corpus by index and accepts `--budget N`; `coercion-law` talks to a panproto VCS service via `dev.panproto.translate.verifyCoercionLaws`. The CLI prints the typed `Verification` record as JSON and exits non-zero on `Falsified` or `Inconclusive`, suitable for CI gates.
+- `idiolect-migrate` batch CLI binary (behind the `cli` feature on `idiolect-migrate`). Streams a directory of JSON records through `migrate_record` against a published lens record, writes a target directory, and reflects per-record success in the exit code (0 if every file succeeded, 1 if any failed).
+- `idiolect_oauth::refresh_if_needed(&store, &refresher, did)`: generic helper that loads a session, decides whether to refresh based on the current wall clock plus a 60-second buffer, drives the caller-supplied `Refresher::refresh` if so, persists the result, and returns the live session. Generic over `S: OAuthTokenStore` plus `R: Refresher` because `OAuthTokenStore`'s async-fn-in-trait methods rule out trait-object form. The refresh HTTP call lives in whatever OAuth client the application uses; `idiolect-oauth` owns the storage and timing decision around it.
+- `deliberation-tally` registered in `observer-spec/methods.json`. The `DeliberationTallyMethod` implementation has shipped in `idiolect-observer` since v0.7.0 but was missing from the spec registry; codegen now generates the dispatch entry alongside the other observer methods.
+
 ## [0.9.0] — 2026-05-12
 
 ### Added

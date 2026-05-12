@@ -88,15 +88,57 @@ Both shipped persistent stores
 (`FilesystemOAuthTokenStore`, `SqliteOAuthTokenStore`) do; if
 you write a custom store, do the same.
 
-## Planned functionality
+## `idiolect oauth login` (transitional)
 
-- An `idiolect oauth login --handle <HANDLE>` CLI subcommand
-  driving the OAuth dance via `atrium-oauth-client` and
-  persisting the resulting session through the configured
-  `OAuthTokenStore`. Not shipped at v0.8.0; the dance is
-  programmatic.
-- A `refresh_if_needed(store, did)` helper that wraps the
-  refresh-on-expiry pattern. Not shipped at v0.8.0; the
-  primitives (`is_expired`, `needs_refresh`,
-  `refresh_expired`) are exposed and applications drive the
-  refresh call themselves.
+The `idiolect` CLI ships an `oauth login` subcommand that
+exchanges a handle + app password for an access JWT via
+`com.atproto.server.createSession` and persists the resulting
+session as a JSON file under
+`$IDIOLECT_SESSION_DIR` (default
+`~/.config/idiolect/sessions/`):
+
+```bash
+idiolect oauth login --handle yourhandle.bsky.social --pds-url https://bsky.social
+# password from --app-password or ATPROTO_APP_PASSWORD / ATPROTO_PASSWORD env
+idiolect oauth list
+idiolect oauth logout --did did:plc:...
+```
+
+This path uses **app passwords in legacy Bearer mode**.
+ATProto is moving off app passwords in favour of OAuth +
+DPoP; the next-iteration login UX wraps `atrium-oauth`'s
+browser-handoff dance and persists the resulting DPoP-bound
+session through the same `OAuthTokenStore`. The `OAuthSession`
+shape already carries the DPoP private key field; switching
+flows is a CLI substitution, not a session-shape change.
+
+## `refresh_if_needed`
+
+`idiolect_oauth::refresh_if_needed(&store, &refresher, did)`
+loads a session, decides whether to refresh based on the
+current wall clock plus a 60-second buffer, drives the caller-
+supplied `Refresher::refresh` if so, persists the result, and
+returns the live session. Callers who want to drive the
+decision themselves read `OAuthSession::needs_refresh` and
+`OAuthSession::is_expired` directly.
+
+```rust
+use idiolect_oauth::{refresh_if_needed, Refresher, RefreshError, OAuthSession};
+
+struct MyRefresher { /* http client, auth-server URL, ... */ }
+
+impl Refresher for MyRefresher {
+    async fn refresh(&self, session: &OAuthSession) -> Result<OAuthSession, RefreshError> {
+        // POST refresh_token to the auth-server's token_endpoint.
+        // Return a fresh OAuthSession with new access_jwt / expires_at.
+        todo!()
+    }
+}
+
+let fresh = refresh_if_needed(&store, &MyRefresher { /* ... */ }, "did:plc:...").await?;
+```
+
+The trait is narrow on purpose: the refresh HTTP call lives in
+whatever OAuth client the application uses (atrium-oauth, a
+hand-rolled reqwest call, an in-memory fake for tests).
+`idiolect-oauth` owns the storage and timing decision around it.

@@ -98,10 +98,12 @@ to the `default_methods()` constructor.
   of $n$ trusted observers before treating an observation as
   authoritative.
 
-## What is not currently shipped
+## Note on `deliberation-tally`
 
-A `deliberation-tally` method that produces
-`dev.idiolect.deliberationOutcome` records is not in the
-shipped method set. Communities that need a Polis-style tally
-of a deliberation author the method against the same
-`ObservationMethod` trait or build it as a downstream daemon.
+The shipped `deliberation-tally` method emits its
+per-statement per-stance vote counts inside an
+`observation.output` blob, not as a typed
+`dev.idiolect.deliberationOutcome` record. The data shape is
+the same; the surface differs. A variant that publishes the
+typed outcome record directly is a small refactor on top of
+the existing `DeliberationTallyMethod`.
