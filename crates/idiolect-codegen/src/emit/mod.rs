@@ -4,11 +4,19 @@
 //! and fixture list loaded by `main.rs`. Today we ship two targets:
 //!
 //! - [`rust::RustTarget`] (syn + prettyplease)
-//! - [`typescript::TypeScriptTarget`] (in-house ast + hand-rolled printer)
+//! - [`typescript::TypeScriptTarget`] (oxc ast + `oxc_codegen`)
 //!
-//! Additional targets (or a by-construction panproto pretty-printer
-//! swap-in) plug in by providing another `impl TargetEmitter`. The
-//! orchestration here doesn't need to change.
+//! Two panproto-parse modules close the loop on their output:
+//!
+//! - [`gate`] re-parses every emitted file through the matching
+//!   tree-sitter grammar and fails codegen on recovery vertices.
+//! - [`panproto_rust`] renders the directory `mod.rs` index files as
+//!   by-construction abstract schemas through panproto's verified
+//!   tree-sitter-rust emitter; a parity test pins its output
+//!   byte-equal to the syn target's.
+//!
+//! Additional targets plug in by providing another `impl
+//! TargetEmitter`. The orchestration here doesn't need to change.
 
 use anyhow::Result;
 
@@ -17,6 +25,8 @@ use crate::lexicon::LexiconDoc;
 use crate::target::{EmittedFile, TargetEmitter};
 
 pub mod family;
+pub mod gate;
+pub mod panproto_rust;
 pub mod rust;
 pub mod typescript;
 

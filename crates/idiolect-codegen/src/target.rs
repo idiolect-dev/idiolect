@@ -18,12 +18,16 @@
 //!     -> [render]  -> source bytes                        // via prettyplease / printer
 //! ```
 //!
-//! Today the lens + render halves live inside each target impl.
-//! When `panproto-parse` grows a by-construction pretty-printer for
-//! its tree-sitter grammars, a second impl of this trait can route
-//! through a `panproto_schema::Schema` in the tree-sitter-rust /
-//! tree-sitter-typescript theory and hand off the render step to
-//! panproto. The trait boundary is the swap point.
+//! Today the lens + render halves live inside each target impl. The
+//! panproto-native alternative routes through a by-construction
+//! `panproto_schema::AbstractSchema` in the tree-sitter theory and
+//! hands the render step to `panproto-parse`'s verified
+//! `pretty_with_protocol`; [`crate::emit::panproto_rust`] pilots that
+//! path on the rust module-index files, parity-pinned against this
+//! crate's syn renderer. The trait boundary is the swap point for a
+//! full panproto-backed impl, with no call-site changes here. Either
+//! way, [`crate::emit::gate`] re-parses every emitted file through
+//! the matching grammar before it lands.
 
 use crate::Example;
 use crate::emit::family::FamilyConfig;

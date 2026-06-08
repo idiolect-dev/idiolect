@@ -92,6 +92,25 @@ fn cmd_generate(repo_root: &Path, check_only: bool) -> Result<ExitCode> {
         .map(EmittedFile::from)
         .collect();
 
+    // Emit gate: every generated file must re-parse cleanly through
+    // the matching tree-sitter grammar before it is written (or
+    // drift-checked). A renderer defect fails codegen here instead of
+    // landing in the tree.
+    emit::gate::verify_parses(
+        "rust",
+        rust_files
+            .iter()
+            .map(|f| (f.path.as_str(), f.contents.as_str())),
+    )
+    .context("emit gate (rust)")?;
+    emit::gate::verify_parses(
+        "typescript",
+        ts_files
+            .iter()
+            .map(|f| (f.path.as_str(), f.contents.as_str())),
+    )
+    .context("emit gate (typescript)")?;
+
     if check_only {
         let rust_drift = check_drift(&rust_out, &rust_files)?;
         let ts_drift = check_drift(&ts_out, &ts_files)?;

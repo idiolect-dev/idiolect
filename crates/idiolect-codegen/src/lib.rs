@@ -45,14 +45,17 @@
 //!
 //! - [`emit::rust::RustTarget`] builds a `syn::File` by `quote!`ing
 //!   each generated item, then renders via `prettyplease`.
-//! - [`emit::typescript::TypeScriptTarget`] builds a small in-house
-//!   ast and walks it with a hand-rolled printer.
+//! - [`emit::typescript::TypeScriptTarget`] builds an `oxc_ast` tree
+//!   per declaration and renders via `oxc_codegen`.
 //!
-//! The trait is the swap-point for a future panproto-native
-//! by-construction pretty-printer: a third impl would route through
-//! a `panproto_schema::Schema` in the tree-sitter-rust /
-//! tree-sitter-typescript theory and hand off to panproto's
-//! `emit_pretty`. No call-site changes in this crate.
+//! Two panproto-parse modules close the loop on their output:
+//! [`emit::gate`] re-parses every emitted file through the matching
+//! tree-sitter grammar and fails codegen on recovery vertices, and
+//! [`emit::panproto_rust`] pilots the panproto-native render path
+//! (by-construction `AbstractSchema` through the verified
+//! tree-sitter-rust emitter) on the module-index files, parity-pinned
+//! against the syn target. The trait is the swap-point for a full
+//! panproto-backed impl; no call-site changes in this crate.
 //!
 //! # Examples module
 //!
