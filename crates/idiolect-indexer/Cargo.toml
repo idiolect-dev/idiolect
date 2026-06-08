@@ -75,7 +75,7 @@ tokio = { version = "1.48", optional = true, default-features = false }
 rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
 
 # Jetstream websocket transport.
-tokio-tungstenite = { version = "0.24", optional = true, features = ["rustls-tls-webpki-roots"] }
+tokio-tungstenite = { version = "0.28", optional = true, features = ["rustls-tls-webpki-roots"] }
 futures-util = { version = "0.3", optional = true, default-features = false, features = ["sink", "std"] }
 url = { version = "2.5", optional = true }
 
