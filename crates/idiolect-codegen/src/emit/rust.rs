@@ -12,9 +12,10 @@
 //! `syn` is the canonical rust ast; `quote!` builds token streams that
 //! syn parses into items with the full correctness invariant enforced
 //! by the grammar. `prettyplease` gives us rustfmt-grade formatting
-//! without a separate pass. When a `panproto_schema::Schema` emitter
-//! for the tree-sitter-rust grammar lands (see the panproto-issue
-//! doc), a second impl of [`TargetEmitter`] can replace this one.
+//! without a separate pass. The panproto-native rendering of the
+//! directory `mod.rs` index files lives in
+//! [`super::panproto_rust`], parity-pinned against this target's
+//! output; this target stays canonical for every emitted file.
 
 // generator-local allows: this module is a string/token composer, so
 // the pedantic lints against `format!` into `String`, `if let/else`
@@ -108,8 +109,10 @@ impl TargetEmitter for RustTarget {
 /// 100 cols), and the hand-written `render_examples_rs` template
 /// picks a shape rustfmt may rewrite; routing everything through
 /// rustfmt means the checked-in files are a fixed point of `cargo fmt`
-/// and the drift check stays honest.
-fn rustfmt(source: &str) -> Result<String, EmitError> {
+/// and the drift check stays honest. Shared with the panproto pilot
+/// target, whose output converges with this target's under the same
+/// normalisation.
+pub(super) fn rustfmt(source: &str) -> Result<String, EmitError> {
     use std::io::Write as _;
     use std::process::{Command, Stdio};
 
@@ -920,13 +923,14 @@ fn prefixed_alias((path, ty): &(Vec<String>, String), take: usize) -> String {
     format!("{prefix}{ty}")
 }
 
-/// Per-directory `mod.rs` files. For every internal directory in the
-/// lexicon tree (e.g. `dev/`, `dev/idiolect/`, `dev/panproto/`,
-/// `dev/panproto/schema/`), emit a `mod.rs` that declares its
-/// immediate children. The leaf `.rs` files are emitted by the main
-/// loop; this helper only produces the intermediate index files that
-/// stitch the tree into a compilable module graph.
-fn render_directory_mod_files(docs: &[LexiconDoc]) -> Vec<(String, String)> {
+/// dir-segments → set of immediate children, for every internal
+/// directory of the lexicon module tree (e.g. `dev/`, `dev/idiolect/`,
+/// `dev/panproto/`, `dev/panproto/schema/`). Shared by this target's
+/// string renderer and the panproto pilot target so both emit the
+/// same set of index files.
+pub(super) fn directory_module_tree(
+    docs: &[LexiconDoc],
+) -> std::collections::BTreeMap<Vec<String>, std::collections::BTreeSet<String>> {
     use std::collections::BTreeMap;
 
     // dir-segments → set of immediate children (each child is the next
@@ -952,7 +956,16 @@ fn render_directory_mod_files(docs: &[LexiconDoc]) -> Vec<(String, String)> {
     // The empty-dir entry would correspond to the root `mod.rs`,
     // which is rendered separately; skip it here.
     tree.remove(&Vec::new());
+    tree
+}
 
+/// Per-directory `mod.rs` files. For every internal directory in the
+/// lexicon tree, emit a `mod.rs` that declares its immediate children.
+/// The leaf `.rs` files are emitted by the main loop; this helper only
+/// produces the intermediate index files that stitch the tree into a
+/// compilable module graph.
+fn render_directory_mod_files(docs: &[LexiconDoc]) -> Vec<(String, String)> {
+    let tree = directory_module_tree(docs);
     let mut files = Vec::with_capacity(tree.len());
     for (dir, children) in tree {
         let mut body = String::new();

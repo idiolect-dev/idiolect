@@ -23,6 +23,25 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.11.0] — 2026-06-08
+
+### Added
+
+- Emit gate in `idiolect-codegen`: every generated file (rust and typescript) must re-parse cleanly through the matching tree-sitter grammar via `panproto-parse` before it is written or drift-checked. The gate rejects schemas carrying `ERROR`/`MISSING` recovery vertices, so a renderer defect fails `generate`/`check` instead of landing in the tree. Only the `lang-rust` and `lang-typescript` grammars are compiled in.
+- Panproto-native rust render pilot (`emit::panproto_rust`): the directory `mod.rs` index files are built as by-construction `panproto_schema::AbstractSchema`s in the tree-sitter-rust theory and rendered through `ParserRegistry::pretty_with_protocol`, the parse/decorate/emit machinery panproto verified for the rust grammar in 0.51/0.52. `tests/panproto_pilot_parity.rs` pins the pilot byte-equal (post-rustfmt) to the syn target over the repo's real lexicon tree; the syn target stays canonical. `tests/panproto_emit_gate.rs` pins `EmitVerificationStatus::Verified` for both grammars so an upstream downgrade is loud at upgrade time.
+
+### Changed
+
+- Panproto pin bumped v0.47.0 → v0.52.0 across all workspace crates. No source changes were required for the existing surface (SchemaBuilder, protolens constructors, lens runtime, panproto-check, expression engine); the full test suite passes on the new pin, including the `parse_lexicon` constraint-fidelity contract. The bump unlocks `panproto-parse`'s verified source-code emit (255 of 261 grammars under the corpus oracle) used by the new emit gate and render pilot.
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
 ## [0.10.0] — 2026-05-12
 
 ### Added

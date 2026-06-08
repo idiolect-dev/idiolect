@@ -29,6 +29,11 @@ panproto-schema    = { workspace = true }
 panproto-inst      = { workspace = true }
 panproto-protocols = { workspace = true }
 panproto-check     = { workspace = true }
+# panproto-parse closes the loop on emitted source: every generated file
+# must re-parse cleanly through the matching tree-sitter grammar (the
+# emit gate), and the panproto-native pilot target renders the module
+# tree through `pretty_with_protocol` instead of syn.
+panproto-parse     = { workspace = true }
 
 serde       = { workspace = true }
 serde_json  = { workspace = true }

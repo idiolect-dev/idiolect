@@ -20,7 +20,12 @@ precede the tag.
 ## 1. Bump versions
 
 A release is atomic across the Rust workspace and the npm package.
-Bump both to the new semver.
+Bump both to the new semver. Three places carry a version, not two:
+the workspace `version`, the npm `package.json`, and the explicit
+`version = "..."` requirement each crate pins on its sibling
+`idiolect-*` path dependencies. The path-dep requirements must track
+the workspace version or `cargo build` fails with a "no matching
+version" error before CI ever sees the tag.
 
 ```sh
 # Pick one and use it consistently.
@@ -30,16 +35,26 @@ new=0.1.0
 sed -i.bak "s/^version = \".*\"$/version = \"$new\"/" Cargo.toml
 rm Cargo.toml.bak
 
+# Inter-crate path-dep requirements (idiolect-* deps only; this leaves
+# external deps like `sha2 = "0.10"` untouched because the substitution
+# is scoped to lines that point at a sibling crate via `path`).
+sed -i.bak -E "/path = \"\.\.\/idiolect-/ s/version = \"[^\"]*\"/version = \"$new\"/" crates/*/Cargo.toml
+rm crates/*/Cargo.toml.bak
+
 # @idiolect-dev/schema.
 jq --arg v "$new" '.version = $v' packages/schema/package.json \
   > packages/schema/package.json.tmp
 mv packages/schema/package.json.tmp packages/schema/package.json
+
+# Refresh the lockfile so the workspace crate versions in Cargo.lock
+# match the bumped manifests.
+cargo build --workspace
 ```
 
 Commit the bump on its own:
 
 ```sh
-git add Cargo.toml packages/schema/package.json
+git add Cargo.toml Cargo.lock packages/schema/package.json crates/*/Cargo.toml
 git commit -m "release: v$new"
 ```
 

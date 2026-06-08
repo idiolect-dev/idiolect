@@ -1296,7 +1296,7 @@ checksum = "3d3067d79b975e8844ca9eb072e16b31c3c1c36928edf9c6789548c524d0d954"
 
 [[package]]
 name = "idiolect-cli"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "idiolect-identity",
@@ -1316,7 +1316,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-codegen"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "oxc_allocator",
@@ -1325,6 +1325,7 @@ dependencies = [
  "oxc_span",
  "panproto-check",
  "panproto-inst",
+ "panproto-parse",
  "panproto-protocols",
  "panproto-schema",
  "prettyplease",
@@ -1338,7 +1339,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-identity"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "idiolect-records",
  "reqwest",
@@ -1352,7 +1353,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-indexer"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "futures-util",
  "idiolect-records",
@@ -1370,7 +1371,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-lens"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "atrium-api",
  "atrium-xrpc",
@@ -1396,7 +1397,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-migrate"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "idiolect-lens",
@@ -1416,7 +1417,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-oauth"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1434,7 +1435,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-observer"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "idiolect-indexer",
@@ -1454,7 +1455,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-orchestrator"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1476,7 +1477,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-records"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "cid",
  "language-tags",
@@ -1489,7 +1490,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-verify"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -2214,8 +2215,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-check"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "memchr",
  "panproto-gat",
@@ -2230,8 +2231,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-expr"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -2240,8 +2241,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-expr-parser"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "chumsky",
  "logos",
@@ -2250,8 +2251,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-gat"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "miette",
  "panproto-expr",
@@ -2261,9 +2262,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "panproto-grammars"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
+dependencies = [
+ "cc",
+ "serde",
+ "toml",
+ "tree-sitter",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "panproto-inst"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "bumpalo",
  "panproto-expr",
@@ -2278,8 +2291,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-lens"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -2295,8 +2308,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-mig"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -2309,9 +2322,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "panproto-parse"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
+dependencies = [
+ "memchr",
+ "miette",
+ "panproto-gat",
+ "panproto-grammars",
+ "panproto-lens",
+ "panproto-protocols",
+ "panproto-schema",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "smallvec 2.0.0-alpha.12",
+ "thiserror 2.0.18",
+ "tree-sitter",
+ "tree-sitter-tags",
+]
+
+[[package]]
 name = "panproto-protocols"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "blake3",
  "panproto-gat",
@@ -2325,8 +2359,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-schema"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.52.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.52.0#ef064ea6a4a22c6b990542f3ae15d8ba2cd57e25"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -2986,6 +3020,7 @@ version = "1.0.149"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
 dependencies = [
+ "indexmap",
  "itoa",
  "memchr",
  "serde",
@@ -3002,6 +3037,15 @@ dependencies = [
  "itoa",
  "serde",
  "serde_core",
+]
+
+[[package]]
+name = "serde_spanned"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -3156,6 +3200,12 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2231b7c3057d5e4ad0156fb3dc807d900806020c5ffa3ee6ff2c8c76fb8520"
 
 [[package]]
 name = "subtle"
@@ -3463,6 +3513,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.8.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
+dependencies = [
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_edit",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "0.6.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.22.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
+dependencies = [
+ "indexmap",
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_write",
+ "winnow",
+]
+
+[[package]]
+name = "toml_write"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
+
+[[package]]
 name = "tower"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3582,6 +3673,39 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tree-sitter"
+version = "0.26.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4dab76d0b724ba557954125188cf0633a1ca43199ced82d95c7b9c32cc3de1f3"
+dependencies = [
+ "cc",
+ "regex",
+ "regex-syntax 0.8.10",
+ "serde_json",
+ "streaming-iterator",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-language"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "009994f150cc0cd50ff54917d5bc8bffe8cad10ca10d81c34da2ec421ae61782"
+
+[[package]]
+name = "tree-sitter-tags"
+version = "0.26.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba419171ace99ea326903dffc603ce627d6936719812d50cc95ba4377abd9cd1"
+dependencies = [
+ "memchr",
+ "regex",
+ "streaming-iterator",
+ "thiserror 2.0.18",
+ "tree-sitter",
 ]
 
 [[package]]
@@ -4132,6 +4256,15 @@ name = "windows_x86_64_msvc"
 version = "0.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
+
+[[package]]
+name = "winnow"
+version = "0.7.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "wiremock"
