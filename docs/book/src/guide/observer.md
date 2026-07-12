@@ -57,7 +57,7 @@ The shipped binary's exact CLI surface is documented by its
 
 ## Bundled methods
 
-The spec at `observer-spec/methods.json` declares eight bundled
+The spec at `observer-spec/methods.json` declares nine bundled
 methods. Each lives in `crates/idiolect-observer/src/methods/`.
 
 | Method | Folds |
@@ -70,6 +70,7 @@ methods. Each lives in `crates/idiolect-observer/src/methods/`.
 | `purpose-distribution` | Encounter counts grouped by `use.purpose`. |
 | `basis-distribution` | Record counts grouped by `basis` variant, bucketed by record kind. |
 | `attribution-chains` | `dev.idiolect.belief` counts by holder and subject. |
+| `deliberation-tally` | Per-statement per-stance `deliberationVote` counts (see the note below). |
 
 Methods come in two forms (declared in the spec): record-form
 methods consume `&IndexerEvent<IdiolectFamily>` directly;

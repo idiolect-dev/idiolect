@@ -84,7 +84,7 @@ metadata.
 | `changeNote` | string (≤2000 graphemes) | no | SKOS `changeNote`. |
 | `notation` | string (≤500) | no | SKOS `notation`: non-text identifier. |
 | `externalIds` | array (≤20) of `externalId` | no | Mappings to external knowledge bases. |
-| `status` | open enum | no | `proposed` / `active` / `deprecated`. |
+| `status` | open enum | no | `proposed` / `provisional` / `established` / `deprecated`. |
 | `relationMetadata` | `relationMetadata` | no | OWL Lite property characteristics. Required for `kind: relation`. |
 
 ### `vocabNode.kind`
@@ -153,9 +153,12 @@ Each `externalId` carries:
 
 | Subfield | Type | Notes |
 | --- | --- | --- |
-| `system` | string | Knowledge-base identifier (`wikidata`, `ror`, `orcid`, `lcsh`, ...). |
-| `id` | string | Identifier in that system. |
-| `match` | enum | `exact` / `close` / `broader` / `narrower` / `related`. |
+| `system` | open enum | Knowledge-base identifier (`wikidata`, `ror`, `orcid`, `lcsh`, ...). |
+| `systemVocab` | `vocabRef` | Vocab the `system` slug resolves against. |
+| `identifier` | string | Identifier in that system. |
+| `uri` | uri | Optional direct URI for the external entity. |
+| `matchType` | open enum | `exact` / `close` / `broader` / `narrower` / `related`. |
+| `matchTypeVocab` | `vocabRef` | Vocab the `matchType` slug resolves against. |
 
 External ids enable cross-system translation. A consumer holding
 two vocabs with `wikidata:Q4116214` external ids can match the

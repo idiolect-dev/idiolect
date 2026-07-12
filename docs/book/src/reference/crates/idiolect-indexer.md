@@ -66,8 +66,8 @@ where
 | Type | Feature | Purpose |
 | --- | --- | --- |
 | `JetstreamEventStream` | `firehose-jetstream` | Subscribes to a Jetstream websocket feed. |
-| `TappedFirehoseStream` | `firehose-tapped` | Subscribes to the at-proto-native firehose via `tapped`. |
-| `ReconnectingStream<S>` | `reconnecting` | Wraps any `S: EventStream` with exponential-backoff reconnect. |
+| `TappedEventStream` | `firehose-tapped` | Subscribes to the at-proto-native firehose via `tapped`. |
+| `ReconnectingEventStream<S>` | `reconnecting` | Wraps any `S: EventStream` with exponential-backoff reconnect. |
 | `InMemoryCursorStore` | (always) | `HashMap`-backed; for tests. |
 | `FilesystemCursorStore` | `cursor-filesystem` | One JSON file per stream. |
 | `SqliteCursorStore` | `cursor-sqlite` | One row per stream. Pairs with handlers that also write SQLite. |

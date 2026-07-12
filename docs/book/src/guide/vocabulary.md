@@ -98,7 +98,7 @@ Every concept node accepts SKOS-style annotations:
   "example": "I agree with the proposal as drafted.",
   "notation": "1",
   "externalIds": [
-    { "system": "wikidata", "id": "Q4116214", "match": "exact" }
+    { "system": "wikidata", "identifier": "Q4116214", "matchType": "exact" }
   ]
 }
 ```
@@ -106,7 +106,7 @@ Every concept node accepts SKOS-style annotations:
 The full annotation set is `label`, `alternateLabels`,
 `hiddenLabels`, `description` (definition), `scopeNote`, `example`,
 `historyNote`, `editorialNote`, `changeNote`, `notation`, and
-`externalIds`. The match types on `externalIds` carry SKOS
+`externalIds`. The `matchType` values on `externalIds` carry SKOS
 semantics (`exact`, `close`, `broader`, `narrower`, `related`).
 
 A `kind: "collection"` plus `member_of` edges expresses a SKOS

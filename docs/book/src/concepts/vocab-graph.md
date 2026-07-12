@@ -129,7 +129,7 @@ cross-vocabulary work. It exposes:
   validate every registered vocab.
 
 The exact signatures and return types are on docs.rs at
-[`idiolect_records::VocabGraph`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.VocabGraph.html).
+[`idiolect_records::vocab::VocabGraph`](https://docs.rs/idiolect-records/latest/idiolect_records/vocab/struct.VocabGraph.html).
 
 ## Cross-vocab translation
 

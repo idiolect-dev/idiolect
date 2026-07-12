@@ -17,9 +17,13 @@ versioned but bumped together at every release.
 | [idiolect-migrate](./idiolect-migrate.md) | Schema diff plus lens-based record migration. |
 | [idiolect-cli](./idiolect-cli.md) | Command-line tool wrapping the library crates. |
 
-Cargo manifests live under `crates/<name>/Cargo.toml`. Every
-shipped crate is published to crates.io under the same name and
-to docs.rs at `https://docs.rs/<name>/latest/<name_underscored>/`.
+Cargo manifests live under `crates/<name>/Cargo.toml`. Three
+crates — `idiolect-records`, `idiolect-identity`, and
+`idiolect-indexer` — are published to crates.io under the same
+name and to docs.rs at
+`https://docs.rs/<name>/latest/<name_underscored>/`. The rest are
+`publish = false` and are consumed via a git or path reference;
+each crate page states which applies.
 
 ## Policy
 
