@@ -43,7 +43,7 @@ idiolect-orchestrator \
 
 The exact CLI surface is documented by the daemon's `--help`.
 The catalog is populated by the indexer that ships with the
-daemon; the orchestrator reads from the same SQLite file.
+daemon. The orchestrator reads from the same SQLite file.
 
 ## Query it
 
@@ -82,21 +82,21 @@ document with a top-level `queries` array). To add one:
    query-string parser, response shape, and CLI subcommand.
 
 The hand-written part is the panproto-expr predicate inside the
-spec entry; the generated tree handles routing, parameter
+spec entry. The generated tree handles routing, parameter
 parsing, and response encoding.
 
 ## Observability
 
 The orchestrator exposes `/metrics` in Prometheus exposition
-format. Plus structured `tracing` logs. The exact metric names
+format, plus structured `tracing` logs. The exact metric names
 and label sets are defined in
-`crates/idiolect-orchestrator/src/http.rs`; see the source for
+`crates/idiolect-orchestrator/src/http.rs`. See the source for
 the live list.
 
 ## Deployment
 
 A pre-built container image ships at
 `ghcr.io/idiolect-dev/orchestrator:<version>` per release. The
-image is signed with sigstore keyless; verification policy is
+image is signed with sigstore keyless. Verification policy is
 in
 [`docs/ci-cd.md`](https://github.com/idiolect-dev/idiolect/blob/main/docs/ci-cd.md).

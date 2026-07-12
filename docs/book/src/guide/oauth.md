@@ -1,13 +1,13 @@
 # Configure OAuth sessions
 
 [`idiolect-oauth`](../reference/crates/idiolect-oauth.md)
-provides the token-store trait and three shipped implementations.
-The crate does *not* implement the OAuth dance itself: that
-lives in `atrium-oauth-client`. The crate also does *not* ship a
-`refresh_if_needed` helper or a CLI login command; consumers
-drive the dance and the refresh decision in their own code,
-using `OAuthSession`'s helpers (`is_expired`, `needs_refresh`,
-`refresh_expired`) for timing.
+provides the token-store trait and three shipped implementations,
+plus a `refresh_if_needed` helper and a `Refresher` trait for
+session refresh. The crate does *not* implement the OAuth dance
+itself: that lives in `atrium-oauth-client`. Consumers drive the
+dance in their own code, then either call `refresh_if_needed` or
+read `OAuthSession`'s helpers (`is_expired`, `needs_refresh`,
+`refresh_expired`) to drive the refresh decision themselves.
 
 ## When you need it
 
@@ -62,22 +62,22 @@ let store = SqliteOAuthTokenStore::open("sessions.sqlite").await?;
 
 ## Drive the OAuth dance
 
-The dance itself is `atrium-oauth-client`'s job; the crate
+The dance itself is `atrium-oauth-client`'s job. The crate
 returns an authenticated session you store via
 `OAuthTokenStore::save`. The session shape (`OAuthSession`) is
 documented in the crate's source: it carries the DID, PDS URL,
 access JWT, refresh JWT, DPoP private key (JWK-serialized),
 DPoP nonce, and expiry timestamps as public fields.
 
-For session-staleness decisions, read `OAuthSession::is_expired`
-and `OAuthSession::needs_refresh(now, threshold)` in your own
-refresh path; the crate does not ship a `refresh_if_needed`
-helper, and the application decides how to drive the refresh
-endpoint.
+For session-staleness decisions, either call `refresh_if_needed`
+(documented below) or read `OAuthSession::is_expired` and
+`OAuthSession::needs_refresh(now, threshold)` in your own refresh
+path. Either way, the application supplies the `Refresher` that
+drives the refresh endpoint.
 
 ## DPoP
 
-The session's DPoP keypair is what makes the access token bound.
+The session's DPoP keypair is what binds the access token.
 The signer (the `P256DpopProver` in
 [`idiolect-lens`](../reference/crates/idiolect-lens.md) under
 the `dpop-p256` feature) consumes the keypair from the session

@@ -66,8 +66,8 @@ training corpus"`; both are valid, neither subsumes the other.
 
 Falsified verifications are first-class records and are how the
 community learns a lens is wrong. A consumer that ignores a
-falsified verification is making a routing decision; the substrate
-records the falsification and lets consumers decide.
+falsified verification is making a routing decision. The record
+captures the falsification and lets consumers decide.
 
 ### `tool`
 
@@ -140,8 +140,7 @@ for verification records on each lens, accepts the records signed
 by trusted verifiers with `result: "holds"`, and confirms each
 required verification is covered. A recommendation with required
 verifications that nobody has published is a community asking for
-work to be done; a `dev.idiolect.bounty` is the canonical way to
-ask for it.
+work to be done. A `dev.idiolect.bounty` is how you ask for it.
 
 ## Concept references
 

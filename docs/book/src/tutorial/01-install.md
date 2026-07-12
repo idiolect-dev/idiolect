@@ -17,7 +17,7 @@ This compiles every crate the CLI depends on (`idiolect-records`,
 `idiolect-identity`, `idiolect-lens`, plus their atproto transport
 features) and drops an `idiolect` binary into `~/.cargo/bin`. The
 build takes two to four minutes on a recent laptop. There is no
-runtime dependency on the cloned tree after install; you can `cd`
+runtime dependency on the cloned tree after install. You can `cd`
 anywhere.
 
 Confirm it works:

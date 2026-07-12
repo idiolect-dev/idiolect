@@ -15,7 +15,7 @@ cargo install --path crates/idiolect-cli
 ```
 
 The CLI hardcodes the `idiolect-lens` features it needs
-(`pds-reqwest`, `pds-resolve`); there are no CLI-level features
+(`pds-reqwest`, `pds-resolve`). There are no CLI-level features
 to set.
 
 ## Subcommand surface
@@ -47,7 +47,7 @@ The CLI's `orchestrator …` dispatcher is emitted from
 `orchestrator-spec/queries.json` into
 `crates/idiolect-cli/src/generated.rs`. Adding a query (per the
 [orchestrator guide](../../guide/orchestrator.md)) regenerates
-the dispatcher; the new subcommand becomes available
+the dispatcher. The new subcommand becomes available
 automatically.
 
 The hand-written subcommands (`resolve`, `fetch`,

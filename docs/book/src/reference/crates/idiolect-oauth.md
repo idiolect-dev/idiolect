@@ -7,8 +7,8 @@
 > built locally with `cargo doc -p idiolect-oauth --open`.
 
 ATProto OAuth session storage. The crate carries the token-store
-trait and shipped implementations; the OAuth dance itself lives
-in `atrium-oauth-client` and the DPoP signer lives in
+trait and shipped implementations. The OAuth dance itself lives
+in `atrium-oauth-client`, and the DPoP signer lives in
 `idiolect-lens` under the `dpop-p256` feature.
 
 Because the crate is `publish = false`, depend via git or path:
@@ -20,13 +20,20 @@ idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8
 
 ## Public surface
 
-`OAuthTokenStore` is the trait every store implements; the
+`OAuthTokenStore` is the trait every store implements. The
 typical surface is `get` / `put` / `delete` keyed by DID.
 `OAuthSession` carries the access token, refresh token, expiry,
 and DPoP key. The session has helpers (`is_expired`,
 `time_until_expiry`, `needs_refresh(now, threshold)`,
 `refresh_expired`) for callers that want to drive their own
 refresh policy.
+
+For the common case, the crate also ships `refresh_if_needed`
+and a `Refresher` trait: `refresh_if_needed(store, refresher,
+did)` loads the session, decides whether to refresh (wall clock
+plus a `DEFAULT_REFRESH_THRESHOLD_SECS` buffer), drives the
+caller-supplied `Refresher` if so, persists the result, and
+returns the live session.
 
 ## Shipped stores
 
@@ -41,7 +48,7 @@ All three implement `OAuthTokenStore`. Anything that takes
 
 ## Errors
 
-`StoreError` covers store-side failures; `SessionError` covers
+`StoreError` covers store-side failures. `SessionError` covers
 session-shape failures. Callers that want a flattened error type
 build their own at the application boundary.
 
@@ -56,7 +63,7 @@ build their own at the application boundary.
 
 The session carries a DPoP keypair. Persistence is the store's
 responsibility; both shipped stores persist it alongside the
-session. A custom store must do the same; the OAuth RFC
+session. A custom store must do the same. The OAuth RFC
 requires DPoP keys to survive across requests.
 
 The signer behind the DPoP-bound HTTP layer is `P256DpopProver`

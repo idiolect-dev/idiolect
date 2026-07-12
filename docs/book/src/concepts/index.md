@@ -7,7 +7,7 @@ ATProto records and panproto's lens vocabulary.
 | Chapter | What it explains |
 | --- | --- |
 | [Idiolect, dialect, language](./idiolect-dialect-language.md) | The frame the project is named after; what each layer is responsible for. |
-| [The dev.idiolect.* lexicon family](./lexicon-family.md) | The shipped lexicons, what each one names, and how they compose. |
+| [The dev.idiolect.* lexicon family](./lexicon-family.md) | The shipped lexicons, what each one covers, and how they compose. |
 | [Records as content-addressed signed data](./atproto-records.md) | Why ATProto's record model is the substrate; what the runtime gets for free. |
 | [Lens semantics and laws](./lens-laws.md) | The `get` / `put` / complement model, GetPut, PutGet, optic classification. |
 | [Open enums and vocabularies](./open-enums.md) | Why every enum field is open; how `*Vocab` siblings extend slugs. |

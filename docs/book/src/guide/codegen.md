@@ -34,8 +34,8 @@ non-zero on any drift. CI runs `--check` on every PR.
 | Observer method descriptors | `observer-spec/methods.json` | `crates/idiolect-observer/src/generated.rs` |
 | Verifier kind taxonomy | `verify-spec/runners.json` | `crates/idiolect-verify/src/generated.rs` |
 
-The three spec files are single JSON documents (not directories);
-each declares an array of entries that codegen reads.
+The three spec files are single JSON documents (not directories).
+Each declares an array of entries that codegen reads.
 
 ## The drift gate
 
@@ -69,7 +69,7 @@ specs each carry a different shape. The pattern is the same:
    an observer method, the `VerificationRunner` impl for a
    verifier runner).
 
-The dispatcher routes to the new entry by its kind; the
+The dispatcher routes to the new entry by its kind. The
 generated tree handles parsing and shape.
 
 ## Library API
@@ -89,9 +89,9 @@ return a `Vec<EmittedFile>`. Loading the lexicons from disk is
 the caller's job.
 
 `FamilyConfig::new(marker_name, id, nsid_prefix)` constructs a
-config from any string-like inputs; the shipped default for
+config from any string-like inputs. The shipped default for
 `dev.idiolect.*` is `idiolect_family()`.
 
-The crate is `publish = false` and not on crates.io; downstream
+The crate is `publish = false` and not on crates.io. Downstream
 consumers depend on it via a path or git reference rather than
 a registry version.

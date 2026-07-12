@@ -58,9 +58,8 @@ kind, [`deliberationOutcome`](./deliberationOutcome.md), rather
 than as an observation output.
 
 A consumer reading an observation must know the method to
-interpret the output. The `method.name` plus `version` plus
-optional `codeRef` together is what makes the output
-interpretable.
+interpret the output. The `method.name`, `version`, and optional
+`codeRef` together tell a consumer how to interpret the output.
 
 ### `scope.encounterKinds`
 
@@ -68,7 +67,7 @@ The observer must disclose which encounter kinds it includes or
 the observation is uninterpretable. An observation that includes
 `adversarial` encounters at the same weight as `invocation-log`
 encounters is meaningfully different from one that excludes
-adversarial samples; consumers reading the observation rely on
+adversarial samples. Consumers reading the observation rely on
 this disclosure to decide whether the result fits their use case.
 
 ### `version` versus `occurredAt`
@@ -138,8 +137,8 @@ A central metrics endpoint cannot:
 - Disagree with itself across observers.
 
 A signed observation can. Two observers running the same fold on
-overlapping data will produce records with comparable counts;
-consumers can require quorum among trusted observers before
+overlapping data will produce records with comparable counts.
+Consumers can require quorum among trusted observers before
 treating an observation as authoritative.
 
 ## Concept references

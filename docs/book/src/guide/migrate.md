@@ -7,7 +7,9 @@ is for.
 
 The crate is a thin typed façade over `panproto-check` (for diff
 classification) and `idiolect-lens` (for record translation). It
-ships as a library only; there is no `idiolect-migrate` binary.
+is primarily a library, and also ships an optional
+`idiolect-migrate` binary behind the `cli` feature for streaming
+batch migration (see [Batch migration](#batch-migration)).
 
 The runtime path:
 
@@ -119,8 +121,8 @@ covers that case. The authoring loop is:
 5. Publish the chain plus a verification record signed by a
    reviewer.
 
-Each step is mechanical and gated; the policy is what makes
-migrations reviewable.
+Each step is mechanical and gated. The policy makes migrations
+reviewable.
 
 ## Batch migration
 

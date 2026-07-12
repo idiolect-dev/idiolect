@@ -4,7 +4,7 @@ A signed record of a single lens invocation. Encounters are the
 *emergent-channel* primitive: they record that a translation
 occurred, with enough context for aggregators (observations) and
 correctors to reason about it. Narrative commentary lives in
-`annotations`; the structured payload in `use` covers the
+`annotations`. The structured payload in `use` covers the
 action / material / purpose / actor of the invocation.
 
 > **Source:** [`lexicons/dev/idiolect/encounter.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/encounter.json)
@@ -65,8 +65,8 @@ The encounter-kind slug declares what the corpus represents:
 Observers declare in their method which kinds they weight and
 how. An observation aggregating `invocation-log` plus `curated`
 encounters is meaningfully different from one aggregating only
-`adversarial` ones; the kind plus the observer's method together
-is what makes the observation interpretable.
+`adversarial` ones. The kind and the observer's method together
+determine how the observation should be read.
 
 ### `downstreamResult`
 
@@ -88,19 +88,19 @@ encounter's `downstreamResult` to confirm the link.
 
 Most encounters are first-party: the repo owner is the party that
 invoked the lens. Some are third-party: a labeler records that
-*another* party invoked a lens. `holder` names the party the
-record is attributed to; `basis` carries structured grounds for
+*another* party invoked a lens. `holder` identifies the party the
+record is attributed to. `basis` carries structured grounds for
 the attribution (a community policy, an external signal, an
 inference from another record). See [`defs#basis`](./defs.md) for
 the variants.
 
 ### `visibility`
 
-The five values are policy hints, not access control. The
-substrate does not enforce them today. Records marked
+The five values are policy hints, not access control. idiolect
+does not enforce them today. Records marked
 `community-scoped` should not be served to parties outside the
-named community once the substrate supports scope enforcement;
-records marked `private` should not be published at all.
+named community once scope enforcement lands. Records marked
+`private` should not be published at all.
 
 ## Example
 
@@ -135,8 +135,8 @@ flowchart LR
     OBSREC -.cited by.-> BEL[belief]
 ```
 
-An encounter is the unit; observations and corrections reference
-it. A `dev.idiolect.belief` may cite either the encounter
+An encounter is the base record. Observations and corrections
+reference it. A `dev.idiolect.belief` may cite either the encounter
 directly (for narrow claims) or an observation that aggregated
 it (for broad claims). A `dev.idiolect.retrospection` references
 an encounter to record a delayed finding about it.

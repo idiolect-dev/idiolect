@@ -1,7 +1,7 @@
 # dev.idiolect.bounty
 
 A declaration that a translation, verification, or adapter is
-wanted, with terms. The substrate does not intermediate fulfillment:
+wanted, with terms. idiolect does not intermediate fulfillment:
 payment, review, and acceptance happen on external rails referenced
 in the record. The record is the *request* primitive.
 
@@ -17,7 +17,7 @@ in the record. The record is the *request* primitive.
 | `requester` | did | yes | Who is requesting. |
 | `wants` | union | yes | Exactly one of `wantLens` / `wantVerification` / `wantAdapter`. |
 | `constraints` | array (≤64) | no | Structured constraints the deliverable must satisfy. |
-| `reward` | object | no | `{ summary?, externalRef? }`. The substrate does not transact. |
+| `reward` | object | no | `{ summary?, externalRef? }`. idiolect does not transact. |
 | `eligibility` | array (≤128) | no | Postfix eligibility tree. |
 | `fulfillment` | at-uri | no | Once fulfilled, points to the deliverable record. |
 | `status` | open enum | no | `open` / `claimed` / `fulfilled` / `withdrawn`. |
@@ -97,11 +97,11 @@ Empty array means no eligibility restriction.
 ### `reward`
 
 `reward` is intentionally underspecified. `summary` is narrative
-prose; `externalRef` is a URL pointing at the rail that handles
+prose. `externalRef` is a URL pointing at the rail that handles
 the actual reward (a grant portal, a payment platform, an
-attestation service). The substrate does not validate that the
+attestation service). idiolect does not validate that the
 external rail exists, that it is solvent, or that the reward will
-be paid; that is the consumer's diligence.
+be paid. That is the consumer's diligence.
 
 The pattern: a bounty with `externalRef` pointing at a known
 grant portal is more credible than a bounty with only a narrative
@@ -112,7 +112,7 @@ summary. Consumers route their effort accordingly.
 Once a deliverable exists, the bounty publisher edits the bounty
 record (a put, not a new record) to set `fulfillment` to the
 deliverable's at-uri and `status` to `fulfilled`. Consumers
-querying open bounties filter on `status: open`; consumers
+querying open bounties filter on `status: open`. Consumers
 auditing the fulfilled set filter on `status: fulfilled` and
 follow `fulfillment`.
 
@@ -124,7 +124,7 @@ is requesting), set `basis` and `requester` accordingly. The
 common case is `basisCommunityPolicy` (a community has a standing
 policy of requesting verifications of every published lens) or
 `basisDerivedFromRecord` (a researcher infers a request from a
-prior recommendation that named required verifications).
+prior recommendation that listed required verifications).
 
 ## Example
 
@@ -176,7 +176,7 @@ flowchart LR
 
 A community publishing recommendations with `requiredVerifications`
 that nobody has published is asking for verification work. A
-bounty is the canonical way to request that work. A claimer that
+bounty is how you request that work. A claimer that
 matches the eligibility predicate publishes the verification, the
 requester points the bounty at it, and the external rail handles
 the payment.

@@ -63,7 +63,7 @@ OWL Lite (`symmetric`, `transitive`, `functional`,
 | `world` (per-relation override) | Open-enum policy for this relation only. |
 
 Contradictions (`symmetric+asymmetric`, `reflexive+irreflexive`)
-are caught at validation time; functional / inverse-functional
+are caught at validation time. Functional and inverse-functional
 violations are caught at edge-walk time. The `VocabGraph::validate`
 walker emits one
 [`VocabViolation`](../reference/crates/idiolect-records.md) per
@@ -88,7 +88,7 @@ Every concept-kind node accepts the SKOS Core annotation set:
 | `externalIds[]` | `exactMatch` / `closeMatch` / `broadMatch` / `narrowMatch` / `relatedMatch` |
 
 The annotations do not affect runtime resolution (the slug is the
-key); they are surface-area for human authors and downstream
+key). They are surface area for human authors and downstream
 display tooling.
 
 ## Runtime queries
@@ -146,14 +146,14 @@ let translated: Option<String> = registry.translate(
 ```
 
 If the bridge exists, the consumer gets the equivalent slug in
-the target vocab. If it does not, `None`. This is the engine for
+the target vocab. If it does not, `None`. This is what backs
 [Open enums](./open-enums.md)' `translate_to` helper.
 
 ## Versioning
 
 A vocab edit is a record edit (a new `dev.idiolect.vocab` record)
 under a new rkey, with the old vocab listed as `supersedes`. The
-new record is a separate at-uri; consumers depending on the old
+new record is a separate at-uri. Consumers depending on the old
 slug set continue to resolve through the old vocab until they
 update their references.
 

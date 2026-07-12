@@ -24,7 +24,7 @@ laws covered in [Lens semantics and laws](../concepts/lens-laws.md).
 
 ## Wire it up
 
-`idiolect-lens` is `publish = false`; depend on it via git (or a
+`idiolect-lens` is `publish = false`. Depend on it via git (or a
 path, when working inside the workspace):
 
 ```toml
@@ -95,7 +95,7 @@ PDS:
   shape with the kind relabelled to `text`.
 - `dev.panproto.schema.lens/tutorial-rename-sort-string-to-text`
   — a single-step `rename_sort` chain. The optic class is
-  `Iso`; round-trip is byte-equal.
+  `Iso`, and round-trip is byte-equal.
 
 `apply_lens` is one async call. It does five things in order:
 

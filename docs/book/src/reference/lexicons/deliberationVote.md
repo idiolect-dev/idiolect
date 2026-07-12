@@ -3,11 +3,11 @@
 A stance taken on a [`deliberationStatement`](./deliberationStatement.md).
 Stance is an open-enum slug resolved against a community-published
 vote-stance vocabulary. The Acorn-style three-way default
-(`agree` / `pass` / `disagree`) is canonical; richer vocabularies
+(`agree` / `pass` / `disagree`) is canonical. Richer vocabularies
 (conditional-agree, abstain-with-reason, ranked preference) are
 expressible by referencing a different vocab. Optional `weight`
-and `rationale` capture additional signal that observers can fold;
-consumers that don't need them ignore them.
+and `rationale` carry additional signal that observers can fold.
+Consumers that don't need them ignore them.
 
 > **Source:** [`lexicons/dev/idiolect/deliberationVote.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/deliberationVote.json)
 > · **Rust:** [`idiolect_records::DeliberationVote`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.DeliberationVote.html)
@@ -36,8 +36,8 @@ they are aggregating votes against the same statement revision.
 
 If a statement is edited and a participant wants to vote on the
 new revision, that is a separate vote record with a different
-`subject` CID. The substrate does not collapse votes across
-revisions; observers do, when their fold method specifies it.
+`subject` CID. idiolect does not collapse votes across
+revisions. Observers do, when their fold method specifies it.
 
 ### `stance`
 
@@ -71,13 +71,13 @@ precision. Convention follows `pub.chive.graph.edge#weight`.
 Consumers that aggregate votes uniformly ignore `weight`. Ranked
 or weighted aggregations consume it. A community that wants
 quadratic voting publishes a `vote-weights` companion vocabulary
-and uses `weight` to encode the scheme; observers running a
+and uses `weight` to encode the scheme. Observers running a
 quadratic-vote fold read both the stance and the weight.
 
 ### `rationale`
 
-Optional narrative. Tally folds do not consume `rationale`;
-consumer surfaces (e.g. a deliberation viewer) display it
+Optional narrative. Tally folds do not consume `rationale`.
+Consumer surfaces (e.g. a deliberation viewer) display it
 alongside the vote. The 500-grapheme cap matches the
 deliberation-statement length: brevity is conventional.
 
@@ -111,7 +111,7 @@ A vote does not produce an outcome on its own. An observer reads
 the vote stream for a deliberation, folds by `(statement, stance)`
 (plus optional weight aggregation), and publishes a
 [`deliberationOutcome`](./deliberationOutcome.md) record. Multiple
-observers may publish concurrent outcomes; consumers that want
+observers may publish concurrent outcomes. Consumers that want
 consensus require quorum across trusted observers.
 
 ## Concept references

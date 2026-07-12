@@ -68,11 +68,11 @@ Two ways to represent membership:
   shouldn't bloat the community record itself.
 
 A community may use both for the transition period while moving
-from inline to external; consumers union the two sets.
+from inline to external. Consumers union the two sets.
 
 ### `roleAssignments` versus the default role
 
-The default role (named on the role vocabulary's top node) applies
+The default role (declared on the role vocabulary's top node) applies
 to every member who does not have an explicit `roleAssignment`.
 Only members whose role *differs* from the default need an entry.
 A 500-member community with five moderators carries five
@@ -97,10 +97,10 @@ through the AppView instead of crawling member PDSes.
 
 ### `endorsedCommunities`
 
-A community names other communities it recognises as legitimate
+A community lists other communities it recognises as legitimate
 interlocutors. The endorsement is *not* transitive: A endorsing B
-and B endorsing C does not imply A endorsing C. The substrate
-records the assertion; consumers decide what to do with it. Common
+and B endorsing C does not imply A endorsing C. The record only
+states the assertion. Consumers decide what to do with it. Common
 patterns: a quorum policy that requires endorsements from $k$
 trusted communities; a denylist that excludes communities not
 endorsed by any trusted party.

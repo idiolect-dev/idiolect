@@ -97,16 +97,16 @@ byte-for-byte. A single counterexample would have produced
 ## Falsified is a record, not an error
 
 A *falsified* property returns
-`Ok(Verification { result: Falsified, ... })`, not an error. The
-substrate's view: a falsified verification is the signal the
-community is paying the runner to produce. Treat it like a
-finding, sign and publish it. Consumers reading the falsified
-record decide whether to continue invoking the lens.
+`Ok(Verification { result: Falsified, ... })`, not an error. A
+falsified verification is a normal result the runner exists to
+report. Treat it like a finding: sign it and publish it.
+Consumers reading the falsified record decide whether to continue
+invoking the lens.
 
 `VerifyError` is reserved for input-shape, transport, or
 irrecoverable-state failures (a corpus the runner could not load,
 a schema the loader could not resolve). Those are operator
-problems; the lens's actual behaviour is captured in the
+problems. The lens's actual behaviour is captured in the
 returned record.
 
 ## Publish the result

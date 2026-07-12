@@ -7,7 +7,7 @@
 > built locally with `cargo doc -p idiolect-verify --open`.
 
 Verification runners with declarative dispatch. Driven by
-`verify-spec/runners.json`; codegen emits the kind taxonomy.
+`verify-spec/runners.json`. Codegen emits the kind taxonomy.
 
 Because the crate is `publish = false`, depend via git or path:
 
@@ -50,14 +50,14 @@ kinds:
 
 The lexicon's `verification.kind` field is open-enum and lists
 additional kinds (`formal-proof`, `conformance-test`,
-`convergence-preserving`); those kinds are *recognised* but not
+`convergence-preserving`). Those kinds are *recognised* but not
 shipped as runners. Communities that need them author their own
 runner against the trait.
 
 ## Errors
 
 `VerifyError` covers input-shape, transport, and
-irrecoverable-state failures; `VerifyResult<T>` is its alias.
+irrecoverable-state failures. `VerifyResult<T>` is its alias.
 
 ## Result records
 

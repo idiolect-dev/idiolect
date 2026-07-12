@@ -6,7 +6,7 @@ escape hatch that requires governance sign-off. The same policy
 applies to vendored externals (Blacksky, layers-pub, ...).
 
 The policy is the lexicon-level half of the project's stability
-story; the schema-level half is the
+story. The schema-level half is the
 [stability and versioning](../reference/stability.md) note. The
 policy below is enforced by `scripts/lexicon-evolve.sh` and the
 release CI workflow.
@@ -22,7 +22,7 @@ flowchart LR
     ROUNDTRIP --> PUBLISH[5. Publish lens]
 ```
 
-Each stage maps onto a panproto primitive; nothing is bespoke.
+Each stage maps onto a panproto primitive. Nothing is bespoke.
 
 ### Stage 0 — Diff
 
@@ -77,10 +77,10 @@ For any `CoerceType` step crossing primitive kinds:
 schema theory check-coercion-laws theory.ncl --json
 ```
 
-Sample-based; exit code is non-zero on any falsifying sample. The
+Sample-based. Exit code is non-zero on any falsifying sample. The
 chain declares each `CoerceType` with an honest `CoercionClass`.
 Dishonest declarations corrupt the asymmetric-lens put law
-silently; this gate catches them.
+silently. This gate catches them.
 
 ### Stage 4 — Roundtrip verification
 
@@ -91,8 +91,8 @@ schema lens verify <corpus>/ --protocol atproto --schema <new>.json --chain chai
 Checks GetPut and PutGet over the corpus. The corpus is the live
 indexer's catalog snapshot at the time of revision: actual
 records published across the network for that NSID. CI fails on
-any record that violates either law. Verification is grounded in
-real data, not synthetic test cases.
+any record that violates either law. Verification runs on real
+data rather than synthetic test cases.
 
 ### Stage 5 — Publish
 
@@ -109,7 +109,7 @@ DID. The lens at-uri is added to:
   `dev.idiolect.dialect#preferredLenses`.
 - The previous lexicon's `deprecations` block as `replacement`.
 
-Codegen re-runs on revision bump; downstream consumers pulling
+Codegen re-runs on revision bump. Downstream consumers pulling
 the dialect record see the lens automatically.
 
 ## Vocab edits go through the same pipeline
@@ -126,10 +126,10 @@ six stages apply via dependent optics:
 
 ## Why this is modular
 
-- **Modular.** Each elementary protolens is a stand-alone, well-typed combinator. The pipeline composes them; no bespoke migration code per revision.
+- **Modular.** Each elementary protolens is a stand-alone, well-typed combinator. The pipeline composes them, with no bespoke migration code per revision.
 - **Abstract.** Protolenses are quantified over schemas, not specific to a revision pair. `RenameField("oldName", "newName")` is a schema-parametric morphism; it applies to the lexicon and to every record across the network without per-record code.
 - **Composable.** Chain auto-simplification, ScopedTransform sub-chains, Nickel record merge for fragments, symmetric lenses for forward / backward pairing, lift across protocols via theory morphisms.
-- **Verifiable.** Optic classification is mechanical. Coercion-law checks are sample-based. Corpus regression uses real records. Trust comes from the substrate, not from review prose.
+- **Verifiable.** Optic classification is mechanical. Coercion-law checks are sample-based. Corpus regression uses real records. Trust rests on those mechanical checks rather than on review prose.
 - **Decentralized.** Communities author their own protolens chains for their own lexicons. The policy applies to anyone adopting idiolect's framework.
 
 ## Vendored externals
@@ -138,8 +138,8 @@ Vendored lexicons (Blacksky, layers-pub, ...) are consumed as
 schemas idiolect does not own. When they revise, the same six
 stages run against their old / new pair. The output is a
 *symmetric* lens (per panproto's `symmetricLens`): syncing A → B
-and B → A keeps both sides consistent up to complement. This is
-the right shape for a bridge crate (e.g. the planned
+and B → A keeps both sides consistent up to complement. That is
+what a bridge crate needs (e.g. the planned
 `idiolect-acorn`): when the upstream changes, the bridge auto-
 updates and downstream idiolect records remain syncable.
 
@@ -155,5 +155,5 @@ updates and downstream idiolect records remain syncable.
   classification.json, verification.json}` is the per-revision
   audit trail.
 
-The policy is what makes lexicon evolution reviewable. The tooling
-is what makes the policy cheap to follow.
+The policy makes lexicon evolution reviewable. The tooling makes
+the policy cheap to follow.

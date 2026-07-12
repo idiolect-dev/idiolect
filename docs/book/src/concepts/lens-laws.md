@@ -66,7 +66,7 @@ based on what the chain promises:
 | **Affine** | Partial. The forward direction may fail on some inputs. | PR review plus a community recommendation. |
 | **General** | None of the above. | Manual lens authoring, full coercion-law check, plus verification. |
 
-The class is not a quality judgment; it is a routing decision.
+The class drives routing rather than passing judgment on quality.
 Some legitimate migrations are projections (a field genuinely went
 away). The policy makes the consequences visible.
 
@@ -78,7 +78,7 @@ $$
 (\ell_1 \circ \ell_2) \circ \ell_3 \;=\; \ell_1 \circ (\ell_2 \circ \ell_3)
 $$
 
-Identity is the no-op lens; it is a left and right identity for
+Identity is the no-op lens, a left and right identity for
 composition. panproto's protolens runtime auto-simplifies adjacent
 steps where it can (`RenameVertex(a,b) ; RenameVertex(b,c) →
 RenameVertex(a,c)`).
@@ -128,7 +128,7 @@ work. The shipped runner kinds:
 - `static-check` runs the panproto-level coercion-law and
   existence checks against the chain itself.
 
-A lens with no published verifications is a claim; a lens with
+A lens with no published verifications is a claim. A lens with
 multiple published verifications from trusted signers, run on
 recent corpora, is closer to an asserted fact. See
 [Author a verification runner](../guide/verify.md) for the

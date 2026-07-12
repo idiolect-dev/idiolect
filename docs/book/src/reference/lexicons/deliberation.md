@@ -13,8 +13,8 @@ Deliberations are intentionally process-shaped: they represent the
 *unsettled* moment. They are distinct from
 [`belief`](./belief.md) (settled doxastic) and
 [`recommendation`](./recommendation.md) (settled normative). A
-deliberation that closes can name an outcome record so consumers
-can read the conclusion without re-folding the votes.
+deliberation that closes can point at an outcome record so
+consumers can read the conclusion without re-folding the votes.
 
 > **Source:** [`lexicons/dev/idiolect/deliberation.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/deliberation.json)
 > · **Rust:** [`idiolect_records::Deliberation`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.Deliberation.html)
@@ -46,9 +46,9 @@ participation rights are resolved through that community's record.
 A deliberation can be cross-referenced from other communities, but
 exactly one owns it.
 
-The substrate does not enforce membership. `authRequired` is a
+idiolect does not enforce membership. `authRequired` is a
 declared policy: when `true`, only authenticated members'
-statements and votes count toward the outcome; when `false`, the
+statements and votes count toward the outcome. When `false`, the
 deliberation accepts drive-by statements (which observers may
 weight differently when folding the tally).
 
@@ -68,8 +68,8 @@ classifications vocabulary (`negotiation`, `process-vote`,
 default.
 
 The classification is *optional*. A community that does not want
-to commit to a classification omits the field; the deliberation
-record is still valid, observers and consumers just have less
+to commit to a classification omits the field. The deliberation
+record is still valid, and observers and consumers just have less
 metadata to fold on.
 
 ### `status` lifecycle
@@ -84,8 +84,8 @@ metadata to fold on.
 
 Open-enum: a community that wants finer-grained statuses
 (`closed-pending-revision`, `escalated`, ...) extends via
-`statusVocab`. The lifecycle is a *declaration*; the substrate
-records the value the publisher set.
+`statusVocab`. The lifecycle is a *declaration*. The record
+carries the value the publisher set.
 
 ### `outcome`
 
@@ -95,7 +95,7 @@ a closed deliberation can fetch the outcome without re-folding
 the entire vote stream.
 
 Multiple outcome records per deliberation are allowed (different
-observers, different cut-offs); the deliberation's `outcome`
+observers, different cut-offs). The deliberation's `outcome`
 field points at the *canonical* one. Consumers who want a
 different observer's tally query the orchestrator directly.
 

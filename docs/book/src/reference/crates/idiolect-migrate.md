@@ -58,8 +58,22 @@ Two reasons:
    heavier dep than the lens runtime itself. Keeping it
    separate keeps the runtime crate's compile-time small.
 
+## The `idiolect-migrate` binary
+
+Behind the `cli` feature the crate also ships an
+`idiolect-migrate` binary (`src/bin/idiolect_migrate.rs`) that
+streams a directory of JSON records through a lens at-uri against
+a live PDS. The library is the default; the binary is opt-in:
+
+```bash
+cargo install --path crates/idiolect-migrate --features cli
+```
+
+See [Migrate records across a revision](../../guide/migrate.md)
+for the batch-migration flow.
+
 ## Scope
 
-The crate owns no runtime state. It is a thin façade; the
+The crate is a thin façade with no runtime state. The
 runtime cost of a migration equals the cost of one `apply_lens`
 per record.

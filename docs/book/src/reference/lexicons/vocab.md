@@ -12,8 +12,8 @@ supported:
 Authors choose either. Consumers normalize the legacy tree to the
 graph form at access time by lifting each `actionEntry` to a
 node and each `parents` entry to a `subsumed_by` edge. New
-vocabularies should prefer the graph shape; the tree stays valid
-for backward compatibility and remains the right shape for pure
+vocabularies should prefer the graph shape. The tree stays valid
+for backward compatibility and remains a good fit for pure
 subsumption hierarchies.
 
 The graph shape is modelled after `pub.chive.graph.{node,edge}`,
@@ -43,7 +43,7 @@ alignment (Wikidata, ROR, ORCID, ...) are first-class.
 
 ## The `world` discipline
 
-A closed-enum field naming how undeclared identifiers are treated:
+A closed-enum field controlling how undeclared identifiers are treated:
 
 | Slug | Behavior |
 | --- | --- |
@@ -174,7 +174,7 @@ The lifting from tree to graph form is mechanical:
 
 A vocab record with both `actions` and `nodes`/`edges` populated
 is interpreted as the union after lifting. This is the
-transition shape; new vocabularies should prefer pure graph
+transition shape. New vocabularies should prefer pure graph
 form.
 
 ## Example (graph form)

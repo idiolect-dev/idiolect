@@ -58,14 +58,14 @@ shape per endpoint.
 ## Error shape
 
 A request that fails parameter validation returns 400 with a
-JSON body naming the offending field. Internal failures return
-500 with a brief message.
+JSON body identifying the offending field. Internal failures
+return 500 with a brief message.
 
 ## Versioning
 
 The `v1` and `/xrpc/` prefixes are the route contract. New
 endpoints are additive. Pre-1.0 the project may rename or
-restructure endpoints between minor versions; see
+restructure endpoints between minor versions. See
 [Stability and versioning](./stability.md). At 1.0 the prefixes
 become stable and breaking changes ship under `v2` (or, for the
 xrpc surface, under new method names that deprecate the old).

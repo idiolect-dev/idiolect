@@ -9,7 +9,7 @@ a firehose consumer factored into three trait surfaces:
   `tapped`).
 - `RecordHandler<F: RecordFamily = IdiolectFamily>`: handles one
   decoded `IndexerEvent<F>`. The family parameter narrows the
-  handler to the records the indexer should not skip; everything
+  handler to the records the indexer should not skip. Everything
   outside the family is dropped before decode.
 - `CursorStore`: persists the last-acknowledged sequence number
   per subscription so a restart resumes where the previous run
@@ -92,7 +92,7 @@ family.
 `drive_indexer` calls
 `CursorStore::commit(subscription_id, seq)` after the handler
 returns `Ok`. A handler that wants at-least-once semantics
-should make its work idempotent before returning; a handler
+should make its work idempotent before returning. A handler
 that wants exactly-once semantics needs to coordinate the commit
 with its own storage transaction.
 
@@ -116,5 +116,5 @@ tracing_subscriber::fmt()
 
 You will see one log line per accepted commit, one per skipped
 commit (debug level), and one per cursor commit. The
-orchestrator exposes a Prometheus surface; see
+orchestrator exposes a Prometheus surface. See
 [Run the orchestrator HTTP API](./orchestrator.md).

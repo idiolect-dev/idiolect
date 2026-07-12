@@ -7,7 +7,7 @@
 > built locally with `cargo doc -p idiolect-observer --open`.
 
 Fold encounter-family records into observation records. Driven
-by the declarative spec at `observer-spec/methods.json`; codegen
+by the declarative spec at `observer-spec/methods.json`. Codegen
 emits the method-descriptor table.
 
 Because the crate is `publish = false`, depend via git or path:
@@ -43,14 +43,14 @@ pub async fn drive_observer<S, C, M, P>(
 `ObservationMethod` is the stateful aggregator. It folds decoded
 events into internal state and snapshots that state on flush.
 `ObserverHandler` wires the method onto the indexer's
-`RecordHandler` boundary; `drive_observer` runs the indexer loop
+`RecordHandler` boundary. `drive_observer` runs the indexer loop
 and triggers periodic flushes that publish observations through
 the configured publisher.
 
 ## Shipped methods
 
 The spec at `observer-spec/methods.json` declares eight bundled
-methods; the typed structs ship in `crates/idiolect-observer/src/methods/`:
+methods. The typed structs ship in `crates/idiolect-observer/src/methods/`:
 
 | Spec name | Module | Folds |
 | --- | --- | --- |
@@ -86,7 +86,7 @@ implementations:
 
 ## Errors
 
-`ObserverError` is a flattened error type; `ObserverResult<T>`
+`ObserverError` is a flattened error type. `ObserverResult<T>`
 is its alias.
 
 ## Feature flags
@@ -100,7 +100,7 @@ is its alias.
 
 Edit `observer-spec/methods.json`, add the method's entry, run
 `cargo run -p idiolect-codegen`. The generated descriptor table
-picks up the new method; you write the
+picks up the new method. You write the
 `ObservationMethod` (or `InstanceMethod`) impl in
 `crates/idiolect-observer/src/methods/<module>.rs` and add it to
 the `default_methods()` constructor.

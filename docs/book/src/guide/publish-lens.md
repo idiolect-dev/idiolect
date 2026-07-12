@@ -8,8 +8,8 @@ A lens on the network is two artifacts:
 2. The two schemas themselves, each a `dev.panproto.schema.schema`
    record (or a `getSchema` xrpc response from a panproto vcs).
 
-The lens record is what consumers resolve by at-uri. The schemas
-are what the runtime instantiates against.
+Consumers resolve the lens record by at-uri. The runtime
+instantiates against the two schemas.
 
 ## Build the lens
 
@@ -57,7 +57,7 @@ Three fields warrant care:
 - `laws_verified` is a soft assertion that the chain passed
   panproto's coercion-law and existence checks. A true value here
   is meaningless without a corresponding `dev.idiolect.verification`
-  record from a publisher you trust; treat it as a pre-publish
+  record from a publisher you trust. Treat it as a pre-publish
   smoke signal.
 
 ## Publish
@@ -86,7 +86,7 @@ let resp = publisher.create(&lens).await?;
 `pkcs8_pem` is converted from the session's
 `dpop_private_key_jwk` via an external JWK-to-PKCS8 helper.
 Driving the OAuth dance and persisting the session is the
-caller's job; see [Configure OAuth sessions](./oauth.md). The
+caller's job. See [Configure OAuth sessions](./oauth.md). The
 PDS rejects the record if the chain blob does not parse, the
 schema at-uris do not resolve, or the canonical bytes do not
 match the declared `object_hash`.
@@ -117,7 +117,7 @@ and rejects the record on mismatch. `CachingResolver` keeps the
 result in a TTL'd cache so repeated `apply_lens` calls do not
 re-fetch.
 
-`Arc<dyn Resolver>` is supported (since v0.8.0); the resolver
+`Arc<dyn Resolver>` is supported (since v0.8.0). The resolver
 futures are `Send`, so handlers in async HTTP frameworks can hold
 the resolver behind a trait object and call `apply_lens` from
 inside an `#[async_trait]` impl.

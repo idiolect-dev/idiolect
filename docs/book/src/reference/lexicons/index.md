@@ -32,4 +32,4 @@ authoritative shape for every lexicon is the JSON document under
 [docs.rs/idiolect-records](https://docs.rs/idiolect-records/latest/idiolect_records/)
 are derived from that JSON and are the authoritative typed
 surface. When this book and either source disagree, the source
-wins; please file an issue.
+wins. Please file an issue.

@@ -49,7 +49,7 @@ are independent.
 
 ## Lexicon-by-lexicon
 
-| Lexicon | What it names |
+| Lexicon | What it describes |
 | --- | --- |
 | `dev.idiolect.encounter` | One invocation of a lens. Carries the lens, the source schema, the action / material / purpose / actor (`use`), and the outcome. |
 | `dev.idiolect.observation` | Aggregate over encounters folded by an observer. Per-outcome counts plus optional weighted aggregates over a window. |
@@ -79,8 +79,8 @@ The family was assembled to cover four concerns:
    triple. One record per invocation, with corrections and folds
    on top.
 2. **What should happen?** The recommendation / belief / dialect /
-   verification quad. Communities express opinions; opinions cite
-   evidence; consumers route translations through them.
+   verification quad. Communities express opinions, those opinions
+   cite evidence, and consumers route translations through them.
 3. **What does this mean?** The vocab + open-enum convention.
    Slugs are open-enum strings resolved through community-published
    knowledge graphs.
@@ -90,17 +90,18 @@ The family was assembled to cover four concerns:
 
 A new record kind that fits into one of those four columns is a
 candidate for the family. A record kind that does not fit is
-likely a downstream extension; the [Bundle records into a
+likely a downstream extension. The [Bundle records into a
 dialect](../guide/dialect.md) guide covers how to ship one.
 
 ## Composition with downstream lexicons
 
-idiolect's shape is meant to be the substrate, not the ceiling. A
+The idiolect family is meant as a base for downstream extension,
+not a fixed set. A
 downstream community publishes its own NSID family and uses
 `OrFamily<IdiolectFamily, MyFamily>` at the indexer boundary so its
 records flow alongside idiolect's. Lenses bridge the two. A
 dialect record from the downstream community lists both
 families' canonical NSIDs.
 
-The shipped example of this pattern is the planned `idiolect-acorn`
-bridge; the design is in `notes/`.
+The worked example of this pattern is the planned `idiolect-acorn`
+bridge. The design is in `notes/`.

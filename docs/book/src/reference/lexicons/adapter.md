@@ -3,8 +3,8 @@
 A subprocess or HTTP-endpoint wrapper for a framework's tooling,
 authored by incentive-aligned parties. Adapters are how idiolect
 glues existing frameworks (Hasura, Prisma, Datomic, FHIR, Coq,
-Meilisearch, ...) without forking them. The substrate publishes
-the adapter declaration; the orchestrator runs the adapter under
+Meilisearch, ...) without forking them. The adapter declaration
+is a published record. The orchestrator runs the adapter under
 the declared isolation policy.
 
 > **Source:** [`lexicons/dev/idiolect/adapter.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/adapter.json)
@@ -54,13 +54,13 @@ An adapter is a *declared contract*: the publisher asserts that
 "this framework, at this version range, can be invoked via this
 protocol under this isolation policy". The orchestrator running
 the adapter trusts the contract only as far as it trusts the
-publisher's signature; verification records can pin specific
+publisher's signature. Verification records can pin specific
 conformance claims.
 
 The alternative (each orchestrator hand-coding adapter wrappers
 per framework) does not scale. The adapter record is the
 declarative replacement: a community with framework expertise
-publishes the wrapper once; orchestrators pick it up from the
+publishes the wrapper once, and orchestrators pick it up from the
 network.
 
 ### `invocationProtocol.kind`
@@ -113,8 +113,9 @@ Orthogonal axes layered on top of the kind:
 | `full` | Unrestricted. |
 
 The orchestrator's enforcement is best-effort and depends on the
-underlying isolation runtime; e.g. `wasm-sandbox` makes
-`egress-allowlist` cheap and exact, `process` makes it harder.
+underlying isolation runtime. For example, `wasm-sandbox` makes
+`egress-allowlist` cheap and exact, while `process` makes it
+harder.
 
 ### `resourceLimits`
 

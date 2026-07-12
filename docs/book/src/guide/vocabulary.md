@@ -63,7 +63,7 @@ The shipped properties cover the OWL Lite set: `symmetric`,
 `asymmetric`, `transitive`, `reflexive`, `irreflexive`,
 `functional`, `inverseFunctional`, plus `inverseOf` and a per-
 relation `world` override. The runtime walks the asserted edges
-and validates them against these properties; contradictions
+and validates them against these properties. Contradictions
 (`symmetric+asymmetric`, `reflexive+irreflexive`) produce a
 `PropertyContradiction` violation at publish time.
 
@@ -123,7 +123,7 @@ consistency walker. Violations are listed with the offending edge
 or property.
 
 For programmatic validation, construct a `Vocab` value and call
-`VocabGraph::from_vocab(&vocab).validate()`; violations are
+`VocabGraph::from_vocab(&vocab).validate()`. Violations are
 returned as a `Vec<VocabViolation>` listing each offending edge
 or property.
 
@@ -155,9 +155,9 @@ let resp = publisher.create(&vocab).await?;
 
 `pkcs8_pem` is converted from the session's
 `dpop_private_key_jwk` via an external JWK-to-PKCS8 helper. The
-PDS validates the record against the lexicon before commit;
-malformed values surface as commit errors. Driving the OAuth
-dance and persisting the session is the caller's job; see
+PDS validates the record against the lexicon before commit.
+Malformed values surface as commit errors. Driving the OAuth
+dance and persisting the session is the caller's job. See
 [Configure OAuth sessions](./oauth.md).
 
 ## Use the published vocab

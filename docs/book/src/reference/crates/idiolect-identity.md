@@ -6,7 +6,7 @@
 >
 > This page is an editorial overview. The per-symbol surface
 > (every public type, trait, function, and feature flag) is the
-> docs.rs link above; that is the authoritative reference.
+> docs.rs link above. That is the authoritative reference.
 
 DID resolution. Maps a `did` to a structured `DidDocument`
 carrying the also-known-as set, service entries, verification
@@ -19,7 +19,7 @@ idiolect-identity = { version = "0.8", features = ["resolver-reqwest"] }
 
 ## Public surface
 
-`IdentityResolver` is the trait every resolver implements; the
+`IdentityResolver` is the trait every resolver implements. The
 crate ships three implementations.
 
 | Type | Feature | Backing |
@@ -30,7 +30,7 @@ crate ships three implementations.
 
 `DidDocument` carries the resolved data. The shipped accessors
 include `handle()`, `pds_url()`, and the underlying
-`also_known_as` field; see docs.rs for the full surface.
+`also_known_as` field. See docs.rs for the full surface.
 
 ## Errors
 
@@ -48,5 +48,5 @@ unsupported DID methods.
 
 The shipped `CachingIdentityResolver` wraps any inner resolver
 with a TTL'd cache. Default TTL and overrides are documented on
-docs.rs. Cache hits skip the HTTP request entirely; cache misses
+docs.rs. Cache hits skip the HTTP request entirely. Cache misses
 fall through to the inner resolver. Errors are not cached.

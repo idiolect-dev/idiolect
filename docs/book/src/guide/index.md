@@ -11,7 +11,7 @@ comfortable working without it) and have the runtime installed.
 | [Run the observer daemon](./observer.md) | You want to fold encounter-family records into observation records. |
 | [Author a verification runner](./verify.md) | You want to add a new property kind to the verifier. |
 | [Publish and resolve a lens](./publish-lens.md) | You have a panproto lens and want it on the network. |
-| [Migrate records across a revision](./migrate.md) | A schema you depend on changed; you want to lift records across the change. |
+| [Migrate records across a revision](./migrate.md) | A schema you depend on changed, and you want to lift records across the change. |
 | [Configure OAuth sessions](./oauth.md) | You want a session store the publishing path can use. |
 | [Run codegen](./codegen.md) | You edited a lexicon or a spec and need the generated tree refreshed. |
 | [Author a community vocabulary](./vocabulary.md) | You want to extend an open enum or publish a typed knowledge graph. |

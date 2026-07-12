@@ -7,7 +7,7 @@
 > built locally with `cargo doc -p idiolect-orchestrator --features daemon --open`.
 
 Read-only HTTP query API over a record catalog. Driven by
-`orchestrator-spec/queries.json`; codegen emits the routes plus
+`orchestrator-spec/queries.json`. Codegen emits the routes plus
 the matching CLI dispatcher.
 
 Because the crate is `publish = false`, depend via git or path:
@@ -62,13 +62,13 @@ Every handler under the `v1` prefix is generated from
 | `GET /v1/vocabularies/by-world?...` | Vocabularies declared with a given `world`. |
 | `GET /v1/vocabularies/by-name?...` | Vocabularies by name. |
 
-The full path-and-flag table for each endpoint is generated; see
+The full path-and-flag table for each endpoint is generated. See
 [`orchestrator-spec/queries.json`](https://github.com/idiolect-dev/idiolect/blob/main/orchestrator-spec/queries.json)
 for the authoritative list.
 
 ## Errors
 
-`OrchestratorError` flattens catalog and HTTP errors;
+`OrchestratorError` flattens catalog and HTTP errors.
 `OrchestratorResult<T>` is its alias.
 
 ## Feature flags
@@ -82,7 +82,7 @@ for the authoritative list.
 ## Observability
 
 `/metrics` exposes Prometheus counters and histograms for the
-catalog and per-endpoint latency. Structured `tracing` logs at
-`info` level for accepted requests; `debug` for query
+catalog and per-endpoint latency. Structured `tracing` logs run
+at `info` level for accepted requests and `debug` for query
 internals. The exact metric names are defined in
 `crates/idiolect-orchestrator/src/http.rs`.

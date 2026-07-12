@@ -62,7 +62,7 @@ keeps the validator simple.
 ### `lensPath`
 
 The recommendation endorses a *path* of lenses, not just a single
-lens. A `lensPath` of length 1 is the single-lens case; longer
+lens. A `lensPath` of length 1 is the single-lens case. Longer
 paths are a community's recommendation for a chained translation
 (e.g. v1 → middle-form → v3 instead of a direct v1 → v3 lens
 when the direct lens has worse properties).
@@ -76,7 +76,7 @@ the next. See [Concepts: Lens semantics](../../concepts/lens-laws.md).
 A list of specific lens properties (`lensProperty` from
 [`defs`](./defs.md)). Each entry specifies what the recommendation
 *assumes* is in place: a particular roundtrip domain, a specific
-formal theorem, a conformance to a named standard.
+formal theorem, a conformance to a specific standard.
 
 A consumer verifies the recommendation by:
 
@@ -88,9 +88,9 @@ A consumer verifies the recommendation by:
 3. Adopting the recommendation only when all required
    verifications check out.
 
-This is what makes a recommendation more than an opinion: the
-required-verifications list pins exactly what the community is
-relying on, and consumers can audit it.
+The required-verifications list pins exactly what the community
+is relying on, so a recommendation is auditable rather than a
+bare opinion.
 
 ### `caveats`
 

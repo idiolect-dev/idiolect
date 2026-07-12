@@ -44,14 +44,14 @@ Polis-style opinion map without further computation.
 
 ### Why outcomes are observer-published
 
-The deliberation owns the topic; participants own the statements
+The deliberation owns the topic. Participants own the statements
 and votes. The aggregate is *opinion*: it depends on the
 observer's fold method, the cut-off time, and which encounter
 kinds it weights. Two observers can produce different but
 defensible outcomes for the same deliberation.
 
-The substrate's answer: outcomes are records, signed by the
-observer, comparable across observers. A consumer that distrusts
+The answer is that outcomes are records, signed by the observer
+and comparable across observers. A consumer that distrusts
 one observer's fold can:
 
 - Fetch all outcomes for the deliberation.
@@ -87,7 +87,7 @@ Statements with zero votes are omitted. Each tally carries:
   `weight`.
 
 The 4096-entry cap matches the maximum statement count per
-deliberation in practice; communities expecting more should
+deliberation in practice. Communities expecting more should
 publish multiple outcome records partitioned by statement
 window.
 
@@ -114,7 +114,7 @@ The `tool` field carries the aggregator's identity and version.
 Two outcomes for the same deliberation produced by different
 tools (or different versions of the same tool) are not directly
 comparable: the algorithm differs. Consumers compare outcomes
-across tools at their own risk; the substrate records the tool
+across tools at their own risk. The record carries the tool
 identity so the comparison is at least informed.
 
 ## Example

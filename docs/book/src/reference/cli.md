@@ -45,7 +45,7 @@ as JSON.
 
 The orchestrator dispatcher accepts a flat path-and-flags shape
 generated from `orchestrator-spec/queries.json`. Each query
-maps onto a subcommand and a flag set; the CLI translates the
+maps onto a subcommand and a flag set. The CLI translates the
 invocation into an HTTP path and calls the orchestrator at
 `--url` (default `http://localhost:8787`).
 
@@ -61,7 +61,7 @@ the live list):
 | `idiolect orchestrator verifications --lens_uri <AT-URI>` | `GET /v1/verifications?lens_uri=...` |
 
 Adding a query to the spec extends both the HTTP and the CLI
-surface; see [Run codegen](../guide/codegen.md). The CLI's
+surface. See [Run codegen](../guide/codegen.md). The CLI's
 top-level `--url` flag overrides the default orchestrator base.
 
 ## `oauth`
@@ -86,7 +86,7 @@ env vars to avoid leaking into shell history.
 `list` enumerates every stored session as a JSON array of
 `{did, handle, pds_url}` triples.
 
-`logout` deletes the session file for `--did`; a missing file is
+`logout` deletes the session file for `--did`. A missing file is
 not an error.
 
 ## `publish <kind>`
@@ -116,7 +116,7 @@ idiolect verify static-check    --lens AT_URI                   [--pds-url URL] 
 idiolect verify coercion-law    --lens AT_URI  --vcs-url URL    --standard STD  [--version V] [--violation-threshold N] [--verifier-did DID]
 ```
 
-Runs the shipped `VerificationRunner` for the named kind against
+Runs the shipped `VerificationRunner` for the given kind against
 the live PDS, prints the typed `Verification` record as JSON,
 and exits non-zero on `Falsified` / `Inconclusive` so CI surfaces
 failures.
@@ -154,6 +154,6 @@ The shipped login path uses app passwords in legacy Bearer
 mode (`com.atproto.server.createSession` plus
 `Authorization: Bearer <token>`). The full OAuth + DPoP flow
 via `atrium-oauth` (browser handoff, PKCE, DPoP-bound tokens)
-is the next-iteration login UX; the library `OAuthSession`
+is the next-iteration login UX. The library `OAuthSession`
 shape and `OAuthTokenStore` trait are already in place to
 receive whatever the dance returns.

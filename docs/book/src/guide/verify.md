@@ -19,9 +19,9 @@ pub trait VerificationRunner: Send + Sync {
 
 A *falsified* property returns
 `Ok(Verification { result: Falsified, ... })`, not an error.
-Falsification is the signal the community is paying the runner
-to produce; `VerifyError` is reserved for input-shape, transport,
-or irrecoverable-state failures.
+A falsified result is a finding the runner is meant to report,
+not an error. `VerifyError` is reserved for input-shape,
+transport, or irrecoverable-state failures.
 
 ## Shipped runners
 
@@ -36,7 +36,7 @@ Four kinds ship in `crates/idiolect-verify/src/`:
 
 The lexicon's `verification.kind` field is open-enum and lists
 additional kinds (`formal-proof`, `conformance-test`,
-`convergence-preserving`); those kinds are recognised but not
+`convergence-preserving`). Those kinds are recognised but not
 shipped as runners. Communities that need them author their own.
 
 ## Add a runner kind
@@ -45,8 +45,8 @@ The project's spec-driven layout means adding a kind is two
 edits:
 
 1. Add an entry to `verify-spec/runners.json` declaring the kind
-   and its description. Run `cargo run -p idiolect-codegen`;
-   the generated kind taxonomy
+   and its description. Run `cargo run -p idiolect-codegen`.
+   The generated kind taxonomy
    (`crates/idiolect-verify/src/generated.rs`) picks up the
    new kind.
 2. Implement `VerificationRunner` for a struct in a new module
@@ -54,7 +54,7 @@ edits:
    `lib.rs`.
 
 The runner's `kind()` returns the new `VerificationKind`
-variant; the `run` method does the work and returns a
+variant. The `run` method does the work and returns a
 `Verification` record. Use `build_verification` (in
 `runner.rs`) to package the result with the structured
 `property` field.
@@ -98,8 +98,8 @@ idiolect verify coercion-law    --lens AT_URI  --vcs-url URL  --standard STD
 ```
 
 Corpus files may be JSON arrays or JSON Lines. The
-`property-test` generator cycles through the corpus by index;
-`--budget` controls case count. The CLI prints the typed
+`property-test` generator cycles through the corpus by index,
+and `--budget` controls case count. The CLI prints the typed
 `Verification` record as JSON and exits non-zero on `Falsified`
-or `Inconclusive`. Publishing the result is a separate step;
+or `Inconclusive`. Publishing the result is a separate step:
 pipe to `idiolect publish verification --record -`.

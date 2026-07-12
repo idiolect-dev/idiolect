@@ -21,5 +21,5 @@ This section is editorial. For Rust crates, the authoritative
 per-symbol reference is the rendered rustdoc on docs.rs (linked at
 the top of every crate page). For lexicons, the authoritative
 shape is the JSON document under `lexicons/dev/idiolect/`. When
-this book and either source disagree, the source wins; please
+this book and either source disagree, the source wins. Please
 file an issue.

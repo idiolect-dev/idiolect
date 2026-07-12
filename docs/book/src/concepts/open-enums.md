@@ -2,7 +2,7 @@
 
 Closed enums are the wrong default for a federated lexicon.
 Adding a value should not require coordinating with every
-consumer; refusing to accept a new value should not be the
+consumer. Refusing to accept a new value should not be the
 default.
 
 idiolect's policy is: every enum-shaped field is open, and the
@@ -103,7 +103,7 @@ contract, not the data:
 - `vocab.world` (`open` / `closed-with-default` / `hierarchy-closed`)
   controls the runtime's open-enum policy itself.
 - `lensClass` (`isomorphism` / `injection` / `projection` /
-  `affine` / `general`) is a panproto contract; extending it
+  `affine` / `general`) is a panproto contract. Extending it
   changes what the runtime promises.
 - `recordHosting` (`member-hosted` / `community-hosted` / `hybrid`)
   controls a federation policy.
@@ -115,7 +115,7 @@ A new value here is a runtime change, not a record change.
 Converting a closed enum to an open enum is wire-compatible:
 existing records continue to validate, and the codegen-emitted
 helpers degrade to "if `Other`, ignore" in consumers that have
-not regenerated. Going the other way is breaking; the shipped
+not regenerated. Going the other way is breaking, and the shipped
 lexicons do not do that.
 
 ## Codegen identifier collisions

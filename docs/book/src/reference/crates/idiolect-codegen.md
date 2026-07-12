@@ -9,7 +9,7 @@
 Lexicon-driven Rust + TypeScript emitter. Reads
 `lexicons/dev/idiolect/*.json` and the three spec files
 (`orchestrator-spec/queries.json`, `observer-spec/methods.json`,
-`verify-spec/runners.json`); writes the generated modules under
+`verify-spec/runners.json`). Writes the generated modules under
 each downstream crate.
 
 The crate is shipped both as a library (callable from a
@@ -42,7 +42,7 @@ use idiolect_codegen::Example;
 `emit_typescript(docs, examples, family)` take pre-loaded
 `LexiconDoc` and `Example` slices plus a `FamilyConfig`, and
 return `Vec<EmittedFile>`. Loading the lexicons from disk is the
-caller's job; the workspace binary does this through the
+caller's job. The workspace binary does this through the
 `idiolect_codegen::lexicon` parser.
 
 `FamilyConfig` carries three `Cow<'static, str>` fields: the
@@ -75,7 +75,7 @@ Per spec file:
   taxonomy (`crates/idiolect-verify/src/generated.rs`).
 
 Each spec file is a single JSON document with a top-level
-`queries` / `methods` / `runners` array; codegen produces the
+`queries` / `methods` / `runners` array. Codegen produces the
 dispatch tables and typed enums. The hand-written predicates
 live alongside the generated tree.
 
@@ -97,7 +97,7 @@ Three rules:
    On collision (`foo-bar` and `foo_bar`), the second occurrence
    gets a numeric suffix (`FooBar2`).
 3. The emitter walks each record's path until each member's
-   prefix is unique within the colliding group; the alias is
+   prefix is unique within the colliding group. The alias is
    the unique-prefix concatenation (e.g. `ChangelogEntry`,
    `ResourceEntry`).
 

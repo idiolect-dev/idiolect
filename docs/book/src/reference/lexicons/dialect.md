@@ -44,10 +44,10 @@ against the schemas in `idiolects`, and treats the deprecation
 list as a redirect table.
 
 The dialect record is data, not configuration. Adding an entry is
-a record edit; deprecating one is another record edit on the same
+a record edit. Deprecating one is another record edit on the same
 dialect with a `Deprecation` entry. Two dialects from different
 communities can list the same NSID with different preferred
-lenses; consumers pick a dialect (or a quorum of dialects) and
+lenses. Consumers pick a dialect (or a quorum of dialects) and
 follow it.
 
 ### `previousVersion` and the version chain
@@ -60,14 +60,14 @@ the orchestrator's catalog.
 
 The chain is not enforced: a community can publish a dialect with
 no `previousVersion` (a fresh start) or skip versions (publishing
-v3 with `previousVersion = v1`). The substrate records what was
-done; consumers decide whether to trust it.
+v3 with `previousVersion = v1`). The record captures what was
+done. Consumers decide whether to trust it.
 
 ### `deprecations`
 
 Each entry records an idiolect or lens that was once part of the
 dialect and is now superseded. The `ref` field points at the
-deprecated artifact; `replacement` optionally points at the
+deprecated artifact. `replacement` optionally points at the
 successor. Consumers reading a record at the deprecated `ref` can
 follow `replacement` to the new one, with the `reason` field
 explaining why.
@@ -107,8 +107,8 @@ automatically when a non-Iso lens revision ships. See
 ## Multiple dialects
 
 Two communities can publish disjoint, overlapping, or
-contradictory dialects. The substrate treats them as opinions;
-nothing in the protocol prefers one over another. Consumers pick
+contradictory dialects. The protocol treats them all as opinions
+and prefers none. Consumers pick
 a resolution policy:
 
 - `first-match` — pick the first dialect listed in the consumer's

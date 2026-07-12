@@ -3,12 +3,12 @@
 Every artifact in idiolect is an ATProto record. A record is:
 
 - a JSON object,
-- with a `$type` field naming a lexicon,
+- with a `$type` field identifying its lexicon,
 - stored at a `(did, collection, rkey)` triple,
 - content-addressed by its CID,
 - signed by the publishing repo's signing key.
 
-The substrate is documented in the
+ATProto's record model is documented in the
 [ATProto spec](https://atproto.com/specs/repository).
 This chapter covers the properties idiolect relies on.
 
@@ -60,7 +60,7 @@ idiolect uses `strongRef` for evidence (`belief.evidence`,
 `correction.encounter`, `verification.lens`) and at-uri for
 queries that should follow updates (`recommendation.lensPath`,
 `dialect.entries[].vocab`). The choice in each lexicon is
-deliberate; see the per-lexicon reference for the rationale.
+deliberate. See the per-lexicon reference for the rationale.
 
 ### 4. Records survive PDS migration
 
@@ -68,7 +68,7 @@ ATProto's identity layer (PLC plus did:web) lets a repo move
 between PDSes without changing its `did`. A record fetched by
 at-uri after a PDS migration goes through one extra DID-resolve
 hop and arrives at the new PDS. idiolect's runtime path goes
-through `idiolect-identity` for every fetch; PDS migration is
+through `idiolect-identity` for every fetch. PDS migration is
 transparent.
 
 ## Properties idiolect adds on top
@@ -102,18 +102,18 @@ extend the same field without a centralized governance step. See
 Runtime state that should not federate (firehose cursors, OAuth
 tokens) uses the same panproto schema apparatus, but under a
 sibling `dev.idiolect.internal.*` namespace. Conformant firehose
-consumers skip the prefix; the data still travels through the
+consumers skip the prefix. The data still travels through the
 same runtime as a public record, just out of band.
 
 ## What ATProto does not give you
 
 - **A schema language.** ATProto Lexicon is a constrained type
-  language; it does not cover lens algebra, schema diffs, or
+  language. It does not cover lens algebra, schema diffs, or
   optic classification. Those live in panproto, which idiolect
   embeds.
 - **A migration story.** Lexicon revision is wire-compatible by
   policy, not by tooling. The lexicon-evolution policy fills the
-  gap; see [Lexicon evolution policy](./lexicon-evolution.md).
+  gap. See [Lexicon evolution policy](./lexicon-evolution.md).
 - **A vocabulary registry.** Open-enum slugs need a published
-  knowledge graph to resolve; ATProto does not ship one. The
+  knowledge graph to resolve, and ATProto does not ship one. The
   `dev.idiolect.vocab` record is where the resolution lives.

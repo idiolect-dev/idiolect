@@ -148,7 +148,7 @@ fn describe<R: Record>() -> String {
 `R::kind()` returns the short kind name (`"encounter"`,
 `"recommendation"`, ...) and `R::NSID` is the fully-qualified
 NSID constant. `Record` does not carry instance-level methods on
-the record body itself; the at-uri at which a record lives is
+the record body itself. The at-uri at which a record lives is
 external (a `(did, collection, rkey)` triple from the firehose
 or PDS response).
 

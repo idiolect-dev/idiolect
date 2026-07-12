@@ -49,7 +49,7 @@ moved out of the working set:
 
 The encounter / correction / observation triple cannot capture
 these without distorting their semantics. A retrospection record
-is the right shape: it points at the original encounter, names a
+handles this: it points at the original encounter, records a
 delayed finding, and carries the evidence.
 
 ## The four finding kinds
@@ -81,13 +81,13 @@ meaningful.
 
 Optional, in `[0, 1]`. A finding the detecting party is sure of
 omits it. A finding hedged on uncertain evidence sets a value
-below 1. Aggregators may weight findings by confidence; consumers
+below 1. Aggregators may weight findings by confidence. Consumers
 treating findings as ground truth filter for high confidence.
 
 ### `disputedAttribution`
 
 A hint the detecting party expects the causal attribution to be
-contested. The substrate does not enforce contestation; a
+contested. idiolect does not enforce contestation. A
 contesting party publishes its own retrospection with
 disagreement, or a `dev.idiolect.belief` over the finding. The
 flag exists so consumers can flag the finding as
@@ -99,7 +99,7 @@ flag exists so consumers can flag the finding as
 Most retrospections are first-party: the repo owner is the
 detecting party. Some are third-party: a researcher republishing
 a finding from a trusted source. `holder` is not a field here
-(unlike encounter / belief / correction); `detectingParty` plus
+(unlike encounter / belief / correction). `detectingParty` plus
 the repo signer carry the relevant attribution.
 
 ## Example

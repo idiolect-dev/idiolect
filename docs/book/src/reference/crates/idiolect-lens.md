@@ -23,7 +23,7 @@ idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.
 ### Resolvers
 
 `Resolver` is the trait every resolver implements. It is
-object-safe (`Arc<dyn Resolver>`) since v0.8.0; the resolve
+object-safe (`Arc<dyn Resolver>`) since v0.8.0. The resolve
 future is `Send`.
 
 Shipped implementations:
@@ -52,7 +52,7 @@ The runtime shipped under `idiolect_lens::runtime`:
   lenses sharing a middle schema.
 
 Each takes a resolver, a schema loader, a `Protocol`, and a
-typed input struct; each returns a typed output struct. The
+typed input struct. Each returns a typed output struct. The
 composed future is `Send` so callers can spawn it under
 `tokio::spawn` or hold it inside an `#[async_trait]` impl.
 
@@ -82,7 +82,7 @@ the record, splices the `$type` field, and forwards to the
 `LensError` collapses backend-specific errors into a small set
 of variants (`NotFound`, `Transport`, decode failures, translate
 failures). Backend-specific errors collapse to one of these at
-the resolver layer; callers do not pattern-match on transport
+the resolver layer. Callers do not pattern-match on transport
 types.
 
 ## Composition pattern

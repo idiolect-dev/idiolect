@@ -11,7 +11,7 @@ linguistic terms.
   lenses, endorsed vocabularies, and deprecations.
 - A **language** is the federated substrate over which idiolects
   and dialects meet. There is no central registry, no single
-  authority, and no global schema; the substrate is ATProto plus
+  authority, and no global schema. The substrate is ATProto plus
   the shipped lexicons.
 
 The three layers correspond to three things in the runtime:
@@ -26,9 +26,9 @@ The three layers correspond to three things in the runtime:
 
 A large protocol benefits from a model where parties can disagree
 gracefully. Two communities can run incompatible schemas and the
-substrate accommodates them; a third community can publish a lens
-between the two and the network can route translations. The frame
-does not promise a single canonical schema; it ships the
+substrate accommodates them. A third community can publish a lens
+between the two, and the network can route translations. The frame
+does not promise a single canonical schema. It ships the
 machinery for reasoning about plural canonicities.
 
 The properties this gets you:
@@ -53,7 +53,7 @@ records. It admits:
 - **Silent fragmentation.** Two communities ship near-identical
   schemas under different NSIDs. Consumers see two records where
   there should be one. The signal is the lens-recommendation
-  density between the two; if no community publishes a lens
+  density between the two. If no community publishes a lens
   between them, the fragmentation is permanent.
 - **Adversarial publishing.** A bad actor publishes a vocab that
   shadows a canonical slug with a different meaning. The
@@ -61,7 +61,7 @@ records. It admits:
   recognised communities, treat unknown vocabs as unknown.
 - **Dialect drift.** A community changes its dialect record
   without coordinating with downstream consumers. Old records keep
-  validating; new lens choices route differently. The signal is
+  validating. New lens choices route differently. The signal is
   the deprecation list and the lexicon-evolution gate.
 
 The runtime ships primitives for each of these (recommendation,

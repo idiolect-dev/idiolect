@@ -2,7 +2,7 @@
 
 A participant utterance submitted to a
 [`deliberation`](./deliberation.md). Statements are the units
-votes attach to; the deliberation itself is not voted on
+votes attach to. The deliberation itself is not voted on
 directly. Classification is an open-enum slug resolved against a
 community vocabulary, so communities that draw the line between
 `claim` and `proposal` differently can extend or remap without
@@ -36,13 +36,13 @@ participant was responding to.
 
 This matters when deliberations are edited mid-process (e.g. the
 publisher clarifies the topic). Statements published before the
-edit pin the pre-edit revision; statements published after pin
+edit pin the pre-edit revision. Statements published after pin
 the post-edit revision. Folds and consumers can distinguish.
 
 ### `text`
 
 The statement itself. The 400-grapheme cap is conventional, not
-arbitrary: brevity is what makes statements voteable. Long-form
+arbitrary: brevity keeps statements voteable. Long-form
 context belongs on the deliberation record's `description` or
 in a community-published companion document linked from the
 description.
@@ -60,7 +60,7 @@ description.
 Classifications are *argumentative roles*, not topics. A
 community that draws different distinctions (`amendment`,
 `process-objection`, `tangent`, ...) extends via
-`classificationVocab`. The classification is optional; a
+`classificationVocab`. The classification is optional. A
 deliberation that wants to stay agnostic on argumentative roles
 omits it.
 
@@ -73,7 +73,7 @@ repo, so the repo signature does not reveal identity. Consumers
 that need provenance match on the repo DID (the service DID),
 not on this record's content.
 
-The flag is a *declaration*: the substrate does not enforce
+The flag is a *declaration*: idiolect does not enforce
 anonymity beyond what the publishing rail provides. A community
 that wants strong anonymity uses an anonymizing service DID with
 its own access controls.

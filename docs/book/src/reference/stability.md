@@ -17,8 +17,8 @@ Pre-1.0:
   versions. The most recent example is the `Resolver` /
   `SchemaLoader` Send bound in v0.8.0.
 - **Lexicon shapes** can change. Wire-compatible changes go through
-  the [lexicon-evolution policy](../concepts/lexicon-evolution.md);
-  breaking changes ship with a derived migration lens.
+  the [lexicon-evolution policy](../concepts/lexicon-evolution.md).
+  Breaking changes ship with a derived migration lens.
 - **CLI subcommands** can rename or reshape. The output JSON shape
   is more stable than the flag surface.
 - **HTTP routes** can change under the `v1` prefix between minor
@@ -27,7 +27,7 @@ Pre-1.0:
 ## What does not change
 
 - The `dev.idiolect.*` namespace stays as is. NSID renames are
-  possible but extraordinarily unusual; one would ship with a
+  possible but extraordinarily unusual. One would ship with a
   deprecation note in `dev.idiolect.dialect#deprecations`.
 - Records that pass validation continue to pass validation. A
   record valid against v0.7's lexicon is also valid against v0.8's
@@ -43,14 +43,14 @@ Pre-1.0:
   ship in major versions only.
 - The lexicon-evolution `check-compat` gate flips from advisory to
   a hard fail.
-- The HTTP API's `v1` prefix becomes a stability commitment; new
+- The HTTP API's `v1` prefix becomes a stability commitment. New
   endpoints are additive.
 - Trait signatures in `idiolect-records`, `idiolect-lens`,
   `idiolect-indexer`, and `idiolect-orchestrator` become
   semver-stable.
 
 The 1.0 release date is not committed. The pre-1.0 series
-deliberately churns to find the right shape; 1.0 ships when the
+deliberately churns to find the right shape. 1.0 ships when the
 shape stops moving.
 
 ## Reading the changelog
@@ -82,6 +82,6 @@ The Changelog is in
 | `idiolect-orchestrator` container | `ghcr.io/idiolect-dev/orchestrator` | image SHA |
 | `idiolect-observer` container | `ghcr.io/idiolect-dev/observer` | image SHA |
 
-The container images are sigstore-signed; verification policy is
+The container images are sigstore-signed. Verification policy is
 in
 [`docs/ci-cd.md`](https://github.com/idiolect-dev/idiolect/blob/main/docs/ci-cd.md).

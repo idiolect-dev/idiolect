@@ -6,10 +6,10 @@
 >
 > This page is an editorial overview. The per-symbol surface
 > (every public type, trait, function, and feature flag) is the
-> docs.rs link above; that is the authoritative reference.
+> docs.rs link above. That is the authoritative reference.
 
 Firehose consumer factored into three trait surfaces. The crate
-owns the loop; you bring the stream, the handler, and the cursor
+owns the loop. You bring the stream, the handler, and the cursor
 store.
 
 ```toml
@@ -102,7 +102,7 @@ boundaries. Variants:
 ## Cursor commit semantics
 
 `drive_indexer` commits the cursor only after the handler
-returns `Ok`. A failing handler does not commit; the loop
+returns `Ok`. A failing handler does not commit. The loop
 either retries on the next event (default) or surfaces the
 error. For exactly-once semantics, the handler coordinates the
 cursor commit with its own storage transaction.

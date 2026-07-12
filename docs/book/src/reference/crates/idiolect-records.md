@@ -6,11 +6,11 @@
 >
 > This page is an editorial overview. The per-symbol surface
 > (every public type, trait, function, and feature flag) is the
-> docs.rs link above; that is the authoritative reference.
+> docs.rs link above. That is the authoritative reference.
 
 Serde record types mirroring the `dev.idiolect.*` lexicons. The
 contents of `crates/idiolect-records/src/generated/` are written
-by [`idiolect-codegen`](./idiolect-codegen.md); do not edit by
+by [`idiolect-codegen`](./idiolect-codegen.md). Do not edit by
 hand.
 
 ```toml
@@ -43,13 +43,13 @@ The vendored panproto record types (`PanprotoLens`,
 `PanprotoProtolensChain`, `PanprotoComplement`,
 `PanprotoLensAttestation`, `PanprotoProtocol`, plus
 `PanprotoCommit`, `PanprotoRefUpdate`, `PanprotoRepo`) are
-re-exported at the crate root as their own structs; they are
+re-exported at the crate root as their own structs. They are
 not variants of `AnyRecord` (which is scoped to
 `IdiolectFamily`'s NSIDs).
 
 ### Family
 
-`RecordFamily` is the trait every family implements; the crate
+`RecordFamily` is the trait every family implements. The crate
 ships `IdiolectFamily` for `dev.idiolect.*` and the
 `OrFamily<F1, F2>` composer that recognises every NSID either
 side claims. `detect_or_family_overlap` audits a probe set at
@@ -68,7 +68,7 @@ right-side family.
 | `Cid` | CID |
 | `Language` | BCP 47 |
 
-Each wraps a string with a parser; the parser fires at
+Each wraps a string with a parser. The parser fires at
 deserialize time. `Display` / `as_str` / `Deref<Target=str>` are
 uniform.
 
@@ -96,7 +96,7 @@ shipped fixtures cover: `adapter`, `belief`, `bounty`,
 you do not have to hand-roll JSON.
 
 The four deliberation lexicons do not currently ship example
-fixtures; consumers building deliberation tests construct
+fixtures. Consumers building deliberation tests construct
 records directly via the typed structs.
 
 ## Feature flags

@@ -2,10 +2,10 @@
 
 A `dev.idiolect.recommendation` is a community-published opinion
 that a particular lens path is appropriate under specific
-applicability conditions. It is the unit consumers query before
-choosing a translation: a lens that nobody recommends is just
-code; a lens that a community recommends under conditions a
-consumer satisfies is a routing decision.
+applicability conditions. Consumers query recommendations before
+choosing a translation. A lens nobody recommends is just code. A
+lens a community recommends, under conditions the consumer meets,
+is a routing decision.
 
 The shape is:
 
@@ -246,7 +246,7 @@ next-iteration CLI wraps `atrium-oauth`'s browser-handoff dance
 and persists the resulting DPoP-bound session through the same
 `OAuthTokenStore`. The publish path is unchanged.
 
-That is the full loop. Where to go next:
+That completes the loop. Where to go next:
 
 - [Run the orchestrator HTTP API](../guide/orchestrator.md)
   shows how the consumer side of that flow is served.

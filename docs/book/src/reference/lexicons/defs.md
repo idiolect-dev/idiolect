@@ -20,7 +20,7 @@ not here.
 
 ### `schemaRef`
 
-Reference to a schema. Either an at-uri or a content hash; at
+Reference to a schema. Either an at-uri or a content hash. At
 least one must be present.
 
 | Subfield | Type | Notes |
@@ -81,7 +81,7 @@ A closed-enum string. Five values:
 | `community-scoped` | Reserved for v1 substrate enforcement; should not be served to parties outside the named community once enforcement lands. |
 | `private` | Should not be published at all. |
 
-The substrate does not enforce these today; they are policy
+idiolect does not enforce these today. They are policy
 hints.
 
 ## Content-theory types
@@ -230,7 +230,7 @@ A union of structured grounds for an attitudinal claim.
 | `basisExternalSignal` | Grounded in something outside ATProto. Carries `url`, optional `signalType`, optional `description`. |
 | `basisDerivedFromRecord` | Grounded in another ATProto record. Carries `source` (`strongRecordRef`) and optional `inferenceRule`. |
 
-`basisSelfAsserted` has no fields; the variant tag itself is the
+`basisSelfAsserted` has no fields. The variant tag itself is the
 content. `basisDerivedFromRecord.inferenceRule` is the canonical
 hook for declaring how this record derives from another
 (`classifier:purpose-v1`, `lens:v1-to-v2`, `aggregation:byte-mean`,

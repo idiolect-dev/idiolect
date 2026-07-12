@@ -1,9 +1,9 @@
 # Observer protocol
 
-Aggregate state in idiolect is records, not endpoints. An
-observer is a process that reads encounter-family records from
-the firehose, folds them along a key, and publishes the fold as
-a record.
+In idiolect, aggregate state lives in records rather than in a
+served endpoint. An observer is a process that reads
+encounter-family records from the firehose, folds them along a
+key, and publishes the fold as a record.
 
 ## What an observer is
 
@@ -38,8 +38,8 @@ A central metrics endpoint cannot:
 - Be re-folded by an independent party. A consumer that distrusts
   the operator cannot re-derive the count from the underlying
   data.
-- Disagree with itself across observers. There is one operator,
-  one number.
+- Disagree with itself across observers. A single operator
+  produces a single number.
 
 A signed record can be:
 
@@ -50,7 +50,7 @@ A signed record can be:
   in scope and recompute the fold independently.
 - Compared across observers. Two observers running the same fold
   on overlapping data will produce records with comparable
-  counts; consumers can require quorum before treating an
+  counts. Consumers can require quorum before treating an
   observation as authoritative.
 
 The cost is an extra serialization per fold and an extra commit
@@ -97,7 +97,7 @@ All eight produce `dev.idiolect.observation` records. A
 addition but is not in the shipped set at v0.8.0.
 
 The spec is a single JSON file (`observer-spec/methods.json`),
-not a directory of files; codegen emits the descriptor table.
+not a directory of files. Codegen emits the descriptor table.
 See [Run the observer daemon](../guide/observer.md) for the
 operator-facing path.
 
@@ -116,7 +116,7 @@ agree up to:
 
 Consumers that want consensus require $k$ of $n$ trusted observers
 to publish records that agree within a tolerance. This is a
-consumer policy; the substrate ships the records.
+consumer policy. The runtime only provides the records.
 
 ## Why folds are the right primitive
 
@@ -130,5 +130,5 @@ by its DID — supports a lot of structure:
 - Fork detection (two observers' aggregates over the same window
   diverging is a signal that one of them is missing data).
 
-None of those need protocol changes. They are policies on top of
-records.
+None of them require protocol changes, since they are all
+policies layered on top of records.

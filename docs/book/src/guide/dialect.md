@@ -65,13 +65,13 @@ dialect record (via `idiolect_lens::PdsResolver`'s
 `Resolver::resolve` or any other resolver) and walk the typed
 fields directly. A small wrapper layer is the right shape if a
 consumer wants a `dialect.preferred_lens_for(nsid)` style
-accessor; the substrate ships only the record.
+accessor. The runtime ships only the record.
 
 ## Multiple dialects
 
 Two communities can publish disjoint, overlapping, or
-contradictory dialects. The substrate treats them as opinions;
-nothing in the protocol prefers one over another. Consumers
+contradictory dialects. The protocol treats them all as opinions
+and prefers none. Consumers
 pick a resolution policy in their own code:
 
 - *first-match* — pick the first dialect listed in the
@@ -81,6 +81,6 @@ pick a resolution policy in their own code:
 - *merge* — union the entries; on collision, fall back to a
   configured tie-breaker.
 
-The substrate does not ship trait or implementation for any of
+The runtime ships no trait or implementation for any of
 these: dialect resolution is a consumer decision, and the right
 shape varies by deployment.

@@ -4,8 +4,8 @@ A signed doxastic claim that a referenced record is true or
 applicable. Belief records are how third parties represent what
 *they* think about *another* record without flattening provenance:
 the `subject` strong-ref pins the exact referenced record, the
-`holder` names the party whose attitude is represented, and the
-`basis` names what grounds it.
+`holder` identifies the party whose attitude is represented, and
+the `basis` records what grounds it.
 
 > **Source:** [`lexicons/dev/idiolect/belief.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/belief.json)
 > · **Rust:** [`idiolect_records::Belief`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.Belief.html)
@@ -37,14 +37,14 @@ recommendation has been edited since.
 ### `holder` versus the repo owner
 
 The simplest case: the repo owner is the holder. The record
-expresses the publisher's own belief; `holder` is omitted.
+expresses the publisher's own belief, and `holder` is omitted.
 
 The richer case: the repo owner is publishing a belief on behalf
 of, or about, another party. A labeler that publishes
 `{ subject: <some encounter>, holder: did:plc:other-party }`
 is asserting that *the other party* believes the encounter is
 applicable. The labeler's signature attests that the labeler
-made the attribution; the holder field carries who the attitude
+made the attribution. The holder field carries who the attitude
 is attributed to.
 
 ### `basis` carries the grounds
@@ -57,7 +57,7 @@ on what grounds the attribution rests. The four `basis` variants:
 | `basisSelfAsserted` | The holder asserted directly with no external grounding claimed. The default when `basis` is omitted. |
 | `basisCommunityPolicy` | Grounded in a community's published policy. |
 | `basisExternalSignal` | Grounded in something outside ATProto (a license, an external standard, a statement on another network). |
-| `basisDerivedFromRecord` | Grounded in another ATProto record (with an inference rule naming the derivation). |
+| `basisDerivedFromRecord` | Grounded in another ATProto record (with an inference rule identifying the derivation). |
 
 See [`defs#basis`](./defs.md) for the field shapes.
 
@@ -74,7 +74,7 @@ this lens for a particular use" uses three records:
    party's DID, and `basis` carrying the structured grounds.
 
 Consumers reading the belief see all three. The labeler's
-signature on the belief is what makes the attribution accountable.
+signature on the belief makes the attribution accountable.
 
 ## Example
 
