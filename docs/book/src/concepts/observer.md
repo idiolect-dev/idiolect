@@ -90,11 +90,14 @@ The shipped methods (declared in `observer-spec/methods.json`):
 | `purpose-distribution` | Encounter counts grouped by `use.purpose`. |
 | `basis-distribution` | Record counts grouped by `basis` variant. |
 | `attribution-chains` | `dev.idiolect.belief` counts by holder and subject. |
+| `deliberation-tally` | Per-statement per-stance `deliberationVote` counts. |
 
-All eight produce `dev.idiolect.observation` records. A
-`deliberation-tally` method that produces
-`dev.idiolect.deliberationOutcome` records is a plausible
-addition but is not in the shipped set at v0.8.0.
+All nine produce `dev.idiolect.observation` records. The ninth,
+`deliberation-tally`, folds `deliberationVote` records into
+per-statement per-stance counts and packs them into the
+observation's `output`; a variant that instead publishes a typed
+`dev.idiolect.deliberationOutcome` record is a small refactor on
+`DeliberationTallyMethod`.
 
 The spec is a single JSON file (`observer-spec/methods.json`),
 not a directory of files. Codegen emits the descriptor table.

@@ -20,8 +20,9 @@ idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8
 
 ## Public surface
 
-`OAuthTokenStore` is the trait every store implements. The
-typical surface is `get` / `put` / `delete` keyed by DID.
+`OAuthTokenStore` is the trait every store implements. Its
+methods are `save` / `load` / `delete` keyed by DID, plus a
+defaulted `list_dids`.
 `OAuthSession` carries the access token, refresh token, expiry,
 and DPoP key. The session has helpers (`is_expired`,
 `time_until_expiry`, `needs_refresh(now, threshold)`,

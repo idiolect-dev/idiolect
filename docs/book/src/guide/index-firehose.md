@@ -5,7 +5,7 @@ a firehose consumer factored into three trait surfaces:
 
 - `EventStream`: yields `RawEvent`s from a PDS firehose. Shipped
   impls: `JetstreamEventStream` (Jetstream websocket feed) and
-  `TappedFirehoseStream` (the at-proto-native firehose via
+  `TappedEventStream` (the at-proto-native firehose via
   `tapped`).
 - `RecordHandler<F: RecordFamily = IdiolectFamily>`: handles one
   decoded `IndexerEvent<F>`. The family parameter narrows the

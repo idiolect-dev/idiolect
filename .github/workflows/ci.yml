@@ -184,7 +184,9 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
-          arguments: --all-features
+          # Feature selection lives in deny.toml's `[graph]`
+          # (`all-features = true`); cargo-deny 0.18 dropped the
+          # `--all-features` CLI flag.
           log-level: warn
 
   # ---------------------------------------------------------------

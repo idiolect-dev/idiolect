@@ -39,7 +39,9 @@ Shipped implementations:
 ### Schema loaders
 
 `SchemaLoader` is also object-safe. Shipped implementations:
-`InMemorySchemaLoader`, `FilesystemSchemaLoader`.
+`InMemorySchemaLoader`, `FilesystemSchemaLoader`, and
+`PdsSchemaLoader` (the loader the tutorials use, pairing with
+`PdsResolver`).
 
 ### Apply functions
 

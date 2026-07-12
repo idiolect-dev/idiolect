@@ -23,6 +23,22 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.11.1] - 2026-07-11
+
+### Changed
+
+- Panproto pin bumped v0.52.0 → v0.56.1 across all workspace crates. No source changes were required for the surface idiolect uses (SchemaBuilder, protolens constructors, lens runtime, panproto-check, the expression engine, and the panproto-parse emit pipeline). Codegen regenerates byte-identical output on the new pin (no drift), and the full test suite passes, including the emit gate's `Verified` status for both grammars.
+
+### Fixed
+
+- cargo-deny CI jobs no longer pass `--all-features`, which cargo-deny 0.18 removed from the `check` command (the `cargo-deny-action` auto-installs the latest release, so the flag began erroring with "unexpected argument"). Feature selection now lives in `deny.toml` under `[graph]` (`all-features = true`), covering both the `cargo-deny` gate in `ci.yml` and the `cargo-deny advisories` job in `audit.yml`.
+
+### Security
+
+- Bumped `crossbeam-epoch` 0.9.18 → 0.9.20, closing RUSTSEC-2026-0204 (invalid pointer dereference in the `fmt::Pointer` impl for `Atomic`/`Shared` over a null pointer). Reached transitively through `moka`.
+- Bumped `anyhow` 1.0.102 → 1.0.103, closing RUSTSEC-2026-0190 (unsoundness in `Error::downcast_mut()` after `Error::context`).
+- Bumped `quinn-proto` 0.11.14 → 0.11.16, closing RUSTSEC-2026-0185 (remote memory exhaustion from unbounded out-of-order stream reassembly). Reached transitively through `reqwest`.
+
 ## [0.11.0] — 2026-06-08
 
 ### Added

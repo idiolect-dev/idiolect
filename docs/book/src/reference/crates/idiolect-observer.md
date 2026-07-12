@@ -49,7 +49,7 @@ the configured publisher.
 
 ## Shipped methods
 
-The spec at `observer-spec/methods.json` declares eight bundled
+The spec at `observer-spec/methods.json` declares nine bundled
 methods. The typed structs ship in `crates/idiolect-observer/src/methods/`:
 
 | Spec name | Module | Folds |
@@ -62,6 +62,7 @@ methods. The typed structs ship in `crates/idiolect-observer/src/methods/`:
 | `purpose-distribution` | `purpose_distribution` | Encounter counts grouped by `use.purpose`. |
 | `basis-distribution` | `basis_distribution` | Record counts grouped by `basis` variant, bucketed by record kind. |
 | `attribution-chains` | `attribution_chains` | Counts of `dev.idiolect.belief` records by holder and subject. |
+| `deliberation-tally` | `deliberation_tally` | Per-statement per-stance `deliberationVote` counts, packed into the observation's `output`. |
 
 Methods come in two forms (declared in the spec):
 
