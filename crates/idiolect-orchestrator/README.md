@@ -46,14 +46,14 @@ flowchart LR
 
 Three parts:
 
-- **`Catalog`** — one slot per at-uri per record kind. Updates overwrite;
-  deletes remove; no ranking. A cross-kind re-upsert evicts the prior
-  kind's slot, so one at-uri is always at most one kind.
+- **`Catalog`** — one slot per at-uri per record kind. Updates overwrite,
+  deletes remove, and there is no ranking. A cross-kind re-upsert evicts
+  the prior kind's slot, so one at-uri is always at most one kind.
 - **`CatalogHandler`** — implements `idiolect_indexer::RecordHandler`.
-  Folds commits into the catalog; ignores encounter-family records
+  Folds commits into the catalog and ignores encounter-family records
   (those are observer territory).
 - **`query::*`** — pure functions over `&Catalog`, re-exported from the
-  generated module. Adding a query is a spec edit, not a code edit; see
+  generated module. Adding a query is a spec edit, not a code edit. See
   [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json).
 
 Every list query is generated from the spec, plus hand-written
@@ -129,14 +129,14 @@ Graceful shutdown on SIGINT / SIGTERM.
 
 ## Design notes
 
-- The catalog is one slot per at-uri across record kinds; a re-upsert
+- The catalog is one slot per at-uri across record kinds. A re-upsert
   to a different kind evicts the prior slot. Adoption is a caller
   decision, never the orchestrator's: every query is read-only and
   surfaces what is recorded, not what should win.
 - List queries are generated from
   [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json)
   with its matching atproto-shaped lexicon. Adding a query is a spec
-  edit; codegen emits the Rust fn, the HTTP handler, the CLI
+  edit. Codegen emits the Rust fn, the HTTP handler, the CLI
   subcommand, and the xrpc lexicon in one pass.
 - Predicate evaluation runs through `crate::predicates` for hand-
   written logic and a panproto-expr engine for spec-driven boolean

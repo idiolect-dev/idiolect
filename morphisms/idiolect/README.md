@@ -7,11 +7,11 @@ operation mappings.
 
 ## Overview
 
-Morphisms are what panproto uses to turn a composition
-(`ThAtt + ThAssertive + ThUse`) into a single pushout diagram. They are
-also what you use to *translate* a record from one theory to another,
-which is how the framework reasons about compatibility between
-alternative attitudinal frameworks.
+panproto uses morphisms to turn a composition
+(`ThAtt + ThAssertive + ThUse`) into a single pushout diagram. You also
+use them to *translate* a record from one theory to another, which is
+how the framework reasons about compatibility between alternative
+attitudinal frameworks.
 
 ## Architecture
 
@@ -54,8 +54,8 @@ flowchart TB
 
 ## Morphisms vs lenses
 
-**Morphisms** live here; they describe relationships between *theories*.
-**Lenses** live under `lenses/vocab/`; they are concrete translations
+**Morphisms** live here. They describe relationships between *theories*.
+**Lenses** live under `lenses/vocab/`. They are concrete translations
 between *instances* of theories — for example, between two community
 vocabularies that both implement ThUse but declare different action
 hierarchies.

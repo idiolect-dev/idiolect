@@ -62,7 +62,7 @@ Four runners ship:
   one. A single counterexample falsifies.
 - **`PropertyTestRunner`** — same shape, but the corpus is produced by
   a caller-supplied generator closure rather than a static `Vec`.
-  Budget-bounded; falsification reports the failing case index.
+  Budget-bounded. Falsification reports the failing case index.
 - **`StaticCheckRunner`** — runs `panproto::validate` on the lens's
   source and target schemas against a configured protocol. Validates
   the graph shape, not the lens body itself.
@@ -72,7 +72,7 @@ Four runners ship:
   Generic over a `CoercionLawClient` so deployments can plug an
   http-backed client while tests stub the xrpc.
 
-All four implement the `VerificationRunner` trait; adding a kind
+All four implement the `VerificationRunner` trait. Adding a kind
 (`formal-proof`, `conformance-test`, `convergence-preserving`) is a
 new runner module following the same shape.
 
@@ -107,15 +107,15 @@ let verification = runner.run(&target).await?;
 ## Design notes
 
 - A falsified property returns `Ok(Verification { result: Falsified,
-  counterexample: Some(…), .. })`, not an error. Falsification is the
-  signal the community is paying the runner to produce; `VerifyError`
-  is reserved for input-shape or transport failures.
+  counterexample: Some(…), .. })`, not an error. A falsified result is
+  a finding the runner is meant to report. `VerifyError` is reserved
+  for input-shape or transport failures.
 - `VerificationRunner` forwards through `Arc<T>` for shared deployment
   use, matching the Arc-blanket pattern every other idiolect boundary
   trait uses.
 - The runner taxonomy lives in
   [`verify-spec/runners.json`](../../verify-spec/runners.json) with its
-  matching atproto-shaped lexicon; codegen emits `generated.rs` carrying
+  matching atproto-shaped lexicon. Codegen emits `generated.rs` carrying
   descriptors for every shipped runner.
 
 ## Stability

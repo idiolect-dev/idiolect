@@ -10,7 +10,7 @@ through automatically.
 
 The lens is itself a record — a `dev.panproto.schema.lens` on ATProto,
 authored by whichever community wants to propose the bridge. Publishing
-a lens does not force anyone to adopt it; consumers pick which lens to
+a lens does not force anyone to adopt it. Consumers pick which lens to
 apply based on whose community they trust.
 
 ## Architecture
@@ -46,29 +46,29 @@ A vocabulary lens has three parts:
 2. **`steps`** — the concrete translation. Steps include:
    - `rename_action: { from, to }` — identity mapping under a new name.
    - `expand_action: { from, to, default }` — one source action splits
-     into several target actions; the `default` chooses one when the
+     into several target actions. The `default` chooses one when the
      source alone doesn't disambiguate.
    - `contract_action: { from, to }` — several source actions collapse
-     into one target action; information is lost and the complement
+     into one target action. Information is lost, and the complement
      captures which source action the Use had.
-   - `drop_action: { from }` — no target counterpart; the source
+   - `drop_action: { from }` — no target counterpart. The source
      action's data is captured in the complement.
-   - `add_action: { name }` — target-only action; forward translation
+   - `add_action: { name }` — target-only action. Forward translation
      requires a default, captured in the complement's `forward_defaults`.
 3. **`complement`** — the structured witness of what the forward
    translation did not carry through. Two kinds of entries:
    - `captured_data` — data present in the source but not in the target
      shape (e.g. the specific source action when multiple collapse into
      one).
-   - `forward_defaults` — target elements with no source counterpart;
-     a default is required for forward translation to produce a
+   - `forward_defaults` — target elements with no source counterpart.
+     A default is required for forward translation to produce a
      well-formed target Use.
 
 ## Authoring
 
 Copy an existing lens (e.g. `action-v1-to-granular-v1.yaml`) and edit in
-place. The `id` must be unique within the authoring DID's repo; `source`
-and `target` must resolve to published vocabulary records.
+place. The `id` must be unique within the authoring DID's repo, and
+`source` and `target` must resolve to published vocabulary records.
 
 When in doubt, **err toward capturing rather than silently defaulting**.
 A complement with ten entries is better than a lens that quietly picks

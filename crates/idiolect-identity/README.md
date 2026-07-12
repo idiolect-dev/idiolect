@@ -68,12 +68,12 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
 ## Design notes
 
 - `Did` is the typed identifier from
-  [`idiolect-records`](../idiolect-records); this crate re-exports it
+  [`idiolect-records`](../idiolect-records). This crate re-exports it
   so callers do not need a second import for the same type. `Did::parse`
-  accepts `did:plc:*` and `did:web:*`; other methods are rejected as
+  accepts `did:plc:*` and `did:web:*`. Other methods are rejected as
   out-of-scope.
 - `DidDocument` carries only the atproto-relevant subset of the W3C
-  spec; unknown fields survive via an `extras: BTreeMap<String, Value>`
+  spec. Unknown fields survive via an `extras: BTreeMap<String, Value>`
   so round-trip through the struct preserves what the PLC directory or
   the `/.well-known/did.json` endpoint returned.
 

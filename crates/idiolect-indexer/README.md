@@ -6,10 +6,10 @@ Firehose consumer parameterised over a record family.
 
 Sits between a firehose transport (`tapped`, jetstream, a custom adapter)
 and an appview's per-record handlers. The crate owns the event loop,
-cursor management, and reconnect/retry policy; consumers provide handler
+cursor management, and reconnect/retry policy. Consumers provide handler
 logic, pick their transport via feature flag, and pin the loop to a
 [`RecordFamily`](../idiolect-records/src/family.rs). The default family
-is `IdiolectFamily` (the `dev.idiolect.*` record set); downstream
+is `IdiolectFamily` (the `dev.idiolect.*` record set). Downstream
 consumers running their own codegen pass wire their own.
 
 ## Architecture
@@ -122,7 +122,7 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
 
 - Every event carries a `live: bool`. Live and backfill events dispatch
   identically at the handler, but the cursor store only advances on live
-  events; replaying backfill on reconnect is safe and expected.
+  events. Replaying backfill on reconnect is safe and expected.
 - `IndexerEvent.collection` is a typed `Nsid` (parsed at the
   stream-decode boundary). A frame with a malformed NSID is skipped
   with a `tracing::warn!` rather than fatal-ing the loop, so a single
@@ -134,7 +134,7 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
   `IndexerError::FamilyContract` (a family-implementation bug, not a
   data bug).
 - Trait objects are not dyn-compatible because the traits use native
-  `async fn`; the crate ships Arc blanket impls so consumers share state
+  `async fn`. The crate ships Arc blanket impls so consumers share state
   via `Arc<ConcreteImpl>` instead.
 
 ## Stability
@@ -152,4 +152,4 @@ Pin to an exact version if you depend on this crate, and read
   inside the indexer.
 - [`idiolect-orchestrator`](../idiolect-orchestrator) and
   [`idiolect-observer`](../idiolect-observer) both consume this crate's
-  firehose stream; the observer pins to `IdiolectFamily` explicitly.
+  firehose stream. The observer pins to `IdiolectFamily` explicitly.

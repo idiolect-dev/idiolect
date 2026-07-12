@@ -72,7 +72,7 @@ raw `IndexerEvent`; [`InstanceMethod`](src/instance_method.rs) takes a
 `panproto_inst::WInstance` and is wrapped into an `ObservationMethod` by
 `InstanceMethodAdapter`, which decodes each event's record into graph
 form via a caller-supplied schema resolver. Use the instance form for
-methods that need to walk a record as a vertex/edge graph; use the
+methods that need to walk a record as a vertex/edge graph. Use the
 record form for flat-field counting and grouping.
 
 ## Usage

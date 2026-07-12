@@ -31,11 +31,11 @@ canonical.
 dialects meet, disagree, and slowly converge without a central arbiter.
 
 Architectural primitives are signed, content-addressed records on
-[ATProto](https://atproto.com); and schemas and translations between
+[ATProto](https://atproto.com). Schemas and translations between
 schemas are [panproto](https://github.com/panproto/panproto) artifacts. The
 project ships reference runtimes, including a CLI, an orchestrator daemon, an observer
-daemon, a verification runtime, and a migration library, on top of a small,
-set of ten `dev.idiolect.*` lexicons.
+daemon, a verification runtime, and a migration library, on top of a small
+family of `dev.idiolect.*` lexicons.
 
 ## Architecture
 
@@ -104,7 +104,7 @@ Four crates that carry a taxonomy of
 similarly-shaped items—the orchestrator's queries, the observer's methods,
 the verifier's runners, and the CLI's subcommands—each live behind a
 declarative JSON spec (`<crate>-spec/`) validated against its own
-atproto-shaped lexicon. Codegen emits the wire-up; hand-written predicates
+atproto-shaped lexicon. Codegen emits the wire-up. Hand-written predicates
 and semantics supply the business logic.
 
 Runtime state that must not federate—e.g. firehose cursors and OAuth tokens—uses
@@ -214,7 +214,7 @@ project, and read [CHANGELOG.md](CHANGELOG.md) before bumping.
 
 Issue templates and the PR template under `.github/` are the canonical route
 for reports and proposals. The project holds opinionated architectural
-commitments; consult the [feature-request template](.github/ISSUE_TEMPLATE/feature.yml)
+commitments. Consult the [feature-request template](.github/ISSUE_TEMPLATE/feature.yml)
 if you are unsure whether a capability fits before opening.
 
 ## Acknowledgments

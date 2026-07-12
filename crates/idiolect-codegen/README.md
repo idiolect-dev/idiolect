@@ -8,7 +8,7 @@ family plus the vendored `dev.panproto.*` tree.
 
 A single binary and library exposing four deterministic emit targets
 and a CI compatibility gate. Inputs are JSON on disk (lexicons +
-specs); outputs are formatted Rust and TypeScript committed to the
+specs). Outputs are formatted Rust and TypeScript committed to the
 repository. The on-disk emit layout mirrors the lexicon directory
 tree 1:1 — `lexicons/dev/panproto/schema/lens.json` becomes
 `generated/dev/panproto/schema/lens.rs` (and `.ts`), with

@@ -69,12 +69,12 @@ flowchart LR
 Three resolver shapes ship, all behind the narrow `Resolver` trait:
 
 - **`InMemoryResolver`** — `HashMap<AtUri, PanprotoLens>` for tests.
-- **`PdsResolver<C>`** — generic over a `PdsClient`; turns an at-uri
+- **`PdsResolver<C>`** — generic over a `PdsClient`. Turns an at-uri
   into `(did, collection, rkey)` and delegates to the injected client.
-- **`PanprotoVcsResolver<C>`** — generic over a `PanprotoVcsClient`;
-  asks the client for the at-uri's current ref hash and then for the
-  content-addressed lens object. The resolver itself is stateless;
-  the ref table and object store both live behind the client.
+- **`PanprotoVcsResolver<C>`** — generic over a `PanprotoVcsClient`.
+  Asks the client for the at-uri's current ref hash and then for the
+  content-addressed lens object. The resolver itself is stateless.
+  The ref table and object store both live behind the client.
 
 `PanprotoVcsClient` covers the full `dev.panproto.sync.*` xrpc
 surface: object reads, ref reads / writes / lists, commit-graph
@@ -141,7 +141,7 @@ from DID to typed writes in one call.
   assuming a particular shape and asks for "the schema at this
   hash."
 - Trait objects are not dyn-compatible because the traits use
-  native `async fn`; the crate ships Arc blanket impls so consumers
+  native `async fn`. The crate ships Arc blanket impls so consumers
   share state via `Arc<ConcreteImpl>` instead.
 
 ## Stability

@@ -60,7 +60,7 @@ right side.
 `AnyRecord` is the runtime discriminated union across every shipped
 idiolect record kind, and `decode_record(nsid, value)` dispatches
 into the matching variant. Both are generated from the lexicon set
-by `idiolect-codegen`'s family emitter; adding a record is a
+by `idiolect-codegen`'s family emitter. Adding a record is a
 one-file lexicon change. The `RecordFamily` impl on `IdiolectFamily`
 delegates `contains`/`decode` to the same generated table, so
 consumers can switch between the bare `decode_record` API and the

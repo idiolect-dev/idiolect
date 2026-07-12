@@ -17,10 +17,13 @@ The name comes from linguistics:
   dialects meet, disagree, and slowly converge without a central
   arbiter.
 
-This documentation covers the runtime; not the reasons it exists.
-For the underlying theory, see the project
-[README](https://github.com/idiolect-dev/idiolect#readme) and the
-[deliberation lexicons](./concepts/deliberation.md).
+If you are new, read [Why idiolect
+exists](./concepts/why-idiolect.md) and then [What you need
+first](./concepts/prerequisites.md). ATProto's model is a deep
+dependency worth learning properly; panproto contributes a single
+concept, the lens. For the underlying theory beyond that, see the
+project [README](https://github.com/idiolect-dev/idiolect#readme)
+and the [deliberation lexicons](./concepts/deliberation.md).
 
 ## Where to start
 
@@ -35,10 +38,11 @@ structure:
   answers a question of the form "how do I do X?". Reach for these
   when you know what you want to accomplish.
 - The [Concepts](./concepts/index.md) explain the underlying model:
-  the idiolect-dialect-language frame, the `dev.idiolect.*` lexicon
-  family, lens semantics, the vocabulary knowledge graph, the
-  observer protocol, and the lexicon-evolution policy. Read these
-  when you want to understand why something is the way it is.
+  why the project exists, the idiolect-dialect-language frame, the
+  `dev.idiolect.*` lexicon family, lens semantics, the vocabulary
+  knowledge graph, the observer protocol, and the lexicon-evolution
+  policy. Read these when you want to understand why something is
+  the way it is.
 - The [Reference](./reference/index.md) is the per-symbol detail:
   one page per crate, one page per lexicon, the CLI surface, the
   HTTP query API, and the stability policy.

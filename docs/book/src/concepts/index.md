@@ -2,10 +2,13 @@
 
 The Concepts section explains the model the runtime is built on.
 The chapters are self-contained but assume basic familiarity with
-ATProto records and panproto's lens vocabulary.
+ATProto records and panproto's lens vocabulary. [What you need
+first](./prerequisites.md) states the assumed background.
 
 | Chapter | What it explains |
 | --- | --- |
+| [Why idiolect exists](./why-idiolect.md) | The founding problem, developed through one worked example; no formalism. |
+| [What you need first](./prerequisites.md) | The assumed background: ATProto's record model, plus one concept from panproto (the lens). |
 | [Idiolect, dialect, language](./idiolect-dialect-language.md) | The frame the project is named after; what each layer is responsible for. |
 | [The dev.idiolect.* lexicon family](./lexicon-family.md) | The shipped lexicons, what each one covers, and how they compose. |
 | [Records as content-addressed signed data](./atproto-records.md) | Why ATProto's record model is the substrate; what the runtime gets for free. |

@@ -28,6 +28,8 @@
 # Concepts
 
 - [Overview](./concepts/index.md)
+- [Why idiolect exists](./concepts/why-idiolect.md)
+- [What you need first](./concepts/prerequisites.md)
 - [Idiolect, dialect, language](./concepts/idiolect-dialect-language.md)
 - [The dev.idiolect.* lexicon family](./concepts/lexicon-family.md)
 - [Records as content-addressed signed data](./concepts/atproto-records.md)

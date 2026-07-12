@@ -80,7 +80,7 @@ if session.needs_refresh(OffsetDateTime::now_utc(), Duration::minutes(5)) {
 The `access_jwt`, `refresh_jwt`, and `dpop_private_key_jwk` fields are
 secrets. `Debug` is derived for development ergonomics but must be
 filtered from production logs. Disk-backed stores are responsible for
-encryption at rest; the refresh token grants full repo write until the
+encryption at rest. The refresh token grants full repo write until the
 account re-authenticates.
 
 ## Design notes
@@ -92,7 +92,7 @@ account re-authenticates.
 - Lenses over w-instances of the session schema express token lifecycle
   as ordinary panproto operations — issue via `put`, refresh via a
   field-rewriting `get`, revoke via a token-dropping `put`. Those lenses
-  live in whichever component needs them; this crate ships only the
+  live in whichever component needs them. This crate ships only the
   schema, the struct, and the store trait.
 
 ## Stability

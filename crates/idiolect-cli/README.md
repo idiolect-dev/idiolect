@@ -82,10 +82,10 @@ idiolect encounter record \
 ## Design notes
 
 - The `orchestrator` subcommand dispatcher is emitted from the
-  orchestrator's query spec; adding a query to the spec produces a new
+  orchestrator's query spec. Adding a query to the spec produces a new
   CLI subcommand automatically on the next codegen run.
 - Authentication is not wired: `resolve` and `fetch` hit public
-  endpoints; the orchestrator API is read-only and public by design.
+  endpoints. The orchestrator API is read-only and public by design.
   Authenticated writes are
   [`idiolect-lens::SigningPdsWriter`](../idiolect-lens)'s responsibility.
 

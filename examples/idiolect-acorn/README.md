@@ -6,7 +6,7 @@ This directory is the source-of-truth for an eventual standalone repo. Layout mi
 
 ## Contents
 
-- `lexicons/community/blacksky/{feed,assembly}/*.json` — vendored Blacksky lexicons. Snapshot only; the upstream is `blacksky-algorithms/atproto` (feed) and `blacksky-algorithms/assembly.blacksky.community` (assembly).
+- `lexicons/community/blacksky/{feed,assembly}/*.json` — vendored Blacksky lexicons. Snapshot only. The upstream is `blacksky-algorithms/atproto` (feed) and `blacksky-algorithms/assembly.blacksky.community` (assembly).
 - `data/vocabs/blacksky-vote-stances.json` — bridge vocabulary mapping Blacksky's integer-encoded vote values onto idiolect's canonical `vote-stances-v1` slugs via `equivalent_to` edges.
 - `data/bridge-records/blacksky-community.json` — `dev.idiolect.community` record that makes Blacksky a first-class participant in the idiolect catalog. Uses the new `recordHosting=community-hosted` + `appviewEndpoint` fields to disclose that records live on the AppView rather than member PDSes.
 - `data/bridge-records/blacksky-dialect.json` — `dev.idiolect.dialect` listing Blacksky NSIDs and the bridging lenses.

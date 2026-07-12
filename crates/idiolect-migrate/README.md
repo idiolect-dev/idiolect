@@ -81,7 +81,7 @@ Non-goals:
 - Deciding the hashing rule for schemas. Hashes are deployment policy;
   pass yours into [`MigrationPlan`].
 - Publishing records. [`MigrationPlan`] is a payload shape ready for a
-  `PdsWriter`; this crate does not reach out to a PDS.
+  `PdsWriter`. This crate does not reach out to a PDS.
 - Batch-rewriting records on disk. Compose `migrate_record` with your
   own record stream.
 
