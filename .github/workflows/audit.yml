@@ -41,8 +41,10 @@ jobs:
 
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
+          # Feature selection lives in deny.toml's `[graph]`
+          # (`all-features = true`); cargo-deny 0.18 dropped the
+          # `--all-features` CLI flag.
           command: check advisories
-          arguments: --all-features
 
   npm-audit:
     name: npm audit

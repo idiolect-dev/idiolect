@@ -16,7 +16,10 @@ targets = [
     { triple = "aarch64-apple-darwin" },
     { triple = "x86_64-apple-darwin" },
 ]
-all-features = false
+# Check the full feature graph. cargo-deny 0.18 removed the
+# `--all-features` CLI flag, so feature selection lives here in
+# config rather than in the workflow invocation.
+all-features = true
 no-default-features = false
 
 [output]
