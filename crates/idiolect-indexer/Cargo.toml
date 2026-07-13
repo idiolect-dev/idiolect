@@ -72,7 +72,7 @@ tokio = { version = "1.48", optional = true, default-features = false }
 # Bundled sqlite for the optional `cursor-sqlite` feature. `bundled` pulls
 # sqlite into the build so the crate works on platforms without a system
 # libsqlite3. Off by default; a caller that enables the feature opts in.
-rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+rusqlite = { version = "0.39", optional = true, features = ["bundled"] }
 
 # Jetstream websocket transport.
 tokio-tungstenite = { version = "0.24", optional = true, features = ["rustls-tls-webpki-roots"] }

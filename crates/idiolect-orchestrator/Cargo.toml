@@ -52,7 +52,7 @@ serde_json = { workspace = true }
 thiserror  = { workspace = true }
 tracing    = "0.1"
 
-rusqlite   = { version = "0.32", optional = true, features = ["bundled"] }
+rusqlite   = { version = "0.39", optional = true, features = ["bundled"] }
 axum       = { version = "0.8", optional = true, default-features = false, features = ["http1", "json", "query", "tokio"] }
 tokio      = { version = "1.48", optional = true, default-features = false }
 tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter"] }
