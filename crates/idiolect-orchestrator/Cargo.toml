@@ -54,7 +54,7 @@ tracing    = "0.1"
 
 rusqlite   = { version = "0.32", optional = true, features = ["bundled"] }
 axum       = { version = "0.8", optional = true, default-features = false, features = ["http1", "json", "query", "tokio"] }
-tokio      = { version = "1.48", optional = true, default-features = false }
+tokio      = { version = "1.52", optional = true, default-features = false }
 tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter"] }
 anyhow     = { workspace = true, optional = true }
 tapped     = { version = "0.3", optional = true }
@@ -70,6 +70,6 @@ path = "tests/http_api.rs"
 required-features = ["query-http"]
 
 [dev-dependencies]
-tokio    = { version = "1.48", default-features = false, features = ["macros", "rt", "net"] }
+tokio    = { version = "1.52", default-features = false, features = ["macros", "rt", "net"] }
 tempfile = "3.13"
 reqwest  = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }

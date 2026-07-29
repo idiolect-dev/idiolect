@@ -29,5 +29,5 @@ thiserror  = { workspace = true }
 tracing    = "0.1"
 
 [dev-dependencies]
-tokio         = { version = "1.48", default-features = false, features = ["macros", "rt"] }
+tokio         = { version = "1.52", default-features = false, features = ["macros", "rt"] }
 panproto-lens = { workspace = true }
