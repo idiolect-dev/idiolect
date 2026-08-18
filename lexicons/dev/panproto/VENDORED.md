@@ -6,8 +6,8 @@ Do not edit them in place — update the pin below and re-vendor.
 | field           | value                                      |
 |-----------------|--------------------------------------------|
 | upstream        | `panproto/panproto` (git)                  |
-| commit          | `02158abb80252378a21bb1a9bee839d053a21795` |
-| workspace ver.  | `0.39.0`                                   |
+| commit          | `ee2f52d52e372e2ef771801d67c6b4469e165e1e` |
+| workspace ver.  | `0.70.1`                                   |
 | source path     | `lexicons/dev/panproto/`                   |
 
 ## Vendored set
@@ -35,8 +35,8 @@ Procedures / queries (`translate/applyLens.json`, `schema/findLenses.json`,
 implements, not storage records; they live in upstream panproto and aren't
 regenerated here.
 
-Out-of-scope-for-now record types (`editLens`, `symmetricLens`, `theory`,
-`theoryMorphism`, `protocol`, `migration`, `expr`) can be vendored when a
+Out-of-scope-for-now record types (`editLens`, `symmetricLens`,
+`theoryMorphism`, `migration`, `expr`) can be vendored when a
 downstream feature needs them; the vendor step is mechanical.
 
 ## How to refresh
@@ -44,4 +44,8 @@ downstream feature needs them; the vendor step is mechanical.
 1. bump the commit in this file.
 2. `cp` the new upstream `.json` files over the ones listed above.
 3. `cargo run -p idiolect-codegen` to regenerate the typed bindings.
-4. `cargo test` + `pnpm test` to confirm no downstream break.
+4. `cargo test` + `bun test` to confirm no downstream break.
+
+The files listed above were compared byte for byte with commit
+`ee2f52d52e372e2ef771801d67c6b4469e165e1e`; no file contents changed during
+the 0.70.1 refresh.

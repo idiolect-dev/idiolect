@@ -6,8 +6,9 @@
 > authoritative reference is the source above plus the rustdoc
 > built locally with `cargo doc -p idiolect-lens --open`.
 
-Resolve `dev.panproto.schema.lens` records and run `apply_lens`.
-Bridges idiolect's record runtime to panproto's lens runtime.
+Resolve `dev.panproto.schema.lens` [records](../../glossary.md#record)
+and run `apply_lens`. The crate connects idiolect's record runtime to
+panproto 0.70.1's lens runtime.
 
 Because the crate is `publish = false`, downstream consumers
 depend on it via a git or path reference rather than a
@@ -15,7 +16,7 @@ registry version:
 
 ```toml
 [dependencies]
-idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["pds-reqwest"] }
+idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.11.1", features = ["pds-reqwest"] }
 ```
 
 ## Public surface
@@ -23,8 +24,7 @@ idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.
 ### Resolvers
 
 `Resolver` is the trait every resolver implements. It is
-object-safe (`Arc<dyn Resolver>`) since v0.8.0. The resolve
-future is `Send`.
+object-safe (`Arc<dyn Resolver>`), and its resolve future is `Send`.
 
 Shipped implementations:
 
@@ -50,8 +50,12 @@ The runtime shipped under `idiolect_lens::runtime`:
 - `apply_lens` / `apply_lens_put` — state-based forward / backward.
 - `apply_lens_get_edit` / `apply_lens_put_edit` — edit-based
   variants for incremental translation.
-- `apply_lens_symmetric` — symmetric pairing of two state-based
-  lenses sharing a middle schema.
+- `apply_lens_symmetric` pairs two state-based lenses that share a
+  middle schema. This view-only helper calls panproto 0.70.1's
+  `put_without_complement`, so the incoming span leg must be an
+  isomorphism. A lossy incoming leg requires complement state from an
+  earlier `get` and direct use of panproto's lower-level
+  `SymmetricLens` API.
 
 Each takes a resolver, a schema loader, a `Protocol`, and a
 typed input struct. Each returns a typed output struct. The
@@ -67,7 +71,7 @@ traits over xrpc. Behind feature flags:
 | --- | --- |
 | `pds-reqwest` | `ReqwestPdsClient` (read-only). The reqwest-backed write surface uses `SigningPdsWriter` plus a `DpopProver` (one of `StaticDpopProver`, `NoOpDpopProver`, or `P256DpopProver` with the `dpop-p256` feature). |
 | `pds-atrium` | `AtriumPdsClient`. |
-| `pds-resolve` | `fetcher_for_did`, `publisher_for_did` — DID-to-PDS resolution helpers. Pulls in `idiolect-identity`. |
+| `pds-resolve` | `fetcher_for_did`, `publisher_for_did`; [DID](../../glossary.md#did)-to-[PDS](../../glossary.md#pds) resolution helpers. Pulls in `idiolect-identity`. |
 | `dpop-p256` | The `P256DpopProver` for OAuth-bound DPoP requests. |
 
 ### Generic publisher
@@ -91,7 +95,7 @@ types.
 
 The recommended runtime stack:
 
-```rust
+```text
 use std::sync::Arc;
 use std::time::Duration;
 use idiolect_lens::*;
@@ -106,6 +110,6 @@ let loader = FilesystemSchemaLoader::new("./schema-cache")?;
 let out = apply_lens(&resolver, &loader, &Protocol::default(), input).await?;
 ```
 
-The `Arc<dyn Resolver>` indirection lets a downstream
-orchestrator inject a different resolver (e.g. a record-of-record
-mock for tests) without changing the surface.
+The `Arc<dyn Resolver>` indirection lets a downstream application
+inject a different resolver, such as an in-memory resolver for tests,
+without changing the surrounding API.

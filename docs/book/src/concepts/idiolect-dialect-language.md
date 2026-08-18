@@ -1,81 +1,79 @@
 # Idiolect, dialect, language
 
-The project name comes from a deliberate analogy with the
-linguistic terms.
+The project borrows three linguistic terms to distinguish individual practice,
+community policy, and shared infrastructure. The analogy is organizational; it
+does not claim that schema systems have every property of natural languages.
 
-- An **idiolect** is one party's choice of schemas, lenses, and
-  conventions. It is what a single PDS (or a single application
-  developer) actually publishes.
-- A **dialect** is the bundle of idiolects a community treats as
-  canonical. It carries a list of preferred NSIDs, preferred
-  lenses, endorsed vocabularies, and deprecations.
-- A **language** is the federated substrate over which idiolects
-  and dialects meet. There is no central registry, no single
-  authority, and no global schema. The substrate is ATProto plus
-  the shipped lexicons.
+## Three levels
 
-The three layers correspond to three things in the runtime:
+An [idiolect](../glossary.md#idiolect "One publisher's actual choices of schemas, lenses, and conventions")
+is one publisher's practice: the record types it emits, the lenses it uses, and
+the conventions it follows. There is no `dev.idiolect.idiolect` record. An
+idiolect is inferred from records; a dialect's `idiolects` field lists the
+schema references that constitute its idiolect set.
 
-| Linguistic | Runtime artifact | Lexicon |
+A [dialect](../glossary.md#dialect "A community-published bundle of schema and translation policy")
+is an explicit community bundle. A `dev.idiolect.dialect` record names its
+owning community and may carry schema references in `idiolects`, along with
+`preferredLenses`, `deprecations`, and version links. The dialect is policy
+expressed as data; consuming it remains a local choice.
+
+The **language level (LL)** is the shared ATProto substrate plus the schema and
+lens records published on it. The LL has no single runtime record and no
+requirement that all participants use one schema. Local catalogs, indexers, and
+orchestrators construct views over this level.
+
+| Level | Concrete representation | Scope |
 | --- | --- | --- |
-| Idiolect | A single party's records on a PDS | (any record kind) |
-| Dialect | A bundle published by a community | `dev.idiolect.dialect` |
-| Language | The federated network of all parties | (the whole `dev.idiolect.*` family) |
+| Idiolect | A publisher's observed records and choices | One publisher or application |
+| Dialect | `dev.idiolect.dialect` | A community's stated schema and lens policy |
+| Language | ATProto repositories, event streams, Lexicons, and lenses | The federated substrate |
 
-## Why this frame
+## Plural canonicity
 
-A large protocol benefits from a model where parties can disagree
-gracefully. Two communities can run incompatible schemas and the
-substrate accommodates them. A third community can publish a lens
-between the two, and the network can route translations. The frame
-does not promise a single canonical schema. It ships the
-machinery for reasoning about plural canonicities.
+The model permits more than one community to call a different bundle canonical.
+We call this **plural canonicity (PC)**. A consumer resolves PC locally by
+choosing which community records, recommendations, vocabularies, and observers
+it trusts. The orchestrator's catalog supports that selection; it does not make
+the selection universal.
 
-The properties this gets you:
+PC has two consequences. First, a new schema can be published without a
+network-wide approval step. Second, a lens can connect established schemas
+without forcing either publisher to rename its collection. But the same freedom
+allows incompatible or malicious records, so policy cannot be derived from
+federation alone.
 
-- **No global arbiter.** There is no place to file a grievance and
-  no place to extract rent. A community can fork a dialect, ship
-  its own, and let consumers pick.
-- **Cheap experimentation.** Adding an idiolect is a record edit.
-  A community can try a new schema, see who adopts, and either
-  roll it into a dialect or abandon it.
-- **Auditable convergence.** When two communities adopt the same
-  lens, the encounter / observation / recommendation records carry
-  enough structure to make the convergence visible without a
-  central monitor.
+## Failure modes
 
-## Failure modes the frame admits
+Three failure modes recur at different levels:
 
-The frame does not promise that the network converges, that
-disagreements always resolve, or that bad actors cannot publish
-records. It admits:
+1. **Unlinked duplication.** Two NSIDs describe similar data, but no lens or
+   recommendation relates them. Consumers must either treat them separately or
+   author the missing relationship.
+2. **Vocabulary collision.** Two communities reuse a slug with different
+   intended meanings. A `*Vocab` reference can disambiguate the vocabulary, but
+   an omitted reference may leave policy to a canonical default outside the wire
+   record.
+3. **Dialect drift.** A community updates a dialect's preferred lenses or
+   deprecations. An AT-URI may then resolve to a new record CID while consumers
+   holding an older strong reference continue to see the pinned revision.
 
-- **Silent fragmentation.** Two communities ship near-identical
-  schemas under different NSIDs. Consumers see two records where
-  there should be one. The signal is the lens-recommendation
-  density between the two. If no community publishes a lens
-  between them, the fragmentation is permanent.
-- **Adversarial publishing.** A bad actor publishes a vocab that
-  shadows a canonical slug with a different meaning. The
-  containment is at the consumer's policy: prefer vocabs from
-  recognised communities, treat unknown vocabs as unknown.
-- **Dialect drift.** A community changes its dialect record
-  without coordinating with downstream consumers. Old records keep
-  validating. New lens choices route differently. The signal is
-  the deprecation list and the lexicon-evolution gate.
+A potential worry about PC is that it merely renames fragmentation. That worry
+is justified when publishers supply no lenses, evidence, or policy records. The
+model does not prevent that outcome. It makes the missing relationships visible
+and gives later publishers a common place to add them.
 
-The runtime ships primitives for each of these (recommendation,
-deliberation, lens classification) but no policy. Policy lives in
-the consumer.
+## The actual guarantees
 
-## What is not promised
+An NSID identifies an intended Lexicon shape, but repositories remain untrusted
+input; invalid records may appear on an event stream. A generated decoder can
+reject a record it cannot deserialize, though not every semantic constraint is
+enforced by deserialization alone. Likewise, a lens carries law claims, but
+those claims require checking on concrete instances or stronger external
+evidence.
 
-The frame does not promise a unified ontology, a global
-identifier scheme, or a single authoritative type for any record
-kind. It does promise that two parties using the same NSID see
-records under that NSID with the same wire shape, that lenses
-between schemas obey their stated laws, and that the lexicon
-itself does not change shape without an auditable migration.
-
-The chapters that follow cover what each of those promises means
-in practice.
+Thus, the three levels distribute responsibility rather than truth. Publishers
+choose an idiolect, communities state a dialect, and consumers decide how to
+interpret the language-level record population. The
+[`dev.idiolect.*` family](./lexicon-family.md) supplies the records used in that
+exchange.

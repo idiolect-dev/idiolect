@@ -1,9 +1,9 @@
 # Bundle records into a dialect
 
-A `dev.idiolect.dialect` record is a community-published bundle
-of "these are the schemas, lenses, and conventions we treat as
-canonical". Consumers wanting the dialect's view of the world
-fetch one record and follow the references.
+A `dev.idiolect.dialect` record publishes a community's selected
+[schemas and lenses](../glossary.md#dialect "A community-selected bundle of schemas and translations")
+as one versioned bundle. A consumer fetches the record and follows
+only the references its local policy accepts.
 
 The shape is documented in the
 [lexicon reference](../reference/lexicons/dialect.md). The
@@ -20,9 +20,8 @@ fields most consumers care about:
 
 The shortest path is to construct the typed record directly:
 
-```rust
-use idiolect_records::{Dialect, AtUri, Datetime};
-// Plus the inline `defs` types: SchemaRef, LensRef, Deprecation.
+```text
+use idiolect_records::{AtUri, Datetime, Dialect};
 
 let dialect = Dialect {
     owning_community: AtUri::parse(
@@ -30,12 +29,12 @@ let dialect = Dialect {
     )?,
     name: "tutorial canonical".into(),
     description: Some("...".into()),
-    idiolects: vec![/* schemaRef entries */],
-    preferred_lenses: vec![/* lensRef entries */],
-    deprecations: vec![],
+    idiolects: Some(vec![/* SchemaRef values */]),
+    preferred_lenses: Some(vec![/* LensRef values */]),
+    deprecations: None,
     version: Some("1.0.0".into()),
     previous_version: None,
-    created_at: Datetime::parse("2026-04-19T00:00:00.000Z").unwrap(),
+    created_at: Datetime::parse("2026-04-19T00:00:00.000Z")?,
 };
 ```
 
@@ -44,35 +43,30 @@ Construct the record, then publish it via
 
 ## What it does for consumers
 
-Consumers reading a dialect get three things:
+Consumers reading a dialect get three independent signals:
 
 - A canonical NSID list. A consumer that has resolved a dialect
   knows which schemas the community treats as canonical and can
   filter incoming records accordingly.
-- A vocabulary registry by reference. Open-enum slugs in records
-  whose author belongs to the community resolve against the
-  dialect's listed vocabularies (consumers read the vocabularies
-  themselves through their `*Vocab` siblings, not through the
-  dialect).
+- A lens preference list. `preferredLenses` records which
+  translations the community recommends; it does not override a
+  consumer's trust policy.
 - An audit trail of deprecations. A consumer that sees a
   `Deprecation` entry can keep reading the deprecated NSID for
   some grace period and route to `replacement` afterwards.
 
 ## Use a dialect at runtime
 
-There is no shipped `DialectClient` helper. Consumers fetch the
-dialect record (via `idiolect_lens::PdsResolver`'s
-`Resolver::resolve` or any other resolver) and walk the typed
-fields directly. A small wrapper layer is the right shape if a
-consumer wants a `dialect.preferred_lens_for(nsid)` style
-accessor. The runtime ships only the record.
+There is no shipped `DialectClient`. Fetch the record through a typed
+record client and inspect its fields directly. The
+`idiolect_lens::Resolver` trait resolves lens records only; it does
+not resolve `dev.idiolect.dialect` records.
 
 ## Multiple dialects
 
-Two communities can publish disjoint, overlapping, or
-contradictory dialects. The protocol treats them all as opinions
-and prefers none. Consumers
-pick a resolution policy in their own code:
+Two communities may publish disjoint, overlapping, or contradictory
+dialects. The protocol assigns no global priority, so consumers pick
+a resolution policy in application code:
 
 - *first-match* — pick the first dialect listed in the
   consumer's config.

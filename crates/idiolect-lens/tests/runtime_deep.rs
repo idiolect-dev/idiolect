@@ -223,10 +223,9 @@ async fn apply_lens_get_edit_errors_on_missing_lens() {
 async fn apply_lens_symmetric_returns_a_value_for_both_directions() {
     // Smoke test the symmetric-lens wiring end-to-end: legs share a
     // middle schema, both directions succeed and produce a
-    // well-formed json object. We deliberately do not compare the
-    // payload against a specific expected value — symmetric
-    // translation depends on how panproto's middle-complement is
-    // initialized, and that's panproto's contract, not idiolect's.
+    // well-formed json object. Both legs are isomorphisms, so Panproto
+    // can reconstruct the middle without a complement from an earlier
+    // `get`.
     let middle = single_field_schema("middle:root", "string");
     let protocol = test_protocol();
     let protolens = elementary::rename_sort("string", "string");

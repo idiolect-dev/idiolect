@@ -1,12 +1,12 @@
 # Crates
 
-The workspace ships eleven crates. Each is independently
-versioned but bumped together at every release.
+The workspace ships eleven crates at version 0.11.1. The workspace
+version keeps their release numbers aligned.
 
 | Crate | Purpose |
 | --- | --- |
 | [idiolect-records](./idiolect-records.md) | Generated record types for the `dev.idiolect.*` lexicons; `Record` trait; family modules. |
-| [idiolect-codegen](./idiolect-codegen.md) | Lexicon-driven Rust + TypeScript emitter; drift gate; breaking-change classifier. |
+| [idiolect-codegen](./idiolect-codegen.md) | Lexicon-driven Rust + TypeScript emitter; generated-source check; breaking-change classifier. |
 | [idiolect-lens](./idiolect-lens.md) | Resolve `PanprotoLens` records; run `apply_lens`. |
 | [idiolect-identity](./idiolect-identity.md) | DID resolution (`did:plc`, `did:web`). |
 | [idiolect-indexer](./idiolect-indexer.md) | Firehose consumer with pluggable stream / handler / cursor store. |
@@ -25,11 +25,8 @@ name and to docs.rs at
 `publish = false` and are consumed via a git or path reference;
 each crate page states which applies.
 
-## Policy
+## Reference boundary
 
-The pages in this section are editorial overviews: an opinionated
-summary of what each crate is for, the public types you reach for
-first, and the feature flags. They are not the authoritative
-per-symbol reference. The authoritative reference is the rendered
-rustdoc on docs.rs, linked at the top of every crate page. When
-this book and docs.rs disagree, docs.rs is right.
+These pages list the exported boundaries and feature flags. Use docs.rs
+for the three published crates. For workspace-only crates, build
+rustdoc from the checkout named at the top of the page.

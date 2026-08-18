@@ -1,78 +1,67 @@
 # What you need first
 
-idiolect's two dependencies are prerequisites of different kinds.
+idiolect depends on ATProto for publication and on panproto for schema
+translation. Readers need three ATProto objects and one panproto object. The
+definitions below are sufficient for the rest of the Concepts chapters.
 
-The ATProto dependency is deep. idiolect is founded on ATProto's
-ideas (self-owned repositories, signed content-addressed records,
-schemas anyone can publish, federation without a central arbiter),
-and its design decisions assume that model; without it, they will
-read as arbitrary. If
-you have not worked with ATProto, plan to spend time with the
-[ATProto documentation](https://atproto.com/guides/overview); this
-book does not substitute for it. This page states the three
-ATProto ideas the book leans on hardest. If they read as familiar,
-continue; if not, follow the links first.
+## ATProto repositories and records
 
-The panproto dependency, by contrast, is shallow for readers. The runtime uses
-panproto heavily, but this book requires exactly one concept from
-it (the lens), stated in the last section below. You do not need
-to read the panproto book, and no category theory appears anywhere
-in this book.
+An ATProto account controls a public
+[repository](../glossary.md#repository "An account-scoped, verifiable collection of ATProto records").
+A [record](../glossary.md#record "A typed data object stored at a repository path")
+occupies a path of the form `collection/rkey`; an
+[AT-URI](../glossary.md#at-uri "A mutable address for an ATProto record") adds the
+account DID:
 
-## From ATProto: record
+```text
+at://did:plc:example/dev.idiolect.verification/3kexample
+```
 
-A *record* is a piece of JSON that lives in a repository controlled
-by one account (identified by a DID). Records are signed and
-content-addressed, so anyone can verify who published a record and
-that it has not been altered. Every record has an address of the
-form `at://did/collection/key`. Everything idiolect publishes
-(lenses, verifications, recommendations, dialects) is a record.
-The runtime consequences of this choice are the subject of
-[Records as content-addressed signed data](./atproto-records.md).
+The repository is a content-addressed Merkle Search Tree whose leaves point to
+record CIDs. The repository *commit* is signed; an individual record is not a
+stand-alone signed document. A proof chain can connect a record CID to that
+signed commit. This distinction, specified in the official
+[ATProto repository format](https://atproto.com/specs/repository), must be
+accounted for when evaluating provenance claims.
 
-## From ATProto: lexicon
+## Lexicons and NSIDs
 
-A *lexicon* is ATProto's schema language: a JSON document that
-declares the shape of a record type and names it with an *NSID*, a
-reverse-domain identifier such as `app.bsky.feed.post` or
-`dev.idiolect.recommendation`. Anyone who controls a domain can
-publish lexicons under it. This is the source of the problem
-idiolect addresses: independent parties can, and do, publish
-different lexicons for the same kind of thing. The lexicons this
-project ships are catalogued in [the lexicon
-family](./lexicon-family.md).
+A [Lexicon](../glossary.md#lexicon "ATProto's schema language for records and XRPC")
+is an ATProto schema document. Its
+[NSID](../glossary.md#nsid "A reverse-domain identifier for an ATProto schema or method")
+names a record collection or XRPC method; `dev.idiolect.recommendation` is one
+such collection. The [Lexicon specification](https://atproto.com/specs/lexicon)
+defines the record, object, reference, union, and scalar forms used throughout
+this repository.
 
-## From ATProto: PDS and firehose
+Independent publishers may define different NSIDs for similar data. Lexicon
+validation can determine whether a value has the declared shape, but it cannot
+determine that two independently named shapes describe the same thing. idiolect
+addresses that second problem.
 
-A *PDS* (personal data server) hosts repositories. The *firehose*
-is the network-wide event stream of record creations, updates, and
-deletions that consumers subscribe to. The load-bearing facts for
-this book: records live on many independent servers, and there is
-a stream you can watch to see all of them. idiolect's indexer,
-orchestrator, and observer are consumers of that stream; the
-[tutorial](../tutorial/01-install.md) has you fetch records
-without running any of them.
+## PDSes and event streams
 
-## From panproto: lens
+A [personal data server (PDS)](../glossary.md#pds "The service that hosts an account's authoritative ATProto repository")
+hosts an account's authoritative repository. Network consumers usually learn about
+record changes through a synchronization stream or a derived transport such as
+Jetstream or tap. The book uses *event stream* for the abstraction and
+*firehose* when referring to the network-wide ATProto stream specifically.
 
-A *lens* is a two-way converter between two schemas. The forward
-direction (`get`) translates a record from the source shape to the
-target shape and sets aside whatever the target shape cannot
-express; the set-aside part is called the *complement*. The
-backward direction (`put`) uses the complement to reconstruct the
-original exactly. A lens is not trusted on its author's word: it
-obeys stated round-trip laws, and the laws can be checked
-mechanically against real records. Nothing more from panproto is
-assumed in this book. The laws, the classification of lenses by
-what they promise, and the symmetric variant used for bridging two
-communities are in [Lens semantics and laws](./lens-laws.md), and
-that chapter restates each of them before use.
+The current indexer accepts a generic `EventStream`. Concrete adapters cover
+tap and Jetstream; thus a conceptual statement about an event fold does not
+imply that every process connects directly to a PDS.
 
-## Where to deepen
+## Panproto lenses
 
-The [ATProto documentation](https://atproto.com/guides/overview)
-is the real prerequisite if the three paragraphs above were not
-already familiar. The [panproto book](https://panproto.dev/book/)
-is optional depth on the schema and lens machinery. [Why idiolect
-exists](./why-idiolect.md) explains why the project builds on
-both.
+A [lens](../glossary.md#lens "A bidirectional schema translation with explicit round-trip obligations")
+relates a source schema to a target schema. Its forward operation, `get`,
+produces a target view and a
+[complement](../glossary.md#complement "State retained so a backward lens operation can reconstruct its source")
+containing source information that the view did not retain. Its backward
+operation, `put`, combines a target view with that complement to reconstruct a
+source value.
+
+idiolect uses panproto 0.70.1 to instantiate and run these lenses. No category
+theory is assumed: [Lens semantics and laws](./lens-laws.md) introduces the
+notation before using it, while the [panproto book](https://panproto.dev/book/)
+provides optional depth.

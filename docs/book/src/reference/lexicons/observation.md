@@ -1,6 +1,6 @@
 # dev.idiolect.observation
 
-A signed aggregate over a set of encounter-family records.
+A signed aggregate over a [record family](../../glossary.md#record-family).
 Observations decouple ranking from the orchestrator: many
 observers publish competing aggregates over the same traces, and
 consumers choose whom to trust.
@@ -64,19 +64,18 @@ interpret the output. The `method.name`, `version`, and optional
 ### `scope.encounterKinds`
 
 The observer must disclose which encounter kinds it includes or
-the observation is uninterpretable. An observation that includes
-`adversarial` encounters at the same weight as `invocation-log`
-encounters is meaningfully different from one that excludes
-adversarial samples. Consumers reading the observation rely on
-this disclosure to decide whether the result fits their use case.
+the observation is uninterpretable. An observation that weights `adversarial`
+and `invocation-log` encounters equally has a different input distribution from
+one that excludes adversarial samples. Consumers reading the observation rely
+on this disclosure to decide whether the result fits their use case.
 
 ### `version` versus `occurredAt`
 
-`version` is the method's version. Two observations with the same
-`method.name` but different `version`s are not comparable: the
-algorithm changed. `occurredAt` is when the observation was
-published. Two observations with the same `version` but different
-`occurredAt`s are comparable as time-series data.
+`version` is the method's version. Different method versions may not be
+comparable because the algorithm or parameter semantics may have changed.
+`occurredAt` is when the observation was published. Observations with the same
+method and version are comparable as time-series data only when their scopes
+and parameters also align.
 
 ### `basis`
 
@@ -127,19 +126,14 @@ the relay or transformation kind.
 }
 ```
 
-## Why observations and not metrics
+## Trust semantics
 
-A central metrics endpoint cannot:
-
-- Be verified after the fact (the counter is whatever the endpoint
-  says it is).
-- Be re-folded by an independent party.
-- Disagree with itself across observers.
-
-A signed observation can. Two observers running the same fold on
-overlapping data will produce records with comparable counts.
-Consumers can require quorum among trusted observers before
-treating an observation as authoritative.
+A mutable metrics endpoint does not by itself preserve a signed, replayable
+snapshot. A signed observation records the publisher and can be re-folded when
+the input history and method are available. Observers may produce comparable
+counts when method version, scope, and input coverage align. Consumers can
+require quorum among trusted observers before treating an observation as
+authoritative.
 
 ## Concept references
 

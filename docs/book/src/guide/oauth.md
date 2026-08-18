@@ -1,13 +1,10 @@
 # Configure OAuth sessions
 
-[`idiolect-oauth`](../reference/crates/idiolect-oauth.md)
-provides the token-store trait and three shipped implementations,
-plus a `refresh_if_needed` helper and a `Refresher` trait for
-session refresh. The crate does *not* implement the OAuth dance
-itself: that lives in `atrium-oauth-client`. Consumers drive the
-dance in their own code, then either call `refresh_if_needed` or
-read `OAuthSession`'s helpers (`is_expired`, `needs_refresh`,
-`refresh_expired`) to drive the refresh decision themselves.
+[`idiolect-oauth`](../reference/crates/idiolect-oauth.md) stores
+[OAuth](../glossary.md#oauth "An authorization framework for delegated access")
+sessions after an application completes the authorization flow. The
+crate supplies `OAuthTokenStore`, three stores, and refresh timing; an
+OAuth client supplies the network exchange.
 
 ## When you need it
 
@@ -23,27 +20,29 @@ authenticated PDS session. Reading records does not.
 | `FilesystemOAuthTokenStore` | `store-filesystem` | A single operator process running on one host. Sessions live under a directory; one file per DID. |
 | `SqliteOAuthTokenStore` | `store-sqlite` | Multi-process or multi-tenant deployments. Concurrent reads, fsync per write. |
 
-All three implement `OAuthTokenStore`. Anything that takes
-`Arc<dyn OAuthTokenStore>` accepts any of them.
+All three implement `OAuthTokenStore`. Its native async methods make
+the trait non-object-safe, so callers remain generic over
+`S: OAuthTokenStore` rather than using `Arc<dyn OAuthTokenStore>`.
 
 `idiolect-oauth` is `publish = false`; depend via git.
 
 ## Filesystem store
 
 ```toml
-idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["store-filesystem"] }
+idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.11.1", features = ["store-filesystem"] }
 ```
 
-```rust
+```text
 use idiolect_oauth::{FilesystemOAuthTokenStore, OAuthTokenStore};
 
-let store = FilesystemOAuthTokenStore::open("./sessions/")?;
+std::fs::create_dir_all("./sessions/")?;
+let store = FilesystemOAuthTokenStore::new("./sessions/")?;
 
 // Write a session (returned by the OAuth dance, not by this crate):
 store.save(&session).await?;
 
 // Read it back later:
-let recovered = store.load(&session.did).await?;
+let recovered = store.load(&session.did).await?; // Option<OAuthSession>
 ```
 
 The directory contains one JSON file per session keyed by DID.
@@ -51,20 +50,19 @@ The directory contains one JSON file per session keyed by DID.
 ## SQLite store
 
 ```toml
-idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["store-sqlite"] }
+idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.11.1", features = ["store-sqlite"] }
 ```
 
-```rust
+```text
 use idiolect_oauth::{SqliteOAuthTokenStore, OAuthTokenStore};
 
-let store = SqliteOAuthTokenStore::open("sessions.sqlite").await?;
+let store = SqliteOAuthTokenStore::open("sessions.sqlite")?;
 ```
 
 ## Drive the OAuth dance
 
-The dance itself is `atrium-oauth-client`'s job. The crate
-returns an authenticated session you store via
-`OAuthTokenStore::save`. The session shape (`OAuthSession`) is
+The authorization client returns an authenticated session that you
+store through `OAuthTokenStore::save`. The `OAuthSession` shape is
 documented in the crate's source: it carries the DID, PDS URL,
 access JWT, refresh JWT, DPoP private key (JWK-serialized),
 DPoP nonce, and expiry timestamps as public fields.
@@ -77,7 +75,9 @@ drives the refresh endpoint.
 
 ## DPoP
 
-The session's DPoP keypair is what binds the access token.
+The session's
+[DPoP](../glossary.md#dpop "Proof-of-possession binding for OAuth access tokens")
+keypair binds the access token.
 The signer (the `P256DpopProver` in
 [`idiolect-lens`](../reference/crates/idiolect-lens.md) under
 the `dpop-p256` feature) consumes the keypair from the session
@@ -105,12 +105,9 @@ idiolect oauth logout --did did:plc:...
 ```
 
 This path uses **app passwords in legacy Bearer mode**.
-ATProto is moving off app passwords in favour of OAuth +
-DPoP; the next-iteration login UX wraps `atrium-oauth`'s
-browser-handoff dance and persists the resulting DPoP-bound
-session through the same `OAuthTokenStore`. The `OAuthSession`
-shape already carries the DPoP private key field; switching
-flows is a CLI substitution, not a session-shape change.
+This CLI path is separate from `OAuthSession`: its JSON file contains
+the DID, handle, PDS URL, access JWT, and refresh JWT, but no DPoP key.
+Use the library store for a DPoP-bound OAuth deployment.
 
 ## `refresh_if_needed`
 
@@ -122,7 +119,7 @@ returns the live session. Callers who want to drive the
 decision themselves read `OAuthSession::needs_refresh` and
 `OAuthSession::is_expired` directly.
 
-```rust
+```text
 use idiolect_oauth::{refresh_if_needed, Refresher, RefreshError, OAuthSession};
 
 struct MyRefresher { /* http client, auth-server URL, ... */ }

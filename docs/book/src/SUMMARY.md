@@ -1,14 +1,15 @@
 # Summary
 
 [Introduction](./index.md)
+[Choose a reading path](./paths.md)
 
 # Tutorial
 
 - [Overview](./tutorial/index.md)
-- [Install and resolve a record](./tutorial/01-install.md)
-- [Validate against the lexicon](./tutorial/02-validate.md)
-- [Apply a lens](./tutorial/03-apply-lens.md)
-- [Run a verification](./tutorial/04-verify.md)
+- [Install the CLI and fetch a lens](./tutorial/01-install.md)
+- [Validate a typed record](./tutorial/02-validate.md)
+- [Apply the lens](./tutorial/03-apply-lens.md)
+- [Verify the round trip](./tutorial/04-verify.md)
 - [Publish a recommendation](./tutorial/05-publish.md)
 
 # Guides
@@ -32,7 +33,7 @@
 - [What you need first](./concepts/prerequisites.md)
 - [Idiolect, dialect, language](./concepts/idiolect-dialect-language.md)
 - [The dev.idiolect.* lexicon family](./concepts/lexicon-family.md)
-- [Records as content-addressed signed data](./concepts/atproto-records.md)
+- [Records in signed, content-addressed repositories](./concepts/atproto-records.md)
 - [Lens semantics and laws](./concepts/lens-laws.md)
 - [Open enums and vocabularies](./concepts/open-enums.md)
 - [The vocabulary knowledge graph](./concepts/vocab-graph.md)
@@ -76,3 +77,7 @@
 - [CLI](./reference/cli.md)
 - [HTTP query API](./reference/http-api.md)
 - [Stability and versioning](./reference/stability.md)
+
+# Glossary
+
+- [Terminology](./glossary.md)

@@ -6,9 +6,8 @@
 > CLI is intended to be installed and run, not depended on as a
 > library.
 
-The `idiolect` command-line tool. Wraps the library crates so
-operators and end users do not need to write Rust for common
-operations.
+The `idiolect` command-line tool wraps the library crates so operators and end
+users do not need to write Rust for common operations.
 
 ```bash
 cargo install --path crates/idiolect-cli
@@ -25,13 +24,16 @@ idiolect resolve <did>
 idiolect fetch <at-uri>
 idiolect orchestrator <subcommand>
 idiolect encounter record [...]
+idiolect oauth <login|list|logout> [...]
+idiolect publish <kind> --record <path> [...]
+idiolect verify <kind> [...]
 idiolect version
 idiolect help
 ```
 
 The full reference is the [CLI reference](../cli.md).
 
-## Why no clap
+## Parser boundary
 
 The CLI uses a hand-rolled subcommand parser. Two reasons:
 
@@ -50,9 +52,9 @@ The CLI's `orchestrator …` dispatcher is emitted from
 the dispatcher. The new subcommand becomes available
 automatically.
 
-The hand-written subcommands (`resolve`, `fetch`,
-`encounter record`, `version`, `help`) live in `main.rs` and
-`encounter.rs`.
+The hand-written subcommands (`resolve`, `fetch`, `encounter record`,
+`oauth`, `publish`, `verify`, `version`, and `help`) live in
+`main.rs` and their sibling modules.
 
 ## Output
 
@@ -64,6 +66,8 @@ Errors go to stderr with `error: <message>`.
 | Setting | Default | Override |
 | --- | --- | --- |
 | Orchestrator URL | `http://localhost:8787` | `--url` flag on `orchestrator` subcommands |
-| Log level | `info` | `RUST_LOG` env var |
+| Log level | `warn` | `RUST_LOG` environment variable |
+| Session directory | `$HOME/.config/idiolect/sessions` | `IDIOLECT_SESSION_DIR` environment variable |
+| Login app password | none | `--app-password`, `ATPROTO_APP_PASSWORD`, or `ATPROTO_PASSWORD` |
 
 The CLI does not read a config file.

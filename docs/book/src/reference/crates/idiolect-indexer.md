@@ -8,21 +8,21 @@
 > (every public type, trait, function, and feature flag) is the
 > docs.rs link above. That is the authoritative reference.
 
-Firehose consumer factored into three trait surfaces. The crate
+The crate factors a [firehose](../../glossary.md#firehose) consumer
+into three trait surfaces. It
 owns the loop. You bring the stream, the handler, and the cursor
 store.
 
 ```toml
 [dependencies]
-idiolect-indexer = { version = "0.8",
-    features = ["firehose-jetstream", "cursor-filesystem", "reconnecting"] }
+idiolect-indexer = { version = "0.11.1", features = ["firehose-jetstream", "cursor-filesystem", "reconnecting"] }
 ```
 
 ## Public surface
 
 ### Trait surface
 
-```rust
+```text
 pub trait EventStream: Send + Sync {
     async fn next_event(&mut self) -> Result<Option<RawEvent>, IndexerError>;
 }
@@ -44,7 +44,7 @@ delete), CID, and the typed record body (`Option<F::AnyRecord>`).
 
 ### Composer
 
-```rust
+```text
 pub async fn drive_indexer<F, S, H, C>(
     stream: &mut S,
     handler: &H,
@@ -67,9 +67,9 @@ where
 | --- | --- | --- |
 | `JetstreamEventStream` | `firehose-jetstream` | Subscribes to a Jetstream websocket feed. |
 | `TappedEventStream` | `firehose-tapped` | Subscribes to the at-proto-native firehose via `tapped`. |
-| `ReconnectingEventStream<S>` | `reconnecting` | Wraps any `S: EventStream` with exponential-backoff reconnect. |
+| `ReconnectingEventStream<C, F, S>` | `reconnecting` | Recreates an `S: EventStream` with a caller-supplied async connection factory and exponential backoff. |
 | `InMemoryCursorStore` | (always) | `HashMap`-backed; for tests. |
-| `FilesystemCursorStore` | `cursor-filesystem` | One JSON file per stream. |
+| `FilesystemCursorStore` | `cursor-filesystem` | One JSON file containing the cursor map for every subscription ID. |
 | `SqliteCursorStore` | `cursor-sqlite` | One row per stream. Pairs with handlers that also write SQLite. |
 | `NoopRecordHandler` | (always) | Counts events and drops them. Useful as a baseline. |
 | `RetryingHandler` / `CircuitBreakerHandler` | `resilience` | Wraps an inner handler with retry / circuit-breaker policies. |
@@ -86,7 +86,7 @@ boundaries. Variants:
 | `Decode(DecodeError)` | A known NSID failed to decode into its typed record. |
 | `Handler(String)` | Handler returned a handler-defined error. |
 | `MissingBody(String)` | The firehose event had no record body or the body was malformed. |
-| `FamilyContract(String)` | `contains` accepted an NSID but `decode` returned `None` — a family-implementation bug. |
+| `FamilyContract(String)` | `contains` accepted an NSID but `decode` returned `None`; this is a family-implementation bug. |
 
 ## Feature flags
 
@@ -103,6 +103,9 @@ boundaries. Variants:
 
 `drive_indexer` commits the cursor only after the handler
 returns `Ok`. A failing handler does not commit. The loop
-either retries on the next event (default) or surfaces the
-error. For exactly-once semantics, the handler coordinates the
-cursor commit with its own storage transaction.
+returns the error to its caller. Handler retries require the
+`RetryingHandler` wrapper or an application-level policy. The
+shipped driver is thus at-least-once: an event may be handled
+again if the cursor commit fails. A custom driver can coordinate
+its data write and cursor update in one storage transaction when
+both use the same backend.

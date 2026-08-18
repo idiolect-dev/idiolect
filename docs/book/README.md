@@ -15,6 +15,20 @@ mdbook build
 
 Output lands in `book/`.
 
+## Validate
+
+Run the structural checker before building. It parses data and shell fences,
+checks local links and anchors, resolves footnotes, enforces American spelling,
+and rejects the project's banned prose patterns. The Rust checker compiles each
+`rust` fence as an independent binary against the current checkout.
+
+```bash
+python3 ../../scripts/check_book.py
+python3 ../../scripts/check_book_rust.py
+bun ../../scripts/check_book_mermaid.mjs
+mdbook build
+```
+
 ## Serve locally
 
 ```bash
@@ -51,6 +65,10 @@ The book follows the [Diátaxis](https://diataxis.fr/) structure:
 | `src/guide/` | Task-oriented "how do I X?" guides. |
 | `src/concepts/` | Conceptual explanation of the model. |
 | `src/reference/` | Per-symbol detail (crates, lexicons, CLI, HTTP API). |
+
+The landing page and `src/paths.md` provide cross-quadrant beginner,
+project-integration, and advanced/formal routes. `src/glossary.md` supplies the
+stable terminology anchors used by each quadrant.
 
 ## Style
 

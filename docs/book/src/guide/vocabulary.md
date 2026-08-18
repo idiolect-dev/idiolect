@@ -1,10 +1,10 @@
 # Author a community vocabulary
 
-Open-enum slugs across the idiolect lexicons resolve through a
-`dev.idiolect.vocab` record. That record carries a typed
-multi-relation knowledge graph: nodes (concept, relation, instance,
-type, collection) and edges with a relation slug, plus full OWL
-Lite property characteristics and SKOS Core annotations.
+[Open-enum](../glossary.md#open-enum "An enum that preserves unknown string values")
+slugs may point to a `dev.idiolect.vocab` record. The record stores a
+typed graph whose relation nodes may declare
+[OWL 2](https://www.w3.org/TR/owl2-syntax/) property characteristics and whose
+concept nodes may carry SKOS Core fields.
 
 This guide covers the authoring side: writing the JSON, declaring
 relation properties, and publishing the record.
@@ -59,13 +59,12 @@ declared as metadata:
 }
 ```
 
-The shipped properties cover the OWL Lite set: `symmetric`,
+The shipped fields cover these OWL 2 property characteristics: `symmetric`,
 `asymmetric`, `transitive`, `reflexive`, `irreflexive`,
 `functional`, `inverseFunctional`, plus `inverseOf` and a per-
-relation `world` override. The runtime walks the asserted edges
-and validates them against these properties. Contradictions
-(`symmetric+asymmetric`, `reflexive+irreflexive`) produce a
-`PropertyContradiction` violation at publish time.
+relation `world` override. `VocabGraph::validate` walks asserted edges
+and reports violations. `RecordPublisher` does not call this method,
+so run it before publication.
 
 ## Add edges
 
@@ -114,25 +113,28 @@ Collection.
 
 ## Validate
 
-```bash
-schema check vocab.json
+```text
+use idiolect_records::{Vocab, vocab::VocabGraph};
+
+let bytes = std::fs::read("vocab.json")?;
+let vocab: Vocab = serde_json::from_slice(&bytes)?;
+let violations = VocabGraph::from_vocab(&vocab).validate();
+if !violations.is_empty() {
+    anyhow::bail!("vocabulary violations: {violations:#?}");
+}
 ```
 
-The check runs panproto's structural validation plus the OWL Lite
-consistency walker. Violations are listed with the offending edge
-or property.
-
-For programmatic validation, construct a `Vocab` value and call
-`VocabGraph::from_vocab(&vocab).validate()`. Violations are
-returned as a `Vec<VocabViolation>` listing each offending edge
-or property.
+Deserialization checks the generated record shape. `validate()` then
+returns `Vec<VocabViolation>`, with one entry for each graph-property
+failure. Panproto's `schema check` compares schema migrations; it does
+not validate a `dev.idiolect.vocab` record.
 
 ## Publish
 
 Same path as any other record. Construct a writer, wrap it in
 `RecordPublisher`, and call `create`:
 
-```rust
+```text
 use idiolect_lens::{
     P256DpopProver, RecordPublisher, ReqwestPdsClient, SigningPdsWriter,
 };
@@ -154,27 +156,24 @@ let resp = publisher.create(&vocab).await?;
 ```
 
 `pkcs8_pem` is converted from the session's
-`dpop_private_key_jwk` via an external JWK-to-PKCS8 helper. The
-PDS validates the record against the lexicon before commit.
-Malformed values surface as commit errors. Driving the OAuth
-dance and persisting the session is the caller's job. See
-[Configure OAuth sessions](./oauth.md).
+`dpop_private_key_jwk` via an external JWK-to-PKCS8 helper. Request
+PDS-side lexicon validation when the deployment supports it, but keep
+the local typed and graph checks: PDS validation does not run
+`VocabGraph::validate`. See [Configure OAuth sessions](./oauth.md).
 
 ## Use the published vocab
 
-Once the vocab is on the network, any open-enum field whose
-sibling `*Vocab` points at your at-uri resolves slugs through your
-nodes. Consumers reading the record see one of three things:
+Once the vocabulary is on the network, an open-enum field may point to
+it through the sibling `*Vocab` field. Rust consumers see one of two
+enum forms:
 
-- A known slug (matches a node id).
-- An `Other(String)` value (the slug exists in your vocab but the
-  reading consumer is on an older codegen run).
-- An unknown value (the slug does not appear in your vocab and
-  `world` is permissive enough to accept it).
+- A generated known variant when the slug appears in the lexicon's
+  `knownValues` list.
+- `Other(String)` for every other wire slug, whether or not a
+  referenced vocabulary declares it.
 
-The `is_subsumed_by`, `satisfies`, and `translate_to` helpers
-emitted on every open-enum type use the vocab to answer
-slug-relation questions without the consumer manually walking the
-edges. See
+The `is_subsumed_by`, `satisfies`, and `translate_to` helpers query a
+loaded `VocabGraph` or `VocabRegistry`; deserializing the enum does not
+fetch the referenced record. See
 [The vocabulary knowledge graph](../concepts/vocab-graph.md) for
 the semantics.

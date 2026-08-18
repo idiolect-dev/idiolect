@@ -6,15 +6,16 @@
 > authoritative reference is the source above plus the rustdoc
 > built locally with `cargo doc -p idiolect-orchestrator --features daemon --open`.
 
-Read-only HTTP query API over a record catalog. Driven by
-`orchestrator-spec/queries.json`. Codegen emits the routes plus
-the matching CLI dispatcher.
+The crate exposes a read-only HTTP query API over a record
+[catalog](../../glossary.md#catalog). `orchestrator-spec/queries.json` drives
+the surface, and code generation emits both the routes and the matching CLI
+dispatcher.
 
 Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-orchestrator = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["daemon", "catalog-sqlite", "query-http"] }
+idiolect-orchestrator = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.11.1", features = ["daemon", "catalog-sqlite", "query-http"] }
 ```
 
 ## Public surface
@@ -54,6 +55,7 @@ Every handler under the `v1` prefix is generated from
 | `GET /v1/recommendations` | Recommendations starting from a given source schema. |
 | `GET /v1/verifications?lens_uri=...` | Verifications for a specific lens. |
 | `GET /v1/verifications/by-kind?...` | Verifications by kind. |
+| `GET /v1/verifications/sufficient?lens_uri=...&kinds=...` | Whether each comma-separated verification kind has at least one `holds` record for the lens. |
 | `GET /v1/communities?...` | Communities for a member DID. |
 | `GET /v1/communities/by-name?...` | Communities by name. |
 | `GET /v1/dialects/for-community?...` | Dialects owned by a community. |
@@ -62,7 +64,8 @@ Every handler under the `v1` prefix is generated from
 | `GET /v1/vocabularies/by-world?...` | Vocabularies declared with a given `world`. |
 | `GET /v1/vocabularies/by-name?...` | Vocabularies by name. |
 
-The full path-and-flag table for each endpoint is generated. See
+Each generated route is also mounted at its `/xrpc/<query-nsid>`
+alias. The full path-and-flag table for each endpoint is generated. See
 [`orchestrator-spec/queries.json`](https://github.com/idiolect-dev/idiolect/blob/main/orchestrator-spec/queries.json)
 for the authoritative list.
 
@@ -81,8 +84,7 @@ for the authoritative list.
 
 ## Observability
 
-`/metrics` exposes Prometheus counters and histograms for the
-catalog and per-endpoint latency. Structured `tracing` logs run
-at `info` level for accepted requests and `debug` for query
-internals. The exact metric names are defined in
-`crates/idiolect-orchestrator/src/http.rs`.
+`/metrics` exposes the readiness gauge, per-kind catalog gauges, and
+the total catalog gauge in Prometheus text format. The daemon emits
+structured lifecycle and failure logs through `tracing`. The exact
+metric names are defined in `crates/idiolect-orchestrator/src/http.rs`.

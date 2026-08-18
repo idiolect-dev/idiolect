@@ -1,96 +1,57 @@
-# Install and resolve a record
+# Install the CLI and fetch a lens
 
-The fastest way to get a working idiolect setup is to install the
-CLI from source. The CLI links against the same library crates an
-application would, so installing it also gives you the runtime
-machinery for later chapters.
+This chapter gets you from a fresh checkout to a live idiolect record in about
+five minutes. You need Git, Rust 1.95 or later, and a network connection. You do
+not need an ATProto account.
 
-## Install the CLI
+## Install from the checkout
+
+Clone the repository and install the command-line interface (CLI):
 
 ```bash
 git clone https://github.com/idiolect-dev/idiolect
 cd idiolect
-cargo install --path crates/idiolect-cli
+cargo install --locked --path crates/idiolect-cli
 ```
 
-This compiles every crate the CLI depends on (`idiolect-records`,
-`idiolect-identity`, `idiolect-lens`, plus their atproto transport
-features) and drops an `idiolect` binary into `~/.cargo/bin`. The
-build takes two to four minutes on a recent laptop. There is no
-runtime dependency on the cloned tree after install. You can `cd`
-anywhere.
-
-Confirm it works:
+The first build may take a few minutes. Confirm that the installed binary comes
+from this checkout:
 
 ```bash
 idiolect version
 ```
 
 ```text
-idiolect 0.8.0
+idiolect 0.11.1
 ```
 
-## Resolve a DID
+## Resolve the project account
 
-The first thing the runtime does on any record fetch is resolve a
-DID to its PDS. `idiolect resolve` exposes that step on its own:
-
-The project's own DID is a good first target:
+A [decentralized identifier (DID)](../glossary.md#did "Decentralized identifier")
+names an account. Its DID document identifies the account's
+[personal data server (PDS)](../glossary.md#pds "Personal data server"). Resolve
+the idiolect project DID:
 
 ```bash
 idiolect resolve did:plc:wdl4nnvxxdy4mc5vddxlm6f3
 ```
 
-```json
-{
-  "did": "did:plc:wdl4nnvxxdy4mc5vddxlm6f3",
-  "method": "Plc",
-  "handle": "idiolect.dev",
-  "pds_url": "https://jellybaby.us-east.host.bsky.network",
-  "also_known_as": ["at://idiolect.dev"]
-}
-```
+The JSON response should identify `idiolect.dev` and include a `pds_url`.
+Resolution is a separate step because records move with an account when its PDS
+changes.
 
-The resolver uses
-[`idiolect-identity`](../reference/crates/idiolect-identity.md)'s
-`ReqwestIdentityResolver`. For `did:plc:*` it goes through
-`plc.directory`; for `did:web:*` it fetches
-`https://<host>/.well-known/did.json`. Both transports are built
-on `reqwest`.
+## Fetch the tutorial lens
 
-If the DID does not resolve, the CLI prints a structured error
-on stderr (the message is `IdentityError`-shaped: the variant
-plus the underlying transport message).
-
-## Fetch a record
-
-`idiolect fetch` takes an at-uri and returns the raw record body
-(the `value` field of the xrpc response, not the response
-envelope). The project DID has a tutorial lens record published;
-fetching it exercises the runtime path end to end:
+An [AT-URI](../glossary.md#at-uri "AT Protocol record address") identifies one
+record by DID, collection, and record key. Fetch the published tutorial
+[lens](../glossary.md#lens "Bidirectional schema translation"):
 
 ```bash
 idiolect fetch \
   at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text
 ```
 
-The response is a `dev.panproto.schema.lens` body carrying the
-protolens chain (`blob`), the source and target schema at-uris,
-the optic class (`iso`), and the content hash. Chapter 3 takes
-this exact record and runs it through `apply_lens`.
-
-The fetch goes through the same `PdsClient` impl `apply_lens`
-uses, so any record you can fetch this way you can also feed
-into the lens runtime.
-
-## Where things are stored
-
-| Artifact | Location |
-| --- | --- |
-| The `idiolect` binary | `~/.cargo/bin/idiolect` |
-| Cached crate sources | `~/.cargo/registry/src/` |
-| Cached PLC responses | `~/.cache/idiolect/plc/` (only if you set `IDIOLECT_CACHE_DIR`) |
-
-You do not need to wire any of this up by hand. The next chapter
-takes the raw json `idiolect fetch` returned and validates it
-against the shipped lexicon.
+The result is a real `dev.panproto.schema.lens` record. Its `sourceSchema` and
+`targetSchema` fields identify the schemas it connects, while `blob` contains
+the Panproto lens definition. Keep the checkout: the next chapter validates a
+typed record with the same libraries the CLI uses.

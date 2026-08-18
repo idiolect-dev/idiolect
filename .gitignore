@@ -33,6 +33,8 @@ build/
 
 # dev
 notes/
+__pycache__/
+*.py[cod]
 
 # claude code runtime state
 .claude/

@@ -1,6 +1,6 @@
 # dev.idiolect.vocab
 
-A community-published vocabulary. Two compatible shapes are
+A community-published [vocabulary](../../glossary.md#vocabulary). Two compatible shapes are
 supported:
 
 1. The legacy single-relation **tree** (`actions` + `top` + `world`),
@@ -16,8 +16,8 @@ vocabularies should prefer the graph shape. The tree stays valid
 for backward compatibility and remains a good fit for pure
 subsumption hierarchies.
 
-The graph shape is modelled after `pub.chive.graph.{node,edge}`,
-so cross-vocabulary translation, SKOS-style
+The graph shape is modeled after `pub.chive.graph.{node,edge}`,
+so cross-vocabulary translation, [SKOS](https://www.w3.org/TR/skos-reference/)-style
 `broader_than`/`narrower_than` mappings, and external-id
 alignment (Wikidata, ROR, ORCID, ...) are first-class.
 
@@ -85,7 +85,7 @@ metadata.
 | `notation` | string (≤500) | no | SKOS `notation`: non-text identifier. |
 | `externalIds` | array (≤20) of `externalId` | no | Mappings to external knowledge bases. |
 | `status` | open enum | no | `proposed` / `provisional` / `established` / `deprecated`. |
-| `relationMetadata` | `relationMetadata` | no | OWL Lite property characteristics. Required for `kind: relation`. |
+| `relationMetadata` | `relationMetadata` | no | [OWL 2](https://www.w3.org/TR/owl2-syntax/) property characteristics. Required for `kind: relation`. |
 
 ### `vocabNode.kind`
 
@@ -106,7 +106,7 @@ metadata.
 | `relationSlug` | string | yes | Relation slug. References a relation-kind node. |
 | `metadata` | unknown | no | Edge metadata, free-form. |
 
-## OWL Lite property characteristics
+## OWL property characteristics
 
 A `relation`-kind node carries metadata declaring algebraic
 properties:

@@ -1,6 +1,6 @@
 # dev.idiolect.retrospection
 
-A signed annotation of a prior encounter with a delayed finding.
+A signed [record](../../glossary.md#record) that annotates a prior encounter with a delayed finding.
 Retrospections address silent-error latency: merges, migrations,
 and bitemporal reconciliations often surface failures only after
 long delay.
@@ -33,7 +33,7 @@ long delay.
 | `detail` | string (≤8000 graphemes) | yes | Narrative detail. |
 | `evidence` | union of `evidenceDivergence` / `evidenceLoss` / `evidenceMismatch` | no | Structured witness for the finding. |
 
-## Why a separate record kind
+## Finding timing
 
 Encounters are at-record-time. Corrections are short-loop. A
 retrospection covers the case where the finding surfaces *after*
@@ -75,14 +75,14 @@ Precomputed for aggregation convenience. The value is
 findings by latency (e.g. "what's the median time-to-detect for
 merge-divergence findings?") read this field directly. Authors
 may omit it for `kind: other` findings where latency is not
-meaningful.
+defined.
 
 ### `confidence`
 
-Optional, in `[0, 1]`. A finding the detecting party is sure of
-omits it. A finding hedged on uncertain evidence sets a value
-below 1. Aggregators may weight findings by confidence. Consumers
-treating findings as ground truth filter for high confidence.
+The optional value lies in `[0, 1]`. A finding the detecting party is sure of
+omits it, while a finding hedged on uncertain evidence sets a value below 1.
+Aggregators may weight findings by confidence. Consumers treating findings as
+ground truth filter for high confidence.
 
 ### `disputedAttribution`
 
@@ -112,7 +112,7 @@ the repo signer carry the relevant attribution.
   },
   "finding": {
     "kind": "data-loss",
-    "detail": "Lens dropped the `provenance` array on records with > 100 entries; not detected at write time because all sampled inputs had ≤ 50 entries.",
+    "detail": "Lens dropped the `provenance` array on records with more than 100 entries; not detected at write time because all sampled inputs had at most 50 entries.",
     "evidence": {
       "$type": "dev.idiolect.defs#evidenceLoss",
       "sourceField": "provenance",

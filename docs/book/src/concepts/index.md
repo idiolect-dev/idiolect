@@ -1,20 +1,44 @@
 # Concepts
 
-The Concepts section explains the model the runtime is built on.
-The chapters are self-contained but assume basic familiarity with
-ATProto records and panproto's lens vocabulary. [What you need
-first](./prerequisites.md) states the assumed background.
+The Concepts chapters explain the model behind idiolect. They begin with a
+concrete coordination failure, introduce the records that make translation
+knowledge public, and then develop the formal and governance consequences.
+Procedures stay in the [Guides](../guide/index.md); field-level contracts stay
+in [Reference](../reference/index.md).
 
-| Chapter | What it explains |
-| --- | --- |
-| [Why idiolect exists](./why-idiolect.md) | The founding problem, developed through one worked example; no formalism. |
-| [What you need first](./prerequisites.md) | The assumed background: ATProto's record model, plus one concept from panproto (the lens). |
-| [Idiolect, dialect, language](./idiolect-dialect-language.md) | The frame the project is named after; what each layer is responsible for. |
-| [The dev.idiolect.* lexicon family](./lexicon-family.md) | The shipped lexicons, what each one covers, and how they compose. |
-| [Records as content-addressed signed data](./atproto-records.md) | Why ATProto's record model is the substrate; what the runtime gets for free. |
-| [Lens semantics and laws](./lens-laws.md) | The `get` / `put` / complement model, GetPut, PutGet, optic classification. |
-| [Open enums and vocabularies](./open-enums.md) | Why every enum field is open; how `*Vocab` siblings extend slugs. |
-| [The vocabulary knowledge graph](./vocab-graph.md) | The typed multi-relation graph, OWL Lite, SKOS Core, registry queries. |
-| [Deliberation](./deliberation.md) | The deliberation lexicons, how they relate to belief / recommendation. |
-| [Observer protocol](./observer.md) | Why aggregate state lives in records, not in a central endpoint. |
-| [Lexicon evolution policy](./lexicon-evolution.md) | Every lexicon revision ships with a derived, classified, verified, published lens. |
+## A first pass
+
+Read these chapters in order if the project is new to you:
+
+1. [Why idiolect exists](./why-idiolect.md) names the private-converter problem
+   and follows one translation through the record family.
+2. [What you need first](./prerequisites.md) supplies the small amount of
+   [ATProto](https://atproto.com/guides/overview) and panproto background used
+   elsewhere.
+3. [Idiolect, dialect, language](./idiolect-dialect-language.md) separates the
+   linguistic analogy from the concrete runtime artifacts.
+4. [The `dev.idiolect.*` lexicon family](./lexicon-family.md) maps those artifacts
+   onto the sixteen record kinds shipped by the repository.
+
+## Runtime model
+
+The next four chapters explain how the runtime interprets those records:
+
+- [Records in signed, content-addressed repositories](./atproto-records.md)
+  distinguishes record identity, record content, and repository proof.
+- [Open enums and vocabularies](./open-enums.md) explains how unfamiliar slugs
+  survive decoding and acquire community-specific meanings.
+- [The vocabulary knowledge graph](./vocab-graph.md) develops the graph queries
+  behind that interpretation.
+- [Observer protocol](./observer.md) explains how event folds become
+  independently published observation records.
+
+## Formal and governance paths
+
+[Lens semantics and laws](./lens-laws.md) is the formal center of the book. It
+introduces complements, round-trip laws, optic classification, and symmetric
+span construction against panproto 0.70.1. [Deliberation](./deliberation.md)
+then separates a community's decision process from its settled beliefs and
+recommendations. [Lexicon evolution policy](./lexicon-evolution.md) closes the
+section by comparing the intended migration gate with the enforcement that the
+current checkout actually provides.

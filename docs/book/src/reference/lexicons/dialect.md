@@ -1,6 +1,6 @@
 # dev.idiolect.dialect
 
-A community's bundle of idiolect references and preferred
+A community's [dialect](../../glossary.md#dialect): a bundle of idiolect references and preferred
 translations. Dialects are declared, not imposed: downstream
 consumers may adopt, adapt, or ignore them.
 
@@ -34,7 +34,7 @@ consumers may adopt, adapt, or ignore them.
 
 ## Field details
 
-### What a dialect is
+### Contract semantics
 
 A dialect is a *bundle*. It does not introduce new lexicons; it
 collects existing ones into a coherent set the community treats
@@ -72,8 +72,9 @@ successor. Consumers reading a record at the deprecated `ref` can
 follow `replacement` to the new one, with the `reason` field
 explaining why.
 
-The lexicon-evolution policy generates deprecation entries
-automatically when a non-Iso lens revision ships. See
+The intended lexicon-evolution policy calls for a deprecation entry when a
+non-`Iso` lens revision ships; the current automation does not enforce this
+rule reliably. See
 [Lexicon evolution policy](../../concepts/lexicon-evolution.md).
 
 ## Example

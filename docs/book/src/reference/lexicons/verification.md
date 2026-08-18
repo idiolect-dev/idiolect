@@ -1,9 +1,9 @@
 # dev.idiolect.verification
 
-A signed assertion of a formal property of a lens. Verifications
-are the *formal-channel* primitive: they coexist with the emergent
-channel (encounters, corrections, observations) and neither gates
-the other. `property` is a structured `lensProperty` (see
+A signed [verification](../../glossary.md#verification) of a formal property of a [lens](../../glossary.md#lens). Verifications
+record formal claims alongside operational evidence from encounters,
+corrections, and observations; neither evidence source gates the other.
+`property` is a structured `lensProperty` (see
 [`defs`](./defs.md)) so consumers dispatch on the specific claim:
 a `Theorem` for proof checkers, a `GeneratorSpec` for PBT runners,
 a `ConformanceStandard` for conformance runners, and so on.
@@ -49,10 +49,10 @@ together pin exactly what was verified.
 
 A consumer reading a verification record dispatches on `kind`,
 matches against the embedded `property`, and decides whether the
-specific verification meets its needs. A roundtrip-test verification
-that covers `domain: "all valid v1 records with bodies ≤ 1024 bytes"`
-is meaningfully different from one that covers `domain: "the
-training corpus"`; both are valid, neither subsumes the other.
+specific verification meets its needs. A roundtrip-test verification covering
+`domain: "all valid v1 records with bodies at most 1024 bytes"` tests a
+different input set from one covering `domain: "the training corpus"`; both
+are valid, and neither subsumes the other.
 
 ## Field details
 
@@ -73,7 +73,7 @@ captures the falsification and lets consumers decide.
 
 The `tool` field records the tool's name, version, and optional
 commit. Consumers reading a verification can decide whether to
-trust the tool: `panproto-check@0.39.0` plus a known-good commit
+trust the tool: `panproto-check@0.70.1` plus a known-good commit
 is a different signal from a tool the consumer has never heard of.
 
 ### `verifier`
@@ -119,12 +119,12 @@ falsification independently.
   "verifier": "did:plc:verifier",
   "tool": {
     "name": "panproto-check",
-    "version": "0.39.0",
+    "version": "0.70.1",
     "commit": "02158abb"
   },
   "property": {
     "$type": "dev.idiolect.defs#lpRoundtrip",
-    "domain": "all valid v1 records with bodies ≤ 1024 bytes",
+    "domain": "all valid v1 records with bodies at most 1024 bytes",
     "generator": "https://corpus.example/v1-1k-sample.zip"
   },
   "result": "holds",
@@ -132,7 +132,7 @@ falsification independently.
 }
 ```
 
-## Verifications and recommendations
+## Related records
 
 A `dev.idiolect.recommendation` lists `requiredVerifications`. A
 consumer adopting the recommendation queries the verifier registry

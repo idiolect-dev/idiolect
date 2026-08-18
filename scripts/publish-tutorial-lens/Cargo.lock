@@ -705,7 +705,7 @@ checksum = "3d3067d79b975e8844ca9eb072e16b31c3c1c36928edf9c6789548c524d0d954"
 
 [[package]]
 name = "idiolect-lens"
-version = "0.8.0"
+version = "0.11.1"
 dependencies = [
  "idiolect-records",
  "panproto-inst",
@@ -720,7 +720,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-records"
-version = "0.8.0"
+version = "0.11.1"
 dependencies = [
  "cid",
  "language-tags",
@@ -733,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "idiolect-verify"
-version = "0.8.0"
+version = "0.11.1"
 dependencies = [
  "idiolect-lens",
  "idiolect-records",
@@ -1032,8 +1032,8 @@ checksum = "d211803b9b6b570f68772237e415a029d5a50c65d382910b879fb19d3271f94d"
 
 [[package]]
 name = "panproto-expr"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -1042,8 +1042,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-gat"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "miette",
  "panproto-expr",
@@ -1054,8 +1054,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-inst"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "bumpalo",
  "panproto-expr",
@@ -1070,8 +1070,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-lens"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -1087,8 +1087,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-mig"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -1102,8 +1102,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-protocols"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "blake3",
  "panproto-gat",
@@ -1112,13 +1112,14 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "smallvec 2.0.0-alpha.12",
  "thiserror",
 ]
 
 [[package]]
 name = "panproto-schema"
-version = "0.47.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.47.0#645542a1fd81a4cea278ea85bb52716fd6d64aee"
+version = "0.70.1"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.70.1#ee2f52d52e372e2ef771801d67c6b4469e165e1e"
 dependencies = [
  "panproto-expr",
  "panproto-gat",

@@ -1,6 +1,7 @@
 # dev.idiolect.deliberationVote
 
-A stance taken on a [`deliberationStatement`](./deliberationStatement.md).
+A stance taken on a [`deliberationStatement`](./deliberationStatement.md),
+pinned by a [strong reference](../../glossary.md#strong-reference).
 Stance is an open-enum slug resolved against a community-published
 vote-stance vocabulary. The Acorn-style three-way default
 (`agree` / `pass` / `disagree`) is canonical. Richer vocabularies
@@ -27,7 +28,7 @@ Consumers that don't need them ignore them.
 
 ## Field details
 
-### Why pin the statement by CID
+### `subject`
 
 The `subject` field carries both AT-URI and CID. A statement
 edited after the vote was cast does not retroactively change what
@@ -64,7 +65,7 @@ to the canonical idiolect default.
 
 ### `weight`
 
-Optional ranking signal. The `[0, 1000]` integer range encodes
+The optional `weight` is a ranking signal. Its `[0, 1000]` integer range encodes
 the 0.0–1.0 floating-point range with three decimal places of
 precision. Convention follows `pub.chive.graph.edge#weight`.
 
@@ -76,7 +77,7 @@ quadratic-vote fold read both the stance and the weight.
 
 ### `rationale`
 
-Optional narrative. Tally folds do not consume `rationale`.
+The optional `rationale` is narrative. Tally folds do not consume it.
 Consumer surfaces (e.g. a deliberation viewer) display it
 alongside the vote. The 500-grapheme cap matches the
 deliberation-statement length: brevity is conventional.
@@ -96,7 +97,7 @@ signature is the authoritative provenance signal.
   "$type": "dev.idiolect.deliberationVote",
   "subject": {
     "uri": "at://did:plc:community/dev.idiolect.deliberationStatement/3l5",
-    "cid": "bafy..."
+    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
   },
   "stance": "agree",
   "weight": 750,
@@ -105,7 +106,7 @@ signature is the authoritative provenance signal.
 }
 ```
 
-## Folded into the outcome
+## Related records
 
 A vote does not produce an outcome on its own. An observer reads
 the vote stream for a deliberation, folds by `(statement, stance)`

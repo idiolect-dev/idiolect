@@ -6,19 +6,20 @@
 > authoritative reference is the source above plus the rustdoc
 > built locally with `cargo doc -p idiolect-verify --open`.
 
-Verification runners with declarative dispatch. Driven by
-`verify-spec/runners.json`. Codegen emits the kind taxonomy.
+The crate provides [verification](../../glossary.md#verification) runners with
+declarative dispatch. `verify-spec/runners.json` drives the surface, and code
+generation emits the kind taxonomy.
 
 Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-verify = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0" }
+idiolect-verify = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.11.1" }
 ```
 
 ## Public surface
 
-```rust
+```text
 pub trait VerificationRunner: Send + Sync {
     fn kind(&self) -> VerificationKind;
     fn tool(&self) -> Tool;
@@ -32,7 +33,7 @@ an error: a falsified verification is a first-class record.
 `VerifyError` is reserved for input-shape, transport, or
 irrecoverable-state failures.
 
-The `build_verification` helper packages a runner result into a
+The `runner::build_verification` helper packages a runner result into a
 `Verification` record shaped for direct publication via
 `idiolect_lens::RecordPublisher::create`.
 
@@ -45,12 +46,12 @@ kinds:
 | --- | --- |
 | `roundtrip-test` | `RoundtripTestRunner` — runs `put(get(a)) == a` over a corpus. |
 | `property-test` | `PropertyTestRunner` — runs an arbitrary boolean predicate over a corpus. |
-| `static-check` | `StaticCheckRunner` — runs panproto's existence and structural checks against the lens chain. |
+| `static-check` | `StaticCheckRunner` — resolves the lens's source and target schemas and runs panproto's schema validator on both. |
 | `coercion-law` | `CoercionLawRunner` — runs panproto's sample-based coercion-law checker, optionally via a `CoercionLawClient`. |
 
 The lexicon's `verification.kind` field is open-enum and lists
 additional kinds (`formal-proof`, `conformance-test`,
-`convergence-preserving`). Those kinds are *recognised* but not
+`convergence-preserving`). Those kinds are *recognized* but not
 shipped as runners. Communities that need them author their own
 runner against the trait.
 

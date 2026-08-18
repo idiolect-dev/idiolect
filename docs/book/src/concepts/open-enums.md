@@ -1,129 +1,94 @@
 # Open enums and vocabularies
 
-Closed enums are the wrong default for a federated lexicon.
-Adding a value should not require coordinating with every
-consumer. Refusing to accept a new value should not be the
-default.
+ATProto Lexicon distinguishes suggested string values from closed enumeration.
+`knownValues` lists common values but does not restrict the string; `enum`
+defines a closed set. The distinction is part of the official
+[Lexicon string specification](https://atproto.com/specs/lexicon#string).
 
-idiolect's policy is: every enum-shaped field is open, and the
-extension story is mechanical.
+idiolect builds its extension convention on `knownValues`. We call the
+combination of an open slug and an optional vocabulary reference the
+**open-enum pair (OEP)**.
 
-## The wire shape
+## Wire shape
 
-An open-enum field carries `knownValues` and a sibling `*Vocab`
-reference:
+The adapter Lexicon contains an OEP for its invocation protocol:
 
 ```json
-"kind": {
-  "type": "string",
-  "knownValues": ["subprocess", "http", "wasm"],
-  "description": "Slug; resolves as a node in the vocab referenced by `kindVocab`."
-},
-"kindVocab": {
-  "type": "ref",
-  "ref": "dev.idiolect.defs#vocabRef",
-  "description": "Vocabulary record whose nodes constitute the open extension."
+{
+  "kind": {
+    "type": "string",
+    "knownValues": ["subprocess", "http", "wasm"]
+  },
+  "kindVocab": {
+    "type": "ref",
+    "ref": "dev.idiolect.defs#vocabRef"
+  }
 }
 ```
 
-`kindVocab` is optional. When omitted, the canonical
-idiolect-published vocab for that field is the implicit default.
-A community-published vocab listed here extends the slugs the
-field accepts.
+The record's `kind` value may be `subprocess` or a value that did not exist when
+the consumer generated its bindings. `kindVocab`, when present, identifies a
+[vocabulary](../glossary.md#vocabulary "A published graph that assigns relations and annotations to open slugs")
+in which the slug can be interpreted.
 
-## The codegen shape
+Many idiolect Lexicons describe an omitted `*Vocab` field as selecting a
+canonical project vocabulary. That default is a convention in the schema
+description, not a URI inserted by deserialization. A consumer that needs graph
+semantics must choose or configure the default record itself.
 
-`idiolect-codegen` reads `knownValues` and emits:
+## Generated bindings
 
-```rust
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Kind {
-    Subprocess,
-    Http,
-    Wasm,
-    Other(String),
-}
-```
+The Rust generator turns the example into
+`AdapterInvocationProtocolKind::{Subprocess, Http, Wasm, Other(String)}`.
+Serialization preserves the wire slug, including the string inside `Other`.
+The TypeScript generator emits the literal union
+`"subprocess" | "http" | "wasm" | string & {}` so editors retain completion for
+known values without rejecting extensions.
 
-Plus hand-written `Serialize` / `Deserialize` impls that round-trip
-unknown slugs through `Other(String)`. The TypeScript half emits
-`'a' | 'b' | (string & {})` for the same purpose.
+Rust open-enum types also expose three graph-facing operations:
 
-Three helper methods sit on every emitted open-enum type:
+- `is_subsumed_by` tests the `subsumed_by` relation in one `VocabGraph`.
+- `satisfies` tests reachability under a caller-selected relation.
+- `translate_to` asks a `VocabRegistry` for an `equivalent_to` translation
+  between two registered vocabulary URIs.
 
-```rust
-impl Kind {
-    pub fn is_subsumed_by(
-        &self,
-        graph: &VocabGraph,
-        ancestor: &str,
-    ) -> bool { /* ... */ }
+None of these methods fetches a vocabulary record. Loading, validating, and
+caching those records remains the caller's responsibility.
 
-    pub fn satisfies(
-        &self,
-        graph: &VocabGraph,
-        relation: &str,
-        target: &str,
-    ) -> bool { /* ... */ }
+## Preservation before interpretation
 
-    pub fn translate_to<T: From<String>>(
-        &self,
-        src_vocab_uri: &str,
-        tgt_vocab_uri: &str,
-        registry: &VocabRegistry,
-    ) -> Option<T> { /* ... */ }
-}
-```
+The OEP separates two requirements. **Preservation** means that an old consumer
+can decode and reserialize an unfamiliar slug without replacing it. Generated
+`Other(String)` variants provide that behavior. **Interpretation** means that a
+consumer knows how the slug relates to a requirement such as `subprocess`.
+Interpretation requires a loaded graph and a relation query.
 
-These are what consumers call instead of comparing strings. A
-consumer asking "is this `kind` a subprocess?" calls
-`k.is_subsumed_by(&vocab, "subprocess")` and gets `true` for any
-slug the vocab declares as `subsumed_by` subprocess (`docker-run`,
-`fly-machines-launch`, etc.) without changing the consumer's code.
+This separation avoids a common failure mode in federated systems: treating an
+unknown value as invalid merely because local code has not seen it. It does not
+require a consumer to accept the value for every purpose. A policy may preserve
+`fly-machine` on the wire and still decline to execute it because the relevant
+vocabulary is missing or untrusted.
 
-## Why this shape
+## Closed fields
 
-Closed enums force a coordination problem: adding a value requires
-every consumer to upgrade their code before any producer publishes
-the new value. Open enums turn it into a vocabulary problem: the
-producer publishes the vocab, the consumer queries the vocab at
-runtime, and unknown slugs degrade gracefully to `Other(String)`
-when the consumer has not loaded the vocab.
+The shipped Lexicons still use `enum` for meta-policy fields whose extension
+would alter a parser or runtime contract. `vocab.world` and the per-relation
+`world` override, for instance, are closed over `open`, `closed-with-default`,
+and `hierarchy-closed`. Unions may also be explicitly closed under the Lexicon
+rules.
 
-The cost is one extra indirection per slug interpretation. The
-shipped `VocabRegistry` caches vocabs by at-uri, so the cost is
-amortized across the process lifetime.
+Changing a field from `enum` to `knownValues` expands the accepted wire values,
+but it can also change generated source types. Existing record values remain in
+the larger set; downstream code still needs regeneration and review.
 
-## What stays closed
+## Identifier collisions
 
-A few fields are intentionally closed. They are meta-policy fields
-where extending the value space would change the runtime's
-contract, not the data:
+Distinct slugs can normalize to the same Rust variant name. The generator keeps
+the first name and adds a numeric suffix to later collisions, deterministically
+within the generated enum. It also avoids using `Other` as the fallback name
+when `Other` is itself a declared slug, selecting another fallback variant
+instead. These rules preserve every wire value, though authors should still
+prefer slugs whose generated names remain readable.
 
-- `vocab.world` (`open` / `closed-with-default` / `hierarchy-closed`)
-  controls the runtime's open-enum policy itself.
-- `lensClass` (`isomorphism` / `injection` / `projection` /
-  `affine` / `general`) is a panproto contract. Extending it
-  changes what the runtime promises.
-- `recordHosting` (`member-hosted` / `community-hosted` / `hybrid`)
-  controls a federation policy.
-
-A new value here is a runtime change, not a record change.
-
-## Migration
-
-Converting a closed enum to an open enum is wire-compatible:
-existing records continue to validate, and the codegen-emitted
-helpers degrade to "if `Other`, ignore" in consumers that have
-not regenerated. Going the other way is breaking, and the shipped
-lexicons do not do that.
-
-## Codegen identifier collisions
-
-When two distinct slugs would pascal-case to the same Rust
-identifier (`foo-bar` and `foo_bar`), the second occurrence gets
-a numeric suffix (`FooBar2`). The collision is resolved
-deterministically per lexicon, so two regenerations of the same
-lexicon produce the same identifier names. The collision report
-is printed at codegen time so authors can rename a slug when the
-generated name is awkward.
+[The vocabulary knowledge graph](./vocab-graph.md) develops the graph semantics
+that turn preserved strings into queryable relations.

@@ -15,11 +15,26 @@ if you depend on this project, and read this file before bumping.
 
 ### Changed
 
+- Panproto pins now target v0.70.1 across the workspace and the standalone
+  tutorial package. The vendored `dev.panproto.*` subset is byte-identical to
+  the corresponding v0.70.1 files; its provenance metadata now records the
+  verified upstream commit.
+- The mdBook now provides beginner, project-integration, and advanced/formal
+  reading paths while retaining separate tutorial, guide, explanation, and
+  reference quadrants. Its prose, terminology links, examples, and validation
+  infrastructure received a complete editorial and technical pass.
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- Symmetric view-only lens execution now uses Panproto's
+  `put_without_complement` path. Panproto 0.70.1 rejects an empty complement
+  whose shape could not have come from `get`; idiolect now reconstructs only
+  through an isomorphic incoming leg and returns a translation error for a
+  lossy leg that requires saved complement data.
 
 ### Security
 

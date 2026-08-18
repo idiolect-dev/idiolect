@@ -1,119 +1,96 @@
-# Records as content-addressed signed data
+# Records in signed, content-addressed repositories
 
-Every artifact in idiolect is an ATProto record. A record is:
+ATProto separates three coordinates that are easy to conflate: a record's
+mutable address, the CID of its current content, and the signed commit that
+authenticates a repository state. idiolect relies on all three, but its current
+runtime does not verify all three on every read.
 
-- a JSON object,
-- with a `$type` field identifying its lexicon,
-- stored at a `(did, collection, rkey)` triple,
-- content-addressed by its CID,
-- signed by the publishing repo's signing key.
+## Address, content, and proof
 
-ATProto's record model is documented in the
-[ATProto spec](https://atproto.com/specs/repository).
-This chapter covers the properties idiolect relies on.
+A [record](../glossary.md#record "A typed data object stored at a repository path")
+lives at a repository path `(collection, rkey)` owned by an account DID. An
+[AT-URI](../glossary.md#at-uri "A mutable address for an ATProto record") combines
+those coordinates:
 
-## Properties idiolect relies on
-
-### 1. Records are signed
-
-Every commit is signed by the repo's signing key. A consumer
-fetching a record can verify the signature against the repo head
-and the head against the canonical PLC directory entry. idiolect's
-trust model is rooted in those signatures: a verification record
-is only as trustworthy as its signer.
-
-The runtime does not re-validate signatures on every read. The
-shipped path is:
-
-```mermaid
-sequenceDiagram
-    Consumer->>PDS: getRecord(uri)
-    PDS-->>Consumer: { value, cid, signed_commit }
-    Consumer->>PLC: resolve did
-    PLC-->>Consumer: signing_key
-    Consumer->>Consumer: verify cid against signed_commit
-    Consumer->>Consumer: verify signed_commit against signing_key
+```text
+at://did:plc:example/dev.panproto.schema.lens/3kexample
 ```
 
-The verification step is what `idiolect-identity` plus the
-`VerifyingResolver` in `idiolect-lens` give you. Cache the
-resolved signing key, re-fetch only on cache miss, and treat a
-mismatch as a hard error.
+The AT-URI is stable across updates to that path. A
+[CID](../glossary.md#cid "A content identifier derived from encoded bytes") names
+one encoded record value. Updating the record preserves the AT-URI and changes
+the CID when its content changes.
 
-### 2. Records are content-addressed
+The repository's Merkle Search Tree maps the path to that record CID. Its root
+appears in a signed repository commit. Consequently, provenance verification is
+a chain:
 
-A record's CID is derived from its canonical bytes. Two records
-with the same content have the same CID. The CID is what the lens
-record's `object_hash` field carries, and what the
-`VerifyingResolver` checks before instantiating a lens. A
-malicious upstream cannot serve a different lens under the same
-at-uri without changing the CID, and the CID change is observable.
+```mermaid
+flowchart LR
+    URI[AT-URI path] --> MST[repository MST]
+    MST --> CID[record CID]
+    MST --> ROOT[tree root CID]
+    ROOT --> COMMIT[signed commit]
+    COMMIT --> DID[DID document key]
+```
 
-### 3. Records compose by reference
+The official [repository specification](https://atproto.com/specs/repository)
+defines this proof structure. Saying that a record is "signed" is convenient
+shorthand, but the signature is on the commit, not embedded in each record.
 
-A record can reference another record by at-uri or by `strongRef`
-(at-uri + CID). A `strongRef` is content-addressed, so the
-reference points at exactly one byte sequence. An at-uri is a
-mutable pointer.
+## Mutable and strong references
 
-idiolect uses `strongRef` for evidence (`belief.evidence`,
-`correction.encounter`, `verification.lens`) and at-uri for
-queries that should follow updates (`recommendation.lensPath`,
-`dialect.entries[].vocab`). The choice in each lexicon is
-deliberate. See the per-lexicon reference for the rationale.
+An AT-URI alone follows the current value at a path. A
+[strong reference](../glossary.md#strong-reference "An AT-URI paired with a CID to pin one record revision")
+pairs that URI with a CID. idiolect uses strong-reference-shaped definitions
+where later mutation would change the subject of a claim, including beliefs,
+deliberation statements, votes, and outcomes. Other fields intentionally use an
+AT-URI or a custom reference with an optional CID when following updates may be
+intended.
 
-### 4. Records survive PDS migration
+This choice is semantic. A vote should continue to name the statement revision
+on which it was cast; a dialect's `previousVersion` link, by contrast, names a
+record path in a version chain.
 
-ATProto's identity layer (PLC plus did:web) lets a repo move
-between PDSes without changing its `did`. A record fetched by
-at-uri after a PDS migration goes through one extra DID-resolve
-hop and arrives at the new PDS. idiolect's runtime path goes
-through `idiolect-identity` for every fetch. PDS migration is
-transparent.
+## What the current runtime verifies
 
-## Properties idiolect adds on top
+The read path has two distinct verification layers:
 
-### 5. Lexicon validation at the boundary
+1. `PdsResolver` and the PDS clients fetch record values. They do not currently
+   validate an ATProto repository proof chain or commit signature.
+2. `VerifyingResolver<R, H>` canonicalizes a resolved lens record's `blob`,
+   hashes those JSON bytes, and compares the result with that same record's
+   `objectHash`. The bundled `Sha256Hasher` accepts the `sha256:` prefix.
 
-Every shipped record kind validates against its lexicon at parse
-time. A field that violates a `format`, `maxLength`, or
-`required` constraint fails to deserialize before any business
-logic runs. The boundary is exactly where you want it.
+The second check detects disagreement between a lens blob and its declared
+application-level hash. It is not a substitute for repository signature
+verification: an untrusted response could alter both fields unless the caller
+also authenticates the record through ATProto's repository machinery.
 
-### 6. Family-typed dispatch
+The `idiolect-identity` crate resolves a DID document and its PDS service URL.
+It does not connect a fetched record CID to a signed repository commit. We call
+this missing connection the **proof-boundary gap (PBG)**. Deployments that need
+cryptographic provenance must close the PBG outside the currently shipped
+resolver stack.
 
-The codegen-emitted family modules (`idiolect_records::IdiolectFamily`)
-let consumers be generic over the family. A firehose handler that
-takes a `RecordHandler<F: RecordFamily>` filters out-of-family
-commits before decode. The crate-level reference covers
-`OrFamily<F1, F2>` for composing families.
+## What idiolect adds above storage
 
-### 7. Open enums
+ATProto supplies record addressing, repository content addressing, signed
+commits, account migration through DID service resolution, and the Lexicon
+schema language. idiolect adds typed Rust and TypeScript bindings, record-family
+dispatch, vocabulary graph queries, lens resolution, verification records, and
+community policy records.
 
-Every enum-shaped field is an open enum: known values are typed
-constants, unknown values fall through to `Other(String)`, and the
-sibling `*Vocab` field points at a `dev.idiolect.vocab` record
-where unknown values resolve. This is what lets two communities
-extend the same field without a centralized governance step. See
-[Open enums and vocabularies](./open-enums.md).
+These layers make different claims. A Lexicon describes an intended wire shape;
+a generated decoder decides whether it can construct a typed value; a lens
+relates two schema graphs; and a verification reports the result of a particular
+check. Keeping those claims separate prevents provenance, validation, and
+semantic correctness from collapsing into one ambiguous notion of "valid."
 
-### 8. Internal records do not federate
+## Records outside the public family
 
-Runtime state that should not federate (firehose cursors, OAuth
-tokens) uses the same panproto schema apparatus, but under a
-sibling `dev.idiolect.internal.*` namespace. Conformant firehose
-consumers skip the prefix. The data still travels through the
-same runtime as a public record, just out of band.
-
-## What ATProto does not give you
-
-- **A schema language.** ATProto Lexicon is a constrained type
-  language. It does not cover lens algebra, schema diffs, or
-  optic classification. Those live in panproto, which idiolect
-  embeds.
-- **A migration story.** Lexicon revision is wire-compatible by
-  policy, not by tooling. The lexicon-evolution policy fills the
-  gap. See [Lexicon evolution policy](./lexicon-evolution.md).
-- **A vocabulary registry.** Open-enum slugs need a published
-  knowledge graph to resolve, and ATProto does not ship one. The
-  `dev.idiolect.vocab` record is where the resolution lives.
+Not every runtime datum is a `dev.idiolect.*` record. Cursor stores, OAuth
+sessions, in-memory catalogs, and cached vocabulary graphs are local state.
+Some reuse generated schema machinery, but they do not become federated merely
+because they serialize. The public record family begins where a publisher
+commits a Lexicon-shaped record to an ATProto repository.

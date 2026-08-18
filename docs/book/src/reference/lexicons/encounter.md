@@ -1,8 +1,7 @@
 # dev.idiolect.encounter
 
-A signed record of a single lens invocation. Encounters are the
-*emergent-channel* primitive: they record that a translation
-occurred, with enough context for aggregators (observations) and
+A signed [record](../../glossary.md#record) of a single [lens](../../glossary.md#lens) invocation. Encounters record that a
+translation occurred, with enough context for aggregators (observations) and
 correctors to reason about it. Narrative commentary lives in
 `annotations`. The structured payload in `use` covers the
 action / material / purpose / actor of the invocation.
@@ -48,7 +47,8 @@ end, by which actor" tuple. Consumers that match on actions
 match on *subsumption* against the referenced vocabulary, not on
 substring equality. Two communities that disagree on whether
 `train_model` subsumes `fine_tune` produce different routing
-decisions from the same encounter, which is the right answer.
+decisions from the same encounter, as expected when their vocabularies encode
+different subsumption relations.
 
 ### `kind`
 
@@ -63,10 +63,10 @@ The encounter-kind slug declares what the corpus represents:
 | `adversarial` | An invocation explicitly chosen to stress the lens. |
 
 Observers declare in their method which kinds they weight and
-how. An observation aggregating `invocation-log` plus `curated`
-encounters is meaningfully different from one aggregating only
-`adversarial` ones. The kind and the observer's method together
-determine how the observation should be read.
+how. An observation aggregating `invocation-log` and `curated` encounters has a
+different input distribution from one aggregating only `adversarial`
+encounters. The kind and the observer's method together determine how the
+observation should be read.
 
 ### `downstreamResult`
 
@@ -79,8 +79,8 @@ The invoking party's at-record-time assessment of the outcome:
 | `rejected` | The output was unusable. |
 | `unknown` | The party publishing did not know yet. |
 
-`corrected` is the link between the emergent-channel encounter
-record and the correction record that documents the edit.
+`corrected` links the encounter to the correction record that documents the
+edit.
 Consumers reading correction records traverse back through the
 encounter's `downstreamResult` to confirm the link.
 
@@ -96,11 +96,10 @@ the variants.
 
 ### `visibility`
 
-The five values are policy hints, not access control. idiolect
-does not enforce them today. Records marked
-`community-scoped` should not be served to parties outside the
-named community once scope enforcement lands. Records marked
-`private` should not be published at all.
+The five values are policy hints, not access control. The current
+runtime does not enforce them. `community-scoped` declares that
+consumers should not serve a record outside the named community;
+`private` declares that the record should remain local.
 
 ## Example
 
@@ -123,7 +122,7 @@ named community once scope enforcement lands. Records marked
 }
 ```
 
-## How encounters are consumed
+## Related records
 
 ```mermaid
 flowchart LR
