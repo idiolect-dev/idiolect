@@ -16,7 +16,7 @@ hand.
 
 ```toml
 [dependencies]
-idiolect-records = "0.11.1"
+idiolect-records = "0.12.0"
 ```
 
 The crate has no transport dependencies; it contains data types and their

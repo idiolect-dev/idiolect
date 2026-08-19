@@ -1,7 +1,7 @@
 # CLI
 
 `idiolect` is the command-line tool. The surface below reflects
-idiolect 0.11.1.
+idiolect 0.12.0.
 
 ## Top-level subcommands
 

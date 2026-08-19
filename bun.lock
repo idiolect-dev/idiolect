@@ -12,7 +12,7 @@
     },
     "packages/schema": {
       "name": "@idiolect-dev/schema",
-      "version": "0.11.1",
+      "version": "0.12.0",
       "dependencies": {
         "@atproto/lexicon": "0.4.8",
         "@atproto/syntax": "0.3.4",

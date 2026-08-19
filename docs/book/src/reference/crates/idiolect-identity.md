@@ -15,7 +15,7 @@ methods, and any additional fields the source document carries.
 
 ```toml
 [dependencies]
-idiolect-identity = { version = "0.11.1", features = ["resolver-reqwest"] }
+idiolect-identity = { version = "0.12.0", features = ["resolver-reqwest"] }
 ```
 
 ## Public surface

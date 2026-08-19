@@ -9,7 +9,7 @@ The route surface is generated from
 endpoints: a friendly REST path under `/v1/…` and an
 ATProto-style xrpc path under
 `/xrpc/dev.idiolect.query.<queryName>`. Both call the same
-handler. The snapshot below reflects idiolect 0.11.1.
+handler. The snapshot below reflects idiolect 0.12.0.
 
 ## Liveness and metrics
 

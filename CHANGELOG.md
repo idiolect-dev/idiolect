@@ -15,6 +15,25 @@ if you depend on this project, and read this file before bumping.
 
 ### Changed
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.12.0] - 2026-08-19
+
+### Added
+
+### Changed
+
+- **Breaking:** The view-only `apply_lens_symmetric` entry point now accepts only
+  an isomorphic incoming leg. A lossy leg requires complement state from an
+  earlier `get`; callers that retain that state must use Panproto's
+  complement-aware `SymmetricLens` API.
+
 - Panproto pins now target v0.71.0 across the workspace and the standalone
   tutorial package. The vendored `dev.panproto.*` subset is byte-identical to
   the corresponding v0.71.0 files; its provenance metadata now records the
@@ -35,9 +54,8 @@ if you depend on this project, and read this file before bumping.
 
 - Symmetric view-only lens execution now uses Panproto's
   `put_without_complement` path. Panproto 0.71.0 rejects an empty complement
-  whose shape could not have come from `get`; idiolect now reconstructs only
-  through an isomorphic incoming leg and returns a translation error for a
-  lossy leg that requires saved complement data.
+  whose shape could not have come from `get`; idiolect no longer synthesizes
+  that invalid state.
 
 ### Security
 

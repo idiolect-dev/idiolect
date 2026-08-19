@@ -12,7 +12,7 @@ queries that same state.
 - `GET /metrics` — Prometheus exposition.
 - `GET /v1/stats` — record counts per kind.
 - One pair of REST and XRPC endpoints per declarative query in
-  `orchestrator-spec/queries.json`. The 0.11.1 surface includes:
+  `orchestrator-spec/queries.json`. The 0.12.0 surface includes:
   bounties (open, want-lens, by-requester), adapters (by
   framework, by invocation protocol, with verification),
   recommendations (starting from a source schema), verifications
