@@ -1,6 +1,6 @@
 # dev.idiolect.community
 
-A group of DIDs that declare shared conventions. Self-constituted:
+A group of [DIDs](../../glossary.md#did) that declare shared conventions. Self-constituted:
 there is no central roll and no grading of legitimacy. Communities
 may be small and many.
 
@@ -23,7 +23,7 @@ may be small and many.
 | `membershipRoll` | at-uri | no | External membership record (for communities above ~200 members). |
 | `coreSchemas` | array of `schemaRef` | no | Schemas the community treats as canonical. |
 | `coreLenses` | array of `lensRef` | no | Lenses the community treats as canonical. |
-| `endorsedCommunities` | array of at-uri | no | Other communities recognised as legitimate interlocutors. Not transitive. |
+| `endorsedCommunities` | array of at-uri | no | Other communities recognized as legitimate interlocutors. Not transitive. |
 | `conventions` | array (≤64) of structured convention variants | no | Decidable subset of community conventions. |
 | `conventionsText` | string (≤10000 graphemes) | no | Narrative conventions: style guides, norms not expressible structurally. |
 | `createdAt` | datetime | yes | Publication timestamp. |
@@ -56,7 +56,7 @@ predicate live in `conventionsText`.
 
 ### `members` versus `membershipRoll`
 
-Two ways to represent membership:
+Membership has two representations:
 
 - **Inline `members`** is appropriate for small communities. The
   list lives directly on the community record; reading the
@@ -97,7 +97,7 @@ through the AppView instead of crawling member PDSes.
 
 ### `endorsedCommunities`
 
-A community lists other communities it recognises as legitimate
+A community lists other communities it recognizes as legitimate
 interlocutors. The endorsement is *not* transitive: A endorsing B
 and B endorsing C does not imply A endorsing C. The record only
 states the assertion. Consumers decide what to do with it. Common

@@ -1,9 +1,9 @@
 # dev.idiolect.correction
 
-A signed record of a post-translation edit. Corrections are the
+A signed [record](../../glossary.md#record) of a post-translation edit. Corrections are the
 primary signal an observer uses to detect lens quality issues;
-the reason taxonomy decouples "lens was wrong" from "the world
-is complicated".
+the reason taxonomy distinguishes lens errors from domain differences,
+source errors, downstream requirements, and invocation mistakes.
 
 > **Source:** [`lexicons/dev/idiolect/correction.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/correction.json)
 > · **Rust:** [`idiolect_records::Correction`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.Correction.html)
@@ -15,12 +15,12 @@ is complicated".
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `encounter` | `encounterRef` | yes | The encounter whose output was edited. |
-| `path` | string (≤1024) | yes | JSON Pointer or equivalent into the produced output. |
+| `path` | string (at most 1,024 characters) | yes | JSON Pointer or equivalent into the produced output. |
 | `originalValue` | unknown | no | Value prior to correction. May be elided for visibility reasons. |
 | `correctedValue` | unknown | no | Value after correction. |
 | `reason` | open enum | yes | `lens-error` / `domain-difference` / `source-error` / `downstream-idiosyncrasy` / `user-mistake` / `retrospective`. |
 | `reasonVocab` | `vocabRef` | no | Vocab the reason slug resolves against. |
-| `rationale` | string (≤2000 graphemes) | no | Human-readable justification. |
+| `rationale` | string (at most 2,000 graphemes) | no | Human-readable justification. |
 | `holder` | did | no | Party the correction is attributed to. |
 | `basis` | `basis` | no | Structured grounding for third-party attribution. |
 | `visibility` | `visibility` | yes | Visibility scope. |
@@ -28,7 +28,7 @@ is complicated".
 
 ## Field details
 
-### Why a `reason` taxonomy
+### `reason`
 
 Aggregating corrections naively gives the wrong signal: a lens
 that produces correct output for half its inputs and
@@ -79,19 +79,19 @@ machinery, identical to encounter and belief.
   "$type": "dev.idiolect.correction",
   "encounter": {
     "uri": "at://did:plc:user/dev.idiolect.encounter/3l5",
-    "cid": "bafy..."
+    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
   },
   "path": "/body/text",
   "originalValue": "the quick brown foxes",
   "correctedValue": "the quick brown fox",
   "reason": "lens-error",
-  "rationale": "Lens incorrectly pluralised the singular noun.",
+  "rationale": "Lens incorrectly pluralized the singular noun.",
   "visibility": "public-detailed",
   "occurredAt": "2026-04-19T00:00:00.000Z"
 }
 ```
 
-## How corrections feed observation
+## Related records
 
 ```mermaid
 flowchart LR
@@ -104,9 +104,8 @@ flowchart LR
 A high `lens-error` count in observations is a signal. A high
 `domain-difference` count is just a record of community
 disagreement. Consumers reading observations make routing
-decisions on the former, not the latter; observers therefore
-must publish the breakdown by reason, not just a flat correction
-count.
+decisions on the former, not the latter. Thus, observers must publish
+the breakdown by reason, not just a flat correction count.
 
 ## Concept references
 

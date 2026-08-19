@@ -1,135 +1,147 @@
 # Lens semantics and laws
 
-A lens is a structured pair of functions between two schemas:
+idiolect runs panproto 0.71.0's state-based asymmetric lenses. The basic idea is
+to retain whatever a target view cannot express, then use that retained state
+when translating backward. We call this retained state the
+[complement](../glossary.md#complement "State retained so a backward lens operation can reconstruct its source").
+
+## State-based form
+
+For a source space $S$, view space $V$, and complement space $C$, the runtime
+shape is:
 
 $$
-\get : A \to (B, \complement) \qquad \put : (B, \complement) \to A
+\get : S \to V \times C
 $$
 
-`get` translates a source value `A` into a target view `B` plus a
-**complement** $\complement$ (the data the projection discarded).
-`put` takes a (possibly modified) `B` and the complement, and
-reconstructs an `A`.
-
-This shape is panproto's _state-based asymmetric lens_ and is
-what `idiolect-lens` runs on the wire.
-
-## The laws
-
-A well-formed lens obeys two laws.
-
-### GetPut
-
-Restoring the complement recovers the original.
-
 $$
-\put(\get(a)) = a \qquad \forall a \in A
+\put : V \times C \to S
 $$
 
-In runtime form: if you `apply_lens` a record forward and then
-`apply_lens_put` it back, you get the source bytes you started
-with.
+Given a source $s$, `get` returns a view $v$ and complement $c$. A caller may
+modify the view and then call `put` with the modified view and the original
+complement. In `idiolect-lens`, `apply_lens` and `apply_lens_put` expose these
+two directions over JSON records after parsing them into panproto instances.
 
-### PutGet
+Consider the event schemas from [Why idiolect exists](./why-idiolect.md). If the
+target has a structured `venue` but cannot represent every character of the
+source's free-text `where`, `get` may place the residual source data in $c$.
+The complement is thus record-specific state, not metadata that can be safely
+reconstructed from the lens definition alone.
 
-Lifting then projecting gives back the modified view.
+## Round-trip laws
 
-$$
-\get(\put(b, c)) = (b, c) \qquad \forall b \in B, c \in \complement
-$$
-
-In runtime form: if you write a target view through `put` and
-then read it back through `get`, the view and complement match
-what you wrote.
-
-### Iso laws
-
-When the lens is an isomorphism (no information dropped), the
-complement is empty and the laws collapse:
+A well-behaved lens satisfies two obligations. **GetPut** says that reading an
+unmodified view and writing it back recovers the source:
 
 $$
-\put(\get(a)) = a \qquad \get(\put(b)) = b
+\put(\get(s)) = s
 $$
 
-The two directions are total inverses.
+Here `put(get(s))` abbreviates destructuring the pair returned by `get` and
+passing both components to `put`.
+
+**PutGet** says that writing a view with a compatible complement and reading it
+again recovers that view:
+
+$$
+\pi_V\bigl(\get(\put(v,c))\bigr) = v
+$$
+
+The projection $\pi_V$ selects the view component. panproto's `check_laws`
+checks GetPut on one concrete source, checks PutGet on its original view, and
+also tries a mechanically modified view when one can be produced. Passing this
+check is evidence about those instances; it is not a proof over all $s$, $v$,
+and $c$.
+
+For an isomorphism the complement is empty, and the two operations are
+inverses:
+
+$$
+\put(\get(s)) = s
+\qquad
+\get(\put(v)) = v
+$$
 
 ## Optic classification
 
-panproto's classifier assigns each lens chain one of five classes,
-based on what the chain promises:
+panproto classifies a theory transform structurally with `OpticKind`. Version
+0.71.0 uses these five variants:
 
-| Class | What it promises | What it allows |
+| Kind | Structural reading | Complement role |
 | --- | --- | --- |
-| **Iso** | Bijective; both directions are total inverses. | Auto-merge under the lexicon-evolution policy. |
-| **Injection** | Source embeds in target without loss. Forward is total; backward needs no complement. | Auto-merge as forward-only. |
-| **Projection** | Target is a quotient of source; forward drops information. Backward needs the complement. | PR review under the policy. |
-| **Affine** | Partial. The forward direction may fail on some inputs. | PR review plus a community recommendation. |
-| **General** | None of the above. | Manual lens authoring, full coercion-law check, plus verification. |
+| `Iso` | Bijection | Empty |
+| `Lens` | Single-focus projection or extension | Retains dropped data or required defaults |
+| `Prism` | Variant injection | Retains a variant tag |
+| `Affine` | Composition of lens-like and prism-like behavior | Retains both forms of state |
+| `Traversal` | Multi-focus transform | Tracks focus positions |
 
-The class drives routing rather than passing judgment on quality.
-Some legitimate migrations are projections (a field genuinely went
-away). The policy makes the consequences visible.
+`classify_transform` assigns this kind from transform structure. Elementary
+transforms are intended to be lawful by construction, but classification does
+not itself run the laws. `check_optic_laws` performs the instance-level checks
+available for the classified kind.
 
-## Composition
+Composition uses the optic lattice implemented by `OpticKind::compose`: `Iso`
+is the identity, `Traversal` absorbs the other kinds, and composing `Lens` with
+`Prism` yields `Affine`. Concrete lens composition is sequential and must align
+the first lens's target schema with the second lens's source schema.
 
-Chain composition is associative:
+## Coercion classes
 
-$$
-(\ell_1 \circ \ell_2) \circ \ell_3 \;=\; \ell_1 \circ (\ell_2 \circ \ell_3)
-$$
+Primitive value conversions have a separate `CoercionClass`. The class records
+what relationship the forward and inverse functions claim:
 
-Identity is the no-op lens, a left and right identity for
-composition. panproto's protolens runtime auto-simplifies adjacent
-steps where it can (`RenameVertex(a,b) ; RenameVertex(b,c) →
-RenameVertex(a,c)`).
-
-## Symmetric lenses
-
-A symmetric lens pairs two state-based lenses that share a middle
-schema:
-
-$$
-\ell_{ab} : A \to (M, \complement_a) \qquad \ell_{bc} : B \to (M, \complement_b)
-$$
-
-Sync from $A$ to $B$ goes $A \to M \to B$, threading the
-complement through both halves. The dual sync $B \to A$ uses the
-same machinery in reverse. `apply_lens_symmetric` runs either
-direction.
-
-This is the right shape for bridging two communities' lexicons:
-each community owns its own lens to a shared middle schema, and
-the bridge stays consistent up to complement.
-
-## Coercion honesty
-
-Lens chains that cross primitive kinds (Int↔Str, Float↔Int, ...)
-declare a `CoercionClass` per kind crossing:
-
-| `CoercionClass` | When |
+| Class | Claim |
 | --- | --- |
-| `Iso` | Forward and inverse are total inverses (e.g. `Int` to its decimal string and back). |
-| `Retraction` | Forward is total; inverse recovers the forward image only. |
-| `Projection` | Forward drops information (e.g. `Float` to `Int` by truncation). |
-| `Opaque` | Documentation pair; no round-trip promise. |
+| `Iso` | Both round trips are identities. |
+| `Retraction` | The inverse recovers every value in the forward image. |
+| `Projection` | The target is deterministically derived from source data, but no inverse recovers the source from that target alone. |
+| `Opaque` | No stronger structural relationship is claimed; the complement retains the original value. |
 
-A dishonest `Iso` declaration silently corrupts the GetPut law.
-panproto ships a sample-based law checker
-(`schema theory check-coercion-laws`) that catches violations.
-The checker is wired into the lexicon-evolution gate.
+These classes compose differently from optic kinds. `Iso` is the identity,
+`Opaque` absorbs, and composing a `Retraction` with a `Projection` collapses to
+`Opaque`. panproto's sample-based coercion-law checker may falsify a declared
+class, though a finite sample cannot establish a universal law.
 
-## What you have to verify
+## Symmetric lenses as spans
 
-Stating the laws is cheap. Verifying them on a corpus is the
-work. The shipped runner kinds:
+panproto builds a symmetric lens from two asymmetric lenses with a common
+source schema $M$:
 
-- `roundtrip-test` runs GetPut on a corpus.
-- `property-test` runs an arbitrary boolean predicate.
-- `static-check` runs the panproto-level coercion-law and
-  existence checks against the chain itself.
+$$
+\ell_L : M \to L \times C_L
+$$
 
-A lens with no published verifications is a claim. A lens with
-multiple published verifications from trusted signers, run on
-recent corpora, is closer to an asserted fact. See
-[Author a verification runner](../guide/verify.md) for the
-authoring path.
+$$
+\ell_R : M \to R \times C_R
+$$
+
+To synchronize a left view into a right view, the runtime first uses the left
+leg's `put` to reconstruct a middle instance, then applies the right leg's
+`get`. This is a span through shared state, rather than a direct lens whose
+source is $L$.
+
+`idiolect-lens::apply_lens_symmetric` resolves two lens records, requires equal
+`sourceSchema` references, and constructs this span. Its JSON-level entry point
+rebuilds the middle instance with `put_without_complement`. Thus, the incoming leg
+must be isomorphic: a lossy leg that needs saved complement data is rejected.
+Callers that hold such data can instead use panproto's complement-aware
+`SymmetricLens` operations directly.
+
+## Verification records
+
+The verification Lexicon recognizes seven open-enum kinds, but the current
+`idiolect-verify` crate implements four runners:
+
+- `RoundtripTestRunner` checks forward-then-backward equality on a nonempty,
+  caller-supplied corpus.
+- `PropertyTestRunner` performs the same round trip on values from a
+  caller-supplied generator and finite budget.
+- `StaticCheckRunner` validates the source and target panproto schema graphs; it
+  does not execute the lens.
+- `CoercionLawRunner` delegates to a caller-supplied coercion-law client.
+
+A result of `holds` records that the configured run found no counterexample.
+The runner, corpus or generator, tool version, and publisher thus remain
+part of the evidence. [Author a verification runner](../guide/verify.md) covers
+the operational interface.

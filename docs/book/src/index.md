@@ -1,51 +1,58 @@
 # idiolect
 
-idiolect is a federated runtime for cross-schema interoperability on
-[ATProto](https://atproto.com). It uses
-[panproto](https://github.com/panproto/panproto) as its schema and lens
-substrate. Records are signed and content-addressed; translations
-between records are lenses with formal `get` / `put` laws; and the
-sociotechnical layer above the lenses (recommendations, beliefs,
-verifications, deliberations) is itself a small set of ATProto
-lexicons (`dev.idiolect.*`).
+idiolect translates a record from one community's schema into another's while
+keeping the translation, its evidence, and its social standing inspectable. It
+runs on [AT Protocol](./glossary.md#at-protocol "The federated protocol that hosts idiolect records and services")
+and uses [Panproto](./glossary.md#panproto "The schema and bidirectional-transformation substrate used by idiolect")
+for schema comparison and lens execution.
 
-The name comes from linguistics:
+The project names its unit of local variation the
+[**idiolect**](./glossary.md#idiolect "One party's schemas, lenses, vocabularies, and conventions").
+A [**dialect**](./glossary.md#dialect "A community's published bundle of preferred schemas, lenses, and deprecations")
+records a community convention, while a
+[**language**](./glossary.md#language "The federated substrate on which idiolects and dialects interact")
+is the substrate on which those local choices meet. None of the three requires a
+central schema registry.
 
-- An **idiolect** is one party's choice of schemas, lenses, and conventions.
-- A **dialect** is the bundle of idiolects a community treats as canonical.
-- A **language** is the federated substrate over which idiolects and
-  dialects meet, disagree, and slowly converge without a central
-  arbiter.
+## Start from your task
 
-If you are new, read [Why idiolect
-exists](./concepts/why-idiolect.md) and then [What you need
-first](./concepts/prerequisites.md). ATProto's model is a deep
-dependency worth learning properly; panproto contributes a single
-concept, the lens. For the underlying theory beyond that, see the
-project [README](https://github.com/idiolect-dev/idiolect#readme)
-and the [deliberation lexicons](./concepts/deliberation.md).
+### Beginner: get a result in about five minutes
 
-## Where to start
+[Install the checked-out CLI and resolve a record](./tutorial/01-install.md), then
+[validate it against its Lexicon](./tutorial/02-validate.md). These first two
+steps produce a concrete resolution and validation result before introducing
+lens laws, network publication, or the project's social records.
 
-The documentation follows the [Diátaxis](https://diataxis.fr/)
-structure:
+### Project integration: connect an existing system
 
-- The [Tutorial](./tutorial/index.md) walks through one example end
-  to end: install, fetch a record, validate, apply a lens, run a
-  verification, publish a recommendation. Read this first if you have
-  not used idiolect before.
-- The [Guides](./guide/index.md) are task-oriented. Each guide
-  answers a question of the form "how do I do X?". Reach for these
-  when you know what you want to accomplish.
-- The [Concepts](./concepts/index.md) explain the underlying model:
-  why the project exists, the idiolect-dialect-language frame, the
-  `dev.idiolect.*` lexicon family, lens semantics, the vocabulary
-  knowledge graph, the observer protocol, and the lexicon-evolution
-  policy. Read these when you want to understand why something is
-  the way it is.
-- The [Reference](./reference/index.md) is the per-symbol detail:
-  one page per crate, one page per lexicon, the CLI surface, the
-  HTTP query API, and the stability policy.
+Choose the guide that matches the work in front of you: [generate Rust and
+TypeScript types](./guide/codegen.md), [publish a
+lens](./guide/publish-lens.md), [index the
+firehose](./guide/index-firehose.md), or [run the query
+API](./guide/orchestrator.md). Each guide links to the exact crate, CLI, or wire
+reference needed during implementation.
+
+### Advanced and formal: extend the model
+
+Begin with [lens semantics and laws](./concepts/lens-laws.md) or the
+[vocabulary knowledge graph](./concepts/vocab-graph.md), then move to the
+[observer protocol](./concepts/observer.md), [Lexicon evolution
+policy](./concepts/lexicon-evolution.md), and [crate extension
+points](./reference/crates/index.md). The [reading-path page](./paths.md) gives a
+longer route through each level.
+
+## How the book is organized
+
+The book keeps the four [Diátaxis](https://diataxis.fr/) functions separate:
+
+- The [tutorial](./tutorial/index.md) teaches through one runnable sequence.
+- The [guides](./guide/index.md) give procedures for particular tasks.
+- The [concepts](./concepts/index.md) explain the mechanisms and their limits.
+- The [reference](./reference/index.md) records exact APIs, fields, and commands.
+
+Use the [glossary](./glossary.md) for short definitions. The paths above cross
+the four sections, but they do not turn a tutorial into reference material or a
+conceptual explanation into a procedure.
 
 ## Architecture
 
@@ -89,14 +96,14 @@ flowchart TB
     LENS --> VER
 ```
 
-Lexicons under `lexicons/dev/idiolect/` are the single source of
-truth. Rust types and TypeScript validators are derived from
-them. Three downstream crates carry a taxonomy of
-similarly-shaped items (the orchestrator's queries, the
-observer's methods, the verifier's runners). Each lives behind a
-declarative JSON spec in `<crate>-spec/`; codegen emits the
-wire-up, including the CLI dispatcher that fronts the
-orchestrator's queries.
+Lexicons under `lexicons/dev/idiolect/` are the source of truth for the record
+family. Code generation derives Rust types and TypeScript validators from those
+files. The orchestrator queries, observer methods, and verifier runners each add
+a declarative JSON specification; code generation emits their dispatch and wire
+integration. This separation is the **declarative boundary (DB)**: record and
+method taxonomies live in data, while runtime code implements their behavior.
+The DB lets reviewers distinguish generated contracts from handwritten runtime
+semantics.
 
 ## Stability
 

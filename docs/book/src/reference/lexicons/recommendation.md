@@ -1,6 +1,6 @@
 # dev.idiolect.recommendation
 
-A community-published opinionated path with structured applicability
+A community-published [lens](../../glossary.md#lens) path with structured applicability
 conditions and optional verification requirements. The `conditions`,
 `preconditions`, and `caveats` arrays are *structured*: a consumer
 can evaluate them mechanically against an invocation context. The
@@ -105,8 +105,8 @@ A structured failure-mode list. Each `caveat` has:
 Consumers match on `mode` and `affects` to decide whether the
 caveat applies to their use case. `severity` is advisory; an
 `error` caveat is the community's notice that the recommendation
-should not be adopted in cases the caveat covers, and a consumer
-ignoring it is on its own.
+should not be adopted in cases the caveat covers. A consumer that ignores it
+accepts the failure mode named by the caveat.
 
 ## Example
 
@@ -127,7 +127,7 @@ ignoring it is on its own.
   ],
   "requiredVerifications": [
     { "$type": "dev.idiolect.defs#lpRoundtrip",
-      "domain": "all valid v1 records with bodies ≤ 1024 bytes" }
+      "domain": "all valid v1 records with bodies at most 1024 bytes" }
   ],
   "caveats": [
     { "mode": "loses-dialect-markers",
@@ -138,7 +138,7 @@ ignoring it is on its own.
 }
 ```
 
-## How recommendations route translations
+## Related records
 
 ```mermaid
 flowchart LR

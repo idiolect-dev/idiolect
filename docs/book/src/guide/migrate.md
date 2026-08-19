@@ -1,9 +1,8 @@
 # Migrate records across a revision
 
-A schema you depend on changed. You have records on disk against
-the old schema and need them up against the new one. This is
-what [`idiolect-migrate`](../reference/crates/idiolect-migrate.md)
-is for.
+Use [`idiolect-migrate`](../reference/crates/idiolect-migrate.md)
+when a [schema](../glossary.md#schema "A machine-readable description of valid data")
+revision no longer accepts records written against its predecessor.
 
 The crate is a thin typed façade over `panproto-check` (for diff
 classification) and `idiolect-lens` (for record translation). It
@@ -32,11 +31,12 @@ the reverse direction reconstructs the original.
 
 Before generating a lens, classify what changed:
 
-```rust
-use idiolect_migrate::{classify, plan_auto};
-use panproto_schema::Schema;
+```text
+use idiolect_migrate::classify;
+use panproto_schema::Protocol;
 
-let report = classify(&schema_v1, &schema_v2)?;
+let protocol = Protocol::default();
+let report = classify(&schema_v1, &schema_v2, &protocol);
 ```
 
 `classify` returns a `CompatReport` (re-exported from
@@ -48,13 +48,24 @@ v1 remain valid under v2.
 
 For breaking diffs that are covered by shipped recipes:
 
-```rust
-let plan = plan_auto(&schema_v1, &schema_v2, &hints)?;
+```text
+let plan = plan_auto(
+    &schema_v1,
+    &schema_v2,
+    &protocol,
+    source_schema_hash,
+    target_schema_hash,
+)?;
 ```
 
-`plan_auto` returns a `MigrationPlan` carrying the source and
-target schema hashes plus a lens body the caller can publish as
-a `dev.panproto.schema.lens` record.
+`plan_auto` returns a `MigrationPlan` carrying the two caller-supplied
+schema hashes, a `protolens_chain`, and an `alignment_quality` score.
+It returns `NoChange` or `OnlyNonBreaking` when a migration plan is
+unnecessary.
+
+Panproto 0.71.0 computes this alignment with an exact valued-CSP optimizer.
+The score orders alternatives for the same source schema; do not treat a fixed
+number as a confidence threshold across unrelated schema pairs.
 
 For breaking diffs that resist automation,
 `plan_auto` returns `Err(PlannerError::NotAutoDerivable)`
@@ -63,20 +74,21 @@ hand.
 
 ## Migrate one record
 
-```rust
+```text
 use idiolect_migrate::migrate_record;
 
 let migrated_body = migrate_record(
-    &lens_record,        // PanprotoLens record (from a published lens or local plan)
-    &source_record_body, // serde_json::Value
-    &schema_loader,      // anything implementing idiolect_lens::SchemaLoader
+    &resolver,
+    &schema_loader,
+    &protocol,
+    lens_uri,
+    source_record_body,
 ).await?;
 ```
 
-`migrate_record` wraps `idiolect_lens::apply_lens` for the
-one-shot case: given a lens, a source record body, and a schema
-loader that can resolve both schema hashes, it returns the
-migrated target body.
+`migrate_record` resolves `lens_uri`, loads its source and target
+schemas, and wraps `idiolect_lens::apply_lens`. It returns the target
+record body as `serde_json::Value`.
 
 ## Verify before cutting over
 
@@ -84,19 +96,18 @@ Migration without verification is a guess. Run the round-trip
 runner against a corpus before treating the migrated tree as
 authoritative:
 
-```rust
+```text
 use idiolect_verify::{RoundtripTestRunner, VerificationRunner, VerificationTarget};
 
-let runner = RoundtripTestRunner::new(/* ... */);
-let target = VerificationTarget {/* lens, corpus, schema loader, ... */};
+let runner = RoundtripTestRunner::new(resolver, schema_loader, protocol, corpus);
+let target = VerificationTarget { /* lens, verifier, occurred_at, tool_override */ };
 let verification = runner.run(&target).await?;
 ```
 
-A `Verification { result: Holds, .. }` over a representative
-corpus is the strongest signal you can get short of formal
-proof. The runner returns a `Verification` record that you can
-publish as a `dev.idiolect.verification` (via
-`idiolect_lens::RecordPublisher`).
+A `Verification { result: Holds, .. }` establishes only that the
+sampled corpus round-tripped. Record the corpus boundary, review any
+projection complement, and publish the result through
+`idiolect_lens::RecordPublisher` if other consumers need it.
 
 ## Persist the lens record
 
@@ -121,8 +132,9 @@ covers that case. The authoring loop is:
 5. Publish the chain plus a verification record signed by a
    reviewer.
 
-Each step is mechanical and gated. The policy makes migrations
-reviewable.
+The checklist records the authored chain, law checks, corpus run, and
+reviewer-signed verification, but the current repository does not enforce
+every gate automatically.
 
 ## Batch migration
 
@@ -139,7 +151,6 @@ idiolect-migrate \
    [--pds-url URL]
 ```
 
-Records stream one at a time so the working set stays bounded
-even on multi-million-record corpora. Failed migrations log to
-stderr and the binary's exit code reflects the worst case (0 if
-every file succeeded, 1 if any failed).
+Records stream one at a time, so memory use does not grow with the
+input directory. Failed migrations go to stderr; the process exits 1
+if any file fails and 0 otherwise.

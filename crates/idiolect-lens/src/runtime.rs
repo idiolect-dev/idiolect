@@ -443,8 +443,10 @@ where
 ///
 /// Resolves both lens records, instantiates them against the shared
 /// middle schema, composes them into a [`SymmetricLens`], then runs
-/// the requested direction. The middle complement is initialized from
-/// the input record via the appropriate leg's `get`.
+/// the requested direction. This view-only API can reconstruct the
+/// middle instance only when the incoming leg is an isomorphism; a
+/// lossy leg requires a complement from an earlier `get` and is
+/// rejected.
 ///
 /// # Errors
 ///
@@ -498,9 +500,11 @@ where
             let left_view = parse_json(&left_tgt, &root, &input.record)
                 .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
-            // step one: `put` the left-view back to the middle (the span's
-            // shared source).
-            let middle_instance = panproto_lens::put(&sym.left, &left_view, &Complement::empty())
+            // Step one inverts the left leg into the span's shared
+            // middle. No prior `get` is available to supply a
+            // complement, so Panproto must verify that the leg is an
+            // isomorphism before reconstructing it.
+            let middle_instance = panproto_lens::put_without_complement(&sym.left, &left_view)
                 .map_err(|e| LensError::Translate(e.to_string()))?;
             // step two: `get` the middle forward to the right view.
             let (right_view, _) = panproto_lens::get(&sym.right, &middle_instance)
@@ -515,7 +519,7 @@ where
             let right_view = parse_json(&right_tgt, &root, &input.record)
                 .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
-            let middle_instance = panproto_lens::put(&sym.right, &right_view, &Complement::empty())
+            let middle_instance = panproto_lens::put_without_complement(&sym.right, &right_view)
                 .map_err(|e| LensError::Translate(e.to_string()))?;
             let (left_view, _) = panproto_lens::get(&sym.left, &middle_instance)
                 .map_err(|e| LensError::Translate(e.to_string()))?;

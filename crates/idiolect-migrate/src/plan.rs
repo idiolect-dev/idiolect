@@ -40,10 +40,10 @@ pub struct MigrationPlan {
     /// target. Serialize into a `PanprotoLens.blob` field when
     /// publishing.
     pub protolens_chain: ProtolensChain,
-    /// Alignment quality reported by `panproto_lens::auto_generate`
-    /// (0.0 to 1.0). Low scores — below ~0.6 — suggest the caller
-    /// should review and possibly hand-author a lens rather than
-    /// publish the auto-derived one.
+    /// Pair-relative alignment quality reported by
+    /// `panproto_lens::auto_generate` (0.0 to 1.0). Use it to compare
+    /// alternative alignments over the same source schema, not as a
+    /// confidence threshold across unrelated schema pairs.
     pub alignment_quality: f64,
 }
 

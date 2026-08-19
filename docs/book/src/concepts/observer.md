@@ -1,137 +1,117 @@
 # Observer protocol
 
-In idiolect, aggregate state lives in records rather than in a
-served endpoint. An observer is a process that reads
-encounter-family records from the firehose, folds them along a
-key, and publishes the fold as a record.
-
-## What an observer is
+An [observer](../glossary.md#observer "A process that folds indexed records and publishes method-specific snapshots")
+turns a stream of typed records into an aggregate claim. The aggregate is a
+`dev.idiolect.observation` record when a persistent publisher is configured.
+We call this path the **published-fold path (PFP)**.
 
 ```mermaid
 flowchart LR
-    PDS[(PDS firehose)] -->|encounters| OBS[Observer process]
-    OBS -->|fold by lens, window, kind| OBSREC[observation records]
-    OBSREC --> PDS2[(observer's PDS)]
-    PDS2 --> CONSUMER[Consumer]
-    CONSUMER -->|verifies signature| OBS
+    STREAM[event stream] --> INDEX[indexer decode]
+    INDEX --> METHOD[observation method]
+    METHOD --> SNAPSHOT[snapshot output]
+    SNAPSHOT --> PUB[publisher]
+    PUB --> RECORD[observation record or local sink]
 ```
 
-- The observer subscribes to the firehose.
-- It accumulates encounters into a windowed bucket keyed by
-  `(lens, kind, window)`.
-- At window close, it computes the fold (per-outcome counts plus
-  optional weighted aggregates) and publishes one
-  `dev.idiolect.observation` record.
-- The record is signed by the observer's DID.
+## A fold is stateful
 
-The shape generalises beyond the `observation` lexicon. The same
-fold path runs over `deliberationVote` records to produce
-`deliberationOutcome` records (per-statement per-stance tallies
-plus optional adopted-statements).
-
-## Why records, not metrics
-
-A central metrics endpoint cannot:
-
-- Be verified after the fact. Once the endpoint serves a counter,
-  the counter's history is whatever the endpoint says it is.
-- Be re-folded by an independent party. A consumer that distrusts
-  the operator cannot re-derive the count from the underlying
-  data.
-- Disagree with itself across observers. A single operator
-  produces a single number.
-
-A signed record can be:
-
-- Verified against the signer's key. The same trust model as any
-  ATProto record.
-- Re-folded from the underlying encounter records. A consumer
-  reading an observation can ask the indexer for the encounters
-  in scope and recompute the fold independently.
-- Compared across observers. Two observers running the same fold
-  on overlapping data will produce records with comparable
-  counts. Consumers can require quorum before treating an
-  observation as authoritative.
-
-The cost is an extra serialization per fold and an extra commit
-per window. The shipped daemons amortize this over the window
-duration.
-
-## Fold shapes
-
-A fold is a deterministic function:
+Let $E$ be the event space, $S$ a method's private state, and $O$ its snapshot
+space. An observation method supplies a transition and a partial snapshot
+function:
 
 $$
-F : (E_1, E_2, \dots, E_n) \to R
+\operatorname{step} : S \times E \to S
 $$
 
-over the encounters $E_i$ visible in the window, producing one
-record $R$. Determinism matters because the consumer recomputing
-the fold should get the same result the observer published.
-The constraints:
+$$
+\operatorname{snapshot} : S \to O \cup \{\varnothing\}
+$$
 
-- The fold reads a stable view of the encounters in scope. The
-  observer commits the cursor only after the fold is published, so
-  a restart re-folds the window.
-- The fold does not branch on local time. The window timestamp is
-  derived from the encounters' `occurredAt`.
-- The fold does not branch on local randomness. Anything derived
-  from random sampling has to commit the seed in the record.
+Starting from $s_0$, the method processes events in stream order:
 
-The shipped methods (declared in `observer-spec/methods.json`):
+$$
+s_{i+1} = \operatorname{step}(s_i,e_i)
+$$
 
-| Method | Folds |
+If `snapshot` returns a value after $n$ events, the runtime wraps that value
+with the observer DID, method descriptor, declared scope, method version,
+visibility, and timestamp. A method may return no snapshot when it has not seen
+enough relevant data.
+
+This formulation is more accurate than treating every method as a set function.
+Some methods may be order-insensitive, but `ObservationMethod` does not require
+commutativity or idempotence. Comparability thus depends on method name,
+version, scope, input coverage, and method semantics.
+
+## Stream and flush boundaries
+
+The observer driver accepts any `idiolect_indexer::EventStream`. The reference
+daemon currently uses `TappedEventStream`, backed by a tap service; the indexer
+also has a Jetstream adapter behind its feature flag. The driver filters for
+`IdiolectFamily`, decodes creates and updates, forwards them to one configured
+method, and commits the cursor for live events after the handler succeeds.
+
+`FlushSchedule` is event-count based or manual. `EveryEvents(n)` asks the
+handler to publish after each $n$ processed events and once more when the stream
+closes normally. It does not create clock-aligned windows. A method can declare
+a window in its observation scope, but the generic driver does not enforce or
+derive that window.
+
+## What gets published
+
+Three publisher implementations exist:
+
+- `InMemoryPublisher` retains typed observations for tests and local callers.
+- `LogPublisher` emits structured tracing events without repository durability.
+- `PdsPublisher` adds `$type: "dev.idiolect.observation"` and calls the configured
+  `PdsWriter` to create a record.
+
+The reference daemon selects `CorrectionRateMethod`. It uses the in-memory
+publisher unless `IDIOLECT_PDS_URL` is set. Its PDS client is not authenticated
+by the reference binary, so a normal PDS that requires authenticated writes
+needs a wrapper or further integration before records will persist.
+
+## Bundled methods
+
+The declarative method registry and generated `default_methods()` contain nine
+record-form aggregators:
+
+| Method | Snapshot coordinate |
 | --- | --- |
-| `correction-rate` | Per-lens correction counts grouped by reason. |
-| `encounter-throughput` | Encounter traffic by kind and downstream result. |
-| `verification-coverage` | Per-lens verification counts by kind, result, and distinct verifiers. |
-| `lens-adoption` | Per-lens encounter count and distinct invokers. |
-| `action-distribution` | Encounter counts grouped by `use.action`. |
-| `purpose-distribution` | Encounter counts grouped by `use.purpose`. |
-| `basis-distribution` | Record counts grouped by `basis` variant. |
-| `attribution-chains` | `dev.idiolect.belief` counts by holder and subject. |
-| `deliberation-tally` | Per-statement per-stance `deliberationVote` counts. |
+| `correction-rate` | Correction counts by lens and reason |
+| `encounter-throughput` | Encounters by kind and downstream result |
+| `verification-coverage` | Verifications by lens, kind, result, and verifier |
+| `lens-adoption` | Encounter and invoker counts by lens |
+| `action-distribution` | Encounters by structured action |
+| `purpose-distribution` | Encounters by structured purpose |
+| `basis-distribution` | Records by basis variant and record kind |
+| `attribution-chains` | Beliefs by holder and subject |
+| `deliberation-tally` | Votes by statement and stance |
 
-All nine produce `dev.idiolect.observation` records. The ninth,
-`deliberation-tally`, folds `deliberationVote` records into
-per-statement per-stance counts and packs them into the
-observation's `output`; a variant that instead publishes a typed
-`dev.idiolect.deliberationOutcome` record is a small refactor on
-`DeliberationTallyMethod`.
+Though `default_methods()` constructs all nine, `drive_observer` is generic
+over one method and the reference daemon instantiates only `correction-rate`.
+Running multiple methods requires multiple handlers or an application-level
+composite.
 
-The spec is a single JSON file (`observer-spec/methods.json`),
-not a directory of files. Codegen emits the descriptor table.
-See [Run the observer daemon](../guide/observer.md) for the
-operator-facing path.
+## Evidence and replay
 
-## Coordination among observers
+The PFP separates aggregate state from a central query endpoint.
+Different observers can publish snapshots under their own DIDs, and consumers
+can compare them. If the record is committed to an ATProto repository, the
+repository proof can authenticate who published that snapshot.
 
-Two observers running the same fold will produce records that
-agree up to:
+But the observation record does not enumerate every input event, commit a
+digest of the input set, or prove that the method was executed as described.
+Recomputation requires access to an equivalent event history and the method's
+actual semantics. Divergent snapshots may reflect missed events, different
+cursor positions, method versions, scopes, or dishonest publication.
 
-- The window boundary they chose. Observers should align on a
-  shared cadence (e.g. UTC-aligned 1-hour windows).
-- Late-arriving encounters. Encounters posted after the window
-  closes will be folded into the next window.
-- The encounter scope the observer indexed. An observer that
-  missed a firehose segment will have a different count than one
-  that did not.
+This is the **replay boundary (RB)**. The PFP makes a claim portable; it does not
+make the claim self-proving. Consumers may impose quorum or
+observer-reputation policies above the RB, but the observation Lexicon does not
+implement either policy.
 
-Consumers that want consensus require $k$ of $n$ trusted observers
-to publish records that agree within a tolerance. This is a
-consumer policy. The runtime only provides the records.
-
-## Why folds are the right primitive
-
-A simple primitive — the observer publishes an aggregate signed
-by its DID — supports a lot of structure:
-
-- Quorum (a consumer requires multiple observers to agree).
-- Reputation (a consumer prefers observers with a track record).
-- Delegation (a consumer treats one observer's records as
-  authoritative when it does not want to fold itself).
-- Fork detection (two observers' aggregates over the same window
-  diverging is a signal that one of them is missing data).
-
-None of them require protocol changes, since they are all
-policies layered on top of records.
+The [observer guide](../guide/observer.md) covers daemon configuration. The
+[observation reference](../reference/lexicons/observation.md) gives the record
+shape.

@@ -2,7 +2,8 @@
 
 A participant utterance submitted to a
 [`deliberation`](./deliberation.md). Statements are the units
-votes attach to. The deliberation itself is not voted on
+votes attach to. A [strong reference](../../glossary.md#strong-reference)
+pins the deliberation revision. The deliberation itself is not voted on
 directly. Classification is an open-enum slug resolved against a
 community vocabulary, so communities that draw the line between
 `claim` and `proposal` differently can extend or remap without
@@ -26,7 +27,7 @@ forking the lexicon.
 
 ## Field details
 
-### Why `strongRecordRef` for the deliberation pointer
+### `deliberation`
 
 `deliberation` carries both the AT-URI and the CID. Pinning by
 CID prevents a later deliberation revision from silently
@@ -85,7 +86,7 @@ its own access controls.
   "$type": "dev.idiolect.deliberationStatement",
   "deliberation": {
     "uri": "at://did:plc:community/dev.idiolect.deliberation/3l5",
-    "cid": "bafy..."
+    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
   },
   "text": "Adopting the v2 lens would lose dialect markers on legacy posts.",
   "classification": "dissent",

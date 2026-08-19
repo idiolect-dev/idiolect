@@ -1,111 +1,79 @@
 # Deliberation
 
-The deliberation lexicons (`deliberation`,
-`deliberationStatement`, `deliberationVote`,
-`deliberationOutcome`) describe a process as it happens. The
-`belief` and `recommendation` lexicons describe its results. The
-two are kept separate on purpose.
+The deliberation records preserve an unsettled community process. Beliefs and
+recommendations preserve attributed positions after or outside that process.
+We call this separation the **process/position split (PPS)**.
 
-## What each lexicon is for
+## Four linked records
 
 ```mermaid
 flowchart LR
-    DEL[deliberation] -->|topic, status| DST[deliberationStatement]
-    DST -->|subject of| DVO[deliberationVote]
-    DEL -->|tallied as| DOU[deliberationOutcome]
-    DOU -->|adopts| DST
+    DEL[deliberation] --> DST[deliberationStatement]
+    DST --> DVO[deliberationVote]
+    DEL --> DOU[deliberationOutcome]
+    DOU --> DST
 ```
 
-- **`dev.idiolect.deliberation`** declares a community-scoped
-  topic. Carries the owning community, an open-enum
-  `classification` (question / proposal / grievance / ...), an
-  open-enum `status` (open / closed / tabled / adopted / ...), and
-  an optional pointer to the resulting outcome.
-- **`dev.idiolect.deliberationStatement`** is one statement made
-  inside a deliberation. Carries the deliberation it belongs to,
-  the text, an open-enum `classification` (claim / proposal /
-  dissent / clarification / ...), and an `anonymous` flag with an
-  optional `authoredOn` service-DID surrogate.
-- **`dev.idiolect.deliberationVote`** is a vote on a statement.
-  Carries the statement (as a `strongRef`), an open-enum `stance`
-  (defaults to `agree` / `pass` / `disagree`), an optional
-  `weight` integer, and an optional `rationale`.
-- **`dev.idiolect.deliberationOutcome`** is an observer-published
-  tally. Carries the deliberation, per-stance counts per
-  statement, the `computedAt` timestamp, and an optional list of
-  adopted statements.
+`dev.idiolect.deliberation` names an owning community and topic. It may also
+carry a description, authentication requirement, classification, status,
+closure time, and outcome AT-URI. The known classifications are `question`,
+`proposal`, `grievance`, and `retrospective`; the known statuses include `open`,
+`closed`, `tabled`, `adopted`, and `rejected`. Both fields remain open strings.
 
-## Why this is separate from belief and recommendation
+`dev.idiolect.deliberationStatement` strongly references the deliberation and
+stores one statement. Its optional classification distinguishes claims,
+proposals, dissent, clarification, questions, and community extensions. The
+optional `anonymous` flag describes presentation policy; it does not remove the
+repository DID from ATProto provenance.
 
-A `dev.idiolect.belief` is a community's standing claim about a
-lens or schema. A `dev.idiolect.recommendation` is an opinionated
-path with conditions. Both are settled artifacts: they record what
-a community thinks, not how a community arrived there.
+`dev.idiolect.deliberationVote` strongly references one statement revision. Its
+stance defaults to the known vocabulary of `agree`, `pass`, and `disagree`, with
+an optional `stanceVocab`, integer weight, and rationale. The Lexicon constrains
+weight to the range 0 through 1000 but does not define how a community must
+interpret that number.
 
-Deliberation is the process. The four lexicons together let
-consumers see what the community considered, who voted, what the
-tally was, and which statements were adopted, before reading the
-resulting belief or recommendation. A consumer that only ever
-sees the belief is in the same position as a consumer of any
-asserted truth. A consumer that wants context can follow the
-deliberation.
+`dev.idiolect.deliberationOutcome` strongly references the deliberation and
+contains per-statement stance counts, an optional list of adopted statements, a
+computation time, and optional tool metadata. Multiple observers may publish
+different outcomes for the same deliberation.
 
-## Maps to Acorn's assembly records
+## What PPS permits
 
-Bluesky's Acorn project publishes the same shape under
-`community.blacksky.assembly.{conversation, statement, vote}`.
-The four idiolect lexicons are shaped so a future bridge to
-Acorn's records can be lossless. Stance, classification, and
-status are open-enum slugs resolved through community-published
-vocabularies. Acorn's `-1 | 0 | 1` stances become vocab nodes.
+A `dev.idiolect.belief` says that a holder stands behind a claim about a record.
+A `dev.idiolect.recommendation` advises a conditioned lens path. Neither record
+contains the statements considered, the votes cast, or the aggregation method.
 
-The bridge crate is downstream work and is not shipped. The
-lexicons are. They were designed against the assembly records so
-a future bridge can be lossless.
+The PPS permits a consumer to choose its evidential depth. A lightweight client
+may display a recommendation alone. A client auditing the decision can follow
+the community, deliberation, statement, vote, and outcome references. These
+records supply provenance coordinates; they do not guarantee a fair process or
+a correct conclusion.
 
-## How the tally is produced
+## Tallying in the current observer
 
-A `deliberationOutcome` is observer-published, not voter-published.
-The fold (in `idiolect-observer`) walks every `deliberationVote`
-that points at a statement in the deliberation, tallies stances
-per statement, and emits one outcome record per (deliberation,
-window) tuple.
+`DeliberationTallyMethod` implements one aggregation. It counts votes by strong
+statement reference and stance slug, and it sums optional weights. When
+configured with a `VocabRegistry` and canonical stance vocabulary, it translates
+stances through `equivalent_to` before counting; a slug with no translation
+remains in its original bucket.
 
-Multiple observers can publish concurrent outcomes for the same
-deliberation. Consumers can require quorum across observers
-before adopting an outcome. This is the same shape as the
-`observation` fold over encounters.
+The method's snapshot resembles
+`dev.idiolect.deliberationOutcome.statementTallies`, but the standard observer
+publisher wraps that snapshot in `dev.idiolect.observation`. The current method
+does not publish a typed `deliberationOutcome`, select adopted statements, or
+update the deliberation's `outcome` field. An application that wants those
+records must add the policy and publication step.
 
-## Open-enum extension
+## Procedure remains external
 
-The shipped vocabularies seed canonical defaults:
+The four Lexicons do not implement voter eligibility, quorum, vote delegation,
+ranked choice, quadratic weighting, or clustering. A community may describe
+some of these choices in its community conventions or a vocabulary, but the
+runtime does not infer a decision rule from the presence of `weight`.
 
-- `deliberation-classifications` (question, proposal, grievance,
-  process, position, ...).
-- `statement-classifications` (claim, proposal, dissent,
-  clarification, question, ...).
-- `deliberation-statuses` (open, closed, tabled, adopted,
-  rejected, ...).
-- `vote-stances` (agree, pass, disagree, with `polar_opposite_of`
-  edges).
-
-A community publishing its own vocab over any of these slugs can
-extend the value set without modifying the lexicons. Records
-referencing the community's vocab through the corresponding
-`*Vocab` field resolve through the extended slug set.
-
-## What this is not
-
-The deliberation lexicons do not implement Polis-style clustering,
-quadratic voting, or any specific decision procedure. They
-describe the artifacts of a deliberation. The procedure that
-produces those artifacts (and the procedure that adopts an
-outcome) is the community's choice.
-
-A community that wants quadratic voting publishes a
-`vote-weights` vocabulary and uses the optional `weight` field on
-`deliberationVote` to carry its scheme. A community that wants
-delegation publishes a `delegations` mapping (out-of-band or in
-its own lexicon) and lets observers fold votes along the
-delegation chain. The lexicons store the votes. The community's
-chosen procedure decides what they mean.
+A potential worry is that an open stance vocabulary makes two tallies
+incomparable. Vocabulary translation can reduce that problem when communities
+publish accepted equivalences. It cannot determine that an asserted
+equivalence preserves the communities' intended meanings, and untranslated
+stances remain a live possibility. The observer's method descriptor and output
+must thus accompany any comparison.

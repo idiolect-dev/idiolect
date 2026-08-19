@@ -8,13 +8,14 @@
 > (every public type, trait, function, and feature flag) is the
 > docs.rs link above. That is the authoritative reference.
 
-DID resolution. Maps a `did` to a structured `DidDocument`
+The crate resolves a decentralized identifier
+([DID](../../glossary.md#did)) to a structured `DidDocument`
 carrying the also-known-as set, service entries, verification
 methods, and any additional fields the source document carries.
 
 ```toml
 [dependencies]
-idiolect-identity = { version = "0.8", features = ["resolver-reqwest"] }
+idiolect-identity = { version = "0.12.0", features = ["resolver-reqwest"] }
 ```
 
 ## Public surface
@@ -47,6 +48,6 @@ unsupported DID methods.
 ## Caching
 
 The shipped `CachingIdentityResolver` wraps any inner resolver
-with a TTL'd cache. Default TTL and overrides are documented on
-docs.rs. Cache hits skip the HTTP request entirely. Cache misses
-fall through to the inner resolver. Errors are not cached.
+with the `Duration` supplied to `CachingIdentityResolver::new`.
+Cache hits skip the HTTP request entirely. Cache misses fall
+through to the inner resolver. Errors are not cached.

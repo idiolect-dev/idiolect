@@ -6,8 +6,8 @@
 > authoritative reference is the source above plus the rustdoc
 > built locally with `cargo doc -p idiolect-oauth --open`.
 
-ATProto OAuth session storage. The crate carries the token-store
-trait and shipped implementations. The OAuth dance itself lives
+The crate provides AT Protocol [OAuth](../../glossary.md#oauth) session storage through its
+token-store trait and shipped implementations. The OAuth dance itself lives
 in `atrium-oauth-client`, and the DPoP signer lives in
 `idiolect-lens` under the `dpop-p256` feature.
 
@@ -15,7 +15,7 @@ Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["store-filesystem"] }
+idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0", features = ["store-filesystem"] }
 ```
 
 ## Public surface
@@ -44,8 +44,9 @@ returns the live session.
 | `FilesystemOAuthTokenStore` | `store-filesystem` | One JSON file per session. |
 | `SqliteOAuthTokenStore` | `store-sqlite` | One row per session. |
 
-All three implement `OAuthTokenStore`. Anything that takes
-`Arc<dyn OAuthTokenStore>` accepts any of them.
+All three implement `OAuthTokenStore`. The trait uses native async
+methods and is not object-safe. Callers thus parameterize their
+application over a store type or define an object-safe adapter.
 
 ## Errors
 
@@ -62,10 +63,13 @@ build their own at the application boundary.
 
 ## DPoP keys
 
-The session carries a DPoP keypair. Persistence is the store's
+The session carries a Demonstrating Proof of Possession
+([DPoP](../../glossary.md#dpop)) private key as a JWK. Persistence is the store's
 responsibility; both shipped stores persist it alongside the
 session. A custom store must do the same. The OAuth RFC
-requires DPoP keys to survive across requests.
+does not define this key; [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449.html)
+defines DPoP key binding. Reusing the bound key is necessary for
+requests made with the same DPoP-bound token.
 
 The signer behind the DPoP-bound HTTP layer is `P256DpopProver`
 in `idiolect-lens` under the `dpop-p256` feature. The lens

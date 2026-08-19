@@ -1,11 +1,10 @@
 # dev.idiolect.adapter
 
-A subprocess or HTTP-endpoint wrapper for a framework's tooling,
-authored by incentive-aligned parties. Adapters are how idiolect
-glues existing frameworks (Hasura, Prisma, Datomic, FHIR, Coq,
-Meilisearch, ...) without forking them. The adapter declaration
-is a published record. The orchestrator runs the adapter under
-the declared isolation policy.
+A published [record](../../glossary.md#record) that declares how to
+invoke a framework wrapper and what isolation it requests. The
+shipped orchestrator catalogs these declarations; it does not execute
+adapters or enforce their isolation policies. A separate adapter host
+must interpret and enforce the contract.
 
 > **Source:** [`lexicons/dev/idiolect/adapter.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/adapter.json)
 > · **Rust:** [`idiolect_records::Adapter`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.Adapter.html)
@@ -16,10 +15,10 @@ the declared isolation policy.
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `framework` | string (≤128) | yes | Canonical framework name (e.g. `hasura`, `prisma`, `coq`). |
+| `framework` | string (at most 128 characters) | yes | Canonical framework name (e.g. `hasura`, `prisma`, `coq`). |
 | `versionRange` | string | yes | Semver range supported. |
 | `invocationProtocol` | object | yes | How the adapter is invoked. |
-| `isolation` | object | yes | Sandboxing requirements the orchestrator must honour. |
+| `isolation` | object | yes | Sandboxing requirements an adapter host is expected to enforce. |
 | `author` | did | yes | DID of the adapter author. |
 | `verification` | at-uri | no | Optional verification record demonstrating conformance. |
 | `occurredAt` | datetime | yes | Publication timestamp. |
@@ -44,34 +43,27 @@ the declared isolation policy.
 | `networkPolicyVocab` | `vocabRef` | no | Vocab the policy slug resolves against. |
 | `filesystemPolicy` | open enum | no | `readonly` / `scratch` / `writable-subtree` / `full`. |
 | `filesystemPolicyVocab` | `vocabRef` | no | Vocab the policy slug resolves against. |
-| `resourceLimits` | `{ maxMemoryBytes?, maxCpuSeconds?, maxWallSeconds? }` | no | Hard ceilings the orchestrator enforces. |
+| `resourceLimits` | `{ maxMemoryBytes?, maxCpuSeconds?, maxWallSeconds? }` | no | Requested ceilings for the adapter host. |
 
 ## Field details
 
-### Why an adapter is a record
+### Contract semantics
 
-An adapter is a *declared contract*: the publisher asserts that
-"this framework, at this version range, can be invoked via this
-protocol under this isolation policy". The orchestrator running
-the adapter trusts the contract only as far as it trusts the
-publisher's signature. Verification records can pin specific
-conformance claims.
-
-The alternative (each orchestrator hand-coding adapter wrappers
-per framework) does not scale. The adapter record is the
-declarative replacement: a community with framework expertise
-publishes the wrapper once, and orchestrators pick it up from the
-network.
+The publisher asserts that a framework in `versionRange` supports
+the declared invocation protocol under the requested isolation
+policy. Cataloging the record does not verify that assertion.
+Consumers may use linked verification records to evaluate specific
+conformance claims before passing the record to an adapter host.
 
 ### `invocationProtocol.kind`
 
-The transport over which the orchestrator drives the adapter:
+The transport an adapter host uses:
 
 | Slug | What it means |
 | --- | --- |
-| `subprocess` | The orchestrator forks `entryPoint` as a child process and pipes JSON over stdin/stdout. |
-| `http` | The orchestrator POSTs JSON to the URL at `entryPoint`. |
-| `wasm` | The orchestrator instantiates the WASM module at `entryPoint` and calls a designated export. |
+| `subprocess` | Fork `entryPoint` as a child process and exchange JSON over standard input and output. |
+| `http` | Send JSON to the URL at `entryPoint`. |
+| `wasm` | Instantiate the WebAssembly module at `entryPoint` and call the host-defined export. |
 
 The slug is open-enum: a community publishing a vocab with an
 additional kind (e.g. `nats-rpc`, `grpc-stream`) extends the
@@ -79,7 +71,7 @@ transport set without modifying the lexicon.
 
 ### `isolation.kind`
 
-The sandboxing posture the orchestrator must honour:
+The sandboxing posture requested from an adapter host:
 
 | Slug | What it means |
 | --- | --- |
@@ -89,10 +81,9 @@ The sandboxing posture the orchestrator must honour:
 | `vm` | Run in a full VM. |
 | `wasm-sandbox` | Run in a WASM runtime with capability-based access. |
 
-The orchestrator's policy is to refuse any adapter whose
-`isolation.kind` is weaker than its configured floor. An
-orchestrator configured for `container` minimum will not run an
-adapter declaring `process`.
+The lexicon does not define an ordering among these values or a
+minimum-isolation policy. A host that treats them as ordered must
+document that local policy.
 
 ### Network and filesystem policies
 
@@ -112,15 +103,13 @@ Orthogonal axes layered on top of the kind:
 | `writable-subtree` | The adapter writes to a designated subtree. |
 | `full` | Unrestricted. |
 
-The orchestrator's enforcement is best-effort and depends on the
-underlying isolation runtime. For example, `wasm-sandbox` makes
-`egress-allowlist` cheap and exact, while `process` makes it
-harder.
+These fields declare requested capabilities; enforcement depends on
+the adapter host and its isolation runtime. Consumers should not
+infer enforcement from the existence of the record.
 
 ### `resourceLimits`
 
-Hard ceilings. The orchestrator kills the adapter if it exceeds
-any of:
+Requested ceilings for a host that supports resource accounting:
 
 | Field | Unit |
 | --- | --- |

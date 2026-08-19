@@ -6,33 +6,33 @@
 > authoritative reference is the source above plus the rustdoc
 > built locally with `cargo doc -p idiolect-migrate --open`.
 
-Schema-diff classification plus lens-based record migration.
-Thin typed façade over `panproto-check` (for diff classification)
-and `idiolect-lens` (for record translation).
+The crate combines schema-diff classification with
+[lens](../../glossary.md#lens)-based record migration. It is a typed facade over panproto 0.71.0's
+`panproto-check` crate and `idiolect-lens`.
 
 Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-migrate = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0" }
+idiolect-migrate = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0" }
 ```
 
 ## Public surface
 
 The crate exposes:
 
-- `classify(src, tgt)` — runs the panproto diff and returns a
+- `classify(old, new, protocol)` runs the panproto diff and returns a
   `CompatReport` distinguishing compatible from breaking
   changes.
-- `plan_auto(src, tgt, hints)` — for breaking diffs that are
-  covered by shipped migration recipes, returns a
+- `plan_auto(old, new, protocol, source_schema_hash,
+  target_schema_hash)` asks panproto's `auto_generate` to derive a
   `MigrationPlan` carrying source / target schema hashes plus a
-  lens body the caller can publish. For breaking diffs that
-  resist automation, returns
+  protolens chain the caller can publish. For breaking diffs that
+  resist automatic derivation, it returns
   `Err(PlannerError::NotAutoDerivable)` listing the offending
   changes.
-- `migrate_record(lens, source_record, schema_loader)` — wraps
-  `idiolect_lens::apply_lens` for the one-shot case.
+- `migrate_record(resolver, schema_loader, protocol, lens_uri,
+  source_record)` wraps `idiolect_lens::apply_lens` for one record.
 - `MigrationPlan` — the typed plan struct.
 - `MigrateError`, `MigrateResult`, `PlannerError` — the error
   types.
@@ -44,10 +44,13 @@ The crate exposes:
 | Diff | Behavior |
 | --- | --- |
 | Non-breaking (added optional, added vertex, added edge) | `classify` returns `compatible = true`; no plan is needed. |
-| Auto-derivable breaking (removed optional, renamed vertex via hint) | `plan_auto` returns a `MigrationPlan` with a protolens-chain body. |
+| Auto-derivable breaking | `plan_auto` returns a `MigrationPlan` with a protolens-chain body and an alignment-quality score. The exact supported shapes follow panproto 0.71.0's `auto_generate`. |
 | Non-auto breaking (removed required, changed required type, added required without default) | `plan_auto` returns `NotAutoDerivable`. The caller writes the lens by hand. |
 
-## Why this is a separate crate from idiolect-lens
+The alignment-quality score ranks alternatives for one source schema. Panproto
+0.71.0 does not give it a pair-independent confidence interpretation.
+
+## Dependency boundary
 
 Two reasons:
 
@@ -55,8 +58,9 @@ Two reasons:
    is a different shape than the runtime API
    (`apply_lens` plus resolvers).
 2. `idiolect-migrate` depends on `panproto-check`, which is a
-   heavier dep than the lens runtime itself. Keeping it
-   separate keeps the runtime crate's compile-time small.
+   heavier dependency than the lens runtime itself. Separating it
+   avoids adding that dependency to applications that only apply
+   existing lenses.
 
 ## The `idiolect-migrate` binary
 
@@ -74,6 +78,6 @@ for the batch-migration flow.
 
 ## Scope
 
-The crate is a thin façade with no runtime state. The
+The crate is a thin facade with no runtime state. The
 runtime cost of a migration equals the cost of one `apply_lens`
 per record.

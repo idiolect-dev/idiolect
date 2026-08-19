@@ -1,10 +1,9 @@
 # Run codegen
 
-Codegen keeps the lexicons (under `lexicons/dev/idiolect/`) the
-single source of truth. Anything that lives downstream of a
-lexicon (Rust types, TypeScript validators, family modules,
-spec-driven HTTP routes and CLI subcommands) is regenerated, not
-hand-edited.
+Codegen treats the [lexicons](../glossary.md#lexicon "A schema document in the AT Protocol Lexicon language")
+under `lexicons/dev/idiolect/` as its source of truth. Regenerate
+derived Rust types, TypeScript validators, family modules, HTTP
+routes, and CLI dispatch after changing that source.
 
 The crate is
 [`idiolect-codegen`](../reference/crates/idiolect-codegen.md).
@@ -17,9 +16,10 @@ cargo run -p idiolect-codegen           # write the generated tree
 cargo run -p idiolect-codegen -- --check # verify no drift
 ```
 
-The default mode regenerates. The `--check` flag re-derives in
-memory and byte-compares against the working tree, exiting
-non-zero on any drift. CI runs `--check` on every PR.
+The default mode writes the generated tree. The `--check` flag emits
+in memory, compares bytes against the working tree, and exits nonzero
+on drift. Both modes parse emitted Rust and TypeScript through
+panproto 0.71.0's tree-sitter gate before accepting the output.
 
 ## What gets emitted
 
@@ -37,12 +37,13 @@ non-zero on any drift. CI runs `--check` on every PR.
 The three spec files are single JSON documents (not directories).
 Each declares an array of entries that codegen reads.
 
-## The drift gate
+## Check for generated drift
 
-`--check` is the drift gate. CI runs it on every PR. A red gate
-means somebody edited a lexicon (or a spec) without rerunning
-the default mode, or hand-edited a generated file. Both are
-fixable by running `cargo run -p idiolect-codegen`.
+`--check` compares generated output with the checked-in tree. A failure usually
+means that a lexicon or
+spec changed without regeneration, or that a generated file was
+edited by hand. Run the default mode, inspect the resulting diff, and
+then run `--check` again.
 
 ## Adding a new lexicon
 
@@ -53,9 +54,10 @@ fixable by running `cargo run -p idiolect-codegen`.
    `examples` module emits a typed accessor.
 4. Re-run the workspace tests to confirm the family round-trips.
 
-The codegen rejects malformed lexicons (NSID violations,
-unresolved references) before emitting, so a broken lexicon
-errors at this step rather than at compile time.
+Codegen rejects malformed lexicons, including invalid
+[NSIDs](../glossary.md#nsid "A reverse-DNS identifier for an AT Protocol schema or method"),
+before it writes output. The subsequent emit gate rejects malformed
+generated source.
 
 ## Adding a new spec entry
 
@@ -69,24 +71,24 @@ specs each carry a different shape. The pattern is the same:
    an observer method, the `VerificationRunner` impl for a
    verifier runner).
 
-The dispatcher routes to the new entry by its kind. The
-generated tree handles parsing and shape.
+The dispatcher routes by the declared kind; the generated tree owns
+the parser and dispatch table.
 
 ## Library API
 
 For consumers outside the workspace, the emitter is callable as
 a library:
 
-```rust
+```text
 use idiolect_codegen::emit::{emit_rust, emit_typescript};
 use idiolect_codegen::emit::family::{FamilyConfig, idiolect_family};
 ```
 
 `emit_rust(docs, examples, family)` and
-`emit_typescript(docs, examples, family)` take pre-loaded
-`LexiconDoc` and `Example` slices plus a `FamilyConfig`, and
-return a `Vec<EmittedFile>`. Loading the lexicons from disk is
-the caller's job.
+`emit_typescript(docs, examples, family)` take preloaded
+`LexiconDoc` and `Example` slices plus `&FamilyConfig`. Each returns
+`anyhow::Result<Vec<EmittedFile>>`; loading lexicons from disk remains
+the caller's responsibility.
 
 `FamilyConfig::new(marker_name, id, nsid_prefix)` constructs a
 config from any string-like inputs. The shipped default for

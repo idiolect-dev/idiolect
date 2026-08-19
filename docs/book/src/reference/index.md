@@ -1,7 +1,8 @@
 # Reference
 
-Per-symbol detail. Use the navigation to jump to a specific crate,
-lexicon, CLI subcommand, or HTTP endpoint.
+Use this section to look up exported APIs, record fields, commands,
+and HTTP contracts. Task procedures remain in the
+[guides](../guide/index.md).
 
 | Section | Contents |
 | --- | --- |
@@ -11,15 +12,29 @@ lexicon, CLI subcommand, or HTTP endpoint.
 | [HTTP query API](./http-api.md) | Every endpoint exposed by the orchestrator, request and response shape. |
 | [Stability and versioning](./stability.md) | The pre-1.0 stability policy. |
 
-The reference covers the `0.8.0` release. For older releases, see
-the
+The reference covers idiolect 0.12.0 with panproto 0.71.0. For older
+releases, use the
 [release archive](https://github.com/idiolect-dev/idiolect/releases).
+
+## Extension and API path
+
+For an advanced integration, follow the lookup path that matches the
+extension boundary:
+
+| Extension boundary | Start here | Then inspect |
+| --- | --- | --- |
+| Add a record family or emitter target | [`idiolect-codegen`](./crates/idiolect-codegen.md) | [`RecordFamily`](./crates/idiolect-records.md#family) and the emit functions |
+| Add a stream, handler, or cursor backend | [`idiolect-indexer`](./crates/idiolect-indexer.md) | Trait signatures, feature flags, and error variants |
+| Add a lens resolver or schema loader | [`idiolect-lens`](./crates/idiolect-lens.md) | Resolver, loader, apply-input, and apply-output types |
+| Add an observation or verification method | [`idiolect-observer`](./crates/idiolect-observer.md) or [`idiolect-verify`](./crates/idiolect-verify.md) | Generated taxonomies and implementation traits |
+| Integrate over process boundaries | [CLI](./cli.md) or [HTTP API](./http-api.md) | Exact flags, query parameters, response envelopes, and errors |
+
+For wire-level extensions, begin with the [lexicon index](./lexicons/index.md)
+and follow each page's source link to the authoritative JSON.
 
 ## Authority policy
 
-This section is editorial. For Rust crates, the authoritative
-per-symbol reference is the rendered rustdoc on docs.rs (linked at
-the top of every crate page). For lexicons, the authoritative
-shape is the JSON document under `lexicons/dev/idiolect/`. When
-this book and either source disagree, the source wins. Please
-file an issue.
+For published Rust crates, rustdoc on docs.rs is authoritative. For
+workspace-only crates, build rustdoc from the current checkout. The
+JSON under `lexicons/dev/idiolect/` defines record shape. If this book
+disagrees with either source, use the source and file an issue.

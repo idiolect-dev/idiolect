@@ -1,18 +1,18 @@
 # Run the orchestrator HTTP API
 
 [`idiolect-orchestrator`](../reference/crates/idiolect-orchestrator.md)
-is a read-only HTTP query API over a record catalog. It pairs
-with the indexer (which writes the catalog through
-`CatalogHandler`) and exposes the result over a small set of
-typed query endpoints.
+serves a read-only HTTP API over a record
+[catalog](../glossary.md#catalog "An indexed collection of AT Protocol records").
+`CatalogHandler` fills the catalog from the indexer; the HTTP server
+queries that same state.
 
 ## What it serves
 
 - `GET /healthz`, `GET /readyz` — liveness and readiness.
 - `GET /metrics` — Prometheus exposition.
 - `GET /v1/stats` — record counts per kind.
-- One endpoint per declarative query under
-  `orchestrator-spec/queries.json`. Snapshot at v0.8.0:
+- One pair of REST and XRPC endpoints per declarative query in
+  `orchestrator-spec/queries.json`. The 0.12.0 surface includes:
   bounties (open, want-lens, by-requester), adapters (by
   framework, by invocation protocol, with verification),
   recommendations (starting from a source schema), verifications
@@ -32,18 +32,21 @@ cargo install --path crates/idiolect-orchestrator \
     --features daemon
 ```
 
-The `daemon` feature pulls in `catalog-sqlite`, `query-http`,
-the indexer's tapped firehose, and the SQLite cursor store. Run:
+The `daemon` feature pulls in `catalog-sqlite`, `query-http`, the
+indexer's tapped firehose, and the SQLite cursor store. Configure and
+run it with environment variables:
 
 ```bash
-idiolect-orchestrator \
-  --catalog ./catalog.sqlite \
-  --bind 0.0.0.0:8787
+IDIOLECT_TAP_URL=http://localhost:2480 \
+IDIOLECT_ORCHESTRATOR_DB=./catalog.sqlite \
+IDIOLECT_ORCHESTRATOR_CURSORS=./cursors.sqlite \
+IDIOLECT_HTTP_ADDR=127.0.0.1:8787 \
+idiolect-orchestrator
 ```
 
-The exact CLI surface is documented by the daemon's `--help`.
-The catalog is populated by the indexer that ships with the
-daemon. The orchestrator reads from the same SQLite file.
+Set `IDIOLECT_TAP_ADMIN_PASSWORD` if the tap requires it and
+`IDIOLECT_SUBSCRIPTION_ID` when several subscriptions share a cursor
+database. The daemon does not parse `--catalog` or `--bind` flags.
 
 ## Query it
 
@@ -52,11 +55,11 @@ curl -s http://localhost:8787/v1/stats | jq
 curl -s 'http://localhost:8787/v1/bounties/open' | jq
 curl -s 'http://localhost:8787/v1/adapters?framework=hasura' | jq
 curl -s 'http://localhost:8787/v1/verifications?lens_uri=at://...' | jq
+curl -s 'http://localhost:8787/v1/verifications/sufficient?lens_uri=at://...&kinds=roundtrip-test&hold=true' | jq
 ```
 
-Every shipped query has a CLI subcommand under
-`idiolect orchestrator <subcommand>` that calls the same
-endpoint:
+The generated CLI exposes the spec entries that declare a `cli`
+mapping:
 
 ```bash
 idiolect orchestrator bounties
@@ -64,9 +67,9 @@ idiolect orchestrator adapters --framework hasura
 idiolect orchestrator verifications --lens_uri at://...
 ```
 
-The CLI dispatcher (in
-`crates/idiolect-cli/src/generated.rs`) is generated from the
-same spec the HTTP routes are.
+Other HTTP queries have no CLI subcommand. The dispatcher in
+`crates/idiolect-cli/src/generated.rs` is generated from the
+same spec as the HTTP routes.
 
 ## Add a query
 
@@ -78,8 +81,9 @@ document with a top-level `queries` array). To add one:
    panproto-expr expression), and the record kind it iterates
    over.
 2. Run `cargo run -p idiolect-codegen`.
-3. The generated tree picks up the new query: HTTP route,
-   query-string parser, response shape, and CLI subcommand.
+3. The generated tree picks up the HTTP route, XRPC alias,
+   query-string parser, and response shape. Add a `cli` mapping if the
+   query also needs a CLI subcommand.
 
 The hand-written part is the panproto-expr predicate inside the
 spec entry. The generated tree handles routing, parameter
@@ -87,11 +91,9 @@ parsing, and response encoding.
 
 ## Observability
 
-The orchestrator exposes `/metrics` in Prometheus exposition
-format, plus structured `tracing` logs. The exact metric names
-and label sets are defined in
-`crates/idiolect-orchestrator/src/http.rs`. See the source for
-the live list.
+The orchestrator exposes `/metrics` in Prometheus exposition format
+and emits structured `tracing` logs. The metric names and label sets
+are defined in `crates/idiolect-orchestrator/src/http.rs`.
 
 ## Deployment
 

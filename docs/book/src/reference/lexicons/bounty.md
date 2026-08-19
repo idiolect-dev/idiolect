@@ -1,9 +1,9 @@
 # dev.idiolect.bounty
 
-A declaration that a translation, verification, or adapter is
+A declaration that a [lens](../../glossary.md#lens), verification, or adapter is
 wanted, with terms. idiolect does not intermediate fulfillment:
 payment, review, and acceptance happen on external rails referenced
-in the record. The record is the *request* primitive.
+in the record.
 
 > **Source:** [`lexicons/dev/idiolect/bounty.json`](https://github.com/idiolect-dev/idiolect/blob/main/lexicons/dev/idiolect/bounty.json)
 > · **Rust:** [`idiolect_records::Bounty`](https://docs.rs/idiolect-records/latest/idiolect_records/struct.Bounty.html)
@@ -16,9 +16,9 @@ in the record. The record is the *request* primitive.
 | --- | --- | --- | --- |
 | `requester` | did | yes | Who is requesting. |
 | `wants` | union | yes | Exactly one of `wantLens` / `wantVerification` / `wantAdapter`. |
-| `constraints` | array (≤64) | no | Structured constraints the deliverable must satisfy. |
+| `constraints` | array (at most 64 entries) | no | Structured constraints the deliverable must satisfy. |
 | `reward` | object | no | `{ summary?, externalRef? }`. idiolect does not transact. |
-| `eligibility` | array (≤128) | no | Postfix eligibility tree. |
+| `eligibility` | array (at most 128 entries) | no | Postfix eligibility tree. |
 | `fulfillment` | at-uri | no | Once fulfilled, points to the deliverable record. |
 | `status` | open enum | no | `open` / `claimed` / `fulfilled` / `withdrawn`. |
 | `statusVocab` | `vocabRef` | no | Vocab the status slug resolves against. |
@@ -53,7 +53,7 @@ Asks for an adapter for a framework.
 
 | Subfield | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `framework` | string (≤128) | yes | Framework name. |
+| `framework` | string (at most 128 characters) | yes | Framework name. |
 | `versionRange` | string | no | Semver range. |
 
 ## The constraint variants
@@ -62,9 +62,9 @@ Each entry in `constraints` is one of:
 
 | Variant | Captures |
 | --- | --- |
-| `constraintPerformance` | A quantitative bound: metric, threshold, comparison direction (`lt`, `le`, `eq`, `ge`, `gt`), optional sample size. Examples: `p99-latency-ms ≤ 50`, `error-rate < 0.001`. |
+| `constraintPerformance` | A quantitative bound: metric, threshold, comparison direction (`lt`, `le`, `eq`, `ge`, `gt`), optional sample size. For instance, `p99-latency-ms le 50` or `error-rate lt 0.001`. |
 | `constraintConformance` | A verification kind (and optional specific property) the deliverable must pass. |
-| `constraintLicense` | An SPDX expression plus optional allow / deny lists. |
+| `constraintLicense` | An [SPDX license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/) plus optional allow and deny lists. |
 | `constraintDeadline` | A datetime deadline plus optional grace seconds. |
 | `constraintDependency` | A pointer to another bounty this one waits on. Claims are ineligible until the dependency's status is `fulfilled`. |
 
@@ -101,11 +101,12 @@ prose. `externalRef` is a URL pointing at the rail that handles
 the actual reward (a grant portal, a payment platform, an
 attestation service). idiolect does not validate that the
 external rail exists, that it is solvent, or that the reward will
-be paid. That is the consumer's diligence.
+be paid. Consumers must verify the external rail and its payment
+terms themselves.
 
-The pattern: a bounty with `externalRef` pointing at a known
-grant portal is more credible than a bounty with only a narrative
-summary. Consumers route their effort accordingly.
+An `externalRef` to a known grant portal gives consumers a payment
+claim they can check; a narrative-only reward does not. Consumers
+can route their effort on that distinction.
 
 ### `fulfillment`
 
@@ -142,7 +143,7 @@ prior recommendation that listed required verifications).
       "kind": "roundtrip-test",
       "property": {
         "$type": "dev.idiolect.defs#lpRoundtrip",
-        "domain": "all valid v1 records with bodies ≤ 1024 bytes"
+        "domain": "all valid v1 records with bodies at most 1024 bytes"
       }
     },
     { "$type": "dev.idiolect.bounty#constraintDeadline",
@@ -162,7 +163,7 @@ prior recommendation that listed required verifications).
 }
 ```
 
-## How bounties drive verification work
+## Related records
 
 ```mermaid
 flowchart LR

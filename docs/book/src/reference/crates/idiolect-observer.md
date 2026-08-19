@@ -6,20 +6,20 @@
 > authoritative reference is the source above plus the rustdoc
 > built locally with `cargo doc -p idiolect-observer --open`.
 
-Fold encounter-family records into observation records. Driven
-by the declarative spec at `observer-spec/methods.json`. Codegen
-emits the method-descriptor table.
+The crate folds encounter-family [records](../../glossary.md#record-family) into observation
+records. The declarative spec at `observer-spec/methods.json` drives the
+surface, and code generation emits the method-descriptor table.
 
 Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-observer = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.8.0", features = ["daemon"] }
+idiolect-observer = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0", features = ["daemon"] }
 ```
 
 ## Public surface
 
-```rust
+```text
 pub trait ObservationMethod: Send + Sync {
     fn name(&self) -> &str;
     fn version(&self) -> &str;
@@ -84,6 +84,7 @@ implementations:
 | --- | --- |
 | `InMemoryPublisher` | `Vec<Observation>`. For tests. |
 | `PdsPublisher` | Writes via an `idiolect_lens::PdsWriter` to the observer's PDS. |
+| `LogPublisher` | Emits each observation as a structured tracing event. |
 
 ## Errors
 

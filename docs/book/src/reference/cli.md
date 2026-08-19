@@ -1,6 +1,7 @@
 # CLI
 
-`idiolect` is the command-line tool. The full surface is below.
+`idiolect` is the command-line tool. The surface below reflects
+idiolect 0.12.0.
 
 ## Top-level subcommands
 
@@ -28,7 +29,8 @@ its calls to the orchestrator's HTTP API.
 idiolect resolve <did>
 ```
 
-Resolve a DID via `idiolect-identity::ReqwestIdentityResolver`.
+Resolve a [DID](../glossary.md#did "A decentralized identifier for an AT Protocol identity")
+via `idiolect-identity::ReqwestIdentityResolver`.
 Prints `{ did, method, handle, pds_url, also_known_as }`.
 
 ## `fetch`
@@ -102,7 +104,9 @@ for `<kind>` (which can be either the unqualified kind like
 discriminator, and POSTs `com.atproto.repo.createRecord` using
 the stored session's bearer auth.
 
-When `--did` is omitted the CLI picks the first stored session.
+When `--did` is omitted, the CLI uses the first session returned by
+the filesystem scan; that order is unspecified. Pass `--did` in
+scripts and multi-account environments.
 When `--rkey` is omitted the CLI generates a TID-shaped key.
 
 Prints `{uri, cid}` of the published record on success.
@@ -131,16 +135,17 @@ many cases run.
 ```text
 idiolect encounter record \
   --lens <AT-URI> --source-schema <AT-URI> [--target-schema <AT-URI>] \
-  [--vocab <AT-URI>] [--kind <KIND>] [--visibility <V>] [--text-only]
+  [--action-vocab <AT-URI>] [--kind <KIND>] [--visibility <V>] [--text-only]
 ```
 
-Publishes a `dev.idiolect.encounter` record. The exact flag set
-is in `crates/idiolect-cli/src/encounter.rs`.
+Prints a `dev.idiolect.encounter` body after prompting for a structured
+`use` value. It does not publish the body. Save the JSON and pass it to
+`idiolect publish encounter --record <path>`.
 
 ## Output format
 
-All commands print pretty-printed JSON to stdout on success.
-Errors go to stderr:
+Data commands print pretty-printed JSON to stdout. `version` and
+`help` print text. Errors go to stderr:
 
 ```text
 error: <message>
@@ -148,12 +153,11 @@ error: <message>
 
 Pipe stdout to `jq` for further processing.
 
-## Roadmap
+## Authentication boundary
 
 The shipped login path uses app passwords in legacy Bearer
 mode (`com.atproto.server.createSession` plus
-`Authorization: Bearer <token>`). The full OAuth + DPoP flow
-via `atrium-oauth` (browser handoff, PKCE, DPoP-bound tokens)
-is the next-iteration login UX. The library `OAuthSession`
-shape and `OAuthTokenStore` trait are already in place to
-receive whatever the dance returns.
+`Authorization: Bearer <token>`). Its session file is not an
+`idiolect_oauth::OAuthSession` and contains no DPoP private key.
+Applications that require OAuth with DPoP should use
+`idiolect-oauth` and an OAuth client directly.

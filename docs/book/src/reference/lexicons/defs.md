@@ -1,11 +1,11 @@
 # dev.idiolect.defs
 
-Shared types for the `dev.idiolect.*` lexicon family. Two kinds of
-content live here:
+This document defines shared types for the `dev.idiolect.*`
+[lexicon](../../glossary.md#lexicon) family. Two kinds of content live here:
 
-- **Cross-cutting reference shapes** — lens, schema, encounter,
+- **Cross-cutting reference shapes:** lens, schema, encounter,
   vocab, and strong-record references; tool identity; visibility.
-- **Content-theory types** — purpose, lens property, evidence,
+- **Content-theory types:** purpose, lens property, evidence,
   caveat, basis. Shared across multiple records.
 
 Record-specific combinator trees (condition, eligibility,
@@ -78,7 +78,7 @@ A closed-enum string. Five values:
 | `public-detailed` | Full record body published. |
 | `public-minimal` | Record published with elided detail (e.g. omits source instance). |
 | `public-aggregate-only` | Record consumed only by aggregators; individual reads suppressed. |
-| `community-scoped` | Reserved for v1 substrate enforcement; should not be served to parties outside the named community once enforcement lands. |
+| `community-scoped` | Declares an intended community scope. The current runtime does not enforce access control for this value. |
 | `private` | Should not be published at all. |
 
 idiolect does not enforce these today. They are policy

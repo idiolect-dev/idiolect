@@ -1,6 +1,5 @@
-//! Publishes a `dev.idiolect.recommendation` from the project DID
-//! endorsing the tutorial lens. Demonstrates the live publishing
-//! path tutorial 5 walks through.
+//! Publishes a tutorial community and its `dev.idiolect.recommendation`.
+//! The PDS assigns fresh record keys, so the example can be rerun.
 //!
 //! Auth: app-password Bearer mode. Reads three env vars (same set
 //! as the lens publisher):
@@ -14,15 +13,16 @@
 use std::env;
 
 use anyhow::{Context, Result, anyhow};
-use idiolect_records::Record;
 use idiolect_records::generated::dev::idiolect::defs::LensRef;
 use idiolect_records::generated::dev::idiolect::recommendation::{
     ConditionSourceIs, Recommendation, RecommendationConditions,
 };
+use idiolect_records::{Community, Record};
 use serde::{Deserialize, Serialize};
 
 const LENS_URI: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text";
-const SRC_SCHEMA_URI: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.schema/tutorial-post-body-v1";
+const SRC_SCHEMA_URI: &str =
+    "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.schema/tutorial-post-body-v1";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -34,18 +34,28 @@ async fn main() -> Result<()> {
     let session = create_session(&http, &pds, &handle, &password).await?;
     eprintln!("logged in as {}", session.did);
 
-    // Issuing community is a placeholder for the tutorial — the
-    // canonical "idiolect" community record. The runtime doesn't
-    // dereference issuingCommunity at publish time, so the demo
-    // works even if the community record isn't on the network.
-    let community = format!("at://{}/dev.idiolect.community/canonical", session.did);
+    let community = Community {
+        appview_endpoint: None,
+        conventions: None,
+        conventions_text: None,
+        core_lenses: None,
+        core_schemas: None,
+        created_at: now()?,
+        description: "Community created by the idiolect publishing tutorial.".to_owned(),
+        endorsed_communities: None,
+        member_role_vocab: None,
+        members: Some(vec![session.did.parse()?]),
+        membership_roll: None,
+        name: "idiolect-tutorial".to_owned(),
+        record_hosting: None,
+        role_assignments: None,
+    };
+    let community_uri = publish(&http, &pds, &session.access_jwt, &session.did, &community).await?;
 
-    // Build the typed record. Conditions are postfix-operator
-    // trees over a closed combinator set; a single
-    // `conditionSourceIs` is the simplest "always applies to v1
-    // source records" predicate.
+    // A single `conditionSourceIs` limits this recommendation to
+    // records that use the tutorial's v1 source schema.
     let rec = Recommendation {
-        issuing_community: community.parse()?,
+        issuing_community: community_uri.parse()?,
         conditions: vec![RecommendationConditions::ConditionSourceIs(
             ConditionSourceIs {
                 schema: idiolect_records::generated::dev::idiolect::defs::SchemaRef {
@@ -75,19 +85,14 @@ async fn main() -> Result<()> {
         supersedes: None,
     };
 
-    let rkey = "tutorial-rename-sort";
-    publish(&http, &pds, &session.access_jwt, &session.did, &rec, rkey).await?;
-    println!(
-        "published at://{}/{}/{rkey}",
-        session.did,
-        Recommendation::NSID,
-    );
+    let recommendation_uri = publish(&http, &pds, &session.access_jwt, &session.did, &rec).await?;
+    println!("community      {community_uri}");
+    println!("recommendation {recommendation_uri}");
     Ok(())
 }
 
 // -----------------------------------------------------------------
-// session + publish (mirror of main.rs's helpers; small enough to
-// duplicate rather than factor out)
+// session + publish
 // -----------------------------------------------------------------
 
 #[derive(Serialize)]
@@ -112,7 +117,10 @@ async fn create_session(
     let url = format!("{pds}/xrpc/com.atproto.server.createSession");
     let resp = http
         .post(&url)
-        .json(&CreateSessionRequest { identifier, password })
+        .json(&CreateSessionRequest {
+            identifier,
+            password,
+        })
         .send()
         .await
         .context("createSession request")?;
@@ -130,23 +138,26 @@ async fn create_session(
 struct CreateRecordRequest<'a> {
     repo: &'a str,
     collection: &'a str,
-    rkey: &'a str,
     record: serde_json::Value,
 }
 
-async fn publish(
+#[derive(Deserialize)]
+struct CreateRecordResponse {
+    uri: String,
+}
+
+async fn publish<R: Record>(
     http: &reqwest::Client,
     pds: &str,
     bearer: &str,
     repo: &str,
-    rec: &Recommendation,
-    rkey: &str,
-) -> Result<()> {
+    rec: &R,
+) -> Result<String> {
     let mut value = serde_json::to_value(rec)?;
     if let serde_json::Value::Object(ref mut map) = value {
         map.insert(
             "$type".to_owned(),
-            serde_json::Value::String(Recommendation::NSID.to_owned()),
+            serde_json::Value::String(R::NSID.to_owned()),
         );
     }
     let url = format!("{pds}/xrpc/com.atproto.repo.createRecord");
@@ -155,8 +166,7 @@ async fn publish(
         .bearer_auth(bearer)
         .json(&CreateRecordRequest {
             repo,
-            collection: Recommendation::NSID,
-            rkey,
+            collection: R::NSID,
             record: value,
         })
         .send()
@@ -169,7 +179,7 @@ async fn publish(
             resp.text().await.unwrap_or_default()
         ));
     }
-    Ok(())
+    Ok(resp.json::<CreateRecordResponse>().await?.uri)
 }
 
 fn now() -> Result<idiolect_records::Datetime> {
@@ -185,9 +195,7 @@ fn now() -> Result<idiolect_records::Datetime> {
     let hour = (time_of_day / 3600) as u32;
     let minute = ((time_of_day % 3600) / 60) as u32;
     let second = (time_of_day % 60) as u32;
-    let s = format!(
-        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis:03}Z"
-    );
+    let s = format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis:03}Z");
     idiolect_records::Datetime::parse(s).map_err(|e| anyhow!("parse datetime: {e}"))
 }
 

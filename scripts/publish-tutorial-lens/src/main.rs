@@ -5,7 +5,7 @@
 //!   1. `dev.panproto.schema.schema/v1` — single-field "post:body"
 //!      with a string `text` child.
 //!   2. `dev.panproto.schema.schema/v2` — same shape with the kind
-//!      relabelled to `text` (derived from the chain's
+//!      relabeled to `text` (derived from the chain's
 //!      `target_schema`).
 //!   3. `dev.panproto.schema.lens/rename-sort-string-to-text` —
 //!      single-step protolens chain that applies a `rename_sort`.
@@ -167,7 +167,10 @@ async fn create_session(
     let url = format!("{pds}/xrpc/com.atproto.server.createSession");
     let resp = http
         .post(&url)
-        .json(&CreateSessionRequest { identifier, password })
+        .json(&CreateSessionRequest {
+            identifier,
+            password,
+        })
         .send()
         .await
         .context("createSession request")?;
@@ -275,9 +278,7 @@ fn format_rfc3339(secs: i64, millis: u32) -> String {
     let hour = (time_of_day / 3600) as u32;
     let minute = ((time_of_day % 3600) / 60) as u32;
     let second = (time_of_day % 60) as u32;
-    format!(
-        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis:03}Z"
-    )
+    format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis:03}Z")
 }
 
 fn days_to_ymd(days: i64) -> (i64, u32, u32) {

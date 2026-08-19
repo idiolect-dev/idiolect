@@ -1,159 +1,109 @@
 # Lexicon evolution policy
 
-Every lexicon revision in idiolect ships with an auto-derived,
-classified, verified, published lens. Hand-authored lenses are an
-escape hatch that requires governance sign-off. The same policy
-applies to vendored externals (Blacksky, layers-pub, ...).
+A Lexicon revision can preserve validation compatibility while changing what
+generated programs can safely assume. idiolect's intended response is the
+**evolution evidence chain (EEC)**: classify the schema change, derive or author
+a lens when migration is needed, verify its stated properties, publish it, and
+connect community policy to that record.
 
-The policy is the lexicon-level half of the project's stability
-story. The schema-level half is the
-[stability and versioning](../reference/stability.md) note. The
-policy below is enforced by `scripts/lexicon-evolve.sh` and the
-release CI workflow.
+The current checkout implements parts of the EEC in Rust and describes the rest
+in a shell script and CI workflow. It does not yet enforce the entire chain.
 
-## The six stages
+## Compatibility and migration are different
 
-```mermaid
-flowchart LR
-    DIFF[0. Diff] --> DERIVE[1. Auto-derivation]
-    DERIVE --> CLASSIFY[2. Classify]
-    CLASSIFY --> COERCE[3. Coercion-law check]
-    COERCE --> ROUNDTRIP[4. Roundtrip verify]
-    ROUNDTRIP --> PUBLISH[5. Publish lens]
-```
+`idiolect-migrate` begins with `panproto_check::diff` and
+`panproto_check::classify`. If a diff has no breaking changes, `plan_auto`
+returns `OnlyNonBreaking`: old records remain readable under the new schema, so
+the library does not manufacture a migration plan.
 
-Each stage maps onto a panproto primitive. Nothing is bespoke.
+If breaking changes exist, `plan_auto` asks panproto 0.71.0's `auto_generate`
+for a `ProtolensChain`. Its default `Balanced` configuration uses the exact
+valued-CSP optimizer and requires a total morphism. Success returns a
+`MigrationPlan` containing the source and target schema identifiers supplied by
+the caller, the chain, and an alignment-quality score. This score ranks
+alignments for one source schema; it is not a confidence measure with a stable
+threshold across unrelated pairs. Failure returns the breaking changes that
+need manual attention.
 
-### Stage 0 — Diff
+This yields three distinct outcomes:
 
-```bash
-schema diff --src lexicons/<nsid>.<old>.json --tgt lexicons/<nsid>.<new>.json
-```
+1. no structural change;
+2. a compatible change that needs no record migration; or
+3. a breaking change that needs an auto-derived or hand-authored lens.
 
-Produces a structured change graph: vertex / edge additions,
-removals, renames, kind coercions, constraint tightenings. Cached
-under `migrations/<nsid>/<old>-<new>/diff.json`.
+Compatibility is thus a read-side property, while migration is an
+operation over existing records.
 
-### Stage 1 — Auto-derivation
+## From a plan to a published lens
 
-```bash
-schema lens generate <old>.json <new>.json --hints <hints>.json
-```
+A `MigrationPlan` is not an ATProto record. The caller must serialize its
+protolens chain into a `dev.panproto.schema.lens` `blob`, provide the schema
+record references and object hash expected by the vendored Lexicon, publish the
+record, and retain its AT-URI. `idiolect-migrate::migrate_record` can then apply
+that published lens through the normal `idiolect-lens` runtime.
 
-Produces a *protolens chain*: a sequence of dependent optics, each
-parameterized by a precondition over schemas. The elementary
-constructors are listed in
-[Lens semantics](./lens-laws.md). Hints declare anchors for
-ambiguous renames; forward-chaining propagates declared anchors
-into derived ones before the CSP solver runs.
+Verification remains a separate step. `RoundtripTestRunner` can check GetPut on
+a nonempty corpus; `PropertyTestRunner` can generate a finite set of cases;
+`StaticCheckRunner` validates the two schema graphs. These checks may falsify a
+claim. A passing finite run does not establish the corresponding universal law.
 
-### Stage 2 — Classify
+Finally, a community may add the lens to a dialect's `preferredLenses`, add a
+deprecation entry for the prior object, or publish a recommendation. None of
+those policy records is created by `plan_auto`.
 
-```bash
-schema lens inspect chain.json --protocol atproto
-```
+## Optic kinds are not governance classes
 
-Each chain receives one of five optic classes. The class drives
-the gate:
+panproto 0.71.0 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
+`Traversal`. Earlier versions of this chapter described a different five-way
+set, `Iso`/`Injection`/`Projection`/`Affine`/`General`, and assigned automatic
+merge policy to it. That set is not the current `OpticKind` API.
 
-| Class | Gate behavior |
-| --- | --- |
-| **Iso** | Auto-merge. No governance review. |
-| **Injection** | Auto-merge as forward-only. |
-| **Projection** | PR review required. Complement persistence required. |
-| **Affine** | PR review plus a `dev.idiolect.recommendation` from a recognised reviewer. |
-| **General** | Manual lens authoring. Coercion-law check, verification gate, and recommendation all required. |
+A project can still define review rules over current optic kinds, complement
+requirements, compatibility reports, alignment quality, and verification
+evidence. Such rules are idiolect governance policy; they should not be
+presented as classifications returned by panproto.
 
-The class also feeds `dev.idiolect.dialect#deprecations`: any
-non-Iso lens revision implicitly deprecates the previous schema
-and must populate `deprecations` with the lens at-uri as
-`replacement`.
+## Current automation boundary
 
-### Stage 3 — Coercion-law check
+The repository contains `scripts/lexicon-evolve.sh` and
+`.github/workflows/lexicon-evolution.yml`, but both still encode the earlier CLI
+and classification contract. With panproto 0.71.0:
 
-For any `CoerceType` step crossing primitive kinds:
+- `schema diff` accepts positional `OLD NEW` paths rather than `--src` and
+  `--tgt`, and it has no `--json` flag;
+- `schema lens generate` requires `--protocol` and needs `--chain` to emit a
+  reusable chain;
+- `schema lens inspect` reports the current optic kinds; and
+- `schema lens verify` accepts a data file and optional schema, not the
+  directory/`--schema`/`--chain` combination in the script.
 
-```bash
-schema theory check-coercion-laws theory.ncl --json
-```
+The workflow makes CLI installation non-fatal and skips its pipeline when the
+installation step does not report success. It also searches for the obsolete
+classification names. Thus, the checked-in automation is a design scaffold,
+not a reliable merge gate for 0.71.0. We call this discrepancy the
+**enforcement gap (EG)**.
 
-Sample-based. Exit code is non-zero on any falsifying sample. The
-chain declares each `CoerceType` with an honest `CoercionClass`.
-Dishonest declarations corrupt the asymmetric-lens put law
-silently. This gate catches them.
+## A defensible gate
 
-### Stage 4 — Roundtrip verification
+Until the EG is closed, reviewers can apply the EEC as an explicit
+checklist:
 
-```bash
-schema lens verify <corpus>/ --protocol atproto --schema <new>.json --chain chain.json
-```
+1. compare the old and new parsed schemas with `idiolect-migrate::classify`;
+2. require a reviewed `MigrationPlan` or a hand-authored chain for each
+   breaking change;
+3. inspect the current `OpticKind` and complement requirements;
+4. run the applicable verification runners on versioned inputs;
+5. publish the lens and verification records through an authenticated writer;
+6. update dialect, deprecation, and recommendation records deliberately; and
+7. retain the artifacts that identify the two schema revisions and test corpus.
 
-Checks GetPut and PutGet over the corpus. The corpus is the live
-indexer's catalog snapshot at the time of revision: actual
-records published across the network for that NSID. CI fails on
-any record that violates either law. Verification runs on real
-data rather than synthetic test cases.
+Two points follow:
 
-### Stage 5 — Publish
+1. The EEC does not make every migration reversible.
+2. It makes the remaining assumptions and evidence inspectable.
 
-```bash
-schema lens inspect chain.json --json | idiolect-cli publish-lens \
-  --collection dev.panproto.schema.lens
-```
-
-The verified chain serializes to Nickel via `panproto-lens-dsl`
-and ships as a `dev.panproto.schema.lens` record from idiolect's
-DID. The lens at-uri is added to:
-
-- The new lexicon revision's
-  `dev.idiolect.dialect#preferredLenses`.
-- The previous lexicon's `deprecations` block as `replacement`.
-
-Codegen re-runs on revision bump. Downstream consumers pulling
-the dialect record see the lens automatically.
-
-## Vocab edits go through the same pipeline
-
-Vocab edits are *record* edits, not *schema* edits, but the same
-six stages apply via dependent optics:
-
-| Edit | Class | Action |
-| --- | --- | --- |
-| Add node, add edge | (no migration needed) | Open enums tolerate. Stage 4 corpus regression only. |
-| Remove node | Projection | Full pipeline. |
-| Rename node | Iso | `RenameEdgeName` over consumers. Auto-merge. |
-| Add `equivalent_to` between vocabs | (free) | Triggers a derived lens automatically lifted into the orchestrator's `mapEnum` cache. |
-
-## Why this is modular
-
-- **Modular.** Each elementary protolens is a stand-alone, well-typed combinator. The pipeline composes them, with no bespoke migration code per revision.
-- **Abstract.** Protolenses are quantified over schemas, not specific to a revision pair. `RenameField("oldName", "newName")` is a schema-parametric morphism; it applies to the lexicon and to every record across the network without per-record code.
-- **Composable.** Chain auto-simplification, ScopedTransform sub-chains, Nickel record merge for fragments, symmetric lenses for forward / backward pairing, lift across protocols via theory morphisms.
-- **Verifiable.** Optic classification is mechanical. Coercion-law checks are sample-based. Corpus regression uses real records. Trust rests on those mechanical checks rather than on review prose.
-- **Decentralized.** Communities author their own protolens chains for their own lexicons. The policy applies to anyone adopting idiolect's framework.
-
-## Vendored externals
-
-Vendored lexicons (Blacksky, layers-pub, ...) are consumed as
-schemas idiolect does not own. When they revise, the same six
-stages run against their old / new pair. The output is a
-*symmetric* lens (per panproto's `symmetricLens`): syncing A → B
-and B → A keeps both sides consistent up to complement. That is
-what a bridge crate needs (e.g. the planned
-`idiolect-acorn`): when the upstream changes, the bridge auto-
-updates and downstream idiolect records remain syncable.
-
-## Tooling
-
-- `scripts/lexicon-evolve.sh <nsid> <old> <new>` runs stages 0–5
-  in sequence.
-- `.github/workflows/lexicon-evolution.yml` runs stages 3–4 on
-  PR; stage 5 on tagged release.
-- A pre-commit hook runs stages 0–2 locally on every lexicon
-  edit.
-- `migrations/<nsid>/<old>-<new>/{diff.json, chain.ncl, hints.json,
-  classification.json, verification.json}` is the per-revision
-  audit trail.
-
-The policy makes lexicon evolution reviewable. The tooling makes
-the policy cheap to follow.
+This leaves two live questions: which additional evidence would justify a
+stronger reversibility claim, and which parts of the EEC should become enforced
+CI gates? The [migration guide](../guide/migrate.md) covers the current library
+path, while [Lens semantics and laws](./lens-laws.md) explains the obligations
+being tested.

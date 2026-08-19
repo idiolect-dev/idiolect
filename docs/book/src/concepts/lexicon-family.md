@@ -1,107 +1,120 @@
-# The dev.idiolect.* lexicon family
+# The `dev.idiolect.*` lexicon family
 
-idiolect ships sixteen record-kind lexicons plus one shared-defs
-lexicon (`dev.idiolect.defs`) under the `dev.idiolect.*`
-namespace. The record kinds are organized by what they describe.
+The repository ships sixteen record Lexicons and one shared-definitions
+Lexicon, `dev.idiolect.defs`. Together they separate event traces, aggregate
+claims, community policy, deliberation, and runtime integration.
 
 ```mermaid
 flowchart TB
-    subgraph publishing["Publishing layer"]
-        REC[recommendation]
-        BEL[belief]
-        DIA[dialect]
-        BOU[bounty]
-    end
-    subgraph events["Events"]
+    subgraph evidence["Events and evidence"]
         ENC[encounter]
         COR[correction]
-    end
-    subgraph aggregate["Aggregate"]
         OBS[observation]
         VER[verification]
         RET[retrospection]
     end
-    subgraph deliberation["Deliberation"]
+    subgraph policy["Claims and policy"]
+        BEL[belief]
+        REC[recommendation]
+        BOU[bounty]
+        DIA[dialect]
+        COM[community]
+    end
+    subgraph meaning["Meaning and integration"]
+        VOC[vocab]
+        ADA[adapter]
+    end
+    subgraph process["Deliberation process"]
         DEL[deliberation]
         DST[deliberationStatement]
         DVO[deliberationVote]
         DOU[deliberationOutcome]
     end
-    subgraph infrastructure["Infrastructure"]
-        VOC[vocab]
-        ADA[adapter]
-        COM[community]
-    end
 
-    ENC -->|folds into| OBS
-    DVO -->|tallied as| DOU
-    REC -.points at.-> VER
-    BOU -.requires.-> VER
-    BEL -.cites.-> ENC
-    BEL -.cites.-> OBS
-    COR -.corrects.-> ENC
-    DIA -.bundles.-> REC
-    DIA -.bundles.-> VOC
+    ENC --> COR
+    ENC --> OBS
+    ENC --> RET
+    VER --> REC
+    COM --> DIA
+    DEL --> DST
+    DST --> DVO
+    DEL --> DOU
 ```
 
-The arrows are by-reference relationships; the records themselves
-are independent.
+The arrows show common reference or fold relationships. They do not imply that
+publishing one record automatically creates another.
 
-## Lexicon-by-lexicon
+## Events and evidence
 
-| Lexicon | What it describes |
-| --- | --- |
-| `dev.idiolect.encounter` | One invocation of a lens. Carries the lens, the source schema, the action / material / purpose / actor (`use`), and the outcome. |
-| `dev.idiolect.observation` | Aggregate over encounters folded by an observer. Per-outcome counts plus optional weighted aggregates over a window. |
-| `dev.idiolect.correction` | A claim that a specific encounter's outcome was wrong, plus the corrected output. |
-| `dev.idiolect.belief` | A community's standing claim about a lens or schema, citing encounters / observations as evidence. |
-| `dev.idiolect.recommendation` | A community-published opinionated path: lens chain plus structured applicability conditions, preconditions, caveats, and required verifications. |
-| `dev.idiolect.bounty` | A request for someone to do verification work, with structured `wantVerification` and `constraintConformance` fields. |
-| `dev.idiolect.verification` | The outcome of a verification runner: which lens, which kind, pass/fail, structured report. |
-| `dev.idiolect.retrospection` | A post-hoc review of a sequence of encounters / observations, with a structured `finding`. |
-| `dev.idiolect.dialect` | A community-curated bundle: NSIDs, preferred lenses, endorsed vocabularies, deprecations. |
-| `dev.idiolect.community` | The community itself: members (with optional roles), record-hosting policy, optional AppView endpoint. |
-| `dev.idiolect.vocab` | A typed multi-relation knowledge graph used to resolve open-enum slugs. |
-| `dev.idiolect.adapter` | A description of an external surface (subprocess, http, wasm, ...) that consumes idiolect records, with isolation policy. |
-| `dev.idiolect.deliberation` | A community-scoped deliberation: topic, classification, status, optional outcome pointer. |
-| `dev.idiolect.deliberationStatement` | One statement made inside a deliberation. |
-| `dev.idiolect.deliberationVote` | One vote on a statement, with an open-enum stance plus optional weight + rationale. |
-| `dev.idiolect.deliberationOutcome` | An observer-published tally: per-statement per-stance counts plus optional adopted-statements. |
+- `dev.idiolect.encounter` records one lens invocation, including the lens,
+  source schema, structured use, encounter kind, and visibility.
+- `dev.idiolect.correction` attaches a path, reason, and corrected value to an
+  encounter reference.
+- `dev.idiolect.observation` carries an observer DID, method descriptor, scope,
+  version, and free-form aggregate output.
+- `dev.idiolect.verification` records a runner's `holds`, `falsified`, or
+  `inconclusive` judgment about a structured lens property.
+- `dev.idiolect.retrospection` reports a delayed finding about one encounter,
+  including detecting party, detection time, and optional confidence.
 
-The full per-lexicon reference is under
-[Lexicons](../reference/lexicons/index.md).
+These records form the **evidence chain (EC)**: an invocation may be corrected
+or reviewed later, while an observer can publish a method-specific aggregate
+over the stream it processed. The EC is plural because different parties may
+publish incompatible assessments.
 
-## Why this set
+## Claims and community policy
 
-The family was assembled to cover four concerns:
+- `dev.idiolect.belief` is a holder-attributed claim about a strongly referenced
+  record. Its subject is required; holder, basis, annotations, and visibility
+  are optional.
+- `dev.idiolect.recommendation` publishes a conditioned lens path from an
+  issuing community, with optional preconditions, verification requirements,
+  caveats, and supersession.
+- `dev.idiolect.bounty` requests a lens, adapter, or verification under stated
+  constraints and eligibility rules.
+- `dev.idiolect.dialect` bundles the schema references in a community's
+  idiolect set, along with preferred lenses, deprecations, and version links.
+- `dev.idiolect.community` describes membership, hosting policy, core schemas
+  and lenses, endorsements, and conventions.
 
-1. **What happened?** The encounter / correction / observation
-   triple. One record per invocation, with corrections and folds
-   on top.
-2. **What should happen?** The recommendation / belief / dialect /
-   verification quad. Communities express opinions, those opinions
-   cite evidence, and consumers route translations through them.
-3. **What does this mean?** The vocab + open-enum convention.
-   Slugs are open-enum strings resolved through community-published
-   knowledge graphs.
-4. **What did we decide?** The deliberation quad (deliberation,
-   statement, vote, outcome). A process-shaped counterpart to the
-   settled-belief shape.
+The distinction between belief and recommendation is intentional. Belief is an
+attributed claim about a subject; recommendation advises a translation path
+under conditions.
 
-A new record kind that fits into one of those four columns is a
-candidate for the family. A record kind that does not fit is
-likely a downstream extension. The [Bundle records into a
-dialect](../guide/dialect.md) guide covers how to ship one.
+## Meaning and integration
 
-## Composition with downstream lexicons
+`dev.idiolect.vocab` represents nodes, typed edges, relation metadata, and
+human-facing annotations. It also retains the earlier `actions`/`parents` tree
+shape, which `VocabGraph` normalizes into `subsumed_by` edges. See
+[The vocabulary knowledge graph](./vocab-graph.md).
 
-The idiolect family is meant as a base for downstream extension,
-not a fixed set. A
-downstream community publishes its own NSID family and uses
-`OrFamily<IdiolectFamily, MyFamily>` at the indexer boundary so its
-records flow alongside idiolect's. Lenses bridge the two. A
-dialect record from the downstream community lists both
-families' canonical NSIDs.
+`dev.idiolect.adapter` describes how a named framework version can be invoked
+and what isolation policy it requires. It is a declaration, not an executable
+plugin or proof that the framework is safe.
 
-The worked example of this pattern is the planned `idiolect-acorn`
-bridge. The design is in `notes/`.
+## Deliberation process
+
+The four deliberation records preserve a process before it becomes settled
+policy:
+
+1. `dev.idiolect.deliberation` names the community, topic, and optional status.
+2. `dev.idiolect.deliberationStatement` places a statement in that
+   deliberation.
+3. `dev.idiolect.deliberationVote` pins a statement revision and records a
+   stance.
+4. `dev.idiolect.deliberationOutcome` carries an observer-computed tally and
+   optional adopted statements.
+
+[Deliberation](./deliberation.md) explains why the process records remain
+separate from belief and recommendation.
+
+## Composition at the indexer boundary
+
+The Rust bindings collect these sixteen record types under `IdiolectFamily`.
+Consumers can combine it with another generated family through
+`OrFamily<F1, F2>`. That composition widens typed dispatch; it does not generate
+lenses or assert that records from the two families are semantically
+equivalent. Translation still requires an explicit lens.
+
+The [Lexicons reference](../reference/lexicons/index.md) gives the field-level
+contract for each record.

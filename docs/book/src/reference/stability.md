@@ -1,9 +1,8 @@
 # Stability and versioning
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions: Rust APIs,
-lexicon shapes, wire formats, daemon HTTP routes, and CLI surfaces
-are all in scope.
+idiolect is pre-1.0. Minor releases in the `0.x` series may break Rust
+APIs, [lexicon](../glossary.md#lexicon "A schema document in the AT Protocol Lexicon language")
+shapes, wire formats, HTTP routes, and CLI flags.
 
 Pin to an exact version if you depend on this project. Read the
 [changelog](https://github.com/idiolect-dev/idiolect/blob/main/CHANGELOG.md)
@@ -13,9 +12,7 @@ before bumping.
 
 Pre-1.0:
 
-- **Trait signatures** can tighten or widen between minor
-  versions. The most recent example is the `Resolver` /
-  `SchemaLoader` Send bound in v0.8.0.
+- **Trait signatures** can tighten or widen between minor versions.
 - **Lexicon shapes** can change. Wire-compatible changes go through
   the [lexicon-evolution policy](../concepts/lexicon-evolution.md).
   Breaking changes ship with a derived migration lens.
@@ -24,18 +21,16 @@ Pre-1.0:
 - **HTTP routes** can change under the `v1` prefix between minor
   versions. After 1.0 they will not.
 
-## What does not change
+## Current commitments
 
 - The `dev.idiolect.*` namespace stays as is. NSID renames are
   possible but extraordinarily unusual. One would ship with a
   deprecation note in `dev.idiolect.dialect#deprecations`.
-- Records that pass validation continue to pass validation. A
-  record valid against v0.7's lexicon is also valid against v0.8's
-  (the new fields are optional).
-- The architectural commitments listed in the README do not
-  change between minor versions: records are signed and
-  content-addressed, lenses obey their stated laws, the lexicons
-  are the single source of truth, the codegen drift gate is on.
+- A breaking lexicon revision follows the evolution policy and should
+  ship with a migration lens. This process does not guarantee that an
+  older record validates unchanged against every later minor release.
+- Generated Rust and TypeScript remain derived from the checked-in
+  lexicons, and `idiolect-codegen --check` verifies that relationship.
 
 ## What changes at 1.0
 
@@ -49,9 +44,7 @@ Pre-1.0:
   `idiolect-indexer`, and `idiolect-orchestrator` become
   semver-stable.
 
-The 1.0 release date is not committed. The pre-1.0 series
-deliberately churns to find the right shape. 1.0 ships when the
-shape stops moving.
+The project has not committed to a 1.0 release date.
 
 ## Reading the changelog
 
@@ -78,6 +71,7 @@ The Changelog is in
 | --- | --- | --- |
 | `idiolect-records` | crates.io | exact version |
 | `@idiolect-dev/schema` | npm | exact version |
+| panproto crates | Git tag | `v0.71.0` for idiolect 0.12.0 |
 | `idiolect` CLI | binary release on GitHub | release tag |
 | `idiolect-orchestrator` container | `ghcr.io/idiolect-dev/orchestrator` | image SHA |
 | `idiolect-observer` container | `ghcr.io/idiolect-dev/observer` | image SHA |

@@ -1,13 +1,15 @@
 # Vendored `dev.panproto.*` lexicons
 
-These `.json` files are verbatim copies of upstream panproto lexicons.
-Do not edit them in place — update the pin below and re-vendor.
+The `schema/` and `vcs/` `.json` files listed below are verbatim copies of
+upstream panproto lexicons. Do not edit them in place — update the pin below
+and re-vendor. The `examples/` directory contains local fixture records and is
+not part of the upstream vendored subset.
 
 | field           | value                                      |
 |-----------------|--------------------------------------------|
 | upstream        | `panproto/panproto` (git)                  |
-| commit          | `02158abb80252378a21bb1a9bee839d053a21795` |
-| workspace ver.  | `0.39.0`                                   |
+| commit          | `efa04235eb9aa9d718ad358b6104f69eac17881f` |
+| workspace ver.  | `0.71.0`                                   |
 | source path     | `lexicons/dev/panproto/`                   |
 
 ## Vendored set
@@ -35,8 +37,8 @@ Procedures / queries (`translate/applyLens.json`, `schema/findLenses.json`,
 implements, not storage records; they live in upstream panproto and aren't
 regenerated here.
 
-Out-of-scope-for-now record types (`editLens`, `symmetricLens`, `theory`,
-`theoryMorphism`, `protocol`, `migration`, `expr`) can be vendored when a
+Out-of-scope-for-now record types (`editLens`, `symmetricLens`,
+`theoryMorphism`, `migration`, `expr`) can be vendored when a
 downstream feature needs them; the vendor step is mechanical.
 
 ## How to refresh
@@ -44,4 +46,8 @@ downstream feature needs them; the vendor step is mechanical.
 1. bump the commit in this file.
 2. `cp` the new upstream `.json` files over the ones listed above.
 3. `cargo run -p idiolect-codegen` to regenerate the typed bindings.
-4. `cargo test` + `pnpm test` to confirm no downstream break.
+4. `cargo test` + `bun test` to confirm no downstream break.
+
+The upstream files listed above were compared byte for byte with commit
+`efa04235eb9aa9d718ad358b6104f69eac17881f`; no vendored Lexicon contents
+changed during the 0.71.0 refresh.

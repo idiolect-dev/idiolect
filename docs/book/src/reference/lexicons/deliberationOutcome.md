@@ -1,8 +1,10 @@
 # dev.idiolect.deliberationOutcome
 
-Observer-aggregated tally for a [`deliberation`](./deliberation.md).
-Not a participant-authored record: produced by an observer fold
-over the vote stream and published from the observer's repo.
+`dev.idiolect.deliberationOutcome` is an observer-aggregated tally for a
+[`deliberation`](./deliberation.md), pinned through a
+[strong reference](../../glossary.md#strong-reference).
+An observer, rather than a participant, produces this record by folding the
+vote stream and publishing the result from the observer's repository.
 Consumers reading a closed deliberation can fetch the outcome
 directly rather than re-folding every vote. Tallies are
 per-statement and per-stance, so consumers can render a
@@ -42,24 +44,24 @@ Polis-style opinion map without further computation.
 
 ## Field details
 
-### Why outcomes are observer-published
+### Publisher
 
 The deliberation owns the topic. Participants own the statements
 and votes. The aggregate is *opinion*: it depends on the
 observer's fold method, the cut-off time, and which encounter
-kinds it weights. Two observers can produce different but
-defensible outcomes for the same deliberation.
+kinds it weights. Two observers can produce different outcomes for the same
+deliberation.
 
-The answer is that outcomes are records, signed by the observer
-and comparable across observers. A consumer that distrusts
-one observer's fold can:
+Outcomes are signed observer records, so consumers can identify their
+publishers and compare compatible folds. A consumer that distrusts one
+observer's fold can:
 
 - Fetch all outcomes for the deliberation.
 - Pick one based on the observer's identity or the `tool` field.
 - Require quorum among trusted observers.
 - Re-fold the vote stream itself.
 
-### Why a single `stanceVocab` per outcome
+### `stanceVocab`
 
 The outcome record uses *one* stance vocabulary across all
 tallies. An observer that sees votes referencing different
@@ -68,7 +70,7 @@ vocabularies must either:
 - Publish separate outcomes per vocab, each tallying votes that
   share a vocab.
 - First translate via a `mapEnum` lens (see
-  [Open enums](../../concepts/open-enums.md)) into a single
+  [Open enums](../../concepts/open-enums.md) into a single
   target vocabulary, then tally.
 
 Mixing vocabularies in a single outcome is invalid: the same
@@ -77,7 +79,7 @@ adding their counts is meaningless.
 
 ### `statementTallies`
 
-One entry per statement that received at least one vote.
+The array contains one entry per statement that received at least one vote.
 Statements with zero votes are omitted. Each tally carries:
 
 - The statement (strong-ref, so consumers fetching the tally can
@@ -111,11 +113,9 @@ adoption (rejected, tabled, or closed without resolution).
 ### `tool` and method versioning
 
 The `tool` field carries the aggregator's identity and version.
-Two outcomes for the same deliberation produced by different
-tools (or different versions of the same tool) are not directly
-comparable: the algorithm differs. Consumers compare outcomes
-across tools at their own risk. The record carries the tool
-identity so the comparison is at least informed.
+Different tools or versions may implement different algorithms. Consumers
+should compare their outcomes only when the method semantics align; the `tool`
+field identifies the implementation used.
 
 ## Example
 
@@ -124,13 +124,13 @@ identity so the comparison is at least informed.
   "$type": "dev.idiolect.deliberationOutcome",
   "deliberation": {
     "uri": "at://did:plc:community/dev.idiolect.deliberation/3l5",
-    "cid": "bafy..."
+    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
   },
   "statementTallies": [
     {
       "statement": {
         "uri": "at://did:plc:community/dev.idiolect.deliberationStatement/stmt1",
-        "cid": "bafy..."
+        "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
       },
       "counts": [
         { "stance": "agree",    "count": 42 },
@@ -141,7 +141,7 @@ identity so the comparison is at least informed.
     {
       "statement": {
         "uri": "at://did:plc:community/dev.idiolect.deliberationStatement/stmt2",
-        "cid": "bafy..."
+        "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
       },
       "counts": [
         { "stance": "agree",    "count": 18 },
@@ -153,7 +153,7 @@ identity so the comparison is at least informed.
   "adopted": [
     {
       "uri": "at://did:plc:community/dev.idiolect.deliberationStatement/stmt1",
-      "cid": "bafy..."
+      "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
     }
   ],
   "computedAt": "2026-04-30T00:00:00.000Z",

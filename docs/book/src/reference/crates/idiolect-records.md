@@ -8,17 +8,19 @@
 > (every public type, trait, function, and feature flag) is the
 > docs.rs link above. That is the authoritative reference.
 
-Serde record types mirroring the `dev.idiolect.*` lexicons. The
+The crate provides Serde record types that mirror the `dev.idiolect.*`
+[lexicons](../../glossary.md#lexicon "A schema document in the AT Protocol Lexicon language"). The
 contents of `crates/idiolect-records/src/generated/` are written
 by [`idiolect-codegen`](./idiolect-codegen.md). Do not edit by
 hand.
 
 ```toml
 [dependencies]
-idiolect-records = "0.8"
+idiolect-records = "0.12.0"
 ```
 
-No transport dependencies. Pure data.
+The crate has no transport dependencies; it contains data types and their
+validation and dispatch helpers.
 
 ## Public types
 
@@ -49,9 +51,10 @@ not variants of `AnyRecord` (which is scoped to
 
 ### Family
 
-`RecordFamily` is the trait every family implements. The crate
+[`RecordFamily`](../../glossary.md#record-family "A typed set of record NSIDs with a shared decoder")
+is the trait every family implements. The crate
 ships `IdiolectFamily` for `dev.idiolect.*` and the
-`OrFamily<F1, F2>` composer that recognises every NSID either
+`OrFamily<F1, F2>` composer that recognizes every NSID either
 side claims. `detect_or_family_overlap` audits a probe set at
 boot so a configuration mistake does not silently shadow the
 right-side family.
@@ -74,7 +77,7 @@ uniform.
 
 ### Vocab graph helpers
 
-`VocabGraph` is a normalised read-only view over a `Vocab`
+`VocabGraph` is a normalized read-only view over a `Vocab`
 record (graph form, lifted from the legacy tree where present).
 `VocabRegistry` caches multiple graphs by AT-URI for
 cross-vocabulary work. The shipped query verbs
@@ -86,7 +89,7 @@ plus the `validate` walker are documented on docs.rs and in
 ## Examples module
 
 `idiolect_records::examples::*` exports a fixture per record
-kind. Each fixture is the deserialised result of the JSON
+kind. Each fixture is the deserialized result of the JSON
 constant under `lexicons/dev/idiolect/examples/<name>.json`. The
 shipped fixtures cover: `adapter`, `belief`, `bounty`,
 `community`, `correction`, `dialect`, `encounter`,
@@ -106,9 +109,9 @@ dependencies.
 
 ## Errors
 
-Decode failures surface as `serde_json::Error` with a
-`serde_path_to_error`-shaped path. The structured error type for
-the family-decode path is `DecodeError` (re-exported as
-`idiolect_records::DecodeError`). It distinguishes unknown
-NSIDs, decode failures, and family-contract violations (where a
-family's `contains` returned true but `decode` returned `None`).
+The family-decode path returns `DecodeError`, re-exported as
+`idiolect_records::DecodeError`. `UnknownNsid(String)` reports an
+NSID outside the generated family; `Serde(serde_json::Error)` reports
+a typed deserialization failure. The indexer's separate
+`IndexerError::FamilyContract` variant detects disagreement between a
+family's `contains` and `decode` methods.

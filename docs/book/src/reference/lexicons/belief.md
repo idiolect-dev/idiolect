@@ -3,7 +3,8 @@
 A signed doxastic claim that a referenced record is true or
 applicable. Belief records are how third parties represent what
 *they* think about *another* record without flattening provenance:
-the `subject` strong-ref pins the exact referenced record, the
+the `subject` [strong reference](../../glossary.md#strong-reference)
+pins the exact referenced record, the
 `holder` identifies the party whose attitude is represented, and
 the `basis` records what grounds it.
 
@@ -19,7 +20,7 @@ the `basis` records what grounds it.
 | `subject` | `strongRecordRef` | yes | AT-URI + CID for the record the belief is about. |
 | `holder` | did | no | Party whose attitude is represented. Omit for first-party. |
 | `basis` | `basis` | no | Structured grounding (load-bearing when `holder` differs from the repo owner). |
-| `annotations` | string (≤4000 graphemes) | no | Narrative commentary. |
+| `annotations` | string (at most 4,000 graphemes) | no | Narrative commentary. |
 | `visibility` | `visibility` | no | Visibility scope. |
 | `occurredAt` | datetime | yes | When the belief was published. |
 
@@ -61,7 +62,7 @@ on what grounds the attribution rests. The four `basis` variants:
 
 See [`defs#basis`](./defs.md) for the field shapes.
 
-### Use as a labeler primitive
+### Labeler use
 
 A labeler workflow that wants to record "a third party endorses
 this lens for a particular use" uses three records:
@@ -83,7 +84,7 @@ signature on the belief makes the attribution accountable.
   "$type": "dev.idiolect.belief",
   "subject": {
     "uri": "at://did:plc:other-party/dev.idiolect.recommendation/3l5",
-    "cid": "bafy..."
+    "cid": "bafyreidfcm4u3vnuph5ltwdpssiz3a4xfbm2otjrdisftwnbfmnxd6lsxm"
   },
   "holder": "did:plc:other-party",
   "basis": {
@@ -97,7 +98,7 @@ signature on the belief makes the attribution accountable.
 }
 ```
 
-## How beliefs compose
+## Related records
 
 ```mermaid
 flowchart LR
@@ -106,7 +107,7 @@ flowchart LR
     B -->|holder| H[holder DID]
     B -->|basis| G[community policy]
     R -->|signed by| C[community]
-    C -.recognised by.-> H
+    C -.recognized by.-> H
 ```
 
 A consumer reading the belief sees: which record is being

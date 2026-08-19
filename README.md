@@ -28,7 +28,7 @@ conventions.
 2. A dialect is the bundle of idiolects a community treats as
 canonical.
 3. A language is the federated substrate over which idiolects and
-dialects meet, disagree, and slowly converge without a central arbiter.
+   dialects meet, disagree, and may slowly converge without a central arbiter.
 
 Architectural primitives are signed, content-addressed records on
 [ATProto](https://atproto.com). Schemas and translations between
@@ -141,7 +141,7 @@ if (isRecord(NSIDS.encounter, payload)) {
 | Crate                          | What it is                                                                |
 | ------------------------------ | ------------------------------------------------------------------------- |
 | [`idiolect-records`][recs]     | Serde record types mirroring the `dev.idiolect.*` lexicons. Generated.    |
-| [`idiolect-codegen`][cg]       | Lexicon-driven Rust + TypeScript emitter. Drives the drift gate.          |
+| [`idiolect-codegen`][cg]       | Lexicon-driven Rust + TypeScript emitter. Compares generated sources.     |
 | [`idiolect-lens`][lens]        | Resolve `PanprotoLens` records; run `apply_lens` / `apply_lens_put`.      |
 | [`idiolect-identity`][id]      | DID resolution (`did:plc` via plc.directory, `did:web` via well-known).   |
 | [`idiolect-indexer`][idx]      | Firehose consumer: `EventStream` + `RecordHandler` + `CursorStore`.       |

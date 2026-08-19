@@ -1,157 +1,68 @@
-# Apply a lens
+# Apply the lens
 
-A lens is a structure-preserving translation between two schemas.
-On the wire it is a `dev.panproto.schema.lens` record (re-exported
-by `idiolect-records` as `PanprotoLens`); at runtime it is a
-`panproto_lens::Lens` instantiated against a `Schema` graph.
-[`idiolect-lens`](../reference/crates/idiolect-lens.md) bridges the
-two: it resolves a lens record by at-uri, loads both schemas, and
-runs the lens.
+A [lens](../glossary.md#lens "Bidirectional schema translation") translates a
+record between two schemas. Its forward operation, `get`, returns the target
+record and a [complement](../glossary.md#complement "Data retained for put") that
+retains any source information needed by the reverse operation, `put`.
 
-## What a lens does
+This chapter applies the lens fetched in Chapter 1 to the following source
+record:
 
-A lens has a forward direction and a backward direction:
-
-$$
-\get : A \to (B, \complement) \qquad \put : (B, \complement) \to A
-$$
-
-`get` translates a source record `A` into a target view `B` plus a
-**complement** $\complement$ (the data that the projection
-discarded). `put` reconstructs `A` from a (possibly modified) `B`
-and the complement. The two directions obey the GetPut and PutGet
-laws covered in [Lens semantics and laws](../concepts/lens-laws.md).
-
-## Wire it up
-
-`idiolect-lens` is `publish = false`. Depend on it via git (or a
-path, when working inside the workspace):
-
-```toml
-# in Cargo.toml
-idiolect-lens   = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.10.0", features = ["pds-reqwest"] }
-panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.39.0" }
-tokio           = { version = "1", features = ["full"] }
-```
-
-The lens runtime needs three pieces: a `Resolver` (fetches the
-lens record by at-uri), a `SchemaLoader` (turns the
-`dev.panproto.schema.schema` at-uris on the lens record into
-typed `panproto_schema::Schema` values), and a `Protocol`. v0.9
-ships `PdsSchemaLoader` to pair with `PdsResolver`; both share a
-`ReqwestPdsClient`.
-
-`src/main.rs`:
-
-```rust
-use idiolect_lens::{
-    apply_lens, ApplyLensInput, AtUri, PdsResolver, PdsSchemaLoader,
-    ReqwestPdsClient,
-};
-use panproto_schema::Protocol;
-
-const PDS:  &str = "https://jellybaby.us-east.host.bsky.network";
-const LENS: &str = "at://did:plc:wdl4nnvxxdy4mc5vddxlm6f3/dev.panproto.schema.lens/tutorial-rename-sort-string-to-text";
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let client   = ReqwestPdsClient::with_service_url(PDS);
-    let resolver = PdsResolver::new(client.clone());
-    let loader   = PdsSchemaLoader::new(client);
-    let protocol = Protocol::default();
-
-    let lens_uri = AtUri::parse(LENS)?;
-    let source_record: serde_json::Value =
-        serde_json::from_str(r#"{ "text": "hello, world" }"#)?;
-
-    let out = apply_lens(&resolver, &loader, &protocol, ApplyLensInput {
-        lens_uri, source_record, source_root_vertex: None,
-    }).await?;
-
-    println!("{}", serde_json::to_string_pretty(&out.target_record)?);
-    Ok(())
-}
-```
-
-Run it:
-
-```bash
-cargo run
-```
-
-```text
+```json
 {
   "text": "hello, world"
 }
 ```
 
-The lens referenced above is real. The project DID has the
-three records the runtime needs to resolve it published on its
-PDS:
+## Confirm the Panproto version
 
-- `dev.panproto.schema.schema/tutorial-post-body-v1` — a
-  single-field "post:body" record with a string `text` child.
-- `dev.panproto.schema.schema/tutorial-post-body-v2` — the same
-  shape with the kind relabelled to `text`.
-- `dev.panproto.schema.lens/tutorial-rename-sort-string-to-text`
-  — a single-step `rename_sort` chain. The optic class is
-  `Iso`, and round-trip is byte-equal.
+The runnable package pins the Panproto crates used here to 0.71.0:
 
-`apply_lens` is one async call. It does five things in order:
+```toml
+panproto-lens   = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
+panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
+```
 
-1. Resolve the lens record from the PDS via `PdsResolver`.
-2. Load the source and target schemas from the schema loader.
-3. Instantiate the protolens (or protolens chain) against the source
-   schema under the given protocol.
-4. Parse `source_record` into a panproto w-type instance, project it
-   through `get`, and serialize the view back to JSON under the
-   target schema.
-5. Return the target record together with the complement.
+The idiolect workspace uses the same Panproto version.
 
-The complement is a typed `panproto_lens::Complement`. Treat it
-as an opaque token: store it next to the target view, hand it
-back to `apply_lens_put` when you want to run the reverse
-direction, do not edit it.
+## Run `get`
 
-## Reverse the direction
+From the repository root, run the supplied client:
 
-```rust
-use idiolect_lens::{apply_lens_put, ApplyLensPutInput};
+```bash
+cargo run --quiet \
+  --manifest-path scripts/publish-tutorial-lens/Cargo.toml \
+  --bin apply-tutorial-lens
+```
 
-let back = apply_lens_put(
+```text
+target_record = {
+  "text": "hello, world"
+}
+```
+
+The executable creates one HTTP client, gives it to the lens and schema
+resolvers, and calls `apply_lens`:
+
+```text
+let out = apply_lens(
     &resolver,
     &loader,
     &protocol,
-    ApplyLensPutInput {
-        lens_uri: lens_uri.clone(),
-        target_record: out.target_record,
-        complement: out.complement,
-        target_root_vertex: None,
+    ApplyLensInput {
+        lens_uri,
+        source_record,
+        source_root_vertex: None,
     },
 )
 .await?;
-
-assert_eq!(back.source_record, source_record);
 ```
 
-If the lens is an isomorphism, `put(get(a))` returns the original
-`a` byte-for-byte. If it is a projection (information was dropped on
-the way through), `put` reconstructs `a` from the target plus the
-complement. If you modify the target between the calls, `put`
-applies the modification on top of the original source.
+The JSON value is unchanged because this tutorial lens renames a schema sort
+from `string` to `text`; it does not rename the record's `text` field. The
+unchanged value records a successful run: the runtime resolved the lens, loaded
+both schemas, instantiated Panproto 0.71.0, and produced a target-schema value.
 
-## What can go wrong
-
-| Symptom | Cause |
-| --- | --- |
-| `LensError::NotFound` | The lens at-uri did not resolve. Check the DID and the rkey. |
-| `LensError::LexiconParse` | The schema loader returned bytes that were not a valid panproto schema. |
-| `LensError::Translate` | The source record did not parse as an instance of the source schema. |
-| Output complement is huge | The lens is closer to a projection than you thought. See [Lens semantics](../concepts/lens-laws.md). |
-
-The runtime is `Send`-clean. You can hold an `Arc<dyn Resolver>` and
-call `apply_lens` from inside an `#[async_trait]` handler in an
-HTTP server.
-
-The next chapter takes that lens and runs a verification against
-it.
+The returned `out.complement` belongs with this application of the lens.
+Passing it to `apply_lens_put` would reconstruct the source record. Chapter 4
+checks that reconstruction over several inputs.

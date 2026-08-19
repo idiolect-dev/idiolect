@@ -1,7 +1,8 @@
 # Index a firehose
 
-[`idiolect-indexer`](../reference/crates/idiolect-indexer.md) is
-a firehose consumer factored into three trait surfaces:
+[`idiolect-indexer`](../reference/crates/idiolect-indexer.md) composes
+three boundaries around an AT Protocol
+[firehose](../glossary.md#firehose "A stream of repository commit events"):
 
 - `EventStream`: yields `RawEvent`s from a PDS firehose. Shipped
   impls: `JetstreamEventStream` (Jetstream websocket feed) and
@@ -29,7 +30,6 @@ use idiolect_records::IdiolectFamily;
 
 struct PrintHandler;
 
-#[async_trait::async_trait]
 impl RecordHandler<IdiolectFamily> for PrintHandler {
     async fn handle(
         &self,
@@ -42,7 +42,9 @@ impl RecordHandler<IdiolectFamily> for PrintHandler {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let mut stream = JetstreamEventStream::connect("wss://...").await?;
+    let mut stream = JetstreamEventStream::connect(
+        "wss://jetstream2.us-east.bsky.network/subscribe?wantedCollections=dev.idiolect.*",
+    ).await?;
     let cursors = FilesystemCursorStore::open("./cursor.json")?;
     let handler = PrintHandler;
     let config = IndexerConfig::default();
@@ -57,6 +59,8 @@ Add features:
 ```bash
 cargo add idiolect-indexer \
   --features firehose-jetstream,cursor-filesystem,reconnecting
+cargo add anyhow tracing-subscriber
+cargo add tokio --features macros,rt-multi-thread
 ```
 
 `reconnecting` wraps the inner stream in an exponential-backoff
@@ -72,7 +76,7 @@ decode, so an upstream PDS adding a record type ahead of your
 codegen run does not halt the loop. To handle two families
 (idiolect plus a downstream community's lexicons), compose:
 
-```rust
+```text
 use idiolect_records::{IdiolectFamily, OrFamily};
 
 struct MyFamily;
@@ -81,7 +85,7 @@ struct MyFamily;
 let handler: MyHandler<OrFamily<IdiolectFamily, MyFamily>> = ...;
 ```
 
-`OrFamily<F1, F2>` recognises every NSID either side claims. Its
+`OrFamily<F1, F2>` recognizes every NSID either side claims. Its
 `AnyRecord` is `OrAny`, a tagged union over the two halves.
 `detect_or_family_overlap` audits a probe set at boot so a
 configuration mistake does not silently shadow the right-side
@@ -91,10 +95,10 @@ family.
 
 `drive_indexer` calls
 `CursorStore::commit(subscription_id, seq)` after the handler
-returns `Ok`. A handler that wants at-least-once semantics
-should make its work idempotent before returning. A handler
-that wants exactly-once semantics needs to coordinate the commit
-with its own storage transaction.
+returns `Ok`. Make handler work idempotent to obtain at-least-once
+processing across restarts. Exactly-once processing requires a custom
+driver that commits application state and the cursor in one storage
+transaction; `drive_indexer` cannot make those writes atomic.
 
 Errors propagate as `IndexerError`. The variants distinguish
 transport failures (`Stream`), decode failures (`Decode`),
@@ -108,7 +112,7 @@ handler-defined errors (`Handler`), missing-body events
 Every shipped surface logs through `tracing`. Wire a
 subscriber:
 
-```rust
+```text
 tracing_subscriber::fmt()
     .with_env_filter("idiolect_indexer=info")
     .init();

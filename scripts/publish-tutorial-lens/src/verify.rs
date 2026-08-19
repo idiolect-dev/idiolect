@@ -6,9 +6,7 @@ use anyhow::Result;
 use idiolect_lens::{PdsResolver, PdsSchemaLoader, ReqwestPdsClient};
 use idiolect_records::Datetime;
 use idiolect_records::generated::dev::idiolect::defs::LensRef;
-use idiolect_verify::{
-    RoundtripTestRunner, VerificationRunner, VerificationTarget,
-};
+use idiolect_verify::{RoundtripTestRunner, VerificationRunner, VerificationTarget};
 use panproto_schema::Protocol;
 
 const PDS: &str = "https://jellybaby.us-east.host.bsky.network";

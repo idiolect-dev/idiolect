@@ -23,6 +23,42 @@ if you depend on this project, and read this file before bumping.
 
 ### Security
 
+## [0.12.0] - 2026-08-19
+
+### Added
+
+### Changed
+
+- **Breaking:** The view-only `apply_lens_symmetric` entry point now accepts only
+  an isomorphic incoming leg. A lossy leg requires complement state from an
+  earlier `get`; callers that retain that state must use Panproto's
+  complement-aware `SymmetricLens` API.
+
+- Panproto pins now target v0.71.0 across the workspace and the standalone
+  tutorial package. The vendored `dev.panproto.*` subset is byte-identical to
+  the corresponding v0.71.0 files; its provenance metadata now records the
+  verified upstream commit.
+- Migration planning now runs against Panproto 0.71.0's exact valued-CSP
+  morphism search. Alignment quality remains a ranking signal for one schema
+  pair, not a confidence score that can be thresholded across unrelated pairs.
+- The mdBook now provides beginner, project-integration, and advanced/formal
+  reading paths while retaining separate tutorial, guide, explanation, and
+  reference quadrants. Its prose, terminology links, examples, and validation
+  infrastructure received a complete editorial and technical pass.
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Symmetric view-only lens execution now uses Panproto's
+  `put_without_complement` path. Panproto 0.71.0 rejects an empty complement
+  whose shape could not have come from `get`; idiolect no longer synthesizes
+  that invalid state.
+
+### Security
+
 ## [0.11.1] - 2026-07-11
 
 ### Changed

@@ -1,7 +1,7 @@
 # Lexicons
 
-The `dev.idiolect.*` lexicon family. Every record kind that travels
-on the network has a lexicon document under
+This section covers the `dev.idiolect.*` [lexicon](../../glossary.md#lexicon) family. Every record
+kind that travels on the network has a lexicon document under
 `lexicons/dev/idiolect/`.
 
 | NSID | Page |

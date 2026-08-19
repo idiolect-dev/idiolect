@@ -1,9 +1,10 @@
 # Run the observer daemon
 
-The observer reads encounter-family records from the firehose,
-folds them through an `ObservationMethod`, and publishes a
-`dev.idiolect.observation` record on each flush. Observations
-are the durable summary; encounters are the event log.
+The observer folds records from a
+[firehose](../glossary.md#firehose "A stream of repository commit events")
+through an `ObservationMethod` and emits a
+`dev.idiolect.observation` at each configured flush. Encounters remain
+the event log; observations carry the computed summary.
 
 The crate is
 [`idiolect-observer`](../reference/crates/idiolect-observer.md).
@@ -18,13 +19,13 @@ A `dev.idiolect.observation` record carries:
   parameters and code reference),
 - a `scope` describing which records the aggregation covers,
 - the method's `output` payload (shape is method-defined),
-- a signature.
+- the observation's publication timestamp and visibility.
 
-The record kind is shared with deliberation tallies via the
-`deliberationOutcome` lexicon, but that is a separate
-record-kind, not an observation flavour.
+The `deliberation-tally` method currently places its result in
+`observation.output`; `dev.idiolect.deliberationOutcome` is a separate
+record kind.
 
-## Why the observer publishes records, not just metrics
+## Choose the publication boundary
 
 Observations are content-addressed and signed, like any other
 ATProto record. A consumer reading an observation can:
@@ -35,8 +36,8 @@ ATProto record. A consumer reading an observation can:
 - treat the observation as a soft assertion of fact, not a
   single source of truth.
 
-A central metrics endpoint cannot do that. The same record
-shape also lets multiple observers run in parallel and disagree.
+This record boundary lets several observers publish different folds
+without erasing the underlying events.
 
 ## Run the daemon
 
@@ -44,16 +45,23 @@ shape also lets multiple observers run in parallel and disagree.
 cargo install --path crates/idiolect-observer --features daemon
 ```
 
-The shipped binary's exact CLI surface is documented by its
-`--help`. It wires:
+The binary is configured through environment variables, not command
+flags. Set `IDIOLECT_OBSERVER_DID`; optionally set
+`IDIOLECT_TAP_URL`, `IDIOLECT_TAP_ADMIN_PASSWORD`,
+`IDIOLECT_OBSERVER_CURSORS`, `IDIOLECT_FLUSH_EVENTS`, and
+`IDIOLECT_PDS_URL`. It wires:
 
 - A firehose stream (tapped, via the indexer's
   `firehose-tapped` feature, transitively pulled in by
   `daemon`).
 - A SQLite cursor store.
-- An `ObserverHandler<M, P>` connecting an `ObservationMethod`
-  to an `ObservationPublisher`.
+- A `CorrectionRateMethod` inside `ObserverHandler<M, P>`.
 - A flush schedule that triggers observation publication.
+
+If `IDIOLECT_PDS_URL` is unset, the reference daemon uses an in-memory
+publisher and persists no observation records. Its PDS branch does not
+yet supply authentication; use a wrapper binary with an authenticated
+`PdsWriter` for production publication.
 
 ## Bundled methods
 
@@ -72,10 +80,9 @@ methods. Each lives in `crates/idiolect-observer/src/methods/`.
 | `attribution-chains` | `dev.idiolect.belief` counts by holder and subject. |
 | `deliberation-tally` | Per-statement per-stance `deliberationVote` counts (see the note below). |
 
-Methods come in two forms (declared in the spec): record-form
-methods consume `&IndexerEvent<IdiolectFamily>` directly;
-instance-form methods consume a panproto `WInstance` and wrap
-into the record form via `InstanceMethodAdapter`.
+The current spec declares all nine methods in record form; they consume
+`&IndexerEvent<IdiolectFamily>`. The library also supports instance-form
+methods over panproto `WInstance` through `InstanceMethodAdapter`.
 
 `default_methods()` returns boxed instances of every
 record-form method; instance-form methods need a caller-supplied
@@ -94,17 +101,15 @@ to the `default_methods()` constructor.
 
 - Observers should run with their own DID, distinct from the
   DIDs whose encounters they observe.
-- Multiple observers publishing observations of the same scope
-  is expected and useful; consumers can require quorum among $k$
-  of $n$ trusted observers before treating an observation as
-  authoritative.
+- Multiple observers may publish observations of the same scope.
+  Consumers can require quorum among $k$ of $n$ trusted observers
+  before treating an observation as authoritative.
 
-## Note on `deliberation-tally`
+## `deliberation-tally` output
 
 The shipped `deliberation-tally` method emits its
 per-statement per-stance vote counts inside an
 `observation.output` blob, not as a typed
 `dev.idiolect.deliberationOutcome` record. The data shape is
-the same; the surface differs. A variant that publishes the
-typed outcome record directly is a small refactor on top of
-the existing `DeliberationTallyMethod`.
+the same; the publication surface differs. Publishing a typed outcome
+requires separate application code.

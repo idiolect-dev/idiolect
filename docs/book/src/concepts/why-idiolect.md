@@ -1,109 +1,87 @@
 # Why idiolect exists
 
-This chapter states the problem the project addresses and how the
-machinery responds to it, without formalism. The rest of the
-Concepts section assumes it.
+idiolect addresses the **private-converter problem (PCP)**: independently
+written schema converters tend to remain inside the applications that need
+them, so later consumers cannot inspect, reuse, or evaluate the translation
+knowledge they contain.
 
-## Two apps, one firehose
+## Two event schemas
 
-Suppose two communities build event-planning apps on ATProto.
+Suppose two communities build event-planning applications on ATProto. One
+publishes `garden.seedling.event`, with `title`, `startsAt`, and a free-text
+`where` field. The other publishes `club.lantern.gathering`, with `name`,
+`beginsAt`, and a structured `venue` object. Each schema fits its application.
 
-One community ships a lexicon called `garden.seedling.event`. Its
-records have a `title`, a `startsAt`, and a free-text `where`
-field. The other community ships `club.lantern.gathering`. Its
-records have a `name`, a `beginsAt`, and a structured `venue`
-object. Neither community did anything wrong. Each schema fits its
-app, each shipped when it was ready, and neither had any reason to
-wait for the other.
+A calendar aggregator that consumes both collections now has to answer three
+questions: which fields correspond, what happens to information that exists on
+only one side, and whose answer should be trusted? ATProto supplies publication,
+identity, and repository proofs. It does not supply the correspondence between
+these two Lexicons.
 
-Now a third developer builds a calendar aggregator, whose premise
-is that every event on the network appears in it. The
-aggregator subscribes to the firehose and immediately faces the
-problem this project exists for: the network has two shapes for
-the same kind of thing, and nothing on the network says how they
-relate.
+## Why local fixes accumulate poorly
 
-## The options that do not scale
+The aggregator can hard-code two adapters. That solves its immediate problem,
+but another consumer must repeat the work, and neither consumer has a common
+object on which to publish tests or corrections. Supporting one schema only
+avoids translation by excluding data. Asking both communities to adopt a third
+schema may be appropriate in some settings, though it shifts the disagreement
+to standard selection.
 
-The aggregator developer has three obvious moves, and each one
-fails in a characteristic way.
+These responses differ operationally, but they leave the PCP intact: knowledge
+of the relationship is either private or absent.
 
-**Hardcode both.** Write an internal converter from each lexicon
-into the aggregator's own model. This works for the aggregator,
-for these two lexicons, for now. But the work is private: the next
-consumer rewrites the same converters, every schema revision
-breaks them silently, and the effort grows with the product of
-consumers and lexicons.
+## The publication move
 
-**Pick a winner.** Support `garden.seedling.event` and ignore the
-other. Half the network's events vanish, and the aggregator has
-quietly become a standards body, the thing a federated network
-was supposed to avoid.
+idiolect makes a translation publishable. A panproto
+[lens](../glossary.md#lens "A bidirectional schema translation with explicit round-trip obligations")
+record names its source and target schemas and carries a schema-parameterized
+translation body. A consumer can resolve that record, instantiate it under the
+ATProto protocol, and apply it to a source value. If `get` drops `where` while
+constructing `venue`, its complement retains the discarded state for `put`.
 
-**Wait for a standard.** Petition both communities to converge on
-a shared lexicon. Sometimes this works. Usually it produces a
-third lexicon.
+Publication creates a shared object, not automatic trust. The record family
+thus separates four kinds of claim:
 
-The pattern in all three failures is the same: the *knowledge of
-how two schemas relate* stays private, so the network cannot
-accumulate it.
+1. A `dev.idiolect.verification` reports the result of running a named check on
+   a lens.
+2. A `dev.idiolect.recommendation` endorses a lens path under stated conditions
+   and caveats.
+3. A `dev.idiolect.encounter` records an invocation; a correction or later
+   observation can qualify that evidence.
+4. A `dev.idiolect.dialect` bundles the schema references that constitute a
+   community's idiolect set, along with preferred lenses and deprecations.
 
-## The move idiolect makes
+This separation is the **evidence split (ES)**. A lens body says how to
+translate; a verification says what a particular runner observed; a
+recommendation says who advises using the lens and when. Under the ES, no one
+record stands in for the others.
 
-idiolect's answer is to make that knowledge a first-class,
-published, verifiable object. Anyone (either community, the
-aggregator developer, or an uninvolved third party) can publish a
-*lens*: a two-way translation between the two lexicons, itself a
-signed record on the network. The aggregator resolves the lens and
-applies it instead of hand-writing a converter. So does every
-consumer after it.
+## What the model can promise
 
-A published translation raises an obvious question: why trust it?
-idiolect's answer is more records. A *verification* record is a
-machine-checked run of the lens against real data: evidence, not
-prose. A *recommendation* record is a party endorsing a lens for a
-purpose. A *dialect* record is a community bundling its preferred
-lexicons and lenses so consumers can adopt its choices wholesale.
-None of these requires a central registry. Trust accumulates the
-way it does between people: through use, attestation, and
-reputation, all of it auditable.
+The runtime can preserve unfamiliar open-enum slugs, reject values that its
+typed decoders cannot parse, apply a resolved lens, and publish the resulting
+evidence records. A corpus-backed verification may show that a round-trip law
+held for the tested corpus. It does not prove that the law holds for every
+possible record, and a signed repository commit proves authorship and integrity
+rather than semantic correctness.
 
-The linguistic framing follows from this picture. Each party's
-schema choices are its *idiolect*;
-a community's endorsed bundle is a *dialect*; the federated
-substrate where they meet and negotiate is the *language*. The
-[next chapter](./idiolect-dialect-language.md) develops the frame
-and, importantly, the failure modes it admits.
+idiolect consequently does not promise a global schema, universal convergence,
+or trustworthy publishers. It provides objects over which communities can make
+translation, evidence, and policy disagreements explicit. The
+[idiolect/dialect/language frame](./idiolect-dialect-language.md) names the three
+levels at which those disagreements arise.
 
-## The example, mapped to the machinery
+## From the example to the runtime
 
-Each element of the example above corresponds to one lexicon or
-concept in the runtime:
-
-| In the example | Machinery |
+| Question from the example | Runtime object |
 | --- | --- |
-| The published translation | A panproto lens record; see [Lens semantics and laws](./lens-laws.md) |
-| Evidence the translation works | `dev.idiolect.verification`; see [the tutorial's verification step](../tutorial/04-verify.md) |
-| An endorsement | `dev.idiolect.recommendation` |
-| A community's bundled choices | `dev.idiolect.dialect`; see [Bundle records into a dialect](../guide/dialect.md) |
-| Noticing that two schemas coexist | `dev.idiolect.encounter` / `dev.idiolect.observation`; see [Observer protocol](./observer.md) |
-| Arguing about what to converge on | The deliberation lexicons; see [Deliberation](./deliberation.md) |
+| How do the two event shapes correspond? | `dev.panproto.schema.lens` and [lens semantics](./lens-laws.md) |
+| Did a check find a counterexample? | `dev.idiolect.verification` |
+| Who recommends this path, and under which conditions? | `dev.idiolect.recommendation` |
+| What happened when a consumer used it? | `dev.idiolect.encounter`, `correction`, and `observation` |
+| Which choices does a community currently prefer? | `dev.idiolect.dialect` |
+| How can a community debate a choice before adopting it? | The [deliberation records](./deliberation.md) |
 
-## What idiolect does not promise
-
-idiolect does not promist: (i) a single canonical schema; (ii) a global arbiter; 
-or (iii) a guarantee of convergence. Two communities may stay incompatible forever; the
-frame makes that visible (no lens between them, no
-recommendations) rather than impossible. What is promised is
-narrower and checkable: published lenses obey stated laws, records
-under one NSID share one wire shape, and lexicon revisions ship
-with auditable migrations. [Idiolect, dialect,
-language](./idiolect-dialect-language.md) states these promises
-and non-promises precisely.
-
-## Where next
-
-- [What you need first](./prerequisites.md) gives the assumed
-  background.
-- The [tutorial](../tutorial/index.md) walks the full loop on real
-  records: fetch, validate, apply a lens, verify, publish.
+For the operational loop, continue with the [tutorial](../tutorial/index.md).
+For the conceptual division of responsibility, continue with
+[Idiolect, dialect, language](./idiolect-dialect-language.md).

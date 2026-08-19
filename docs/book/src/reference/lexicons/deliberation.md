@@ -1,6 +1,6 @@
 # dev.idiolect.deliberation
 
-A community-scoped question or proposal under collective
+A community-scoped [record](../../glossary.md#record) for a question or proposal under collective
 consideration. Companion records carry the rest of the process:
 [`deliberationStatement`](./deliberationStatement.md) for
 participant utterances,
@@ -34,7 +34,7 @@ consumers can read the conclusion without re-folding the votes.
 | `status` | open enum | no | `open` / `closed` / `tabled` / `adopted` / `rejected`. |
 | `statusVocab` | `vocabRef` | no | Vocab the status slug resolves against. |
 | `closedAt` | datetime | no | When the deliberation moved out of an open status. |
-| `outcome` | at-uri | no | Pointer to a `deliberationOutcome` record summarising the resolved stance. |
+| `outcome` | at-uri | no | Pointer to a `deliberationOutcome` record summarizing the resolved stance. |
 | `createdAt` | datetime | yes | Publication timestamp. |
 
 ## Field details
