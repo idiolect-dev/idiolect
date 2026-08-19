@@ -4,12 +4,12 @@ Reference observer daemon for `dev.idiolect.*`.
 
 ## Overview
 
-An *observer* consumes encounter-family records off the firehose, runs a
-pluggable aggregation method over them, and periodically publishes a
+An *observer* consumes idiolect records from the firehose, runs a pluggable
+aggregation method over them, and periodically publishes a
 structured `dev.idiolect.observation` record summarizing what it has
-seen. The observer layer exists so ranking does not live in
-orchestrators: any number of observers may publish competing aggregates
-over the same firehose, and users choose which to trust.
+seen. Aggregation remains separate from orchestration: several observers may
+publish different summaries of the same firehose, and clients decide which
+observer records to trust.
 
 ## Architecture
 
@@ -25,7 +25,12 @@ flowchart LR
             M2["encounter-throughput"]
             M3["verification-coverage"]
             M4["lens-adoption"]
-            M5["dialect-federation"]
+            M5["action-distribution"]
+            M6["purpose-distribution"]
+            M7["basis-distribution"]
+            M8["attribution-chains"]
+            M9["deliberation-tally"]
+            M10["dialect-federation"]
         end
         IM["InstanceMethod<br/>(panproto WInstance)"]
         ADAPT["InstanceMethodAdapter"]
@@ -45,6 +50,11 @@ flowchart LR
     OH --> M3
     OH --> M4
     OH --> M5
+    OH --> M6
+    OH --> M7
+    OH --> M8
+    OH --> M9
+    OH --> M10
     IM --> ADAPT --> OH
     FS -.triggers.-> OH
     OH --> P1
@@ -53,19 +63,26 @@ flowchart LR
     P3 -->|dev.idiolect.observation| PDS
 ```
 
-Five reference methods ship:
+The generated default set contains nine methods:
 
-- **`correction-rate`** — per-lens correction counts grouped by reason.
-  Signals translation-quality rumor.
-- **`encounter-throughput`** — encounter traffic by kind and downstream
-  result. Signals firehose liveness.
-- **`verification-coverage`** — per-lens verification counts by kind,
-  result, and distinct verifiers. Signals formal-channel evidence.
-- **`lens-adoption`** — per-lens encounter count and distinct-invoker
-  DIDs. Signals adoption breadth.
-- **`dialect-federation`** — watched communities' current dialect +
-  lens-set deltas since the previous snapshot. Signals federation
-  surface change.
+- **`correction-rate`:** per-lens correction counts grouped by reason.
+- **`encounter-throughput`:** encounter traffic by kind and downstream
+  result.
+- **`verification-coverage`:** per-lens verification counts by kind,
+  result, and distinct verifiers.
+- **`lens-adoption`:** per-lens encounter counts and distinct invoker DIDs.
+- **`action-distribution`:** encounter counts by structured action, with
+  optional rollup through a resolved action vocabulary.
+- **`purpose-distribution`:** encounter counts by structured purpose, with
+  optional rollup through a resolved purpose vocabulary.
+- **`basis-distribution`:** record counts by basis variant and record kind.
+- **`attribution-chains`:** belief counts by holder DID and subject AT-URI.
+- **`deliberation-tally`:** vote counts by statement and stance.
+
+The crate also exports **`dialect-federation`**, which records each watched
+community's current dialect and the lens-set changes since the previous
+snapshot. It requires an explicit community watch list, so
+[`default_methods`](src/generated.rs) does not construct it.
 
 Two method shapes coexist: [`ObservationMethod`](src/method.rs) takes the
 raw `IndexerEvent`; [`InstanceMethod`](src/instance_method.rs) takes a
@@ -122,9 +139,9 @@ cargo run -p idiolect-observer --features daemon
 ```
 
 Without `IDIOLECT_PDS_URL` the binary aggregates into an in-memory
-publisher and logs counts on shutdown — useful as a smoke test against
-a live firehose. `LogPublisher` is a third option for deployments that
-only want a structured `tracing::info!` per snapshot. Setting
+publisher and logs counts on shutdown. This mode can test a live firehose
+without publishing records. `LogPublisher` is a third option for deployments
+that only want a structured `tracing::info!` per snapshot. Setting
 `IDIOLECT_OBSERVER_CURSORS` points the cursor store at a persistent
 sqlite file so restarts resume.
 
@@ -137,14 +154,13 @@ sqlite file so restarts resume.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-indexer`](../idiolect-indexer) — the firehose layer
+- [`idiolect-indexer`](../idiolect-indexer): the firehose layer
   `drive_observer` runs atop.
-- [`idiolect-lens`](../idiolect-lens) — publishes via `PdsWriter` impls.
+- [`idiolect-lens`](../idiolect-lens): provides the `PdsWriter`
+  implementations used for publication.

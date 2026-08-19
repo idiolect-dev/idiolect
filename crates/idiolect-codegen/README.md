@@ -6,11 +6,11 @@ family plus the vendored `dev.panproto.*` tree.
 
 ## Overview
 
-A single binary and library exposing four deterministic emit targets
-and a CI compatibility gate. Inputs are JSON on disk (lexicons +
-specs). Outputs are formatted Rust and TypeScript committed to the
-repository. The on-disk emit layout mirrors the lexicon directory
-tree 1:1 — `lexicons/dev/panproto/schema/lens.json` becomes
+The crate exposes three deterministic artifact generators and a compatibility
+gate through one library and binary. It reads lexicons and specs from JSON and
+writes formatted Rust and TypeScript that are committed to the repository.
+The emitted tree mirrors the lexicon tree one-to-one:
+`lexicons/dev/panproto/schema/lens.json` becomes
 `generated/dev/panproto/schema/lens.rs` (and `.ts`), with
 per-directory `mod.rs` / `index.ts` barrels stitching the tree. The
 drift gate in CI recomputes the emit and fails the build if the
@@ -25,13 +25,14 @@ flowchart LR
         OSPEC["orchestrator-spec/"]
         VSPEC["verify-spec/"]
         MSPEC["observer-spec/"]
-        CSPEC["cli-spec/"]
     end
 
     subgraph codegen["idiolect-codegen"]
-        PARSE["parse_lexicon + parse_json<br/>(panproto)"]
+        LPARSE["parse lexicons<br/>(panproto)"]
+        SPARSE["validate specs<br/>(parse_lexicon + parse_json)"]
         EMIT_R["emit Rust<br/>(syn + prettyplease)"]
         EMIT_TS["emit TypeScript<br/>(oxc_ast + oxc_codegen)"]
+        EMIT_SPEC["emit spec-driven Rust"]
         CHECK["check-compat<br/>(panproto_check)"]
     end
 
@@ -44,16 +45,16 @@ flowchart LR
     BASELINE["baseline lexicon tree"]
     GATE{"CI drift / compat gate"}
 
-    LEX --> PARSE
-    OSPEC --> PARSE
-    VSPEC --> PARSE
-    MSPEC --> PARSE
-    CSPEC --> PARSE
-    PARSE --> EMIT_R
-    PARSE --> EMIT_TS
+    LEX --> LPARSE
+    OSPEC --> SPARSE
+    VSPEC --> SPARSE
+    MSPEC --> SPARSE
+    LPARSE --> EMIT_R
+    LPARSE --> EMIT_TS
+    SPARSE --> EMIT_SPEC
     EMIT_R --> RECS
-    EMIT_R --> WIRE
     EMIT_TS --> NPM
+    EMIT_SPEC --> WIRE
     BASELINE --> CHECK
     LEX --> CHECK
     RECS --> GATE
@@ -62,24 +63,24 @@ flowchart LR
     CHECK --> GATE
 ```
 
-The four emit targets:
+The generated artifacts and compatibility gate are:
 
-1. **Rust records** — each lexicon into
+1. **Rust records:** each lexicon into
    `crates/idiolect-records/src/generated/`, built with `syn` +
    `prettyplease`.
-2. **TypeScript types + validators** — into
+2. **TypeScript types and validators:** into
    `packages/schema/src/generated/`, built with `oxc_ast` +
    `oxc_codegen`.
-3. **Spec-driven wire-up** — reads `<crate>-spec/` JSON files, validates
+3. **Spec-driven wire-up:** reads `<crate>-spec/` JSON files, validates
    them through `panproto_protocols::web_document::atproto::parse_lexicon`
    + `panproto_inst::parse::parse_json` against the spec's own lexicon,
    and emits Rust into each consuming crate's `generated/` module.
-4. **Panproto-check CI gate** — `check-compat --baseline <path>`
+4. **Panproto-check CI gate:** `check-compat --baseline <path>`
    classifies lexicon diffs via `panproto_check`, exiting non-zero on any
    breaking change.
 
-The entire chain is pure: the same inputs yield byte-for-byte identical
-outputs.
+The emitters are deterministic: the same inputs yield byte-for-byte
+identical outputs.
 
 ## Usage
 
@@ -102,10 +103,9 @@ cargo run -p idiolect-codegen -- doctor
 
 ## Design notes
 
-- Every emitter routes through a canonical AST library (`syn` for Rust,
-  `oxc` for TypeScript). Hand-rolled string concatenation is a rejected
-  pattern — the entire emit surface is AST-first so structural invariants
-  are runtime-unrepresentable.
+- Every emitter constructs a language AST (`syn` for Rust, `oxc` for
+  TypeScript) rather than assembling source text by concatenation. This
+  keeps structural checks in typed builders before either printer runs.
 - Spec files (`orchestrator-spec/queries.json`, etc.) ship with a sibling
   lexicon (`<crate>-spec/lexicon.json`) under the
   `dev.idiolect.internal.spec.*` namespace. Loading a spec always
@@ -114,17 +114,15 @@ cargo run -p idiolect-codegen -- doctor
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-records`](../idiolect-records) — Rust emit target.
-- [`@idiolect-dev/schema`](../../packages/schema) — TypeScript emit target.
+- [`idiolect-records`](../idiolect-records): Rust emit target.
+- [`@idiolect-dev/schema`](../../packages/schema): TypeScript emit target.
 - [`idiolect-orchestrator`](../idiolect-orchestrator),
   [`idiolect-observer`](../idiolect-observer),
   [`idiolect-verify`](../idiolect-verify),
-  [`idiolect-cli`](../idiolect-cli) — spec-driven wire-up consumers.
+  [`idiolect-cli`](../idiolect-cli): spec-driven wire-up consumers.

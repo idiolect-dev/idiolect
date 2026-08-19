@@ -4,12 +4,13 @@ Reference orchestrator for the `dev.idiolect.*` record family.
 
 ## Overview
 
-The orchestrator folds the *declarative* records — adapters, bounties,
-communities, dialects, recommendations, verifications — off the firehose
-into an in-memory catalog and answers queries over it. It never enforces;
-a recommendation exists, the orchestrator tells you it exists and whether
-its required verifications are in place. Adoption is the caller's
-decision.
+The orchestrator folds twelve declarative record kinds from the firehose into
+an in-memory catalog: adapters, beliefs, bounties, communities, dialects,
+recommendations, verifications, vocabularies, deliberations, deliberation
+statements, deliberation votes, and deliberation outcomes. It answers queries
+over those records without ranking or enforcing them. For a recommendation,
+for instance, the orchestrator reports the record and whether its required
+verifications exist; the caller decides whether to adopt it.
 
 ## Architecture
 
@@ -44,15 +45,15 @@ flowchart LR
     CG -.emits.-> HTTP
 ```
 
-Three parts:
+Three components define the read path:
 
-- **`Catalog`** — one slot per at-uri per record kind. Updates overwrite,
+- **`Catalog`:** one slot per AT-URI per record kind. Updates overwrite,
   deletes remove, and there is no ranking. A cross-kind re-upsert evicts
-  the prior kind's slot, so one at-uri is always at most one kind.
-- **`CatalogHandler`** — implements `idiolect_indexer::RecordHandler`.
+  the prior kind's slot, so one AT-URI occupies at most one kind.
+- **`CatalogHandler`:** implements `idiolect_indexer::RecordHandler`.
   Folds commits into the catalog and ignores encounter-family records
   (those are observer territory).
-- **`query::*`** — pure functions over `&Catalog`, re-exported from the
+- **`query::*`:** pure functions over `&Catalog`, re-exported from the
   generated module. Adding a query is a spec edit, not a code edit. See
   [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json).
 
@@ -102,8 +103,15 @@ Read-only JSON over HTTP. Every list endpoint accepts
 | GET | `/v1/communities?member_did=` |
 | GET | `/v1/communities/by-name?name=` |
 | GET | `/v1/dialects/for-community?community_uri=` |
+| GET | `/v1/beliefs/about?subject_uri=` |
+| GET | `/v1/beliefs/by-holder?holder_did=` |
+| GET | `/v1/vocabularies/by-world?world=` |
+| GET | `/v1/vocabularies/by-name?name=` |
 
-The API is strictly read-only: records enter through the firehose, never
+Each generated list query is also mounted at the `/xrpc/dev.idiolect.query.*`
+path declared by its generated lexicon.
+
+The API is read-only: records enter through the firehose, never
 through HTTP. Writers author records directly against their PDS (see
 [`idiolect-lens`](../idiolect-lens)).
 
@@ -111,8 +119,8 @@ through HTTP. Writers author records directly against their PDS (see
 
 | Flag | Default | Effect |
 | ---- | ------- | ------ |
-| `catalog-sqlite` | off | `SqliteCatalogStore` — persists upserts/deletes to a sqlite file; warm on startup via `load_catalog()`. |
-| `query-http` | off | `router()` — axum router + `AppState` serving the HTTP API. |
+| `catalog-sqlite` | off | `SqliteCatalogStore`: persists upserts/deletes to a sqlite file; warm on startup via `load_catalog()`. |
+| `query-http` | off | `router()`: axum router + `AppState` serving the HTTP API. |
 | `daemon` | off | Long-running `idiolect-orchestrator` binary. |
 
 ## Daemon binary
@@ -125,7 +133,7 @@ IDIOLECT_HTTP_ADDR=0.0.0.0:8787 \
 cargo run -p idiolect-orchestrator --features daemon
 ```
 
-Graceful shutdown on SIGINT / SIGTERM.
+The daemon shuts down gracefully on SIGINT or SIGTERM.
 
 ## Design notes
 
@@ -145,15 +153,13 @@ Graceful shutdown on SIGINT / SIGTERM.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-indexer`](../idiolect-indexer) — firehose feeding the
+- [`idiolect-indexer`](../idiolect-indexer): supplies the firehose that feeds
   `CatalogHandler`.
-- [`idiolect-cli`](../idiolect-cli) — talks to this crate's HTTP API;
+- [`idiolect-cli`](../idiolect-cli): queries this crate's HTTP API;
   the CLI's subcommand set is generated from the same spec.

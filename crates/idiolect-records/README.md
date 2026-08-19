@@ -5,16 +5,15 @@ Serde record types and typed atproto identifiers for the
 
 ## Overview
 
-The crate ships two layers. The first is a typed core for atproto
-identifiers (`Nsid`, `AtUri`, `Did`) that enforces the spec at parse
-time so malformed values cannot leak into routing, codegen, or
-dispatch. The second is the generated record set: every lexicon in
+The crate has an identifier layer and a record-family layer. The identifier
+layer parses `Nsid`, `AtUri`, and `Did` values before they reach routing,
+codegen, or dispatch. The record-family layer is generated: every lexicon in
 `lexicons/dev/idiolect/` (plus the vendored `dev/panproto/` tree)
 produces a strongly-typed struct, deserializable from the lexicon's
 canonical JSON shape. The generated tree mirrors the lexicon
-directory layout 1:1: `lexicons/dev/idiolect/encounter.json` emits
+directory layout one-to-one: `lexicons/dev/idiolect/encounter.json` emits
 `generated/dev/idiolect/encounter.rs`. Each lexicon's main record
-type is re-exported at the crate root for ergonomic call sites
+type is re-exported at the crate root for shorter imports
 (`idiolect_records::Encounter`).
 
 ## Architecture
@@ -46,16 +45,15 @@ flowchart LR
     TRAIT --> CONS
 ```
 
-`RecordFamily` is the trait every workspace boundary parameterises
-over once it wants to consume more than one record set: a membership
-predicate over NSIDs, a decoder, and a serializer back. The
+`RecordFamily` is the boundary used by workspace components that consume
+more than one record set. It provides an NSID membership predicate, a
+decoder, and a serializer. The
 `IdiolectFamily` marker (codegen output) implements it for the
 `dev.idiolect.*` set. Two families compose via `OrFamily<F1, F2>`
-into a single family that recognises every NSID either side claims;
+into a single family that recognizes every NSID either side claims;
 its `AnyRecord` is the tagged union `OrAny`. Use
 `detect_or_family_overlap` at boot when wiring an `OrFamily` to
-catch configuration errors that would otherwise silently shadow the
-right side.
+catch overlaps that would otherwise give the left family precedence.
 
 `AnyRecord` is the runtime discriminated union across every shipped
 idiolect record kind, and `decode_record(nsid, value)` dispatches
@@ -64,7 +62,7 @@ by `idiolect-codegen`'s family emitter. Adding a record is a
 one-file lexicon change. The `RecordFamily` impl on `IdiolectFamily`
 delegates `contains`/`decode` to the same generated table, so
 consumers can switch between the bare `decode_record` API and the
-family-generic `F::decode` API without behaviour change.
+family-generic `F::decode` API without behavior change.
 
 ## Usage
 
@@ -85,8 +83,8 @@ match record {
 let e: Encounter = serde_json::from_value(payload)?;
 ```
 
-The same dispatch is reachable through the family abstraction, which
-is what indexer / orchestrator / observer code sees:
+The family abstraction exposes the same dispatch to the indexer,
+orchestrator, and observer:
 
 ```rust
 use idiolect_records::{IdiolectFamily, Nsid, RecordFamily};
@@ -140,30 +138,28 @@ use idiolect_records::generated::dev::panproto::schema::lens::PanprotoLens;
 
 ## Design notes
 
-- Records: `#[serde(rename_all = "camelCase")]`.
-- Enum variants: `#[serde(rename_all = "kebab-case")]`.
-- Datetimes: RFC 3339 `String`s (compared byte-wise for ordering;
+- Records use `#[serde(rename_all = "camelCase")]`.
+- Enum variants use `#[serde(rename_all = "kebab-case")]`.
+- Datetimes are RFC 3339 `String`s (compared byte-wise for ordering;
   callers parse via `time::OffsetDateTime` when they need arithmetic).
-- CID links: `{ "$link": "bafy..." }` wrapper (in
+- CID links use the `{ "$link": "bafy..." }` wrapper (in
   `generated::dev::idiolect::defs`).
-- `#[serde(skip_serializing_if = "Option::is_none")]` on every
-  optional field.
+- Every optional field uses
+  `#[serde(skip_serializing_if = "Option::is_none")]`.
 - `Nsid::parse` enforces the atproto spec (≥3 segments, ASCII only,
   ≤317 bytes total, ≤63 bytes per segment, name segment is
   camelCase). `AtUri::parse` rejects fragments, query strings, and
-  trailing or extra path segments — the at-uris idiolect cares about
-  always point at a single record.
+  trailing or extra path segments because idiolect AT-URIs identify one
+  record.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-codegen`](../idiolect-codegen) — emits this crate.
-- [`@idiolect-dev/schema`](../../packages/schema) — TypeScript twin,
+- [`idiolect-codegen`](../idiolect-codegen): emits this crate.
+- [`@idiolect-dev/schema`](../../packages/schema): TypeScript package
   generated from the same lexicons.

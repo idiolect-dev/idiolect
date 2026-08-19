@@ -20,8 +20,8 @@
 
 ---
 
-Idiolect turns the linguistic distinction between *idiolects*, *dialects*, and *languages* into an
-operating model.
+Idiolect treats the linguistic distinction between *idiolects*, *dialects*,
+and *languages* as a three-level operating model:
 
 1. An idiolect is one party's choice of schemas, lenses, and
 conventions.
@@ -33,17 +33,17 @@ canonical.
 Architectural primitives are signed, content-addressed records on
 [ATProto](https://atproto.com). Schemas and translations between
 schemas are [panproto](https://github.com/panproto/panproto) artifacts. The
-project ships reference runtimes, including a CLI, an orchestrator daemon, an observer
-daemon, a verification runtime, and a migration library, on top of a small
-family of `dev.idiolect.*` lexicons.
+repository contains a CLI, orchestrator and observer daemons, a verification
+runtime, and a migration library built over a small family of
+`dev.idiolect.*` lexicons.
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-    subgraph sources["Source of truth"]
+    subgraph sources["Authoritative inputs"]
         LEX["lexicons/dev/idiolect/*.json"]
-        SPEC["*-spec/ (orchestrator, observer, verify, cli)"]
+        SPEC["*-spec/ (orchestrator, observer, verify)"]
     end
 
     subgraph codegen["Codegen (idiolect-codegen)"]
@@ -60,8 +60,8 @@ flowchart TB
         PDS[("ATProto PDS<br/>+ firehose")]
         IDX["idiolect-indexer<br/>(EventStream · CursorStore · RecordHandler)"]
         ORC["idiolect-orchestrator<br/>(Catalog + HTTP query API)"]
-        OBS["idiolect-observer<br/>(fold encounters → observation records)"]
-        VER["idiolect-verify<br/>(roundtrip · property · static check)"]
+        OBS["idiolect-observer<br/>(fold records → observation records)"]
+        VER["idiolect-verify<br/>(roundtrip · property · static · coercion)"]
         MIG["idiolect-migrate<br/>(diff + lens migration)"]
         LENS["idiolect-lens<br/>(resolve + apply panproto lenses)"]
         ID["idiolect-identity<br/>(did:plc · did:web)"]
@@ -96,20 +96,20 @@ flowchart TB
     WIRE -.used by.-> CLI
 ```
 
-Lexicons under `lexicons/dev/` are the single source of truth. Rust types
-(`idiolect-records`) and TypeScript validators (`@idiolect-dev/schema`) are
-derived via `idiolect-codegen`. 
+Lexicons under `lexicons/dev/` are the authoritative record definitions.
+`idiolect-codegen` derives the Rust types in `idiolect-records` and the
+TypeScript validators in `@idiolect-dev/schema` from them.
 
-Four crates that carry a taxonomy of
-similarly-shaped items—the orchestrator's queries, the observer's methods,
-the verifier's runners, and the CLI's subcommands—each live behind a
-declarative JSON spec (`<crate>-spec/`) validated against its own
-atproto-shaped lexicon. Codegen emits the wire-up. Hand-written predicates
-and semantics supply the business logic.
+Three declarative JSON specs define four generated surfaces. The orchestrator
+spec drives catalog queries and their CLI subcommands; the observer and
+verifier specs drive their respective method and runner inventories. Each
+spec is validated against its own atproto-shaped lexicon. Codegen emits the
+dispatch code, while hand-written predicates and implementations supply the
+behavior.
 
-Runtime state that must not federate—e.g. firehose cursors and OAuth tokens—uses
-the same panproto schema apparatus as everything else, flagged under
-`dev.idiolect.internal.*` so conformant firehose consumers skip it.
+Some runtime state must remain local. Firehose cursors and OAuth tokens use
+the same panproto schema machinery as federated records, but their
+`dev.idiolect.internal.*` namespace tells firehose consumers to skip them.
 
 ## Quickstart
 
@@ -128,9 +128,9 @@ bun add @idiolect-dev/schema
 ```
 
 ```ts
-import { NSIDS, isRecord, type Encounter } from "@idiolect-dev/schema";
+import { NSID, isRecord, type Encounter } from "@idiolect-dev/schema";
 
-if (isRecord(NSIDS.encounter, payload)) {
+if (isRecord(NSID.encounter, payload)) {
   const e: Encounter = payload;
   console.log(e.kind);
 }
@@ -148,10 +148,10 @@ if (isRecord(NSIDS.encounter, payload)) {
 | [`idiolect-oauth`][oauth]      | Panproto schema + store trait for atproto OAuth session state.            |
 | [`idiolect-observer`][obs]     | Fold encounter-family records into `dev.idiolect.observation` records.    |
 | [`idiolect-orchestrator`][orc] | Catalog + read-only HTTP query API over cataloged records.                |
-| [`idiolect-verify`][ver]       | Verification runners (`roundtrip-test`, `property-test`, `static-check`). |
+| [`idiolect-verify`][ver]       | Verification runners (`roundtrip-test`, `property-test`, `static-check`, `coercion-law`). |
 | [`idiolect-migrate`][mig]      | Schema diff (panproto-check) + lens-based record migration.               |
 | [`idiolect-cli`][cli]          | Command-line tool wrapping the library crates.                            |
-| [`@idiolect-dev/schema`][npm]      | TypeScript validators, types, and NSID constants (same lexicons).         |
+| [`@idiolect-dev/schema`][npm]  | TypeScript validators, types, and NSID constants (same lexicons).         |
 
 [recs]: crates/idiolect-records
 [cg]: crates/idiolect-codegen
@@ -168,7 +168,7 @@ if (isRecord(NSIDS.encounter, payload)) {
 
 ## Install
 
-Binaries for every release are published to the
+Each release publishes binaries to the
 [releases page](https://github.com/idiolect-dev/idiolect/releases), signed
 with sigstore keyless. Container images for the daemons ship to
 `ghcr.io/idiolect-dev/orchestrator` and `ghcr.io/idiolect-dev/observer`. See
@@ -204,18 +204,17 @@ plus a lexicon breaking-change gate against the PR's merge base.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, daemon HTTP routes, and CLI surfaces
-are all in scope. Pin to an exact version if you depend on this
-project, and read [CHANGELOG.md](CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, daemon HTTP routes, or CLI surfaces. Pin an exact version if
+you depend on the project, and read [CHANGELOG.md](CHANGELOG.md) before
+upgrading.
 
 ## Contributing
 
-Issue templates and the PR template under `.github/` are the canonical route
-for reports and proposals. The project holds opinionated architectural
-commitments. Consult the [feature-request template](.github/ISSUE_TEMPLATE/feature.yml)
-if you are unsure whether a capability fits before opening.
+Use the issue templates and PR template under `.github/` for reports and
+proposals. Before proposing a new architectural primitive, work through the
+[feature-request template](.github/ISSUE_TEMPLATE/feature.yml); it records the
+constraints a proposal must address.
 
 ## Acknowledgments
 

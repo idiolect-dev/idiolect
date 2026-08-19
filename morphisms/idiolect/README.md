@@ -1,17 +1,15 @@
 # Morphisms
 
-Inter-theory functors for the attitudinal substrate. Each file defines a
-morphism from one theory to another — most commonly the inclusion
-`ThAtt ↪ ThX` when `ThX` extends `ThAtt` — with explicit sort and
-operation mappings.
+These files define inter-theory functors for the attitudinal substrate. Most
+are inclusions of the form `ThAtt ↪ ThX`, where `ThX` extends `ThAtt`, with
+explicit mappings for sorts and operations.
 
 ## Overview
 
 panproto uses morphisms to turn a composition
-(`ThAtt + ThAssertive + ThUse`) into a single pushout diagram. You also
-use them to *translate* a record from one theory to another, which is
-how the framework reasons about compatibility between alternative
-attitudinal frameworks.
+(`ThAtt + ThAssertive + ThUse`) into a single pushout diagram. Morphisms also
+translate a record from one theory to another. Compatibility checks can thus
+compare records built from different attitudinal theories.
 
 ## Architecture
 
@@ -40,25 +38,24 @@ flowchart TB
     ILL -.-> PUSH
 ```
 
-## What's here
+## Files
 
-- `att_to_assertive.yaml` — inclusion for the assertive stance.
-- `att_to_doxastic.yaml` — inclusion for the doxastic stance.
-- `att_to_bouletic.yaml` — inclusion for the bouletic stance.
-- `att_to_endorsive.yaml` — inclusion for the endorsive stance.
-- `att_to_declarative.yaml` — inclusion for the declarative stance.
-- `att_to_evidential.yaml` — inclusion for the evidential grounding
+- `att_to_assertive.yaml`: inclusion for the assertive stance.
+- `att_to_doxastic.yaml`: inclusion for the doxastic stance.
+- `att_to_bouletic.yaml`: inclusion for the bouletic stance.
+- `att_to_endorsive.yaml`: inclusion for the endorsive stance.
+- `att_to_declarative.yaml`: inclusion for the declarative stance.
+- `att_to_evidential.yaml`: inclusion for the evidential grounding
   layer.
-- `att_to_illocutionary.yaml` — inclusion for the speech-act layer
+- `att_to_illocutionary.yaml`: inclusion for the speech-act layer
   (via ThTarget).
 
 ## Morphisms vs lenses
 
-**Morphisms** live here. They describe relationships between *theories*.
-**Lenses** live under `lenses/vocab/`. They are concrete translations
-between *instances* of theories — for example, between two community
-vocabularies that both implement ThUse but declare different action
-hierarchies.
+A morphism describes a relationship between theories. A lens under
+`lenses/vocab/` translates instances of those theories, for instance two
+community vocabularies that both implement ThUse but declare different
+action hierarchies.
 
 A morphism is typically a structural inclusion with an identity sort
 map. A lens is a data transformation that may drop or expand fields,
@@ -67,6 +64,6 @@ carry through.
 
 ## Related
 
-- [`lenses/vocab`](../../lenses/vocab) — instance-level translations.
-- [`idiolect-lens`](../../crates/idiolect-lens) — runtime for applying
+- [`lenses/vocab`](../../lenses/vocab): instance-level translations.
+- [`idiolect-lens`](../../crates/idiolect-lens): runtime for applying
   lenses.

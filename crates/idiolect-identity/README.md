@@ -5,12 +5,11 @@ DID resolution for idiolect: `did:plc` via plc.directory, `did:web` via
 
 ## Overview
 
-Maps DID identifiers to their W3C DID documents and, by way of
-`DidDocument::pds_url`, the repo's PDS base URL. The core is
-transport-agnostic — an `InMemoryIdentityResolver` ships for tests and a
-reqwest-backed `ReqwestIdentityResolver` sits behind a feature flag. A
-`CachingIdentityResolver<R>` wraps any resolver with a TTL cache,
-matching the resolve-then-cache pattern every live appview uses.
+The crate maps DIDs to W3C DID documents and exposes the repository's PDS
+base URL through `DidDocument::pds_url`. Resolution is transport-agnostic.
+Tests can use `InMemoryIdentityResolver`, while the feature-gated
+`ReqwestIdentityResolver` handles live requests. A
+`CachingIdentityResolver<R>` adds a TTL cache to either implementation.
 
 ## Architecture
 
@@ -68,8 +67,8 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
 ## Design notes
 
 - `Did` is the typed identifier from
-  [`idiolect-records`](../idiolect-records). This crate re-exports it
-  so callers do not need a second import for the same type. `Did::parse`
+  [`idiolect-records`](../idiolect-records). This crate re-exports it,
+  so callers need only one import. `Did::parse`
   accepts `did:plc:*` and `did:web:*`. Other methods are rejected as
   out-of-scope.
 - `DidDocument` carries only the atproto-relevant subset of the W3C
@@ -79,15 +78,13 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-lens`](../idiolect-lens) — the `pds-resolve` helpers
+- [`idiolect-lens`](../idiolect-lens): the `pds-resolve` helpers
   compose this crate with `ReqwestPdsClient`.
-- [`idiolect-cli`](../idiolect-cli) — `idiolect resolve <did>` surfaces
+- [`idiolect-cli`](../idiolect-cli): `idiolect resolve <did>` exposes
   this crate's resolution at the command line.

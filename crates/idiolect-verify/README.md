@@ -4,11 +4,11 @@ Verification runners for `dev.idiolect.verification` records.
 
 ## Overview
 
-A `Verification` record asserts a formal property of a lens — that
-`put(get(x)) == x` for a corpus of records, that both schemas validate
-against a protocol, that a generator-driven property search found no
-falsifier. This crate actually runs those checks and emits the record
-the orchestrator's `sufficient_verifications_for` consults.
+A `Verification` record reports a claim about a lens: a corpus may satisfy
+`put(get(x)) == x`, both schemas may validate against a protocol, or a
+bounded property search may find no falsifier. The runners in this crate
+evaluate those claims and produce the records consulted by the
+orchestrator's `sufficient_verifications_for` query.
 
 ## Architecture
 
@@ -55,26 +55,26 @@ flowchart LR
     PDS --> ORC
 ```
 
-Four runners ship:
+Four runners evaluate the shipped verification kinds:
 
-- **`RoundtripTestRunner`** — applies the lens forward then backward on
+- **`RoundtripTestRunner`:** applies the lens forward then backward on
   a corpus of source records and checks `put(get(src)) == src` for every
   one. A single counterexample falsifies.
-- **`PropertyTestRunner`** — same shape, but the corpus is produced by
-  a caller-supplied generator closure rather than a static `Vec`.
-  Budget-bounded. Falsification reports the failing case index.
-- **`StaticCheckRunner`** — runs `panproto::validate` on the lens's
+- **`PropertyTestRunner`:** follows the same procedure, but a
+  caller-supplied generator closure produces the corpus rather than a static
+  `Vec`. The budget bounds the search, and a falsification reports the failing
+  case index.
+- **`StaticCheckRunner`:** runs `panproto::validate` on the lens's
   source and target schemas against a configured protocol. Validates
   the graph shape, not the lens body itself.
-- **`CoercionLawRunner`** — dispatches the lens to panproto's
+- **`CoercionLawRunner`:** dispatches the lens to panproto's
   `dev.panproto.translate.verifyCoercionLaws` xrpc and reports any
   returned `coercionLawViolation` entries as a falsified verification.
   Generic over a `CoercionLawClient` so deployments can plug an
   http-backed client while tests stub the xrpc.
 
-All four implement the `VerificationRunner` trait. Adding a kind
-(`formal-proof`, `conformance-test`, `convergence-preserving`) is a
-new runner module following the same shape.
+All four implement `VerificationRunner`. A new verification kind requires a
+runner module and a descriptor in the runner spec.
 
 ## Usage
 
@@ -120,15 +120,13 @@ let verification = runner.run(&target).await?;
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-lens`](../idiolect-lens) — round-trip runners drive
+- [`idiolect-lens`](../idiolect-lens): round-trip runners drive
   `apply_lens` + `apply_lens_put`.
-- [`idiolect-orchestrator`](../idiolect-orchestrator) —
+- [`idiolect-orchestrator`](../idiolect-orchestrator):
   `sufficient_verifications_for` consumes the records this crate emits.

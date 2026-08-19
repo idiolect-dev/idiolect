@@ -5,16 +5,11 @@ TypeScript validators, record types, and NSID constants for the
 
 ## Overview
 
-The TypeScript twin of [`idiolect-records`](../../crates/idiolect-records),
-generated from the same lexicons under `lexicons/dev/idiolect/`. CI
-rejects drift between the two packages. Three shipped surfaces:
-
-- **Types** — `Encounter`, `Correction`, `Bounty`, … per record kind,
-  plus shared types from `defs`.
-- **NSID constants** — `NSID.encounter` → `"dev.idiolect.encounter"`,
-  for switching on a record's collection at runtime.
-- **Validators** — `validateRecord`, `isRecord`, `classifyRecord`,
-  `tagRecord` for runtime structural checks and typed unions.
+This package is the TypeScript counterpart of
+[`idiolect-records`](../../crates/idiolect-records). Both are generated from
+the lexicons under `lexicons/dev/idiolect/`, and CI rejects generated-source
+drift. The public API contains per-record types, NSID constants, structural
+validators, and helpers for tagged record unions.
 
 ## Architecture
 
@@ -78,18 +73,18 @@ const tagged: AnyRecord = tagRecord(NSID.encounter, e);
 
 ## What ships
 
-- Every record type (one per lexicon under `lexicons/dev/idiolect/`) plus
-  shared types from `defs`.
-- `NSID` — a typed constants object with every shipped nsid.
-- `AnyRecord` — discriminated union keyed on `$nsid`.
+- One record type per lexicon under `lexicons/dev/idiolect/`, plus shared
+  types from `defs`.
+- `NSID`: a typed constants object with every shipped NSID.
+- `AnyRecord`: a discriminated union keyed on `$nsid`.
 - `isKind` / per-record `is<Kind>` type guards.
-- `validateRecord(nsid, value)` — atproto-level structural validation via
+- `validateRecord(nsid, value)`: atproto-level structural validation via
   `@atproto/lexicon`.
-- `classifyRecord(value)` — returns the matching nsid or `null`.
-- `tagRecord(nsid, record)` — lift a typed record into the tagged union.
-- `EXAMPLES` and per-record `*_EXAMPLE` constants — bundled minimally-valid
+- `classifyRecord(value)`: returns the matching NSID or `null`.
+- `tagRecord(nsid, record)`: lifts a typed record into the tagged union.
+- `EXAMPLES` and per-record `*_EXAMPLE` constants: bundled minimally valid
   fixtures from `lexicons/dev/idiolect/examples/`.
-- `loadLexiconDocs()` / `defaultLexicons()` — re-exported lexicon JSON
+- `loadLexiconDocs()` / `defaultLexicons()`: re-exported lexicon JSON
   plus a `Lexicons` instance for consumers that extend the validator set.
 
 ## Design notes
@@ -102,14 +97,13 @@ const tagged: AnyRecord = tagRecord(NSID.encounter, e);
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — TypeScript
-exports, lexicon shapes, wire formats, and the validator surface
-are all in scope. Pin to an exact version if you depend on this
-package, and read [CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change TypeScript exports, lexicon
+shapes, wire formats, or the validator surface. Pin an exact version if you
+depend on this package, and read [CHANGELOG.md](../../CHANGELOG.md) before
+upgrading.
 
 ## Related
 
-- [`idiolect-records`](../../crates/idiolect-records) — Rust twin,
+- [`idiolect-records`](../../crates/idiolect-records): Rust package
   generated from the same lexicons.
-- [`idiolect-codegen`](../../crates/idiolect-codegen) — emits this package.
+- [`idiolect-codegen`](../../crates/idiolect-codegen): emits this package.

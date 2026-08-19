@@ -1,16 +1,16 @@
 # idiolect-indexer
 
-Firehose consumer parameterised over a record family.
+Firehose consumer parameterized over a record family.
 
 ## Overview
 
-Sits between a firehose transport (`tapped`, jetstream, a custom adapter)
-and an appview's per-record handlers. The crate owns the event loop,
-cursor management, and reconnect/retry policy. Consumers provide handler
-logic, pick their transport via feature flag, and pin the loop to a
+The indexer sits between a firehose transport (`tapped`, jetstream, or a
+custom adapter) and an appview's per-record handlers. It owns the event
+loop, cursor management, and reconnect and retry policies. Consumers provide
+handler logic, select a transport by feature flag, and pin the loop to a
 [`RecordFamily`](../idiolect-records/src/family.rs). The default family
 is `IdiolectFamily` (the `dev.idiolect.*` record set). Downstream
-consumers running their own codegen pass wire their own.
+code generators can supply another family.
 
 ## Architecture
 
@@ -60,7 +60,7 @@ flowchart LR
     ACK --> C3
 ```
 
-Three traits carry every boundary, all parameterised over a
+The runtime is organized around three traits, each parameterized over a
 `RecordFamily`:
 
 - **`EventStream`** yields commits, one at a time. Impls for in-memory
@@ -70,15 +70,16 @@ Three traits carry every boundary, all parameterised over a
 - **`RecordHandler<F>`** is user code. Receives each decoded commit as an
   `IndexerEvent<F>` whose body is already materialized into `F::AnyRecord`.
 
-`drive_indexer::<F, _, _, _>` wires the three together and owns the
-event loop: family-membership filter, decode, dispatch, commit the
-cursor, handle backpressure errors, exit cleanly on stream close.
+`drive_indexer::<F, _, _, _>` connects the three traits and owns the
+event loop. It filters by family membership, decodes and dispatches each
+event, commits the cursor, handles backpressure errors, and exits when the
+stream closes.
 Out-of-family commits are dropped silently before decode. The
 convenience entry `drive_idiolect_indexer` runs the loop pinned to
 `IdiolectFamily` without an explicit type parameter.
 `ReconnectingEventStream` layers exponential-backoff reconnect plus
-cursor replay for production deployments where transport flaps are
-routine. `RetryingHandler` and `CircuitBreakerHandler` wrap any
+cursor replay for deployments where a transport may disconnect.
+`RetryingHandler` and `CircuitBreakerHandler` wrap any
 `RecordHandler` with the matching resilience policy.
 
 ## Usage
@@ -113,8 +114,8 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
 | ---- | ------- | ------ |
 | `firehose-tapped` | off | `TappedEventStream` backed by [`tapped`](https://crates.io/crates/tapped). Live firehose + repo backfill. |
 | `firehose-jetstream` | off | `JetstreamEventStream` for jetstream's JSON-over-websocket. Includes keepalive pings. |
-| `cursor-filesystem` | off | `FilesystemCursorStore` — one JSON file per subscription id. |
-| `cursor-sqlite` | off | `SqliteCursorStore` — WAL-journaled sqlite table. |
+| `cursor-filesystem` | off | `FilesystemCursorStore`: one JSON file per subscription id. |
+| `cursor-sqlite` | off | `SqliteCursorStore`: WAL-journaled sqlite table. |
 | `reconnecting` | off | `ReconnectingEventStream` + `BackoffPolicy`. |
 | `resilience` | off | `RetryingHandler` + `CircuitBreakerHandler`. |
 
@@ -125,8 +126,8 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
   events. Replaying backfill on reconnect is safe and expected.
 - `IndexerEvent.collection` is a typed `Nsid` (parsed at the
   stream-decode boundary). A frame with a malformed NSID is skipped
-  with a `tracing::warn!` rather than fatal-ing the loop, so a single
-  buggy publisher does not drop the firehose for everyone else.
+  with a `tracing::warn!` rather than terminating the loop, so one
+  malformed frame does not stop the consumer.
 - Family membership is `F::contains`. A NSID outside the family is
   dropped before decode, so an upstream PDS that adds a record type
   ahead of our codegen does not halt the loop. A `contains`-true /
@@ -139,16 +140,14 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-records`](../idiolect-records) defines `RecordFamily`,
-  ships `IdiolectFamily`, and produces the `F::AnyRecord` materialised
+- [`idiolect-records`](../idiolect-records): defines `RecordFamily`,
+  ships `IdiolectFamily`, and produces the `F::AnyRecord` materialized
   inside the indexer.
 - [`idiolect-orchestrator`](../idiolect-orchestrator) and
   [`idiolect-observer`](../idiolect-observer) both consume this crate's

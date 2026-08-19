@@ -4,11 +4,11 @@ Panproto-native schema and store trait for atproto OAuth session state.
 
 ## Overview
 
-OAuth tokens never travel back to a PDS as published records — they are
-ephemeral secrets scoped to the authoring side. This crate nevertheless
-models them as a **panproto schema** so the rest of the system treats
-session lifecycle uniformly with everything else that speaks panproto:
-firehose cursors, identity caches, DPoP nonces.
+OAuth tokens do not travel back to a PDS as published records. They are
+ephemeral secrets held by the authoring client. The crate still models them
+with a panproto schema. We call this the internal-state schema pattern: local
+state such as sessions, firehose cursors, identity caches, and DPoP nonces
+uses the same schema operations without entering the federated record stream.
 
 The schema lives in-crate at `lexicons/session.json`, parsed via
 `panproto_protocols::web_document::atproto::parse_lexicon` into a
@@ -72,8 +72,8 @@ if session.needs_refresh(OffsetDateTime::now_utc(), Duration::minutes(5)) {
 
 | Flag | Default | Effect |
 | ---- | ------- | ------ |
-| `store-filesystem` | off | `FilesystemOAuthTokenStore` — one encrypted file per session. |
-| `store-sqlite` | off | `SqliteOAuthTokenStore` — one row per session, WAL-journaled. |
+| `store-filesystem` | off | `FilesystemOAuthTokenStore`: one encrypted file per session. |
+| `store-sqlite` | off | `SqliteOAuthTokenStore`: one row per session, WAL-journaled. |
 
 ## Security
 
@@ -90,20 +90,18 @@ account re-authenticates.
   panproto's atproto parser accepts it) while flagging consumers that
   this nsid never appears on a PDS firehose.
 - Lenses over w-instances of the session schema express token lifecycle
-  as ordinary panproto operations — issue via `put`, refresh via a
-  field-rewriting `get`, revoke via a token-dropping `put`. Those lenses
+  as panproto operations: issue via `put`, refresh via a field-rewriting
+  `get`, and revoke via a token-dropping `put`. Those lenses
   live in whichever component needs them. This crate ships only the
   schema, the struct, and the store trait.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-lens`](../idiolect-lens) — `SigningPdsWriter` consumes
+- [`idiolect-lens`](../idiolect-lens): `SigningPdsWriter` consumes
   sessions from this crate's store to authenticate record writes.

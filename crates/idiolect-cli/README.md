@@ -1,16 +1,14 @@
 # idiolect-cli
 
-Command-line tool wrapping the library crates.
+Command-line access to the idiolect libraries and orchestrator API.
 
 ## Overview
 
-Single binary named `idiolect`. Subcommands cover the common
-operations: resolve a DID, fetch a record from its home PDS, query
-a running local orchestrator, and compose an encounter record from
-structured prompts. The orchestrator subcommand dispatcher is
-**generated** from
+The `idiolect` binary resolves DIDs, fetches and publishes records, manages
+PDS sessions, queries an orchestrator, composes encounter records, and runs
+lens verifications. Its orchestrator subcommands are generated from
 [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json)
-so the CLI never drifts out of sync with the HTTP API it's targeting.
+so the CLI and HTTP API share one command inventory.
 
 ## Architecture
 
@@ -18,27 +16,40 @@ so the CLI never drifts out of sync with the HTTP API it's targeting.
 flowchart LR
     USER["user shell"]
     subgraph cli["idiolect"]
-        CLAP["clap parser"]
+        PARSER["subcommand parser"]
         RES["resolve"]
         FET["fetch"]
         ORCSUB["orchestrator (generated)"]
+        ENC["encounter"]
+        AUTH["oauth"]
+        PUB["publish"]
+        VER["verify"]
     end
     OSPEC["orchestrator-spec/queries.json"]
     CG["idiolect-codegen"]
 
     ID["idiolect-identity"]
     LENSP["idiolect-lens<br/>(ReqwestPdsClient · fetcher_for_did)"]
+    STORE[("session store")]
+    PDS[("ATProto PDS")]
+    VERIFY["idiolect-verify"]
     ORCHTTP["orchestrator HTTP API"]
 
-    USER --> CLAP
-    CLAP --> RES --> ID
-    CLAP --> FET --> LENSP
-    CLAP --> ORCSUB --> ORCHTTP
+    USER --> PARSER
+    PARSER --> RES --> ID
+    PARSER --> FET --> LENSP --> PDS
+    PARSER --> ORCSUB --> ORCHTTP
+    PARSER --> ENC
+    PARSER --> AUTH --> STORE
+    AUTH --> PDS
+    PARSER --> PUB --> STORE
+    PUB --> PDS
+    PARSER --> VER --> VERIFY
     OSPEC --> CG -.emits subcommands.-> ORCSUB
 ```
 
-Every command prints pretty-printed JSON to stdout — pipe through `jq`
-for further filtering.
+Commands that return records or query results print formatted JSON to stdout.
+Pipe those results through `jq` for further filtering.
 
 ## Install
 
@@ -77,31 +88,50 @@ idiolect orchestrator stats --url https://orch.example.com
 idiolect encounter record \
   --lens at://did:plc:x/dev.panproto.schema.lens/l1 \
   --source-schema at://did:plc:x/dev.panproto.schema.schema/s1
+
+# Store, inspect, and remove authenticated PDS sessions. Omit
+# --app-password to read ATPROTO_APP_PASSWORD from the environment.
+idiolect oauth login --handle alice.example.com --pds-url https://bsky.social
+idiolect oauth list
+idiolect oauth logout --did did:plc:alice
+
+# Validate a local record body and publish it with a stored session.
+idiolect publish encounter --record encounter.json
+idiolect publish verification --record verification.json \
+  --rkey 3l5example --did did:plc:alice
+
+# Run a verification and print the resulting verification record.
+idiolect verify roundtrip-test --lens at://did:plc:x/dev.panproto.schema.lens/l1
+idiolect verify property-test \
+  --lens at://did:plc:x/dev.panproto.schema.lens/l1 \
+  --corpus fixtures/corpus.json --budget 200
+idiolect verify static-check --lens at://did:plc:x/dev.panproto.schema.lens/l1
+idiolect verify coercion-law \
+  --lens at://did:plc:x/dev.panproto.schema.lens/l1 \
+  --vcs-url https://vcs.example.com --standard json
 ```
 
 ## Design notes
 
-- The `orchestrator` subcommand dispatcher is emitted from the
-  orchestrator's query spec. Adding a query to the spec produces a new
-  CLI subcommand automatically on the next codegen run.
-- Authentication is not wired: `resolve` and `fetch` hit public
-  endpoints. The orchestrator API is read-only and public by design.
-  Authenticated writes are
-  [`idiolect-lens::SigningPdsWriter`](../idiolect-lens)'s responsibility.
+- The orchestrator query spec drives the `orchestrator` subcommand
+  dispatcher. The next codegen run adds a CLI subcommand for each new query.
+- `resolve` and `fetch` use public endpoints. `oauth login` stores a PDS
+  bearer session under `~/.config/idiolect/sessions/`, and `publish` uses
+  that session for authenticated writes. Set `IDIOLECT_SESSION_DIR` to use
+  a different store.
+- The orchestrator API is read-only and public by design.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-identity`](../idiolect-identity) — `resolve` backs onto
+- [`idiolect-identity`](../idiolect-identity): `resolve` uses
   this crate.
-- [`idiolect-lens`](../idiolect-lens) — `fetch` uses `ReqwestPdsClient`
+- [`idiolect-lens`](../idiolect-lens): `fetch` uses `ReqwestPdsClient`
   via `fetcher_for_did`.
-- [`idiolect-orchestrator`](../idiolect-orchestrator) — the HTTP API
+- [`idiolect-orchestrator`](../idiolect-orchestrator): defines the HTTP API
   the `orchestrator` subcommands query.

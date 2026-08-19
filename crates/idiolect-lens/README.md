@@ -5,10 +5,10 @@ runtime.
 
 ## Overview
 
-Lenses in the `dev.panproto.schema.lens` record type carry a protolens
-chain plus source and target schema hashes. This crate turns that record
-into runnable translation: resolve the lens record from its at-uri, load
-both schemas, compile the chain against the source schema, and apply
+The `dev.panproto.schema.lens` record type carries a protolens chain and
+the hashes of its source and target schemas. This crate resolves that record
+from its AT-URI, loads both schemas, compiles the chain against the source
+schema, and applies
 `get` / `put` / edit-lens / symmetric-lens pipelines against record
 bodies.
 
@@ -66,12 +66,12 @@ flowchart LR
     COMP --> RP
 ```
 
-Three resolver shapes ship, all behind the narrow `Resolver` trait:
+The `Resolver` trait has three implementations:
 
-- **`InMemoryResolver`** — `HashMap<AtUri, PanprotoLens>` for tests.
-- **`PdsResolver<C>`** — generic over a `PdsClient`. Turns an at-uri
+- **`InMemoryResolver`:** a `HashMap<AtUri, PanprotoLens>` for tests.
+- **`PdsResolver<C>`:** generic over a `PdsClient`. Turns an AT-URI
   into `(did, collection, rkey)` and delegates to the injected client.
-- **`PanprotoVcsResolver<C>`** — generic over a `PanprotoVcsClient`.
+- **`PanprotoVcsResolver<C>`:** generic over a `PanprotoVcsClient`.
   Asks the client for the at-uri's current ref hash and then for the
   content-addressed lens object. The resolver itself is stateless.
   The ref table and object store both live behind the client.
@@ -82,8 +82,8 @@ traversal, the schema-tree view, and registry listings for theories
 and alignments. An `InMemoryVcsClient` implements the whole surface
 for tests and offline fixtures.
 
-Two shipped PDS clients: `AtriumPdsClient` (typed XRPC via atrium)
-and `ReqwestPdsClient` (raw reqwest). `VerifyingResolver<R, H>`
+The crate includes two PDS clients: `AtriumPdsClient` for typed XRPC via
+atrium and `ReqwestPdsClient` for raw reqwest. `VerifyingResolver<R, H>`
 wraps any resolver and re-hashes the returned body against the lens
 record's `object_hash` to reject content-hash mismatches.
 `CachingResolver<R>` adds a TTL cache. `SigningPdsWriter<P>` layers
@@ -135,9 +135,9 @@ from DID to typed writes in one call.
   three. Splitting them keeps read-only consumers free of write
   capabilities and lets fixtures plug a single side at a time.
 - `SchemaLoader::load` returns whatever panproto `Schema` is
-  content-addressed by the requested hash regardless of scope —
-  single-file or project-scope unioned. Dialects routinely span
-  several source schemas, so the runtime intentionally avoids
+  content-addressed by the requested hash regardless of whether it
+  represents one file or a project-scope union. A dialect may span several
+  source schemas, so the runtime avoids
   assuming a particular shape and asks for "the schema at this
   hash."
 - Trait objects are not dyn-compatible because the traits use
@@ -146,17 +146,15 @@ from DID to typed writes in one call.
 
 ## Stability
 
-idiolect is pre-1.0. Releases in the `0.x` series may include
-arbitrary breaking changes between minor versions — Rust APIs,
-lexicon shapes, wire formats, and CLI surfaces are all in scope.
-Pin to an exact version if you depend on this crate, and read
-[CHANGELOG.md](../../CHANGELOG.md) before bumping.
+idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
+wire formats, or CLI surfaces. Pin an exact version if you depend on this
+crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 
-- [`idiolect-records`](../idiolect-records) — the `PanprotoLens` record
-  type lives here.
-- [`idiolect-identity`](../idiolect-identity) — DID resolution the
+- [`idiolect-records`](../idiolect-records): defines the `PanprotoLens`
+  record type.
+- [`idiolect-identity`](../idiolect-identity): supplies the DID resolution
   `pds-resolve` helpers compose against.
-- [`idiolect-migrate`](../idiolect-migrate) — migration layer sitting on
+- [`idiolect-migrate`](../idiolect-migrate): builds migration operations on
   top of `apply_lens`.

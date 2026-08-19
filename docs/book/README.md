@@ -1,6 +1,6 @@
 # idiolect documentation
 
-This is the source for `idiolect.dev/book/`. Built with
+This directory contains the source for `idiolect.dev/book/`. The build uses
 [mdBook](https://rust-lang.github.io/mdBook/) plus
 [mdbook-katex](https://github.com/lzanini/mdbook-katex) for math
 and [mdbook-mermaid](https://github.com/badboy/mdbook-mermaid) for
@@ -13,14 +13,15 @@ cargo install mdbook mdbook-katex mdbook-mermaid
 mdbook build
 ```
 
-Output lands in `book/`.
+The command writes the rendered site to `book/`.
 
 ## Validate
 
-Run the structural checker before building. It parses data and shell fences,
-checks local links and anchors, resolves footnotes, enforces American spelling,
-and rejects the project's banned prose patterns. The Rust checker compiles each
-`rust` fence as an independent binary against the current checkout.
+Run the three checkers before building. The structural checker parses data and
+shell fences, checks local links and anchors, resolves footnotes, enforces
+American spelling, and rejects banned prose patterns. The Rust checker compiles
+each `rust` fence as an independent binary against the current checkout, while
+the Mermaid checker parses and renders every diagram.
 
 ```bash
 python3 ../../scripts/check_book.py
@@ -39,13 +40,11 @@ Watches `src/` and `theme/` and live-reloads.
 
 ## Deploy
 
-`.github/workflows/book.yml` builds on every push to `main` that
-touches `docs/book/` (or the workflow itself) and syncs the
-rendered tree into `idiolect-dev/idiolect-dev.github.io` under
-`/book/`. That sibling repo owns the `idiolect.dev` custom domain
-on its GitHub Pages site and serves from its `main` branch root,
-so a commit lands as `idiolect.dev/book/...` on the next Pages
-refresh.
+`.github/workflows/book.yml` runs after a push to `main` changes
+`docs/book/` or the workflow. It builds the book and syncs the rendered tree
+to `/book/` in `idiolect-dev/idiolect-dev.github.io`. That repository serves
+the `idiolect.dev` custom domain from its `main` branch, so the next Pages
+refresh publishes the result at `idiolect.dev/book/`.
 
 Operator setup (one-time):
 
@@ -72,6 +71,8 @@ stable terminology anchors used by each quadrant.
 
 ## Style
 
-Hard-nosed and factual. Mirrors the style of
+Use direct, factual prose. Name each mechanism before reasoning over it, scope
+claims to what the implementation supports, and end procedural sections with
+the resulting state rather than a generic summary. The reference points are
 [didactic](https://github.com/aaronstevenwhite/didactic) and
 [quivers](https://github.com/FACTSlab/quivers).
