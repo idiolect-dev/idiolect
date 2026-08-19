@@ -15,10 +15,13 @@ if you depend on this project, and read this file before bumping.
 
 ### Changed
 
-- Panproto pins now target v0.70.1 across the workspace and the standalone
+- Panproto pins now target v0.71.0 across the workspace and the standalone
   tutorial package. The vendored `dev.panproto.*` subset is byte-identical to
-  the corresponding v0.70.1 files; its provenance metadata now records the
+  the corresponding v0.71.0 files; its provenance metadata now records the
   verified upstream commit.
+- Migration planning now runs against Panproto 0.71.0's exact valued-CSP
+  morphism search. Alignment quality remains a ranking signal for one schema
+  pair, not a confidence score that can be thresholded across unrelated pairs.
 - The mdBook now provides beginner, project-integration, and advanced/formal
   reading paths while retaining separate tutorial, guide, explanation, and
   reference quadrants. Its prose, terminology links, examples, and validation
@@ -31,7 +34,7 @@ if you depend on this project, and read this file before bumping.
 ### Fixed
 
 - Symmetric view-only lens execution now uses Panproto's
-  `put_without_complement` path. Panproto 0.70.1 rejects an empty complement
+  `put_without_complement` path. Panproto 0.71.0 rejects an empty complement
   whose shape could not have come from `get`; idiolect now reconstructs only
   through an isomorphic incoming leg and returns a translation error for a
   lossy leg that requires saved complement data.

@@ -129,7 +129,7 @@ combines OAuth with PKCE, PAR, and DPoP requirements.
 
 [Panproto](https://github.com/panproto/panproto) supplies the schema graphs,
 protocols, protolenses, lens runtime, compatibility checks, and parsing machinery
-that idiolect uses. This book targets Panproto 0.70.1.
+that idiolect uses. This book targets Panproto 0.71.0.
 
 ## PDS
 

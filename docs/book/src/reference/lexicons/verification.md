@@ -73,7 +73,7 @@ captures the falsification and lets consumers decide.
 
 The `tool` field records the tool's name, version, and optional
 commit. Consumers reading a verification can decide whether to
-trust the tool: `panproto-check@0.70.1` plus a known-good commit
+trust the tool: `panproto-check@0.71.0` plus a known-good commit
 is a different signal from a tool the consumer has never heard of.
 
 ### `verifier`
@@ -119,7 +119,7 @@ falsification independently.
   "verifier": "did:plc:verifier",
   "tool": {
     "name": "panproto-check",
-    "version": "0.70.1",
+    "version": "0.71.0",
     "commit": "02158abb"
   },
   "property": {

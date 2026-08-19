@@ -37,5 +37,5 @@ tokio             = { version = "1", features = ["macros", "rt-multi-thread"] }
 idiolect-records  = { path = "../../crates/idiolect-records" }
 idiolect-lens     = { path = "../../crates/idiolect-lens", features = ["pds-reqwest"] }
 idiolect-verify   = { path = "../../crates/idiolect-verify" }
-panproto-lens     = { git = "https://github.com/panproto/panproto.git", tag = "v0.70.1" }
-panproto-schema   = { git = "https://github.com/panproto/panproto.git", tag = "v0.70.1" }
+panproto-lens     = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
+panproto-schema   = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }

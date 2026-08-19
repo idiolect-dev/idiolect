@@ -63,6 +63,10 @@ schema hashes, a `protolens_chain`, and an `alignment_quality` score.
 It returns `NoChange` or `OnlyNonBreaking` when a migration plan is
 unnecessary.
 
+Panproto 0.71.0 computes this alignment with an exact valued-CSP optimizer.
+The score orders alternatives for the same source schema; do not treat a fixed
+number as a confidence threshold across unrelated schema pairs.
+
 For breaking diffs that resist automation,
 `plan_auto` returns `Err(PlannerError::NotAutoDerivable)`
 listing the offending changes. The caller writes the lens by

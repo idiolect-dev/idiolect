@@ -1,6 +1,6 @@
 # Lens semantics and laws
 
-idiolect runs panproto 0.70.1's state-based asymmetric lenses. The basic idea is
+idiolect runs panproto 0.71.0's state-based asymmetric lenses. The basic idea is
 to retain whatever a target view cannot express, then use that retained state
 when translating backward. We call this retained state the
 [complement](../glossary.md#complement "State retained so a backward lens operation can reconstruct its source").
@@ -66,7 +66,7 @@ $$
 ## Optic classification
 
 panproto classifies a theory transform structurally with `OpticKind`. Version
-0.70.1 uses these five variants:
+0.71.0 uses these five variants:
 
 | Kind | Structural reading | Complement role |
 | --- | --- | --- |

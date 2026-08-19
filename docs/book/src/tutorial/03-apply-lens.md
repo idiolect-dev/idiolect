@@ -16,11 +16,11 @@ record:
 
 ## Confirm the Panproto version
 
-The runnable package pins the Panproto crates used here to 0.70.1:
+The runnable package pins the Panproto crates used here to 0.71.0:
 
 ```toml
-panproto-lens   = { git = "https://github.com/panproto/panproto.git", tag = "v0.70.1" }
-panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.70.1" }
+panproto-lens   = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
+panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
 ```
 
 The idiolect workspace uses the same Panproto version.
@@ -61,7 +61,7 @@ let out = apply_lens(
 The JSON value is unchanged because this tutorial lens renames a schema sort
 from `string` to `text`; it does not rename the record's `text` field. The
 unchanged value records a successful run: the runtime resolved the lens, loaded
-both schemas, instantiated Panproto 0.70.1, and produced a target-schema value.
+both schemas, instantiated Panproto 0.71.0, and produced a target-schema value.
 
 The returned `out.complement` belongs with this application of the lens.
 Passing it to `apply_lens_put` would reconstruct the source record. Chapter 4

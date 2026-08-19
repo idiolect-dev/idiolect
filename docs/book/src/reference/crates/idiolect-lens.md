@@ -8,7 +8,7 @@
 
 Resolve `dev.panproto.schema.lens` [records](../../glossary.md#record)
 and run `apply_lens`. The crate connects idiolect's record runtime to
-panproto 0.70.1's lens runtime.
+panproto 0.71.0's lens runtime.
 
 Because the crate is `publish = false`, downstream consumers
 depend on it via a git or path reference rather than a
@@ -51,7 +51,7 @@ The runtime shipped under `idiolect_lens::runtime`:
 - `apply_lens_get_edit` / `apply_lens_put_edit` — edit-based
   variants for incremental translation.
 - `apply_lens_symmetric` pairs two state-based lenses that share a
-  middle schema. This view-only helper calls panproto 0.70.1's
+  middle schema. This view-only helper calls panproto 0.71.0's
   `put_without_complement`, so the incoming span leg must be an
   isomorphism. A lossy incoming leg requires complement state from an
   earlier `get` and direct use of panproto's lower-level

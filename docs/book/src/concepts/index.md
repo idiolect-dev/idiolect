@@ -37,7 +37,7 @@ The next four chapters explain how the runtime interprets those records:
 
 [Lens semantics and laws](./lens-laws.md) is the formal center of the book. It
 introduces complements, round-trip laws, optic classification, and symmetric
-span construction against panproto 0.70.1. [Deliberation](./deliberation.md)
+span construction against panproto 0.71.0. [Deliberation](./deliberation.md)
 then separates a community's decision process from its settled beliefs and
 recommendations. [Lexicon evolution policy](./lexicon-evolution.md) closes the
 section by comparing the intended migration gate with the enforcement that the

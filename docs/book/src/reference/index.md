@@ -12,7 +12,7 @@ and HTTP contracts. Task procedures remain in the
 | [HTTP query API](./http-api.md) | Every endpoint exposed by the orchestrator, request and response shape. |
 | [Stability and versioning](./stability.md) | The pre-1.0 stability policy. |
 
-The reference covers idiolect 0.11.1 with panproto 0.70.1. For older
+The reference covers idiolect 0.11.1 with panproto 0.71.0. For older
 releases, use the
 [release archive](https://github.com/idiolect-dev/idiolect/releases).
 

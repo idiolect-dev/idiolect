@@ -71,7 +71,7 @@ The Changelog is in
 | --- | --- | --- |
 | `idiolect-records` | crates.io | exact version |
 | `@idiolect-dev/schema` | npm | exact version |
-| panproto crates | Git tag | `v0.70.1` for idiolect 0.11.1 |
+| panproto crates | Git tag | `v0.71.0` for idiolect 0.11.1 |
 | `idiolect` CLI | binary release on GitHub | release tag |
 | `idiolect-orchestrator` container | `ghcr.io/idiolect-dev/orchestrator` | image SHA |
 | `idiolect-observer` container | `ghcr.io/idiolect-dev/observer` | image SHA |

@@ -50,7 +50,7 @@ use idiolect_codegen::Example;
 `LexiconDoc` and `Example` slices plus a `&FamilyConfig`, and
 return `anyhow::Result<Vec<EmittedFile>>`. Loading lexicons from
 disk is the caller's job. The workspace binary parses every
-document through both its internal parser and panproto 0.70.1.
+document through both its internal parser and panproto 0.71.0.
 
 `FamilyConfig` carries three `Cow<'static, str>` fields: the
 marker name, the family ID, and the NSID prefix. The shipped

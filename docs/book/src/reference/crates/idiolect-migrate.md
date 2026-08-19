@@ -7,7 +7,7 @@
 > built locally with `cargo doc -p idiolect-migrate --open`.
 
 The crate combines schema-diff classification with
-[lens](../../glossary.md#lens)-based record migration. It is a typed facade over panproto 0.70.1's
+[lens](../../glossary.md#lens)-based record migration. It is a typed facade over panproto 0.71.0's
 `panproto-check` crate and `idiolect-lens`.
 
 Because the crate is `publish = false`, depend via git or path:
@@ -44,8 +44,11 @@ The crate exposes:
 | Diff | Behavior |
 | --- | --- |
 | Non-breaking (added optional, added vertex, added edge) | `classify` returns `compatible = true`; no plan is needed. |
-| Auto-derivable breaking | `plan_auto` returns a `MigrationPlan` with a protolens-chain body and an alignment-quality score. The exact supported shapes follow panproto 0.70.1's `auto_generate`. |
+| Auto-derivable breaking | `plan_auto` returns a `MigrationPlan` with a protolens-chain body and an alignment-quality score. The exact supported shapes follow panproto 0.71.0's `auto_generate`. |
 | Non-auto breaking (removed required, changed required type, added required without default) | `plan_auto` returns `NotAutoDerivable`. The caller writes the lens by hand. |
+
+The alignment-quality score ranks alternatives for one source schema. Panproto
+0.71.0 does not give it a pair-independent confidence interpretation.
 
 ## Dependency boundary
 

@@ -9,7 +9,7 @@ read-only result in about five minutes:
 2. [Validate a typed record](./02-validate.md) through the generated NSID
    dispatcher.
 3. [Apply the lens](./03-apply-lens.md) to a small JSON record with Panproto
-   0.70.1.
+   0.71.0.
 4. [Verify the round trip](./04-verify.md) over a three-record corpus.
 5. [Publish a recommendation](./05-publish.md) and its community record to your
    [personal data server (PDS)](../glossary.md#pds "Personal data server").

@@ -19,7 +19,7 @@ cargo run -p idiolect-codegen -- --check # verify no drift
 The default mode writes the generated tree. The `--check` flag emits
 in memory, compares bytes against the working tree, and exits nonzero
 on drift. Both modes parse emitted Rust and TypeScript through
-panproto 0.70.1's tree-sitter gate before accepting the output.
+panproto 0.71.0's tree-sitter gate before accepting the output.
 
 ## What gets emitted
 

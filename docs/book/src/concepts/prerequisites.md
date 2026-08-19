@@ -61,7 +61,7 @@ containing source information that the view did not retain. Its backward
 operation, `put`, combines a target view with that complement to reconstruct a
 source value.
 
-idiolect uses panproto 0.70.1 to instantiate and run these lenses. No category
+idiolect uses panproto 0.71.0 to instantiate and run these lenses. No category
 theory is assumed: [Lens semantics and laws](./lens-laws.md) introduces the
 notation before using it, while the [panproto book](https://panproto.dev/book/)
 provides optional depth.

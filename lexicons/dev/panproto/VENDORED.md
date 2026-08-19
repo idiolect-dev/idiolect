@@ -1,13 +1,15 @@
 # Vendored `dev.panproto.*` lexicons
 
-These `.json` files are verbatim copies of upstream panproto lexicons.
-Do not edit them in place — update the pin below and re-vendor.
+The `schema/` and `vcs/` `.json` files listed below are verbatim copies of
+upstream panproto lexicons. Do not edit them in place — update the pin below
+and re-vendor. The `examples/` directory contains local fixture records and is
+not part of the upstream vendored subset.
 
 | field           | value                                      |
 |-----------------|--------------------------------------------|
 | upstream        | `panproto/panproto` (git)                  |
-| commit          | `ee2f52d52e372e2ef771801d67c6b4469e165e1e` |
-| workspace ver.  | `0.70.1`                                   |
+| commit          | `efa04235eb9aa9d718ad358b6104f69eac17881f` |
+| workspace ver.  | `0.71.0`                                   |
 | source path     | `lexicons/dev/panproto/`                   |
 
 ## Vendored set
@@ -46,6 +48,6 @@ downstream feature needs them; the vendor step is mechanical.
 3. `cargo run -p idiolect-codegen` to regenerate the typed bindings.
 4. `cargo test` + `bun test` to confirm no downstream break.
 
-The files listed above were compared byte for byte with commit
-`ee2f52d52e372e2ef771801d67c6b4469e165e1e`; no file contents changed during
-the 0.70.1 refresh.
+The upstream files listed above were compared byte for byte with commit
+`efa04235eb9aa9d718ad358b6104f69eac17881f`; no vendored Lexicon contents
+changed during the 0.71.0 refresh.

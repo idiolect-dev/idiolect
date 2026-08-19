@@ -16,11 +16,14 @@ in a shell script and CI workflow. It does not yet enforce the entire chain.
 returns `OnlyNonBreaking`: old records remain readable under the new schema, so
 the library does not manufacture a migration plan.
 
-If breaking changes exist, `plan_auto` asks panproto 0.70.1's `auto_generate`
-for a `ProtolensChain`. Success returns a `MigrationPlan` containing the source
-and target schema identifiers supplied by the caller, the chain, and an
-alignment-quality score. Failure returns the breaking changes that need manual
-attention.
+If breaking changes exist, `plan_auto` asks panproto 0.71.0's `auto_generate`
+for a `ProtolensChain`. Its default `Balanced` configuration uses the exact
+valued-CSP optimizer and requires a total morphism. Success returns a
+`MigrationPlan` containing the source and target schema identifiers supplied by
+the caller, the chain, and an alignment-quality score. This score ranks
+alignments for one source schema; it is not a confidence measure with a stable
+threshold across unrelated pairs. Failure returns the breaking changes that
+need manual attention.
 
 This yields three distinct outcomes:
 
@@ -50,7 +53,7 @@ those policy records is created by `plan_auto`.
 
 ## Optic kinds are not governance classes
 
-panproto 0.70.1 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
+panproto 0.71.0 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
 `Traversal`. Earlier versions of this chapter described a different five-way
 set, `Iso`/`Injection`/`Projection`/`Affine`/`General`, and assigned automatic
 merge policy to it. That set is not the current `OpticKind` API.
@@ -64,7 +67,7 @@ presented as classifications returned by panproto.
 
 The repository contains `scripts/lexicon-evolve.sh` and
 `.github/workflows/lexicon-evolution.yml`, but both still encode the earlier CLI
-and classification contract. With panproto 0.70.1:
+and classification contract. With panproto 0.71.0:
 
 - `schema diff` accepts positional `OLD NEW` paths rather than `--src` and
   `--tgt`, and it has no `--json` flag;
@@ -77,7 +80,7 @@ and classification contract. With panproto 0.70.1:
 The workflow makes CLI installation non-fatal and skips its pipeline when the
 installation step does not report success. It also searches for the obsolete
 classification names. Thus, the checked-in automation is a design scaffold,
-not a reliable merge gate for 0.70.1. We call this discrepancy the
+not a reliable merge gate for 0.71.0. We call this discrepancy the
 **enforcement gap (EG)**.
 
 ## A defensible gate
