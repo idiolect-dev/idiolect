@@ -16,7 +16,7 @@ registry version:
 
 ```toml
 [dependencies]
-idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0", features = ["pds-reqwest"] }
+idiolect-lens = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1", features = ["pds-reqwest"] }
 ```
 
 ## Public surface

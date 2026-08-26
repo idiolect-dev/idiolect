@@ -14,7 +14,7 @@ Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-migrate = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0" }
+idiolect-migrate = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1" }
 ```
 
 ## Public surface

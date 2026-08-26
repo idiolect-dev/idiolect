@@ -14,7 +14,7 @@ Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-observer = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0", features = ["daemon"] }
+idiolect-observer = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1", features = ["daemon"] }
 ```
 
 ## Public surface

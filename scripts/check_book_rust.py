@@ -93,8 +93,8 @@ idiolect-observer = {{ path = "{ROOT / 'crates/idiolect-observer'}", features = 
 idiolect-orchestrator = {{ path = "{ROOT / 'crates/idiolect-orchestrator'}", features = ["daemon"] }}
 idiolect-records = {{ path = "{ROOT / 'crates/idiolect-records'}" }}
 idiolect-verify = {{ path = "{ROOT / 'crates/idiolect-verify'}" }}
-panproto-lens = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }}
-panproto-schema = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }}
+panproto-lens = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }}
+panproto-schema = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }}
 '''
         (project / "Cargo.toml").write_text(manifest, encoding="utf-8")
 
