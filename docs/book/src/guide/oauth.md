@@ -29,7 +29,7 @@ the trait non-object-safe, so callers remain generic over
 ## Filesystem store
 
 ```toml
-idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0", features = ["store-filesystem"] }
+idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1", features = ["store-filesystem"] }
 ```
 
 ```text
@@ -50,7 +50,7 @@ The directory contains one JSON file per session keyed by DID.
 ## SQLite store
 
 ```toml
-idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.0", features = ["store-sqlite"] }
+idiolect-oauth = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1", features = ["store-sqlite"] }
 ```
 
 ```text

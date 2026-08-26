@@ -15,7 +15,7 @@ store.
 
 ```toml
 [dependencies]
-idiolect-indexer = { version = "0.12.0", features = ["firehose-jetstream", "cursor-filesystem", "reconnecting"] }
+idiolect-indexer = { version = "0.12.1", features = ["firehose-jetstream", "cursor-filesystem", "reconnecting"] }
 ```
 
 ## Public surface

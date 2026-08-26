@@ -126,7 +126,7 @@ spawnable request future.
 
 ## Make it discoverable
 
-The 0.12.0 orchestrator catalogs `dev.idiolect.*` records, not
+The 0.12.1 orchestrator catalogs `dev.idiolect.*` records, not
 `dev.panproto.schema.lens` records. Consumers fetch a known lens URI
 directly. Publish idiolect records that point to the lens to make that
 URI discoverable:

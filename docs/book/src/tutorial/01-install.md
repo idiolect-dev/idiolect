@@ -22,7 +22,7 @@ idiolect version
 ```
 
 ```text
-idiolect 0.12.0
+idiolect 0.12.1
 ```
 
 ## Resolve the project account

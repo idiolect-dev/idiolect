@@ -15,6 +15,18 @@ if you depend on this project, and read this file before bumping.
 
 ### Changed
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.12.1] - 2026-08-26
+
+### Changed
+
 - The panproto pins move to `v0.72.0` across the workspace and the standalone
   tutorial-lens crate, up from `v0.71.0`. That release carries twenty-six
   breaking API changes across the engine, none of which reach the surface

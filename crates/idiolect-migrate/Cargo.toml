@@ -36,8 +36,8 @@ path = "src/bin/idiolect_migrate.rs"
 required-features = ["cli"]
 
 [dependencies]
-idiolect-records = { version = "0.12.0", path = "../idiolect-records" }
-idiolect-lens    = { version = "0.12.0", path = "../idiolect-lens" }
+idiolect-records = { version = "0.12.1", path = "../idiolect-records" }
+idiolect-lens    = { version = "0.12.1", path = "../idiolect-lens" }
 
 panproto-schema    = { workspace = true }
 panproto-protocols = { workspace = true }

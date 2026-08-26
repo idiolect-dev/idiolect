@@ -1,6 +1,6 @@
 # Crates
 
-The workspace ships eleven crates at version 0.12.0. The workspace
+The workspace ships eleven crates at version 0.12.1. The workspace
 version keeps their release numbers aligned.
 
 | Crate | Purpose |
