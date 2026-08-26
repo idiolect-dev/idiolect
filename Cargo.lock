@@ -742,7 +742,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2189,8 +2189,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-check"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "memchr",
  "panproto-gat",
@@ -2205,8 +2205,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-expr"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -2215,8 +2215,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-expr-parser"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "chumsky",
  "logos",
@@ -2225,8 +2225,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-gat"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "miette",
  "panproto-expr",
@@ -2237,8 +2237,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-grammars"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "cc",
  "serde",
@@ -2249,8 +2249,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-inst"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "bumpalo",
  "panproto-expr",
@@ -2265,8 +2265,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-lens"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -2282,8 +2282,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-mig"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -2298,8 +2298,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-parse"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "memchr",
  "miette",
@@ -2319,8 +2319,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-protocols"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "blake3",
  "panproto-gat",
@@ -2335,8 +2335,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-schema"
-version = "0.71.0"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.71.0#efa04235eb9aa9d718ad358b6104f69eac17881f"
+version = "0.72.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.72.0#4f68e9a6b0f805f3fd466bd336a715fc675dc39e"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -2577,7 +2577,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2839,7 +2839,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3310,7 +3310,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]

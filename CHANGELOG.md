@@ -15,6 +15,17 @@ if you depend on this project, and read this file before bumping.
 
 ### Changed
 
+- The panproto pins move to `v0.72.0` across the workspace and the standalone
+  tutorial-lens crate, up from `v0.71.0`. That release carries twenty-six
+  breaking API changes across the engine, none of which reach the surface
+  idiolect uses: the workspace compiles clean, `clippy -D warnings` is quiet
+  across all targets, and all 506 tests pass without a source change. It
+  brings in the architecture-review remediation, most relevant here being
+  capture-avoiding substitution that recurses into dependent-sort argument
+  terms, hashes and compiled artifacts that no longer depend on `HashMap`
+  iteration order, and parsers that index by character rather than by an
+  offset taken from a different string.
+
 ### Deprecated
 
 ### Removed

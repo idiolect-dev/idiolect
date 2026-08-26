@@ -19,8 +19,8 @@ record:
 The runnable package pins the Panproto crates used here to 0.71.0:
 
 ```toml
-panproto-lens   = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
+panproto-lens   = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-schema = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
 ```
 
 The idiolect workspace uses the same Panproto version.

@@ -78,17 +78,17 @@ language-tags = "0.3"
 
 # panproto: idiolect dogfoods panproto for schema codegen, breaking-change
 # detection, and lens compilation.
-panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
-panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0" }
+panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
 # panproto-parse carries the verified tree-sitter emit pipeline. Only the
 # two grammars idiolect emits are enabled; group-core would pull nine more.
-panproto-parse = { git = "https://github.com/panproto/panproto.git", tag = "v0.71.0", default-features = false, features = ["lang-rust", "lang-typescript"] }
+panproto-parse = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0", default-features = false, features = ["lang-rust", "lang-typescript"] }
 
 anyhow = "1.0.100"
 
