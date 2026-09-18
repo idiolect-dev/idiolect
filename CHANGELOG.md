@@ -11,6 +11,8 @@ if you depend on this project, and read this file before bumping.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-18
+
 ### Added
 
 - **Community control plane for 0.13.0.** The new `idiolect-community` crate and
