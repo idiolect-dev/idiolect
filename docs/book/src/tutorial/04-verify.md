@@ -18,7 +18,7 @@ cargo run --quiet \
 ```text
 result = Holds
 kind   = RoundtripTest
-tool   = idiolect-verify/roundtrip-test 0.12.1
+tool   = idiolect-verify/roundtrip-test 0.13.0
 ```
 
 The executable gives the corpus to `RoundtripTestRunner` and runs it against

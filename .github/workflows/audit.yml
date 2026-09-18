@@ -5,9 +5,8 @@
 # between releases," not "per-commit gate" (that's `cargo-deny` in
 # ci.yml).
 #
-# On failure, opens or updates a GitHub issue with the label
-# `security-audit` rather than blocking anything. The issue is the
-# action item; triage happens there.
+# A failing job is the action item. The workflow has read-only repository
+# access and does not open or update issues.
 
 name: audit
 
@@ -18,7 +17,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   cargo-audit:
@@ -26,32 +24,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: rustsec/audit-check@v2.0.0
+      - name: install cargo-audit
+        uses: taiki-e/install-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tool: cargo-audit@0.22.2
+          fallback: none
+
+      - name: audit Rust dependencies
+        # RUSTSEC-2026-0253 reaches the lockfile only through
+        # atrium-common's wasm32-only lru dependency. Idiolect's supported
+        # and cargo-deny target matrix is native; deny.toml records the same
+        # bounded exception with its removal condition.
+        run: cargo audit --ignore RUSTSEC-2026-0253
 
   cargo-deny-advisories:
     name: cargo-deny advisories
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - name: install cargo-deny
+        uses: taiki-e/install-action@v2
         with:
-          # Feature selection lives in deny.toml's `[graph]`
-          # (`all-features = true`); cargo-deny 0.18 dropped the
-          # `--all-features` CLI flag.
-          command: check advisories
+          tool: cargo-deny@0.20.2
+          fallback: none
+
+      - name: check Rust advisories
+        # Feature and target selection, including bounded advisory
+        # exceptions, lives in deny.toml.
+        run: cargo deny --locked check advisories
 
   npm-audit:
     name: npm audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -61,8 +72,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: audit
-        # `bun audit` surfaces npm advisories. Non-zero exit means
-        # one or more advisories exist; allow the failure to flow
-        # through so the next step opens an issue.
+        # `bun audit` surfaces npm advisories. Non-zero exit records the
+        # audit finding without obscuring the Rust audit results.
         run: bun audit
         continue-on-error: true

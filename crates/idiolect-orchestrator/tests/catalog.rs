@@ -11,7 +11,7 @@ use idiolect_indexer::{
     InMemoryCursorStore, InMemoryEventStream, IndexerAction, IndexerConfig, IndexerError,
     IndexerEvent, RawEvent, RecordHandler, drive_indexer,
 };
-use idiolect_orchestrator::{CatalogHandler, query};
+use idiolect_orchestrator::{Catalog, CatalogHandler, query};
 use idiolect_records::generated::dev::idiolect::bounty::{
     BountyStatus, BountyWants, WantAdapter, WantLens,
 };
@@ -959,6 +959,67 @@ fn query_catalog_stats_sums_correctly() {
     assert_eq!(stats.dialects, 1);
     assert_eq!(stats.recommendations, 1);
     assert_eq!(stats.verifications, 3);
+}
+
+#[test]
+fn community_lifecycle_records_roundtrip_through_catalog_and_queries() {
+    let mut catalog = Catalog::new();
+    let author = "did:plc:community".to_owned();
+    let community = "at://did:plc:community/dev.idiolect.community/3lcommunity";
+    let change = "at://did:plc:community/dev.idiolect.changeProposal/3lproposal";
+    let release = "at://did:plc:community/dev.idiolect.communityRelease/3lrelease";
+    let migration = "at://did:plc:community/dev.idiolect.migrationRun/3lmigration";
+    let federation = "at://did:plc:community/dev.idiolect.federation/3lfederation";
+    let peer = "at://did:plc:peer/dev.idiolect.community/3lpeer";
+
+    for (uri, record) in [
+        (
+            change,
+            AnyRecord::ChangeProposal(idiolect_records::examples::change_proposal()),
+        ),
+        (
+            release,
+            AnyRecord::CommunityRelease(idiolect_records::examples::community_release()),
+        ),
+        (
+            migration,
+            AnyRecord::MigrationRun(idiolect_records::examples::migration_run()),
+        ),
+        (
+            federation,
+            AnyRecord::Federation(idiolect_records::examples::federation()),
+        ),
+    ] {
+        catalog.upsert(uri.to_owned(), author.clone(), "rev1".to_owned(), record);
+    }
+
+    assert_eq!(query::open_change_proposals(&catalog).len(), 1);
+    assert_eq!(
+        query::change_proposals_for_community(&catalog, community).len(),
+        1
+    );
+    assert_eq!(
+        query::community_releases_for_community(&catalog, community).len(),
+        1
+    );
+    assert_eq!(query::active_migration_runs(&catalog).len(), 1);
+    assert_eq!(query::migration_runs_for_change(&catalog, change).len(), 1);
+    assert_eq!(
+        query::federations_for_community(&catalog, community).len(),
+        1
+    );
+    assert_eq!(query::federations_for_peer(&catalog, peer).len(), 1);
+
+    let stats = query::catalog_stats(&catalog);
+    assert_eq!(stats.change_proposals, 1);
+    assert_eq!(stats.community_releases, 1);
+    assert_eq!(stats.migration_runs, 1);
+    assert_eq!(stats.federations, 1);
+    assert_eq!(stats.total(), 4);
+
+    catalog.remove(federation);
+    assert!(query::federations_for_peer(&catalog, peer).is_empty());
+    assert_eq!(catalog.len(), 3);
 }
 
 #[test]

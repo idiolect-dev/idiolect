@@ -34,8 +34,14 @@ Architectural primitives are signed, content-addressed records on
 [ATProto](https://atproto.com). Schemas and translations between
 schemas are [panproto](https://github.com/panproto/panproto) artifacts. The
 repository contains a CLI, orchestrator and observer daemons, a verification
-runtime, and a migration library built over a small family of
+runtime, a community governance and release library, and a migration library built over a small family of
 `dev.idiolect.*` lexicons.
+
+Idiolect 0.13 adds a **community control plane**: one portable path from an
+explained definition change through attributable review, explicit verification,
+signed release, durable migration, federation, and ordinary exit. Begin with
+the [newcomer path](docs/book/src/start/index.md), or inspect the
+[`idiolect-community`](crates/idiolect-community) crate directly.
 
 ## Architecture
 
@@ -63,6 +69,7 @@ flowchart TB
         OBS["idiolect-observer<br/>(fold records → observation records)"]
         VER["idiolect-verify<br/>(roundtrip · property · static · coercion)"]
         MIG["idiolect-migrate<br/>(diff + lens migration)"]
+        COMCTL["idiolect-community<br/>(govern + release + exit)"]
         LENS["idiolect-lens<br/>(resolve + apply panproto lenses)"]
         ID["idiolect-identity<br/>(did:plc · did:web)"]
         OAUTH["idiolect-oauth<br/>(session store)"]
@@ -85,6 +92,7 @@ flowchart TB
     OAUTH --> LENS
     ORC -->|HTTP| CLI
     LENS --> MIG
+    MIG --> COMCTL
     LENS --> VER
 
     RECS -.used by.-> IDX
@@ -123,6 +131,11 @@ idiolect fetch at://did:plc:example/dev.idiolect.bounty/3l5
 idiolect orchestrator stats
 idiolect orchestrator adapters --framework hasura
 
+# Start a portable community workspace.
+idiolect init --workspace neighborhood-archive \
+  --name "Neighborhood Archive" --did did:plc:replace-me
+idiolect doctor --workspace neighborhood-archive
+
 # TypeScript: validate incoming records at an appview boundary.
 bun add @idiolect-dev/schema
 ```
@@ -150,6 +163,7 @@ if (isRecord(NSID.encounter, payload)) {
 | [`idiolect-orchestrator`][orc] | Catalog + read-only HTTP query API over cataloged records.                |
 | [`idiolect-verify`][ver]       | Verification runners (`roundtrip-test`, `property-test`, `static-check`, `coercion-law`). |
 | [`idiolect-migrate`][mig]      | Schema diff (panproto-check) + lens-based record migration.               |
+| [`idiolect-community`][community] | Governed changes, signed releases, durable migrations, federation, and portable export. |
 | [`idiolect-cli`][cli]          | Command-line tool wrapping the library crates.                            |
 | [`@idiolect-dev/schema`][npm]  | TypeScript validators, types, and NSID constants (same lexicons).         |
 
@@ -163,6 +177,7 @@ if (isRecord(NSID.encounter, payload)) {
 [orc]: crates/idiolect-orchestrator
 [ver]: crates/idiolect-verify
 [mig]: crates/idiolect-migrate
+[community]: crates/idiolect-community
 [cli]: crates/idiolect-cli
 [npm]: packages/schema
 

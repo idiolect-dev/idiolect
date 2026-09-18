@@ -65,7 +65,7 @@ yet supply authentication; use a wrapper binary with an authenticated
 
 ## Bundled methods
 
-The spec at `observer-spec/methods.json` declares nine bundled
+The spec at `observer-spec/methods.json` declares eleven bundled
 methods. Each lives in `crates/idiolect-observer/src/methods/`.
 
 | Method | Folds |
@@ -79,8 +79,10 @@ methods. Each lives in `crates/idiolect-observer/src/methods/`.
 | `basis-distribution` | Record counts grouped by `basis` variant, bucketed by record kind. |
 | `attribution-chains` | `dev.idiolect.belief` counts by holder and subject. |
 | `deliberation-tally` | Per-statement per-stance `deliberationVote` counts (see the note below). |
+| `migration-health` | Latest durable run status, progress, known totals, and failure counts by community. |
+| `release-adoption` | Release, signed-release, artifact, dependency, and distinct-signer counts by community. |
 
-The current spec declares all nine methods in record form; they consume
+The current spec declares all eleven methods in record form; they consume
 `&IndexerEvent<IdiolectFamily>`. The library also supports instance-form
 methods over panproto `WInstance` through `InstanceMethodAdapter`.
 

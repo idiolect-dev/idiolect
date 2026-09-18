@@ -14,7 +14,7 @@ Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-observer = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1", features = ["daemon"] }
+idiolect-observer = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.13.0", features = ["daemon"] }
 ```
 
 ## Public surface
@@ -49,7 +49,7 @@ the configured publisher.
 
 ## Shipped methods
 
-The spec at `observer-spec/methods.json` declares nine bundled
+The spec at `observer-spec/methods.json` declares eleven bundled
 methods. The typed structs ship in `crates/idiolect-observer/src/methods/`:
 
 | Spec name | Module | Folds |
@@ -63,6 +63,8 @@ methods. The typed structs ship in `crates/idiolect-observer/src/methods/`:
 | `basis-distribution` | `basis_distribution` | Record counts grouped by `basis` variant, bucketed by record kind. |
 | `attribution-chains` | `attribution_chains` | Counts of `dev.idiolect.belief` records by holder and subject. |
 | `deliberation-tally` | `deliberation_tally` | Per-statement per-stance `deliberationVote` counts, packed into the observation's `output`. |
+| `migration-health` | `migration_health` | Latest durable migration status, progress, total, and failure count by community. |
+| `release-adoption` | `release_adoption` | Release, artifact, dependency, signature, and distinct-signer counts by community. |
 
 Methods come in two forms (declared in the spec):
 

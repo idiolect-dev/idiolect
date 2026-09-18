@@ -22,6 +22,12 @@ The **catalog** is the orchestrator's indexed store of typed idiolect records.
 Queries evaluate over this local read model; the catalog is not a global
 registry or an authority over the records it contains.
 
+## Change packet
+
+A **change packet** is the local, durable account of one proposed definition
+change. It keeps the old and new schema references, Panproto consequence
+analysis, governance reviews, verification evidence, and release state together.
+
 ## CID
 
 A [Content Identifier (CID)](https://github.com/multiformats/cid) is a
@@ -33,6 +39,24 @@ metadata. ATProto uses CIDs for links whose target bytes must be verifiable.
 A **complement** stores source information that a lens cannot reconstruct from
 its view alone. A `put` operation uses that information when it propagates an
 edited view back to the source schema.
+
+## Community control plane
+
+The **community control plane** is Idiolect's portable set of local artifacts
+and published records for governing changes, cutting releases, operating
+migrations, relating peer communities, and exiting one tool without losing
+history.
+
+## Community release
+
+A **community release** is an immutable signed cut of a community's accepted
+definition changes, artifacts, and declared federation dependencies.
+
+## Consequence layer
+
+The **consequence layer** translates a structural schema diff into likely
+effects on participants, migrations, and interoperability. It remains evidence
+for deliberation rather than an automatic governance decision.
 
 ## DID
 
@@ -65,6 +89,12 @@ An ATProto **firehose** is the repository event stream described by the
 [ATProto synchronization specification](https://atproto.com/specs/sync). PDSs
 emit events for hosted accounts; relays may aggregate many upstream streams.
 
+## Federation
+
+A **federation** record declares how one community relates to a peer and, when
+known, which explicit lenses or other mappings connect their definitions. A
+relationship without a mapping does not claim semantic equivalence.
+
 ## Idiolect
 
 An **idiolect** is one party's choice of schemas, lenses, vocabularies, and
@@ -96,6 +126,12 @@ A **Lexicon family**, also called a **record family** in generated APIs, is the
 set of related Lexicon records emitted and versioned together under one namespace
 policy.
 
+## Migration run
+
+A **migration run** is the durable operational state for applying one governed
+change. Its checkpoints, counters, and bounded failure samples allow work to
+resume and let observers distinguish progress from completion.
+
 ## NSID
 
 A [Namespaced Identifier (NSID)](https://atproto.com/specs/nsid) is a global
@@ -119,6 +155,12 @@ can evaluate the result.
 An **open enum** accepts a known set of values while preserving unknown strings.
 This representation lets older consumers retain values added by later producers.
 
+## Ordinary exit test
+
+The **ordinary exit test** asks whether a community can copy its definitions,
+policy, change history, releases, migration state, and optional keys into a
+portable verified export without depending on a running Idiolect service.
+
 ## OAuth
 
 [OAuth](https://atproto.com/specs/oauth) is the authorization framework ATProto
@@ -129,7 +171,7 @@ combines OAuth with PKCE, PAR, and DPoP requirements.
 
 [Panproto](https://github.com/panproto/panproto) supplies the schema graphs,
 protocols, protolenses, lens runtime, compatibility checks, and parsing machinery
-that idiolect uses. This book targets Panproto 0.71.0.
+that idiolect uses. This book targets Panproto 0.74.4.
 
 ## PDS
 

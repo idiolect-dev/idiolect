@@ -82,6 +82,58 @@ pub fn bounty() -> crate::Bounty {
     serde_json::from_str(BOUNTY_JSON).expect("bundled dev.idiolect.bounty fixture deserialises")
 }
 
+/// Raw json for the bundled `dev.idiolect.changeProposal` fixture.
+pub const CHANGE_PROPOSAL_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.changeProposal",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "title": "Rename member to participant",
+  "summary": "Use participant language while preserving the prior field through a reversible migration.",
+  "author": "did:plc:alice",
+  "status": "review",
+  "source": {
+    "protocol": "atproto",
+    "location": "lexicons/community-v1.json",
+    "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "target": {
+    "protocol": "atproto",
+    "location": "lexicons/community-v2.json",
+    "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "compatibility": "backward-compatible",
+  "opticKind": "iso",
+  "consequences": [
+    {
+      "code": "existing-records-readable",
+      "severity": "information",
+      "headline": "Existing records remain readable",
+      "detail": "The proposed schema accepts records written under the current schema."
+    }
+  ],
+  "affected": ["member directory", "onboarding form"],
+  "rollback": "Restore the prior schema and apply the inverse rename.",
+  "reviews": [
+    {
+      "reviewer": "did:plc:bob",
+      "role": "maintainer",
+      "stance": "approve",
+      "comment": "Terminology matches the adopted community charter.",
+      "reviewedAt": "2026-09-18T14:00:00Z"
+    }
+  ],
+  "verificationStatus": "verified",
+  "createdAt": "2026-09-17T14:00:00Z",
+  "updatedAt": "2026-09-18T14:00:00Z"
+}
+"#;
+
+/// Deserialised `dev.idiolect.changeProposal` fixture. Panics if the bundled json is invalid.
+#[must_use]
+pub fn change_proposal() -> crate::ChangeProposal {
+    serde_json::from_str(CHANGE_PROPOSAL_JSON)
+        .expect("bundled dev.idiolect.changeProposal fixture deserialises")
+}
+
 /// Raw json for the bundled `dev.idiolect.community` fixture.
 pub const COMMUNITY_JSON: &str = r#"{
   "$nsid": "dev.idiolect.community",
@@ -96,6 +148,43 @@ pub const COMMUNITY_JSON: &str = r#"{
 pub fn community() -> crate::Community {
     serde_json::from_str(COMMUNITY_JSON)
         .expect("bundled dev.idiolect.community fixture deserialises")
+}
+
+/// Raw json for the bundled `dev.idiolect.communityRelease` fixture.
+pub const COMMUNITY_RELEASE_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.communityRelease",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "version": "1.1.0",
+  "manifestDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "changes": [
+    "at://did:plc:community/dev.idiolect.changeProposal/3lproposal"
+  ],
+  "artifacts": [
+    {
+      "location": "lexicons/community.json",
+      "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "mediaType": "application/json"
+    }
+  ],
+  "signatures": [
+    {
+      "signer": "did:plc:alice",
+      "algorithm": "ES256",
+      "publicKey": "BExamplePublicKey",
+      "signature": "ExampleSignature",
+      "signedAt": "2026-09-18T15:00:00Z"
+    }
+  ],
+  "createdAt": "2026-09-18T15:00:00Z"
+}
+"#;
+
+/// Deserialised `dev.idiolect.communityRelease` fixture. Panics if the bundled json is invalid.
+#[must_use]
+pub fn community_release() -> crate::CommunityRelease {
+    serde_json::from_str(COMMUNITY_RELEASE_JSON)
+        .expect("bundled dev.idiolect.communityRelease fixture deserialises")
 }
 
 /// Raw json for the bundled `dev.idiolect.correction` fixture.
@@ -153,6 +242,64 @@ pub const ENCOUNTER_JSON: &str = r#"{
 pub fn encounter() -> crate::Encounter {
     serde_json::from_str(ENCOUNTER_JSON)
         .expect("bundled dev.idiolect.encounter fixture deserialises")
+}
+
+/// Raw json for the bundled `dev.idiolect.federation` fixture.
+pub const FEDERATION_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.federation",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "peer": "at://did:plc:peer/dev.idiolect.community/3lpeer",
+  "relation": "bridges",
+  "release": "2.0.0",
+  "updatePolicy": "review",
+  "mappings": [
+    "at://did:plc:community/dev.panproto.schema.lens/3lbridge"
+  ],
+  "notes": "The communities share event terminology but retain distinct membership models.",
+  "createdAt": "2026-09-18T17:00:00Z"
+}
+"#;
+
+/// Deserialised `dev.idiolect.federation` fixture. Panics if the bundled json is invalid.
+#[must_use]
+pub fn federation() -> crate::Federation {
+    serde_json::from_str(FEDERATION_JSON)
+        .expect("bundled dev.idiolect.federation fixture deserialises")
+}
+
+/// Raw json for the bundled `dev.idiolect.migrationRun` fixture.
+pub const MIGRATION_RUN_JSON: &str = r#"{
+  "$nsid": "dev.idiolect.migrationRun",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "change": "at://did:plc:community/dev.idiolect.changeProposal/3lproposal",
+  "lens": "at://did:plc:community/dev.panproto.schema.lens/3llens",
+  "status": "running",
+  "total": 250,
+  "processed": 100,
+  "failed": 1,
+  "checkpoints": [
+    {
+      "cursor": "record-100",
+      "processed": 100,
+      "recordedAt": "2026-09-18T16:00:00Z"
+    }
+  ],
+  "failures": [
+    {
+      "record": "at://did:plc:member/app.community.profile/3lbroken",
+      "reason": "Required participant identifier is absent."
+    }
+  ],
+  "createdAt": "2026-09-18T15:30:00Z",
+  "updatedAt": "2026-09-18T16:00:00Z"
+}
+"#;
+
+/// Deserialised `dev.idiolect.migrationRun` fixture. Panics if the bundled json is invalid.
+#[must_use]
+pub fn migration_run() -> crate::MigrationRun {
+    serde_json::from_str(MIGRATION_RUN_JSON)
+        .expect("bundled dev.idiolect.migrationRun fixture deserialises")
 }
 
 /// Raw json for the bundled `dev.idiolect.observation` fixture.

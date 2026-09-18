@@ -1,0 +1,63 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.federation",
+  "description": "A declared relationship between two communities, including update policy and the mappings that make interoperability inspectable. A relationship without mappings is social recognition, not a claim of semantic equivalence.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": [
+          "community",
+          "peer",
+          "relation",
+          "updatePolicy",
+          "createdAt"
+        ],
+        "properties": {
+          "community": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "peer": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "relation": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": ["follows", "extends", "bridges", "forked-from"]
+          },
+          "release": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Selected peer release or version requirement."
+          },
+          "updatePolicy": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": ["review", "follow-compatible", "pinned"]
+          },
+          "mappings": {
+            "type": "array",
+            "maxLength": 500,
+            "items": {
+              "type": "string",
+              "format": "at-uri"
+            },
+            "description": "Published lenses or mapping records connecting community definitions."
+          },
+          "notes": {
+            "type": "string",
+            "maxGraphemes": 5000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    }
+  }
+}

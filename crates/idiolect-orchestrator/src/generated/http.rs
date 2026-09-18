@@ -220,6 +220,130 @@ async fn handler_communities_by_name(
         .collect();
     Ok(axum::Json(Paged::from_collected(items, &p.page)?))
 }
+///Every governed change that is still in draft or review.
+async fn handler_open_change_proposals(
+    State(s): State<AppState>,
+    Query(page): Query<Page>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::ChangeProposal>>>, ApiError> {
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::open_change_proposals(&catalog)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &page)?))
+}
+#[derive(Debug, Deserialize)]
+struct ChangeProposalsForCommunityParams {
+    #[serde(rename = "community_uri")]
+    raw_community_uri: String,
+    #[serde(flatten)]
+    page: Page,
+}
+///Every governed change owned by the selected community.
+async fn handler_change_proposals_for_community(
+    State(s): State<AppState>,
+    Query(p): Query<ChangeProposalsForCommunityParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::ChangeProposal>>>, ApiError> {
+    let community_uri: String = p.raw_community_uri.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::change_proposals_for_community(&catalog, &community_uri)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+#[derive(Debug, Deserialize)]
+struct CommunityReleasesForCommunityParams {
+    #[serde(rename = "community_uri")]
+    raw_community_uri: String,
+    #[serde(flatten)]
+    page: Page,
+}
+///Every signed release published for the selected community.
+async fn handler_community_releases_for_community(
+    State(s): State<AppState>,
+    Query(p): Query<CommunityReleasesForCommunityParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::CommunityRelease>>>, ApiError> {
+    let community_uri: String = p.raw_community_uri.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::community_releases_for_community(&catalog, &community_uri)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+///Every planned, running, or paused migration run.
+async fn handler_active_migration_runs(
+    State(s): State<AppState>,
+    Query(page): Query<Page>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::MigrationRun>>>, ApiError> {
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::active_migration_runs(&catalog)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &page)?))
+}
+#[derive(Debug, Deserialize)]
+struct MigrationRunsForChangeParams {
+    #[serde(rename = "change_uri")]
+    raw_change_uri: String,
+    #[serde(flatten)]
+    page: Page,
+}
+///Every migration run attached to the selected governed change.
+async fn handler_migration_runs_for_change(
+    State(s): State<AppState>,
+    Query(p): Query<MigrationRunsForChangeParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::MigrationRun>>>, ApiError> {
+    let change_uri: String = p.raw_change_uri.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::migration_runs_for_change(&catalog, &change_uri)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+#[derive(Debug, Deserialize)]
+struct FederationsForCommunityParams {
+    #[serde(rename = "community_uri")]
+    raw_community_uri: String,
+    #[serde(flatten)]
+    page: Page,
+}
+///Every federation relationship declared by the selected community.
+async fn handler_federations_for_community(
+    State(s): State<AppState>,
+    Query(p): Query<FederationsForCommunityParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Federation>>>, ApiError> {
+    let community_uri: String = p.raw_community_uri.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::federations_for_community(&catalog, &community_uri)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
+#[derive(Debug, Deserialize)]
+struct FederationsForPeerParams {
+    #[serde(rename = "peer_uri")]
+    raw_peer_uri: String,
+    #[serde(flatten)]
+    page: Page,
+}
+///Every federation relationship pointing at the selected peer community.
+async fn handler_federations_for_peer(
+    State(s): State<AppState>,
+    Query(p): Query<FederationsForPeerParams>,
+) -> Result<axum::Json<Paged<EnvelopedEntry<idiolect_records::Federation>>>, ApiError> {
+    let peer_uri: String = p.raw_peer_uri.clone();
+    let catalog = s.catalog.lock()?;
+    let items: Vec<_> = q::federations_for_peer(&catalog, &peer_uri)
+        .into_iter()
+        .map(EnvelopedEntry::from)
+        .collect();
+    Ok(axum::Json(Paged::from_collected(items, &p.page)?))
+}
 #[derive(Debug, Deserialize)]
 struct DialectsForCommunityParams {
     #[serde(rename = "community_uri")]
@@ -405,6 +529,56 @@ pub fn register_routes(router: Router<AppState>) -> Router<AppState> {
         .route(
             "/xrpc/dev.idiolect.query.communitiesByName",
             get(handler_communities_by_name),
+        )
+        .route("/v1/changes/open", get(handler_open_change_proposals))
+        .route(
+            "/xrpc/dev.idiolect.query.openChangeProposals",
+            get(handler_open_change_proposals),
+        )
+        .route(
+            "/v1/changes/for-community",
+            get(handler_change_proposals_for_community),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.changeProposalsForCommunity",
+            get(handler_change_proposals_for_community),
+        )
+        .route(
+            "/v1/releases/for-community",
+            get(handler_community_releases_for_community),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.communityReleasesForCommunity",
+            get(handler_community_releases_for_community),
+        )
+        .route("/v1/migrations/active", get(handler_active_migration_runs))
+        .route(
+            "/xrpc/dev.idiolect.query.activeMigrationRuns",
+            get(handler_active_migration_runs),
+        )
+        .route(
+            "/v1/migrations/for-change",
+            get(handler_migration_runs_for_change),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.migrationRunsForChange",
+            get(handler_migration_runs_for_change),
+        )
+        .route(
+            "/v1/federations/for-community",
+            get(handler_federations_for_community),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.federationsForCommunity",
+            get(handler_federations_for_community),
+        )
+        .route(
+            "/v1/federations/for-peer",
+            get(handler_federations_for_peer),
+        )
+        .route(
+            "/xrpc/dev.idiolect.query.federationsForPeer",
+            get(handler_federations_for_peer),
         )
         .route(
             "/v1/dialects/for-community",

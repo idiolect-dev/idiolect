@@ -1,6 +1,6 @@
 # Crates
 
-The workspace ships eleven crates at version 0.12.1. The workspace
+The workspace ships twelve crates at version 0.13.0. The workspace
 version keeps their release numbers aligned.
 
 | Crate | Purpose |
@@ -16,6 +16,7 @@ version keeps their release numbers aligned.
 | [idiolect-verify](./idiolect-verify.md) | Verification runners with declarative dispatch. |
 | [idiolect-migrate](./idiolect-migrate.md) | Schema diff plus lens-based record migration. |
 | [idiolect-cli](./idiolect-cli.md) | Command-line tool wrapping the library crates. |
+| [idiolect-community](./idiolect-community.md) | File-backed community governance, releases, migrations, federation, and portable exit. |
 
 Cargo manifests live under `crates/<name>/Cargo.toml`. Three
 crates — `idiolect-records`, `idiolect-identity`, and

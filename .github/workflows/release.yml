@@ -22,8 +22,8 @@
 #      - signed with cosign keyless (sigstore OIDC via GitHub Actions)
 #   3. @idiolect-dev/schema npm package.
 #   4. Publishable Rust crates to crates.io
-#      (idiolect-records, idiolect-lens, idiolect-indexer, idiolect-oauth)
-#      in topological order.
+#      (idiolect-community, idiolect-records, idiolect-identity,
+#      idiolect-indexer) in topological order.
 #
 # Every signed artifact can be verified by a downstream consumer with
 # `cosign verify-blob` (binaries) or `cosign verify` (containers).
@@ -65,7 +65,7 @@ jobs:
     outputs:
       version: ${{ steps.extract.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - id: extract
         name: extract version from tag
@@ -173,7 +173,7 @@ jobs:
             features: "--features daemon"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -229,7 +229,7 @@ jobs:
           echo "archive=dist/$staging.tar.gz" >> "$GITHUB_ENV"
           echo "checksum=dist/$staging.tar.gz.sha256" >> "$GITHUB_ENV"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bin-${{ matrix.bin }}-${{ matrix.target }}
           path: |
@@ -268,7 +268,7 @@ jobs:
       registry: ghcr.io
       owner: idiolect-dev
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # QEMU is only needed for cross-arch builds. Uncomment when the
       # container matrix goes back to including linux/arm64.
@@ -276,7 +276,7 @@ jobs:
       - uses: docker/setup-buildx-action@v4
 
       - name: log in to ghcr
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.registry }}
           username: ${{ github.actor }}
@@ -326,7 +326,7 @@ jobs:
           format: spdx-json
           output-file: sbom-${{ matrix.image }}.spdx.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom-${{ matrix.image }}
           path: sbom-${{ matrix.image }}.spdx.json
@@ -349,7 +349,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: build source tarball
         shell: bash
@@ -374,7 +374,7 @@ jobs:
             --bundle "dist/idiolect-${{ needs.verify-version.outputs.version }}-src.tar.gz.sig" \
             "dist/idiolect-${{ needs.verify-version.outputs.version }}-src.tar.gz"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: source-tarball
           path: dist/*
@@ -401,7 +401,7 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # docker/build-push-action@v6 uploads internal *.dockerbuild
       # provenance blobs whose archives intermittently fail to
@@ -488,7 +488,7 @@ jobs:
           echo "path=release_notes.md" >> "$GITHUB_OUTPUT"
 
       - name: publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: release/*
           body_path: ${{ steps.notes.outputs.path }}
@@ -516,7 +516,7 @@ jobs:
       contents: read
       id-token: write     # OIDC token for npm Trusted Publishers
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -540,7 +540,7 @@ jobs:
         # machine where the build step was implicit.)
         run: bun run build
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
@@ -578,7 +578,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -599,13 +599,11 @@ jobs:
             echo "::warning::CARGO_REGISTRY_TOKEN not set; skipping crates.io publish"
             exit 0
           fi
-          # Order matters: each crate's dependencies must already be
-          # on crates.io by the time it publishes. The list is the set
-          # of publishable = true crates in topological order; every
-          # panproto-dependent crate (lens, oauth, migrate, verify) is
-          # `publish = false` at the workspace level until panproto
-          # lands on crates.io, so they're deliberately absent here.
-          for crate in idiolect-records idiolect-identity idiolect-indexer; do
+          # Keep this explicit list in dependency order so adding a
+          # publishable workspace crate cannot silently change release
+          # behavior. CI packages idiolect-community separately to
+          # catch registry-manifest regressions before a tag is pushed.
+          for crate in idiolect-community idiolect-records idiolect-identity idiolect-indexer; do
             echo "::group::publish $crate"
             cargo publish -p "$crate" --locked --no-verify || {
               code=$?

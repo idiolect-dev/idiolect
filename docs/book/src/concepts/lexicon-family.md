@@ -1,8 +1,8 @@
 # The `dev.idiolect.*` lexicon family
 
-The repository ships sixteen record Lexicons and one shared-definitions
+The repository ships twenty record Lexicons and one shared-definitions
 Lexicon, `dev.idiolect.defs`. Together they separate event traces, aggregate
-claims, community policy, deliberation, and runtime integration.
+claims, community policy, deliberation, lifecycle state, and runtime integration.
 
 ```mermaid
 flowchart TB
@@ -30,6 +30,12 @@ flowchart TB
         DVO[deliberationVote]
         DOU[deliberationOutcome]
     end
+    subgraph lifecycle["Community lifecycle"]
+        CHP[changeProposal]
+        REL[communityRelease]
+        MIG[migrationRun]
+        FED[federation]
+    end
 
     ENC --> COR
     ENC --> OBS
@@ -39,6 +45,10 @@ flowchart TB
     DEL --> DST
     DST --> DVO
     DEL --> DOU
+    COM --> CHP
+    CHP --> REL
+    CHP --> MIG
+    COM --> FED
 ```
 
 The arrows show common reference or fold relationships. They do not imply that
@@ -108,9 +118,26 @@ policy:
 [Deliberation](./deliberation.md) explains why the process records remain
 separate from belief and recommendation.
 
+## Community lifecycle
+
+The four lifecycle records expose the state around a governed definition
+change without turning any one service into the community's authority:
+
+1. `dev.idiolect.changeProposal` carries the proposed change, Panproto
+   consequence analysis, governance decision, and verification outcome.
+2. `dev.idiolect.communityRelease` names an immutable signed release, its
+   accepted changes, artifacts, and peer dependencies.
+3. `dev.idiolect.migrationRun` publishes durable progress and bounded failure
+   samples for one change.
+4. `dev.idiolect.federation` declares a relationship with a peer community and
+   any explicit semantic mappings between them.
+
+[The community control plane](./community-control-plane.md) explains the local
+artifacts, published records, and ordinary exit test that connect these types.
+
 ## Composition at the indexer boundary
 
-The Rust bindings collect these sixteen record types under `IdiolectFamily`.
+The Rust bindings collect these twenty record types under `IdiolectFamily`.
 Consumers can combine it with another generated family through
 `OrFamily<F1, F2>`. That composition widens typed dispatch; it does not generate
 lenses or assert that records from the two families are semantically

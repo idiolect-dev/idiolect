@@ -33,7 +33,7 @@ thiserror  = { workspace = true }
 # matches RFC3339.
 time = { workspace = true }
 
-rusqlite = { version = "0.32", optional = true, features = ["bundled"] }
+rusqlite = { version = "0.39", optional = true, features = ["bundled"] }
 
 [features]
 # the crate is transport-agnostic by default — just the trait and an

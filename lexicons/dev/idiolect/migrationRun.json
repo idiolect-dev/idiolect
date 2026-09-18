@@ -1,0 +1,114 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.migrationRun",
+  "description": "Durable operational state for migrating community records across a governed change. Checkpoints make a run resumable; failure samples and terminal states keep incomplete work visible.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": [
+          "community",
+          "change",
+          "status",
+          "processed",
+          "failed",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "community": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "change": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "lens": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": [
+              "planned",
+              "running",
+              "paused",
+              "completed",
+              "failed",
+              "rolled-back"
+            ]
+          },
+          "total": {
+            "type": "integer"
+          },
+          "processed": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "checkpoints": {
+            "type": "array",
+            "maxLength": 1000,
+            "items": {
+              "type": "ref",
+              "ref": "#checkpoint"
+            }
+          },
+          "failures": {
+            "type": "array",
+            "maxLength": 100,
+            "items": {
+              "type": "ref",
+              "ref": "#failure"
+            },
+            "description": "Bounded diagnostic samples, not the complete failed-record corpus."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": ["cursor", "processed", "recordedAt"],
+      "properties": {
+        "cursor": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "processed": {
+          "type": "integer"
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "datetime"
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "required": ["record", "reason"],
+      "properties": {
+        "record": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "reason": {
+          "type": "string",
+          "maxGraphemes": 5000
+        }
+      }
+    }
+  }
+}

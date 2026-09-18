@@ -13,13 +13,62 @@ if you depend on this project, and read this file before bumping.
 
 ### Added
 
+- **Community control plane for 0.13.0.** The new `idiolect-community` crate and
+  CLI lifecycle provide versioned `idiolect.toml` workspaces, role-aware
+  maintainer/consent/vote/steward/hybrid governance, resource-bounded Panproto
+  consequence analysis, three-state verification gates, P-256/ES256 signed
+  releases, resumable migration runs, federation dependencies, workspace
+  diagnostics, and symlink-safe portable exports with SHA-256 inventories.
+- Four protocol records: `dev.idiolect.changeProposal`,
+  `dev.idiolect.communityRelease`, `dev.idiolect.migrationRun`, and
+  `dev.idiolect.federation`, with examples and generated Rust/TypeScript types.
+- The orchestrator catalogs and persists all four lifecycle records. Seven new
+  generated REST/XRPC queries and matching CLI routes cover open or
+  community-scoped changes, community releases, active or change-scoped
+  migrations, and federation relationships by owner or peer.
+- Observer methods `migration-health` and `release-adoption` expose the latest
+  operational progress, failures, releases, artifacts, dependencies, and
+  signer breadth by community.
+- A newcomer-first documentation path explains Idiolect without assuming
+  ATProto or Panproto knowledge, then completes a workspace, governed change,
+  signed release, migration, and portable exit. New concept, guide, crate,
+  manifest, CLI, HTTP, and protocol-record references cover the full surface.
+
 ### Changed
+
+- Workspace crates and `@idiolect-dev/schema` move to 0.13.0.
+
+- Panproto pins now target v0.74.4 across the workspace, standalone tutorial
+  crate, documentation, and vendored-Lexicon provenance. This release supplies
+  the patched `rustls` line required by `RUSTSEC-2026-0285`, fixes indexed and
+  dependent GAT cases, and exposes the canonical protocol registry, shared
+  resource budgets, and three-valued verification results for future tooling.
+- The lexicon-evolution gate now installs Panproto's released CLI artifact and
+  runs its actual `compat` and `diff --optic-kind` interfaces. It retains
+  per-Lexicon evidence and applies policy to the current optic kinds.
+- Dependabot now groups the coupled Oxc crates and the paired ATProto parser
+  packages so future upgrades can pass CI as coherent dependency sets.
+- Reviewed Dependabot updates move the release workflow to the current major
+  versions of its artifact, container, Node, and release actions; Docker builds
+  to Rust 1.96; and the optional SQLite stores to `rusqlite` 0.39.
+- GitHub workflows use the current supported `checkout`, `setup-node`, and
+  artifact-action majors. Rust audit jobs install exact `cargo-audit` and
+  `cargo-deny` versions instead of inheriting tool changes from action wrappers.
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- The daily Rust audit no longer resolves the vulnerable `rustls 0.23.43`
+  pulled through the older Panproto revision.
+- The scheduled Rust audit records a bounded exception for
+  `RUSTSEC-2026-0253`: the affected `lru 0.16.4` is reachable only through
+  `atrium-common` on `wasm32`, outside Idiolect's native target matrix. The
+  exception can be removed when Atrium moves to `lru >=0.18.2`.
+- The audit workflow now has read-only repository permissions and accurately
+  reports failures as job results; it no longer claims to create GitHub issues.
 
 ### Security
 

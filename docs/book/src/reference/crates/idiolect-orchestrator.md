@@ -15,7 +15,7 @@ Because the crate is `publish = false`, depend via git or path:
 
 ```toml
 [dependencies]
-idiolect-orchestrator = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.12.1", features = ["daemon", "catalog-sqlite", "query-http"] }
+idiolect-orchestrator = { git = "https://github.com/idiolect-dev/idiolect", tag = "v0.13.0", features = ["daemon", "catalog-sqlite", "query-http"] }
 ```
 
 ## Public surface
@@ -63,6 +63,13 @@ Every handler under the `v1` prefix is generated from
 | `GET /v1/beliefs/by-holder?...` | Beliefs by holder DID. |
 | `GET /v1/vocabularies/by-world?...` | Vocabularies declared with a given `world`. |
 | `GET /v1/vocabularies/by-name?...` | Vocabularies by name. |
+| `GET /v1/changes/open` | Change proposals still accepting edits or reviews. |
+| `GET /v1/changes/for-community?...` | Change proposals governed by a community. |
+| `GET /v1/releases/for-community?...` | Signed releases for a community. |
+| `GET /v1/migrations/active` | Migration runs that have not reached a terminal state. |
+| `GET /v1/migrations/for-change?...` | Migration runs attached to a governed change. |
+| `GET /v1/federations/for-community?...` | Federation relationships declared by a community. |
+| `GET /v1/federations/for-peer?...` | Federation relationships pointing at a peer. |
 
 Each generated route is also mounted at its `/xrpc/<query-nsid>`
 alias. The full path-and-flag table for each endpoint is generated. See

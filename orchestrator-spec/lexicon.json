@@ -29,8 +29,12 @@
             "adapter",
             "belief",
             "bounty",
+            "change_proposal",
             "community",
+            "community_release",
             "dialect",
+            "federation",
+            "migration_run",
             "recommendation",
             "verification",
             "vocab"

@@ -9,7 +9,7 @@ The route surface is generated from
 endpoints: a friendly REST path under `/v1/…` and an
 ATProto-style xrpc path under
 `/xrpc/dev.idiolect.query.<queryName>`. Both call the same
-handler. The snapshot below reflects idiolect 0.12.1.
+handler. The snapshot below reflects idiolect 0.13.0.
 
 ## Liveness and metrics
 
@@ -36,6 +36,13 @@ handler. The snapshot below reflects idiolect 0.12.1.
 | `GET /v1/verifications/by-kind?kind=...` | `/xrpc/dev.idiolect.query.verificationsByKind` | Verifications by kind. |
 | `GET /v1/communities?member_did=...` | `/xrpc/dev.idiolect.query.communitiesForMember` | Communities for a member DID. |
 | `GET /v1/communities/by-name?name=...` | `/xrpc/dev.idiolect.query.communitiesByName` | Communities by case-insensitive name. |
+| `GET /v1/changes/open` | `/xrpc/dev.idiolect.query.openChangeProposals` | Change proposals still in draft or review. |
+| `GET /v1/changes/for-community?community_uri=...` | `/xrpc/dev.idiolect.query.changeProposalsForCommunity` | Change proposals governed by a community. |
+| `GET /v1/releases/for-community?community_uri=...` | `/xrpc/dev.idiolect.query.communityReleasesForCommunity` | Signed releases for a community. |
+| `GET /v1/migrations/active` | `/xrpc/dev.idiolect.query.activeMigrationRuns` | Planned, running, or paused migration runs. |
+| `GET /v1/migrations/for-change?change_uri=...` | `/xrpc/dev.idiolect.query.migrationRunsForChange` | Migration runs attached to a governed change. |
+| `GET /v1/federations/for-community?community_uri=...` | `/xrpc/dev.idiolect.query.federationsForCommunity` | Federation relationships declared by a community. |
+| `GET /v1/federations/for-peer?peer_uri=...` | `/xrpc/dev.idiolect.query.federationsForPeer` | Federation relationships pointing at a peer. |
 | `GET /v1/dialects/for-community?community_uri=...` | `/xrpc/dev.idiolect.query.dialectsForCommunity` | Dialects owned by a community. |
 | `GET /v1/beliefs/about?subject_uri=...` | `/xrpc/dev.idiolect.query.beliefsAboutRecord` | Beliefs whose subject is a given record. |
 | `GET /v1/beliefs/by-holder?holder_did=...` | `/xrpc/dev.idiolect.query.beliefsByHolder` | Beliefs by holder DID. |

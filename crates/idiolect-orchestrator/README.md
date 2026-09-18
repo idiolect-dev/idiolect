@@ -4,10 +4,11 @@ Reference orchestrator for the `dev.idiolect.*` record family.
 
 ## Overview
 
-The orchestrator folds twelve declarative record kinds from the firehose into
+The orchestrator folds sixteen declarative record kinds from the firehose into
 an in-memory catalog: adapters, beliefs, bounties, communities, dialects,
 recommendations, verifications, vocabularies, deliberations, deliberation
-statements, deliberation votes, and deliberation outcomes. It answers queries
+statements, deliberation votes, deliberation outcomes, change proposals,
+community releases, migration runs, and federations. It answers queries
 over those records without ranking or enforcing them. For a recommendation,
 for instance, the orchestrator reports the record and whether its required
 verifications exist; the caller decides whether to adopt it.
@@ -107,6 +108,13 @@ Read-only JSON over HTTP. Every list endpoint accepts
 | GET | `/v1/beliefs/by-holder?holder_did=` |
 | GET | `/v1/vocabularies/by-world?world=` |
 | GET | `/v1/vocabularies/by-name?name=` |
+| GET | `/v1/changes/open` |
+| GET | `/v1/changes/for-community?community_uri=` |
+| GET | `/v1/releases/for-community?community_uri=` |
+| GET | `/v1/migrations/active` |
+| GET | `/v1/migrations/for-change?change_uri=` |
+| GET | `/v1/federations/for-community?community_uri=` |
+| GET | `/v1/federations/for-peer?peer_uri=` |
 
 Each generated list query is also mounted at the `/xrpc/dev.idiolect.query.*`
 path declared by its generated lexicon.

@@ -84,6 +84,7 @@ tokio = {{ version = "1", features = ["full"] }}
 tracing-subscriber = "0.3"
 url = "2"
 idiolect-codegen = {{ path = "{ROOT / 'crates/idiolect-codegen'}" }}
+idiolect-community = {{ path = "{ROOT / 'crates/idiolect-community'}" }}
 idiolect-identity = {{ path = "{ROOT / 'crates/idiolect-identity'}", features = ["resolver-reqwest"] }}
 idiolect-indexer = {{ path = "{ROOT / 'crates/idiolect-indexer'}", features = ["firehose-tapped", "reconnecting", "resilience", "firehose-jetstream", "cursor-filesystem", "cursor-sqlite"] }}
 idiolect-lens = {{ path = "{ROOT / 'crates/idiolect-lens'}", features = ["pds-reqwest", "pds-resolve", "dpop-p256"] }}
@@ -93,8 +94,8 @@ idiolect-observer = {{ path = "{ROOT / 'crates/idiolect-observer'}", features = 
 idiolect-orchestrator = {{ path = "{ROOT / 'crates/idiolect-orchestrator'}", features = ["daemon"] }}
 idiolect-records = {{ path = "{ROOT / 'crates/idiolect-records'}" }}
 idiolect-verify = {{ path = "{ROOT / 'crates/idiolect-verify'}" }}
-panproto-lens = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }}
-panproto-schema = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }}
+panproto-lens = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }}
+panproto-schema = {{ git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }}
 '''
         (project / "Cargo.toml").write_text(manifest, encoding="utf-8")
 

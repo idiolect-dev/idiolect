@@ -1,0 +1,36 @@
+{
+  "defs": {
+    "main": {
+      "description": "Every federation relationship pointing at the selected peer community.",
+      "output": {
+        "description": "Paged<EnvelopedEntry<R>> — identical shape to the REST endpoint for this query.",
+        "encoding": "application/json"
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Opaque pagination cursor returned by a prior page of results.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of entries to return in one page.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "peer_uri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "peer_uri"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "description": "XRPC facade for the `federations_for_peer` catalog query. Mirrors the REST endpoint at `/v1/federations/for-peer`; both paths invoke the same handler.",
+  "id": "dev.idiolect.query.federationsForPeer",
+  "lexicon": 1
+}

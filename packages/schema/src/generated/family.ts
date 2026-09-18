@@ -10,7 +10,9 @@
 import type { Adapter } from "./dev/idiolect/adapter";
 import type { Belief } from "./dev/idiolect/belief";
 import type { Bounty } from "./dev/idiolect/bounty";
+import type { ChangeProposal } from "./dev/idiolect/change_proposal";
 import type { Community } from "./dev/idiolect/community";
+import type { CommunityRelease } from "./dev/idiolect/community_release";
 import type { Correction } from "./dev/idiolect/correction";
 import type { Deliberation } from "./dev/idiolect/deliberation";
 import type { DeliberationOutcome } from "./dev/idiolect/deliberation_outcome";
@@ -18,6 +20,8 @@ import type { DeliberationStatement } from "./dev/idiolect/deliberation_statemen
 import type { DeliberationVote } from "./dev/idiolect/deliberation_vote";
 import type { Dialect } from "./dev/idiolect/dialect";
 import type { Encounter } from "./dev/idiolect/encounter";
+import type { Federation } from "./dev/idiolect/federation";
+import type { MigrationRun } from "./dev/idiolect/migration_run";
 import type { Observation } from "./dev/idiolect/observation";
 import type { Recommendation } from "./dev/idiolect/recommendation";
 import type { Retrospection } from "./dev/idiolect/retrospection";
@@ -40,7 +44,9 @@ export const NSID = {
   adapter: "dev.idiolect.adapter",
   belief: "dev.idiolect.belief",
   bounty: "dev.idiolect.bounty",
+  change_proposal: "dev.idiolect.changeProposal",
   community: "dev.idiolect.community",
+  community_release: "dev.idiolect.communityRelease",
   correction: "dev.idiolect.correction",
   deliberation: "dev.idiolect.deliberation",
   deliberation_outcome: "dev.idiolect.deliberationOutcome",
@@ -48,6 +54,8 @@ export const NSID = {
   deliberation_vote: "dev.idiolect.deliberationVote",
   dialect: "dev.idiolect.dialect",
   encounter: "dev.idiolect.encounter",
+  federation: "dev.idiolect.federation",
+  migration_run: "dev.idiolect.migrationRun",
   observation: "dev.idiolect.observation",
   recommendation: "dev.idiolect.recommendation",
   retrospection: "dev.idiolect.retrospection",
@@ -64,7 +72,9 @@ export type RecordTypes = {
   [NSID.adapter]: Adapter;
   [NSID.belief]: Belief;
   [NSID.bounty]: Bounty;
+  [NSID.change_proposal]: ChangeProposal;
   [NSID.community]: Community;
+  [NSID.community_release]: CommunityRelease;
   [NSID.correction]: Correction;
   [NSID.deliberation]: Deliberation;
   [NSID.deliberation_outcome]: DeliberationOutcome;
@@ -72,6 +82,8 @@ export type RecordTypes = {
   [NSID.deliberation_vote]: DeliberationVote;
   [NSID.dialect]: Dialect;
   [NSID.encounter]: Encounter;
+  [NSID.federation]: Federation;
+  [NSID.migration_run]: MigrationRun;
   [NSID.observation]: Observation;
   [NSID.recommendation]: Recommendation;
   [NSID.retrospection]: Retrospection;
@@ -86,7 +98,9 @@ export type AnyRecord =
   | { readonly $nsid: typeof NSID.adapter; readonly value: Adapter }
   | { readonly $nsid: typeof NSID.belief; readonly value: Belief }
   | { readonly $nsid: typeof NSID.bounty; readonly value: Bounty }
+  | { readonly $nsid: typeof NSID.change_proposal; readonly value: ChangeProposal }
   | { readonly $nsid: typeof NSID.community; readonly value: Community }
+  | { readonly $nsid: typeof NSID.community_release; readonly value: CommunityRelease }
   | { readonly $nsid: typeof NSID.correction; readonly value: Correction }
   | { readonly $nsid: typeof NSID.deliberation; readonly value: Deliberation }
   | { readonly $nsid: typeof NSID.deliberation_outcome; readonly value: DeliberationOutcome }
@@ -94,6 +108,8 @@ export type AnyRecord =
   | { readonly $nsid: typeof NSID.deliberation_vote; readonly value: DeliberationVote }
   | { readonly $nsid: typeof NSID.dialect; readonly value: Dialect }
   | { readonly $nsid: typeof NSID.encounter; readonly value: Encounter }
+  | { readonly $nsid: typeof NSID.federation; readonly value: Federation }
+  | { readonly $nsid: typeof NSID.migration_run; readonly value: MigrationRun }
   | { readonly $nsid: typeof NSID.observation; readonly value: Observation }
   | { readonly $nsid: typeof NSID.recommendation; readonly value: Recommendation }
   | { readonly $nsid: typeof NSID.retrospection; readonly value: Retrospection }
@@ -123,9 +139,19 @@ export function isBounty(r: AnyRecord): r is { readonly $nsid: typeof NSID.bount
   return r.$nsid === NSID.bounty;
 }
 
+/** True if `r` wraps a `ChangeProposal`. */
+export function isChangeProposal(r: AnyRecord): r is { readonly $nsid: typeof NSID.change_proposal; readonly value: ChangeProposal } {
+  return r.$nsid === NSID.change_proposal;
+}
+
 /** True if `r` wraps a `Community`. */
 export function isCommunity(r: AnyRecord): r is { readonly $nsid: typeof NSID.community; readonly value: Community } {
   return r.$nsid === NSID.community;
+}
+
+/** True if `r` wraps a `CommunityRelease`. */
+export function isCommunityRelease(r: AnyRecord): r is { readonly $nsid: typeof NSID.community_release; readonly value: CommunityRelease } {
+  return r.$nsid === NSID.community_release;
 }
 
 /** True if `r` wraps a `Correction`. */
@@ -161,6 +187,16 @@ export function isDialect(r: AnyRecord): r is { readonly $nsid: typeof NSID.dial
 /** True if `r` wraps a `Encounter`. */
 export function isEncounter(r: AnyRecord): r is { readonly $nsid: typeof NSID.encounter; readonly value: Encounter } {
   return r.$nsid === NSID.encounter;
+}
+
+/** True if `r` wraps a `Federation`. */
+export function isFederation(r: AnyRecord): r is { readonly $nsid: typeof NSID.federation; readonly value: Federation } {
+  return r.$nsid === NSID.federation;
+}
+
+/** True if `r` wraps a `MigrationRun`. */
+export function isMigrationRun(r: AnyRecord): r is { readonly $nsid: typeof NSID.migration_run; readonly value: MigrationRun } {
+  return r.$nsid === NSID.migration_run;
 }
 
 /** True if `r` wraps a `Observation`. */
@@ -203,7 +239,9 @@ export const RECORD_NSIDS = [
   NSID.adapter,
   NSID.belief,
   NSID.bounty,
+  NSID.change_proposal,
   NSID.community,
+  NSID.community_release,
   NSID.correction,
   NSID.deliberation,
   NSID.deliberation_outcome,
@@ -211,6 +249,8 @@ export const RECORD_NSIDS = [
   NSID.deliberation_vote,
   NSID.dialect,
   NSID.encounter,
+  NSID.federation,
+  NSID.migration_run,
   NSID.observation,
   NSID.recommendation,
   NSID.retrospection,

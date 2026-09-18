@@ -84,6 +84,18 @@ pub const METHODS: &[MethodDescriptor] = &[
         description: "Per-statement per-stance vote counts across dev.idiolect.deliberationVote records. The data shape a dev.idiolect.deliberationOutcome record carries, emitted as an observation for visibility into in-progress deliberations.",
         form: MethodForm::Record,
     },
+    MethodDescriptor {
+        name: crate::methods::migration_health::METHOD_NAME,
+        version: crate::methods::migration_health::METHOD_VERSION,
+        description: "Latest durable migration status, progress, known totals, and failure counts by community. Updates replace prior checkpoints rather than inflating counters.",
+        form: MethodForm::Record,
+    },
+    MethodDescriptor {
+        name: crate::methods::release_adoption::METHOD_NAME,
+        version: crate::methods::release_adoption::METHOD_VERSION,
+        description: "Published release, artifact, federation-dependency, signed-release, and distinct-signer counts by community.",
+        form: MethodForm::Record,
+    },
 ];
 /// Fresh instances of every bundled record-form method, in spec order.
 ///
@@ -103,5 +115,7 @@ pub fn default_methods() -> Vec<Box<dyn crate::method::ObservationMethod>> {
         Box::new(crate::methods::basis_distribution::BasisDistributionMethod::new()),
         Box::new(crate::methods::attribution_chains::AttributionChainsMethod::new()),
         Box::new(crate::methods::deliberation_tally::DeliberationTallyMethod::new()),
+        Box::new(crate::methods::migration_health::MigrationHealthMethod::new()),
+        Box::new(crate::methods::release_adoption::ReleaseAdoptionMethod::new()),
     ]
 }

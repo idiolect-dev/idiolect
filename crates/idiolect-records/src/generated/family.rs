@@ -15,7 +15,9 @@ use crate::family::RecordFamily;
 use crate::generated::dev::idiolect::adapter::Adapter;
 use crate::generated::dev::idiolect::belief::Belief;
 use crate::generated::dev::idiolect::bounty::Bounty;
+use crate::generated::dev::idiolect::change_proposal::ChangeProposal;
 use crate::generated::dev::idiolect::community::Community;
+use crate::generated::dev::idiolect::community_release::CommunityRelease;
 use crate::generated::dev::idiolect::correction::Correction;
 use crate::generated::dev::idiolect::deliberation::Deliberation;
 use crate::generated::dev::idiolect::deliberation_outcome::DeliberationOutcome;
@@ -23,6 +25,8 @@ use crate::generated::dev::idiolect::deliberation_statement::DeliberationStateme
 use crate::generated::dev::idiolect::deliberation_vote::DeliberationVote;
 use crate::generated::dev::idiolect::dialect::Dialect;
 use crate::generated::dev::idiolect::encounter::Encounter;
+use crate::generated::dev::idiolect::federation::Federation;
+use crate::generated::dev::idiolect::migration_run::MigrationRun;
 use crate::generated::dev::idiolect::observation::Observation;
 use crate::generated::dev::idiolect::recommendation::Recommendation;
 use crate::generated::dev::idiolect::retrospection::Retrospection;
@@ -47,8 +51,12 @@ pub enum AnyRecord {
     Belief(Belief),
     /// A `dev.idiolect.bounty` record.
     Bounty(Bounty),
+    /// A `dev.idiolect.changeProposal` record.
+    ChangeProposal(ChangeProposal),
     /// A `dev.idiolect.community` record.
     Community(Community),
+    /// A `dev.idiolect.communityRelease` record.
+    CommunityRelease(CommunityRelease),
     /// A `dev.idiolect.correction` record.
     Correction(Correction),
     /// A `dev.idiolect.deliberation` record.
@@ -63,6 +71,10 @@ pub enum AnyRecord {
     Dialect(Dialect),
     /// A `dev.idiolect.encounter` record.
     Encounter(Encounter),
+    /// A `dev.idiolect.federation` record.
+    Federation(Federation),
+    /// A `dev.idiolect.migrationRun` record.
+    MigrationRun(MigrationRun),
     /// A `dev.idiolect.observation` record.
     Observation(Observation),
     /// A `dev.idiolect.recommendation` record.
@@ -82,7 +94,9 @@ impl AnyRecord {
             Self::Adapter(_) => Adapter::NSID,
             Self::Belief(_) => Belief::NSID,
             Self::Bounty(_) => Bounty::NSID,
+            Self::ChangeProposal(_) => ChangeProposal::NSID,
             Self::Community(_) => Community::NSID,
+            Self::CommunityRelease(_) => CommunityRelease::NSID,
             Self::Correction(_) => Correction::NSID,
             Self::Deliberation(_) => Deliberation::NSID,
             Self::DeliberationOutcome(_) => DeliberationOutcome::NSID,
@@ -90,6 +104,8 @@ impl AnyRecord {
             Self::DeliberationVote(_) => DeliberationVote::NSID,
             Self::Dialect(_) => Dialect::NSID,
             Self::Encounter(_) => Encounter::NSID,
+            Self::Federation(_) => Federation::NSID,
+            Self::MigrationRun(_) => MigrationRun::NSID,
             Self::Observation(_) => Observation::NSID,
             Self::Recommendation(_) => Recommendation::NSID,
             Self::Retrospection(_) => Retrospection::NSID,
@@ -159,7 +175,9 @@ impl AnyRecord {
             Self::Adapter(r) => serde_json::to_value(r),
             Self::Belief(r) => serde_json::to_value(r),
             Self::Bounty(r) => serde_json::to_value(r),
+            Self::ChangeProposal(r) => serde_json::to_value(r),
             Self::Community(r) => serde_json::to_value(r),
+            Self::CommunityRelease(r) => serde_json::to_value(r),
             Self::Correction(r) => serde_json::to_value(r),
             Self::Deliberation(r) => serde_json::to_value(r),
             Self::DeliberationOutcome(r) => serde_json::to_value(r),
@@ -167,6 +185,8 @@ impl AnyRecord {
             Self::DeliberationVote(r) => serde_json::to_value(r),
             Self::Dialect(r) => serde_json::to_value(r),
             Self::Encounter(r) => serde_json::to_value(r),
+            Self::Federation(r) => serde_json::to_value(r),
+            Self::MigrationRun(r) => serde_json::to_value(r),
             Self::Observation(r) => serde_json::to_value(r),
             Self::Recommendation(r) => serde_json::to_value(r),
             Self::Retrospection(r) => serde_json::to_value(r),
@@ -206,7 +226,9 @@ pub fn decode_record(nsid: &Nsid, value: serde_json::Value) -> Result<AnyRecord,
         s if s == Adapter::NSID => Ok(AnyRecord::Adapter(from(value)?)),
         s if s == Belief::NSID => Ok(AnyRecord::Belief(from(value)?)),
         s if s == Bounty::NSID => Ok(AnyRecord::Bounty(from(value)?)),
+        s if s == ChangeProposal::NSID => Ok(AnyRecord::ChangeProposal(from(value)?)),
         s if s == Community::NSID => Ok(AnyRecord::Community(from(value)?)),
+        s if s == CommunityRelease::NSID => Ok(AnyRecord::CommunityRelease(from(value)?)),
         s if s == Correction::NSID => Ok(AnyRecord::Correction(from(value)?)),
         s if s == Deliberation::NSID => Ok(AnyRecord::Deliberation(from(value)?)),
         s if s == DeliberationOutcome::NSID => Ok(AnyRecord::DeliberationOutcome(from(value)?)),
@@ -214,6 +236,8 @@ pub fn decode_record(nsid: &Nsid, value: serde_json::Value) -> Result<AnyRecord,
         s if s == DeliberationVote::NSID => Ok(AnyRecord::DeliberationVote(from(value)?)),
         s if s == Dialect::NSID => Ok(AnyRecord::Dialect(from(value)?)),
         s if s == Encounter::NSID => Ok(AnyRecord::Encounter(from(value)?)),
+        s if s == Federation::NSID => Ok(AnyRecord::Federation(from(value)?)),
+        s if s == MigrationRun::NSID => Ok(AnyRecord::MigrationRun(from(value)?)),
         s if s == Observation::NSID => Ok(AnyRecord::Observation(from(value)?)),
         s if s == Recommendation::NSID => Ok(AnyRecord::Recommendation(from(value)?)),
         s if s == Retrospection::NSID => Ok(AnyRecord::Retrospection(from(value)?)),
@@ -231,7 +255,9 @@ impl RecordFamily for IdiolectFamily {
             Adapter::NSID
                 | Belief::NSID
                 | Bounty::NSID
+                | ChangeProposal::NSID
                 | Community::NSID
+                | CommunityRelease::NSID
                 | Correction::NSID
                 | Deliberation::NSID
                 | DeliberationOutcome::NSID
@@ -239,6 +265,8 @@ impl RecordFamily for IdiolectFamily {
                 | DeliberationVote::NSID
                 | Dialect::NSID
                 | Encounter::NSID
+                | Federation::NSID
+                | MigrationRun::NSID
                 | Observation::NSID
                 | Recommendation::NSID
                 | Retrospection::NSID

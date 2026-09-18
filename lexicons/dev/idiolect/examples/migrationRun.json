@@ -1,0 +1,25 @@
+{
+  "$nsid": "dev.idiolect.migrationRun",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "change": "at://did:plc:community/dev.idiolect.changeProposal/3lproposal",
+  "lens": "at://did:plc:community/dev.panproto.schema.lens/3llens",
+  "status": "running",
+  "total": 250,
+  "processed": 100,
+  "failed": 1,
+  "checkpoints": [
+    {
+      "cursor": "record-100",
+      "processed": 100,
+      "recordedAt": "2026-09-18T16:00:00Z"
+    }
+  ],
+  "failures": [
+    {
+      "record": "at://did:plc:member/app.community.profile/3lbroken",
+      "reason": "Required participant identifier is absent."
+    }
+  ],
+  "createdAt": "2026-09-18T15:30:00Z",
+  "updatedAt": "2026-09-18T16:00:00Z"
+}

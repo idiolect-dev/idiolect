@@ -55,6 +55,18 @@
       "module": "deliberation_tally",
       "struct": "DeliberationTallyMethod",
       "description": "Per-statement per-stance vote counts across dev.idiolect.deliberationVote records. The data shape a dev.idiolect.deliberationOutcome record carries, emitted as an observation for visibility into in-progress deliberations."
+    },
+    {
+      "name": "migration-health",
+      "module": "migration_health",
+      "struct": "MigrationHealthMethod",
+      "description": "Latest durable migration status, progress, known totals, and failure counts by community. Updates replace prior checkpoints rather than inflating counters."
+    },
+    {
+      "name": "release-adoption",
+      "module": "release_adoption",
+      "struct": "ReleaseAdoptionMethod",
+      "description": "Published release, artifact, federation-dependency, signed-release, and distinct-signer counts by community."
     }
   ]
 }

@@ -8,11 +8,12 @@ and HTTP contracts. Task procedures remain in the
 | --- | --- |
 | [Crates](./crates/index.md) | One page per workspace crate, with public types, traits, error variants, and feature flags. |
 | [Lexicons](./lexicons/index.md) | One page per `dev.idiolect.*` lexicon, with field-by-field shape. |
+| [Community manifest](./community-manifest.md) | The local `idiolect.toml` policy and workspace contract. |
 | [CLI](./cli.md) | Every shipped `idiolect` subcommand, its flags, and its output. |
 | [HTTP query API](./http-api.md) | Every endpoint exposed by the orchestrator, request and response shape. |
 | [Stability and versioning](./stability.md) | The pre-1.0 stability policy. |
 
-The reference covers idiolect 0.12.1 with panproto 0.71.0. For older
+The reference covers idiolect 0.13.0 with panproto 0.74.4. For older
 releases, use the
 [release archive](https://github.com/idiolect-dev/idiolect/releases).
 
@@ -27,6 +28,7 @@ extension boundary:
 | Add a stream, handler, or cursor backend | [`idiolect-indexer`](./crates/idiolect-indexer.md) | Trait signatures, feature flags, and error variants |
 | Add a lens resolver or schema loader | [`idiolect-lens`](./crates/idiolect-lens.md) | Resolver, loader, apply-input, and apply-output types |
 | Add an observation or verification method | [`idiolect-observer`](./crates/idiolect-observer.md) or [`idiolect-verify`](./crates/idiolect-verify.md) | Generated taxonomies and implementation traits |
+| Extend community governance, releases, migration, or export | [`idiolect-community`](./crates/idiolect-community.md) | [`idiolect.toml`](./community-manifest.md) and the four lifecycle lexicons |
 | Integrate over process boundaries | [CLI](./cli.md) or [HTTP API](./http-api.md) | Exact flags, query parameters, response envelopes, and errors |
 
 For wire-level extensions, begin with the [lexicon index](./lexicons/index.md)

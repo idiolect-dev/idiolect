@@ -1,0 +1,13 @@
+{
+  "$nsid": "dev.idiolect.federation",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "peer": "at://did:plc:peer/dev.idiolect.community/3lpeer",
+  "relation": "bridges",
+  "release": "2.0.0",
+  "updatePolicy": "review",
+  "mappings": [
+    "at://did:plc:community/dev.panproto.schema.lens/3lbridge"
+  ],
+  "notes": "The communities share event terminology but retain distinct membership models.",
+  "createdAt": "2026-09-18T17:00:00Z"
+}

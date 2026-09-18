@@ -18,6 +18,10 @@
 //! - [`dialect_federation::DialectFederationMethod`] — watched
 //!   communities' current dialect + lens-set delta since the
 //!   previous snapshot. Signal: federation surface change.
+//! - [`migration_health::MigrationHealthMethod`] — latest durable
+//!   migration state, progress, and failure counts by community.
+//! - [`release_adoption::ReleaseAdoptionMethod`] — published release,
+//!   signer, artifact, and federation-dependency counts by community.
 //! - [`action_distribution::ActionDistributionMethod`] — encounter
 //!   counts grouped by structured `use.action` with optional
 //!   vocabulary-rooted rollup. Signal: which actions communities
@@ -39,7 +43,9 @@ pub mod deliberation_tally;
 pub mod dialect_federation;
 pub mod encounter_throughput;
 pub mod lens_adoption;
+pub mod migration_health;
 pub mod purpose_distribution;
+pub mod release_adoption;
 pub mod verification_coverage;
 
 pub use action_distribution::ActionDistributionMethod;
@@ -50,5 +56,7 @@ pub use deliberation_tally::DeliberationTallyMethod;
 pub use dialect_federation::DialectFederationMethod;
 pub use encounter_throughput::EncounterThroughputMethod;
 pub use lens_adoption::LensAdoptionMethod;
+pub use migration_health::MigrationHealthMethod;
 pub use purpose_distribution::PurposeDistributionMethod;
+pub use release_adoption::ReleaseAdoptionMethod;
 pub use verification_coverage::VerificationCoverageMethod;

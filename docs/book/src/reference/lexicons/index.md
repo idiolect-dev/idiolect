@@ -9,7 +9,9 @@ kind that travels on the network has a lexicon document under
 | `dev.idiolect.adapter` | [adapter](./adapter.md) |
 | `dev.idiolect.belief` | [belief](./belief.md) |
 | `dev.idiolect.bounty` | [bounty](./bounty.md) |
+| `dev.idiolect.changeProposal` | [changeProposal](./changeProposal.md) |
 | `dev.idiolect.community` | [community](./community.md) |
+| `dev.idiolect.communityRelease` | [communityRelease](./communityRelease.md) |
 | `dev.idiolect.correction` | [correction](./correction.md) |
 | `dev.idiolect.defs` | [defs](./defs.md) |
 | `dev.idiolect.deliberation` | [deliberation](./deliberation.md) |
@@ -18,6 +20,8 @@ kind that travels on the network has a lexicon document under
 | `dev.idiolect.deliberationOutcome` | [deliberationOutcome](./deliberationOutcome.md) |
 | `dev.idiolect.dialect` | [dialect](./dialect.md) |
 | `dev.idiolect.encounter` | [encounter](./encounter.md) |
+| `dev.idiolect.federation` | [federation](./federation.md) |
+| `dev.idiolect.migrationRun` | [migrationRun](./migrationRun.md) |
 | `dev.idiolect.observation` | [observation](./observation.md) |
 | `dev.idiolect.recommendation` | [recommendation](./recommendation.md) |
 | `dev.idiolect.retrospection` | [retrospection](./retrospection.md) |
