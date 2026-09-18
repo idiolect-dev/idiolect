@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/idiolect-cli",
     "crates/idiolect-codegen",
+    "crates/idiolect-community",
     "crates/idiolect-identity",
     "crates/idiolect-indexer",
     "crates/idiolect-lens",
@@ -21,7 +22,7 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.12.1"
+version = "0.13.0"
 edition = "2024"
 rust-version = "1.95"
 license = "MIT"
@@ -78,19 +79,24 @@ language-tags = "0.3"
 
 # panproto: idiolect dogfoods panproto for schema codegen, breaking-change
 # detection, and lens compilation.
-panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
-panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0" }
+panproto-schema    = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-protocols = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-gat       = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-check     = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-lens      = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-inst      = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-expr        = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
+panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4" }
 # panproto-parse carries the verified tree-sitter emit pipeline. Only the
 # two grammars idiolect emits are enabled; group-core would pull nine more.
-panproto-parse = { git = "https://github.com/panproto/panproto.git", tag = "v0.72.0", default-features = false, features = ["lang-rust", "lang-typescript"] }
+panproto-parse = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4", default-features = false, features = ["lang-rust", "lang-typescript"] }
 
 anyhow = "1.0.100"
+base64 = "0.22"
+p256 = { version = "0.13", features = ["ecdsa"] }
+rand = "0.8"
+sha2 = "0.10"
+toml = "1.0"
 
 # oxc: rust-native javascript/typescript toolchain. idiolect-codegen drives
 # the typescript emitter through oxc's arena-allocated ast plus its ast-to-

@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -88,7 +88,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -150,7 +150,7 @@ jobs:
             features: "daemon"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: install rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -179,15 +179,17 @@ jobs:
     needs: codegen
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - name: install cargo-deny
+        uses: taiki-e/install-action@v2
         with:
-          command: check
-          # Feature selection lives in deny.toml's `[graph]`
-          # (`all-features = true`); cargo-deny 0.18 dropped the
-          # `--all-features` CLI flag.
-          log-level: warn
+          tool: cargo-deny@0.20.2
+          fallback: none
+
+      - name: check supply-chain policy
+        # Feature and target selection lives in deny.toml's `[graph]`.
+        run: cargo deny --locked --log-level warn check
 
   # ---------------------------------------------------------------
   # On pull requests, diff the current lexicon tree against the
@@ -206,12 +208,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: check out PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: head
 
       - name: check out base ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.base_ref }}
           path: base
@@ -247,7 +249,7 @@ jobs:
     needs: codegen
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:

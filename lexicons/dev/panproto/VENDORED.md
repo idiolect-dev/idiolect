@@ -8,8 +8,8 @@ not part of the upstream vendored subset.
 | field           | value                                      |
 |-----------------|--------------------------------------------|
 | upstream        | `panproto/panproto` (git)                  |
-| commit          | `efa04235eb9aa9d718ad358b6104f69eac17881f` |
-| workspace ver.  | `0.71.0`                                   |
+| commit          | `869adad52114fdef6d7a0c2e0d6526bec43d84c2` |
+| workspace ver.  | `0.74.4`                                   |
 | source path     | `lexicons/dev/panproto/`                   |
 
 ## Vendored set
@@ -49,5 +49,5 @@ downstream feature needs them; the vendor step is mechanical.
 4. `cargo test` + `bun test` to confirm no downstream break.
 
 The upstream files listed above were compared byte for byte with commit
-`efa04235eb9aa9d718ad358b6104f69eac17881f`; no vendored Lexicon contents
-changed during the 0.71.0 refresh.
+`869adad52114fdef6d7a0c2e0d6526bec43d84c2`; no vendored Lexicon contents
+changed during the 0.74.4 refresh.

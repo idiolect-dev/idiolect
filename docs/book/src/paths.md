@@ -6,7 +6,14 @@ guides give procedures, the concepts explain the model, and the reference pages
 record exact contracts. The paths below cross those sections without merging
 their functions.
 
-## Beginner: resolve and validate a record
+## Beginner: support a community
+
+Start with [Idiolect for a new community](./start/index.md). It defines four
+terms, then walks through a local workspace, one change packet, an attributable
+decision, a signed release, a durable migration, and a portable export. No
+network publication is required.
+
+## Beginner developer: resolve and validate a record
 
 Start with [Install the CLI and fetch a lens](./tutorial/01-install.md). It produces
 a concrete result with the checked-out CLI, then points to
@@ -38,6 +45,9 @@ exact signature or wire contract.
 Read [Lens semantics and laws](./concepts/lens-laws.md) before changing lens
 execution or verification, and read [The vocabulary knowledge
 graph](./concepts/vocab-graph.md) before extending vocabulary inference. The
+[community control plane](./concepts/community-control-plane.md) explains how
+governance, release, migration, federation, and exit connect to those formal
+objects. The
 [Observer protocol](./concepts/observer.md) and [Lexicon evolution
 policy](./concepts/lexicon-evolution.md) connect those formal objects to runtime
 behavior. Then use the [crate reference](./reference/crates/index.md) to find

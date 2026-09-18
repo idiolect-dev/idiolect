@@ -3,6 +3,14 @@
 [Introduction](./index.md)
 [Choose a reading path](./paths.md)
 
+# Start here
+
+- [Idiolect for a new community](./start/index.md)
+- [Create your first workspace](./start/first-workspace.md)
+- [Explain your first change](./start/first-change.md)
+- [Review and release it](./start/review-release.md)
+- [Migrate safely and keep an exit](./start/migrate-export.md)
+
 # Tutorial
 
 - [Overview](./tutorial/index.md)
@@ -25,6 +33,10 @@
 - [Run codegen](./guide/codegen.md)
 - [Author a community vocabulary](./guide/vocabulary.md)
 - [Bundle records into a dialect](./guide/dialect.md)
+- [Operate a community workspace](./guide/community-workspaces.md)
+- [Govern definition changes](./guide/governed-changes.md)
+- [Sign releases and run migrations](./guide/releases-migrations.md)
+- [Federate and export](./guide/federation-export.md)
 
 # Concepts
 
@@ -40,6 +52,7 @@
 - [Deliberation](./concepts/deliberation.md)
 - [Observer protocol](./concepts/observer.md)
 - [Lexicon evolution policy](./concepts/lexicon-evolution.md)
+- [The community control plane](./concepts/community-control-plane.md)
 
 # Reference
 
@@ -56,11 +69,14 @@
   - [idiolect-verify](./reference/crates/idiolect-verify.md)
   - [idiolect-migrate](./reference/crates/idiolect-migrate.md)
   - [idiolect-cli](./reference/crates/idiolect-cli.md)
+  - [idiolect-community](./reference/crates/idiolect-community.md)
 - [Lexicons](./reference/lexicons/index.md)
   - [adapter](./reference/lexicons/adapter.md)
   - [belief](./reference/lexicons/belief.md)
   - [bounty](./reference/lexicons/bounty.md)
   - [community](./reference/lexicons/community.md)
+  - [changeProposal](./reference/lexicons/changeProposal.md)
+  - [communityRelease](./reference/lexicons/communityRelease.md)
   - [correction](./reference/lexicons/correction.md)
   - [defs](./reference/lexicons/defs.md)
   - [deliberation](./reference/lexicons/deliberation.md)
@@ -69,6 +85,8 @@
   - [deliberationOutcome](./reference/lexicons/deliberationOutcome.md)
   - [dialect](./reference/lexicons/dialect.md)
   - [encounter](./reference/lexicons/encounter.md)
+  - [federation](./reference/lexicons/federation.md)
+  - [migrationRun](./reference/lexicons/migrationRun.md)
   - [observation](./reference/lexicons/observation.md)
   - [recommendation](./reference/lexicons/recommendation.md)
   - [retrospection](./reference/lexicons/retrospection.md)
@@ -76,6 +94,7 @@
   - [vocab](./reference/lexicons/vocab.md)
 - [CLI](./reference/cli.md)
 - [HTTP query API](./reference/http-api.md)
+- [Community workspace manifest](./reference/community-manifest.md)
 - [Stability and versioning](./reference/stability.md)
 
 # Glossary

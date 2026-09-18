@@ -1,0 +1,42 @@
+{
+  "$nsid": "dev.idiolect.changeProposal",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "title": "Rename member to participant",
+  "summary": "Use participant language while preserving the prior field through a reversible migration.",
+  "author": "did:plc:alice",
+  "status": "review",
+  "source": {
+    "protocol": "atproto",
+    "location": "lexicons/community-v1.json",
+    "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "target": {
+    "protocol": "atproto",
+    "location": "lexicons/community-v2.json",
+    "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "compatibility": "backward-compatible",
+  "opticKind": "iso",
+  "consequences": [
+    {
+      "code": "existing-records-readable",
+      "severity": "information",
+      "headline": "Existing records remain readable",
+      "detail": "The proposed schema accepts records written under the current schema."
+    }
+  ],
+  "affected": ["member directory", "onboarding form"],
+  "rollback": "Restore the prior schema and apply the inverse rename.",
+  "reviews": [
+    {
+      "reviewer": "did:plc:bob",
+      "role": "maintainer",
+      "stance": "approve",
+      "comment": "Terminology matches the adopted community charter.",
+      "reviewedAt": "2026-09-18T14:00:00Z"
+    }
+  ],
+  "verificationStatus": "verified",
+  "createdAt": "2026-09-17T14:00:00Z",
+  "updatedAt": "2026-09-18T14:00:00Z"
+}

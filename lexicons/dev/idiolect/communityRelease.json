@@ -1,0 +1,157 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.communityRelease",
+  "description": "A signed, immutable release of community-governed definitions and approved changes. The record is an index over content-addressed artifacts; a portable release bundle carries the full manifest and evidence.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": [
+          "community",
+          "version",
+          "manifestDigest",
+          "digest",
+          "changes",
+          "signatures",
+          "createdAt"
+        ],
+        "properties": {
+          "community": {
+            "type": "string",
+            "format": "at-uri"
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Community release version."
+          },
+          "manifestDigest": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "digest": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Digest of canonical unsigned bundle bytes."
+          },
+          "changes": {
+            "type": "array",
+            "maxLength": 1000,
+            "items": {
+              "type": "string",
+              "format": "at-uri"
+            },
+            "description": "Approved dev.idiolect.changeProposal records."
+          },
+          "artifacts": {
+            "type": "array",
+            "maxLength": 2000,
+            "items": {
+              "type": "ref",
+              "ref": "#artifact"
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "maxLength": 500,
+            "items": {
+              "type": "ref",
+              "ref": "#dependency"
+            }
+          },
+          "signatures": {
+            "type": "array",
+            "maxLength": 100,
+            "items": {
+              "type": "ref",
+              "ref": "#signature"
+            },
+            "description": "Detached signatures over digest."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["location", "digest"],
+      "properties": {
+        "location": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "digest": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "mediaType": {
+          "type": "string",
+          "maxLength": 256
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "required": ["community", "relation", "updatePolicy"],
+      "properties": {
+        "community": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Peer community record or DID."
+        },
+        "relation": {
+          "type": "string",
+          "maxLength": 64,
+          "knownValues": ["follows", "extends", "bridges", "forked-from"]
+        },
+        "release": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "updatePolicy": {
+          "type": "string",
+          "maxLength": 64,
+          "knownValues": ["review", "follow-compatible", "pinned"]
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "required": [
+        "signer",
+        "algorithm",
+        "publicKey",
+        "signature",
+        "signedAt"
+      ],
+      "properties": {
+        "signer": {
+          "type": "string",
+          "format": "did"
+        },
+        "algorithm": {
+          "type": "string",
+          "maxLength": 64,
+          "knownValues": ["ES256"]
+        },
+        "publicKey": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "signature": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "datetime"
+        }
+      }
+    }
+  }
+}

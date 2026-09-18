@@ -1,0 +1,27 @@
+{
+  "$nsid": "dev.idiolect.communityRelease",
+  "community": "at://did:plc:community/dev.idiolect.community/3lcommunity",
+  "version": "1.1.0",
+  "manifestDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "changes": [
+    "at://did:plc:community/dev.idiolect.changeProposal/3lproposal"
+  ],
+  "artifacts": [
+    {
+      "location": "lexicons/community.json",
+      "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "mediaType": "application/json"
+    }
+  ],
+  "signatures": [
+    {
+      "signer": "did:plc:alice",
+      "algorithm": "ES256",
+      "publicKey": "BExamplePublicKey",
+      "signature": "ExampleSignature",
+      "signedAt": "2026-09-18T15:00:00Z"
+    }
+  ],
+  "createdAt": "2026-09-18T15:00:00Z"
+}

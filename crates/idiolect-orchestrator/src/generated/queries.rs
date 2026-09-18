@@ -115,6 +115,81 @@ pub fn communities_by_name<'a>(
         .filter(|entry| crate::predicates::community_by_name(&entry.record, name))
         .collect()
 }
+///Every governed change that is still in draft or review.
+#[must_use]
+pub fn open_change_proposals(catalog: &Catalog) -> Vec<&Entry<idiolect_records::ChangeProposal>> {
+    catalog
+        .change_proposals()
+        .filter(|entry| crate::predicates::change_proposal_is_open(&entry.record))
+        .collect()
+}
+///Every governed change owned by the selected community.
+#[must_use]
+pub fn change_proposals_for_community<'a>(
+    catalog: &'a Catalog,
+    community_uri: &str,
+) -> Vec<&'a Entry<idiolect_records::ChangeProposal>> {
+    catalog
+        .change_proposals()
+        .filter(|entry| {
+            crate::predicates::change_proposal_for_community(&entry.record, community_uri)
+        })
+        .collect()
+}
+///Every signed release published for the selected community.
+#[must_use]
+pub fn community_releases_for_community<'a>(
+    catalog: &'a Catalog,
+    community_uri: &str,
+) -> Vec<&'a Entry<idiolect_records::CommunityRelease>> {
+    catalog
+        .community_releases()
+        .filter(|entry| {
+            crate::predicates::community_release_for_community(&entry.record, community_uri)
+        })
+        .collect()
+}
+///Every planned, running, or paused migration run.
+#[must_use]
+pub fn active_migration_runs(catalog: &Catalog) -> Vec<&Entry<idiolect_records::MigrationRun>> {
+    catalog
+        .migration_runs()
+        .filter(|entry| crate::predicates::migration_run_is_active(&entry.record))
+        .collect()
+}
+///Every migration run attached to the selected governed change.
+#[must_use]
+pub fn migration_runs_for_change<'a>(
+    catalog: &'a Catalog,
+    change_uri: &str,
+) -> Vec<&'a Entry<idiolect_records::MigrationRun>> {
+    catalog
+        .migration_runs()
+        .filter(|entry| crate::predicates::migration_run_for_change(&entry.record, change_uri))
+        .collect()
+}
+///Every federation relationship declared by the selected community.
+#[must_use]
+pub fn federations_for_community<'a>(
+    catalog: &'a Catalog,
+    community_uri: &str,
+) -> Vec<&'a Entry<idiolect_records::Federation>> {
+    catalog
+        .federations()
+        .filter(|entry| crate::predicates::federation_for_community(&entry.record, community_uri))
+        .collect()
+}
+///Every federation relationship pointing at the selected peer community.
+#[must_use]
+pub fn federations_for_peer<'a>(
+    catalog: &'a Catalog,
+    peer_uri: &str,
+) -> Vec<&'a Entry<idiolect_records::Federation>> {
+    catalog
+        .federations()
+        .filter(|entry| crate::predicates::federation_for_peer(&entry.record, peer_uri))
+        .collect()
+}
 ///Every dialect whose `owning_community` at-uri matches.
 #[must_use]
 pub fn dialects_for_community<'a>(

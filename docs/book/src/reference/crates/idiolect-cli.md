@@ -22,6 +22,12 @@ to set.
 ```text
 idiolect resolve <did>
 idiolect fetch <at-uri>
+idiolect init|check|doctor [...]
+idiolect propose|preview|review [...]
+idiolect verify change <packet> [...]
+idiolect keygen|release [...]
+idiolect migrate <plan|advance|status> [...]
+idiolect export [...]
 idiolect orchestrator <subcommand>
 idiolect encounter record [...]
 idiolect oauth <login|list|logout> [...]
@@ -52,8 +58,8 @@ The CLI's `orchestrator …` dispatcher is emitted from
 the dispatcher. The new subcommand becomes available
 automatically.
 
-The hand-written subcommands (`resolve`, `fetch`, `encounter record`,
-`oauth`, `publish`, `verify`, `version`, and `help`) live in
+The hand-written subcommands (`resolve`, `fetch`, the community lifecycle,
+`encounter record`, `oauth`, `publish`, `verify`, `version`, and `help`) live in
 `main.rs` and their sibling modules.
 
 ## Output

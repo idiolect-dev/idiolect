@@ -10,6 +10,10 @@
 //! ```text
 //! idiolect resolve <did>                      # DID -> pds, handle
 //! idiolect fetch <at-uri>                     # fetch record as json
+//! idiolect init --name NAME --did DID         # create a community workspace
+//! idiolect propose [flags]                    # create a governed change packet
+//! idiolect release [flags]                    # sign an immutable release
+//! idiolect migrate <plan|advance|status>      # operate durable migration state
 //! idiolect orchestrator stats [--url URL]
 //! idiolect orchestrator bounties [--open] [--requester DID] [--url URL]
 //! idiolect orchestrator adapters [--framework NAME] [--url URL]
@@ -17,6 +21,9 @@
 //! idiolect encounter record --lens AT_URI --source-schema AT_URI
 //!                           [--target-schema AT_URI] [--vocab AT_URI]
 //!                           [--kind KIND] [--visibility V] [--text-only]
+//! idiolect oauth <login|callback|refresh|status|logout> [flags]
+//! idiolect publish <kind> [flags]
+//! idiolect verify <kind> [flags]
 //! idiolect version
 //! idiolect help
 //! ```
@@ -32,6 +39,7 @@ use idiolect_identity::{Did, IdentityResolver, ReqwestIdentityResolver};
 use idiolect_lens::{RecordFetcher, ReqwestPdsClient, fetcher_for_did};
 use tracing_subscriber::EnvFilter;
 
+mod community;
 mod encounter;
 mod generated;
 mod oauth;
@@ -64,6 +72,11 @@ async fn parse_and_run() -> Result<ExitCode> {
     match subcommand.as_str() {
         "resolve" => cmd_resolve(&args.collect::<Vec<_>>()).await,
         "fetch" => cmd_fetch(&args.collect::<Vec<_>>()).await,
+        "init" | "check" | "propose" | "preview" | "review" | "keygen" | "release" | "migrate"
+        | "export" | "doctor" => {
+            let nested: Vec<String> = args.collect();
+            community::dispatch(&subcommand, &nested)
+        }
         "orchestrator" | "orch" => {
             let nested: Vec<String> = args.collect();
             cmd_orchestrator(&nested).await
@@ -88,7 +101,11 @@ async fn parse_and_run() -> Result<ExitCode> {
         }
         "verify" => {
             let nested: Vec<String> = args.collect();
-            verify::dispatch(&nested).await
+            if nested.first().is_some_and(|arg| arg == "change") {
+                community::dispatch("verify-change", &nested[1..])
+            } else {
+                verify::dispatch(&nested).await
+            }
         }
         "version" | "--version" | "-V" => {
             println!("idiolect {}", env!("CARGO_PKG_VERSION"));
@@ -245,9 +262,23 @@ fn print_help() {
          top-level subcommands:\n  \
          resolve <did>                          resolve a DID to its PDS url + handle\n  \
          fetch <at-uri>                         fetch a record's body as json\n  \
+         init --name NAME --did DID             create a community workspace\n  \
+         check                                  validate the workspace and package paths\n  \
+         propose [flags]                        build a Panproto-backed change packet\n  \
+         preview <packet>                       explain a change in community terms\n  \
+         review <packet> [flags]                record and evaluate a governance review\n  \
+         verify change <packet> [flags]         attach verified/refuted/incomplete evidence\n  \
+         keygen [--out PATH]                    create an ES256 community release key\n  \
+         release [flags]                        build and sign a community release\n  \
+         migrate <plan|advance|status>          operate a durable migration run\n  \
+         export --out DIR                       create a portable exit export\n  \
+         doctor [--repair]                      diagnose the community workspace\n  \
          orchestrator stats [--url URL]         catalog counts by kind\n  \
          orchestrator <sub> [flags] [--url URL] query a running orchestrator\n  \
          encounter record [flags]               compose an encounter record from structured prompts\n  \
+         oauth <subcommand> [flags]             manage an ATProto OAuth session\n  \
+         publish <kind> [flags]                 publish an idiolect record to a PDS\n  \
+         verify <kind> [flags]                  run a lens verification method\n  \
          version                                print version\n  \
          help                                   show this help\n\
          \n\

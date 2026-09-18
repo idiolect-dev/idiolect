@@ -4,6 +4,10 @@ The guides start from an integration task and end with an operational
 result. If you have not yet resolved and translated a record, begin
 with the [tutorial](../tutorial/index.md).
 
+If you are setting up a community rather than integrating a service, begin
+with [Idiolect for a new community](../start/index.md), then use the four
+community-operation guides below.
+
 ## Project-integration path
 
 For a first application, take these steps in order:
@@ -32,6 +36,10 @@ side without changing the function of any individual guide.
 | [Run codegen](./codegen.md) | You edited a lexicon or a spec and need the generated tree refreshed. |
 | [Author a community vocabulary](./vocabulary.md) | You want to extend an open enum or publish a typed knowledge graph. |
 | [Bundle records into a dialect](./dialect.md) | You want to ship a coherent set of idiolects as one canonical bundle. |
+| [Operate a community workspace](./community-workspaces.md) | You need local policy, authorities, packages, diagnostics, and resource limits. |
+| [Govern definition changes](./governed-changes.md) | You need compatibility consequences, attributable reviews, and conclusive verification. |
+| [Sign releases and run migrations](./releases-migrations.md) | You need immutable signed releases and resumable operational state. |
+| [Federate and export](./federation-export.md) | You need peer-community dependencies, semantic mappings, or a portable exit. |
 
 For extension traits, feature flags, wire shapes, and endpoint
 parameters, use the [advanced reference path](../reference/index.md#extension-and-api-path).

@@ -1,169 +1,130 @@
 #!/usr/bin/env bash
-# Lexicon evolution policy: drive a lexicon revision through the
-# six-stage panproto-backed pipeline.
-#
-# CAVEAT: this script is the runnable spec of the policy, not a
-# turnkey tool. Several panproto subcommands referenced here (e.g.
-# `schema diff --json`, `schema lens verify --chain`) follow the
-# `panproto-build-migration` and `panproto-protolenses` skill specs;
-# the on-disk panproto CLI release may lag those specs. Stages that
-# fail because a subcommand is unavailable should be treated as
-# "skip; gate will run once panproto catches up".
+# Produce compatibility and optic-classification evidence for one ATProto
+# Lexicon change with Panproto's released CLI.
 #
 # Usage:
-#   scripts/lexicon-evolve.sh <nsid> <old-rev> <new-rev>
+#   scripts/lexicon-evolve.sh <nsid> <old-path> <new-path>
 #
-# Example:
-#   scripts/lexicon-evolve.sh dev.idiolect.vocab 1 2
-#
-# What it does:
-#   Stage 0  diff           panproto's structured schema diff
-#   Stage 1  derive          auto-generate a protolens chain
-#   Stage 2  classify        record the chain's information-theoretic class
-#   Stage 3  coercion check  honesty gate on cross-kind coercions
-#   Stage 4  verify corpus   roundtrip law check against live records
-#   Stage 5  publish lens    serialize chain and prepare for PDS publish
-#
-# Outputs land in:
-#   migrations/<nsid>/<old>-<new>/{diff.json,chain.json,classification.txt,verification.json}
+# Outputs default to migrations/<nsid>/comparison/. Set OUTPUT_DIR to place
+# CI artifacts elsewhere.
 #
 # Exit codes:
-#   0   pipeline ran cleanly; lens ready for review/publish
-#   1   stage failure; see stderr for which stage and why
-#   2   classification gate triggered manual review (Affine/General)
-#
-# Per the standing policy: every lexicon revision must ship a
-# verified, classified, published lens. A stage failure halts the
-# pipeline; the gate at Stage 2 may surface a chain that requires
-# manual lens authoring + governance sign-off.
+#   0  evidence produced; change is auto-merge eligible or needs PR review
+#   1  invalid input or Panproto command failure
+#   2  Panproto could not load/classify the schemas, or the optic gate held
 
 set -euo pipefail
 
 if [[ $# -ne 3 ]]; then
-  echo "Usage: $0 <nsid> <old-rev> <new-rev>" >&2
+  echo "Usage: $0 <nsid> <old-path> <new-path>" >&2
   exit 1
 fi
 
 NSID="$1"
-OLD_REV="$2"
-NEW_REV="$3"
+OLD_PATH="$2"
+NEW_PATH="$3"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LEX_DIR="$REPO_ROOT/lexicons"
-MIG_DIR="$REPO_ROOT/migrations/$NSID/$OLD_REV-$NEW_REV"
-mkdir -p "$MIG_DIR"
+MIG_DIR="${OUTPUT_DIR:-$REPO_ROOT/migrations/$NSID/comparison}"
 
-# Resolve the lexicon JSON paths. Lexicons are organized by the
-# reverse-DNS path of their NSID with a trailing .json.
-nsid_to_path() {
-  local nsid="$1"
-  local rev="$2"
-  echo "$LEX_DIR/${nsid//.//}.${rev}.json"
-}
-
-OLD_PATH="$(nsid_to_path "$NSID" "$OLD_REV")"
-NEW_PATH="$(nsid_to_path "$NSID" "$NEW_REV")"
-
-if [[ ! -f "$OLD_PATH" || ! -f "$NEW_PATH" ]]; then
-  # Versioned filenames not present; fall back to the unversioned
-  # canonical path. The "old" version is whatever git has at the
-  # previous tag/branch; the caller is responsible for materializing
-  # it via `git show <ref>:<path>` before invoking this script.
-  CANONICAL="$LEX_DIR/${NSID//.//}.json"
-  if [[ ! -f "$CANONICAL" ]]; then
-    echo "lexicon not found at $CANONICAL" >&2
+for path in "$OLD_PATH" "$NEW_PATH"; do
+  if [[ ! -f "$path" ]]; then
+    echo "lexicon not found: $path" >&2
     exit 1
   fi
-  OLD_PATH="$CANONICAL"
-  NEW_PATH="$CANONICAL"
-  echo "  warning: using canonical path for both old and new; this only" >&2
-  echo "  exercises stages 1-2 against the current revision." >&2
-fi
+done
 
-# Resolve panproto CLI; emit a clear failure if missing so the
-# caller knows which prerequisite to install rather than seeing a
-# generic command-not-found.
 if ! command -v schema >/dev/null 2>&1; then
-  echo "panproto 'schema' CLI not on PATH; install per panproto-getting-started" >&2
+  echo "Panproto 'schema' CLI not on PATH; install Panproto v0.74.4" >&2
   exit 1
 fi
 
-# Hint file is optional; consumers seed anchors here for ambiguous
-# renames.
-HINTS="$MIG_DIR/hints.json"
-
-DIFF="$MIG_DIR/diff.json"
-CHAIN="$MIG_DIR/chain.json"
+mkdir -p "$MIG_DIR"
+COMPAT="$MIG_DIR/compat.json"
+DIFF="$MIG_DIR/diff.txt"
 CLASS="$MIG_DIR/classification.txt"
-VERIFY="$MIG_DIR/verification.json"
 
-# Stage 0 — Diff.
-echo "[stage 0] diff $OLD_PATH -> $NEW_PATH"
-schema diff --src "$OLD_PATH" --tgt "$NEW_PATH" --json > "$DIFF"
+# `compat` accepts a protocol override for a bare Lexicon file, while `diff`
+# selects document parsers through a project manifest. Wrap each revision in a
+# one-document ATProto project so both commands compare the same parsed graph.
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/idiolect-lexicon-evolve.XXXXXX")"
+trap 'rm -rf -- "$WORK_DIR"' EXIT
+OLD_PROJECT="$WORK_DIR/old"
+NEW_PROJECT="$WORK_DIR/new"
+mkdir -p "$OLD_PROJECT/lexicons" "$NEW_PROJECT/lexicons"
+cp "$OLD_PATH" "$OLD_PROJECT/lexicons/schema.json"
+cp "$NEW_PATH" "$NEW_PROJECT/lexicons/schema.json"
+for project in "$OLD_PROJECT" "$NEW_PROJECT"; do
+  printf '%s\n' \
+    '[workspace]' \
+    'name = "idiolect-lexicon-evolution"' \
+    '' \
+    '[[package]]' \
+    'name = "lexicons"' \
+    'path = "lexicons"' \
+    'protocol = "atproto"' > "$project/panproto.toml"
+done
 
-# Stage 1 — Auto-derive a protolens chain.
-echo "[stage 1] generate protolens chain"
-if [[ -f "$HINTS" ]]; then
-  schema lens generate "$OLD_PATH" "$NEW_PATH" --hints "$HINTS" --json > "$CHAIN"
-else
-  schema lens generate "$OLD_PATH" "$NEW_PATH" --json > "$CHAIN"
-fi
-
-# Stage 2 — Classify and gate.
-echo "[stage 2] classify"
-schema lens inspect "$CHAIN" --protocol atproto > "$CLASS"
-
-class_token() {
-  # The first occurrence of one of the canonical class tokens wins.
-  grep -oE 'Iso|Injection|Projection|Affine|General' "$CLASS" | head -n 1 || true
-}
-CLASSIFICATION="$(class_token)"
-echo "  -> $CLASSIFICATION"
-
-case "$CLASSIFICATION" in
-  Iso|Injection)
-    echo "  auto-merge eligible"
-    ;;
-  Projection)
-    echo "  PR review required: complement persistence + data-loss disclosure"
-    ;;
-  Affine)
-    echo "  PR review + community recommendation required"
-    GATE_EXIT=2
-    ;;
-  General)
-    echo "  manual lens authoring required: gate held until sign-off"
-    GATE_EXIT=2
-    ;;
+# Compatibility is evidence rather than the final policy gate. Exit 1 means
+# Panproto found breaking changes and should not prevent optic classification;
+# exit 2 means the input or protocol could not be loaded and is fatal.
+echo "[stage 0] classify compatibility: $OLD_PATH -> $NEW_PATH"
+set +e
+schema compat --protocol atproto --format json "$OLD_PROJECT" "$NEW_PROJECT" > "$COMPAT"
+COMPAT_EXIT=$?
+set -e
+case "$COMPAT_EXIT" in
+  0) echo "  no breaking changes" ;;
+  1) echo "  breaking changes found; see $COMPAT" ;;
   *)
-    echo "  unrecognized classification token; treating as General" >&2
-    GATE_EXIT=2
+    echo "Panproto compatibility classification failed (exit $COMPAT_EXIT)" >&2
+    exit 2
     ;;
 esac
 
-# Stage 3 — Coercion law check (only if the chain references coerce
-# steps; the panproto CLI exits cleanly when no coercions are
-# present).
-echo "[stage 3] coercion law check"
-if grep -q '"coerce"' "$CHAIN"; then
-  schema theory check-coercion-laws "$CHAIN" --json > "$MIG_DIR/coercion.json"
+# Panproto v0.74.4 parses the manifest-backed ATProto projects through `diff`
+# and auto-classifies their generated migration. Chain serialization is a
+# separate authoring step because the released CLI's file-path `--lens --save`
+# route is not yet wired to the same project loader.
+echo "[stage 1] diff and classify optic"
+schema diff --detect-renames --optic-kind "$OLD_PROJECT" "$NEW_PROJECT" > "$DIFF"
+
+CLASSIFICATION="$({
+  grep -oE 'Optic classification: (iso|lens|prism|affine|traversal)' "$DIFF" || true
+} | tail -n 1 | sed -E 's/.*: //')"
+
+if [[ -z "$CLASSIFICATION" ]]; then
+  echo "Panproto did not emit an optic classification; see $DIFF" >&2
+  exit 2
 fi
 
-# Stage 4 — Roundtrip verification against the live record corpus
-# snapshot. Corpus path is configurable via $CORPUS or defaults to
-# `corpus/<nsid>/`. Stage runs only when a corpus exists.
-CORPUS="${CORPUS:-$REPO_ROOT/corpus/$NSID}"
-if [[ -d "$CORPUS" ]]; then
-  echo "[stage 4] verify against corpus $CORPUS"
-  schema lens verify "$CORPUS" --protocol atproto --schema "$NEW_PATH" --chain "$CHAIN" --json > "$VERIFY"
-else
-  echo "[stage 4] no corpus at $CORPUS; skipping (CI will gate this)"
-fi
+{
+  echo "nsid=$NSID"
+  echo "optic_kind=$CLASSIFICATION"
+  echo "compat_exit=$COMPAT_EXIT"
+} > "$CLASS"
+echo "  optic kind: $CLASSIFICATION"
 
-# Stage 5 — Publish lens record (preparation only; the actual PDS
-# write is gated behind explicit operator action).
-echo "[stage 5] lens prepared at $CHAIN"
-echo "  to publish: idiolect-cli publish-lens --collection dev.idiolect.lens --chain $CHAIN"
+# Policy maps the current OpticKind API onto review requirements. A prism is
+# injection-like; a lens is projection-like and must disclose complement and
+# reverse-direction loss. Affine/traversal changes need an authored chain and
+# governance sign-off before they can merge.
+case "$CLASSIFICATION" in
+  iso|prism)
+    echo "  auto-merge eligible"
+    ;;
+  lens)
+    echo "  PR review required: confirm complement persistence and data-loss disclosure"
+    ;;
+  affine|traversal)
+    echo "  manual chain authoring and governance sign-off required" >&2
+    exit 2
+    ;;
+  *)
+    echo "unrecognized optic classification: $CLASSIFICATION" >&2
+    exit 2
+    ;;
+esac
 
-# Exit code reflects the classification gate.
-exit "${GATE_EXIT:-0}"
+echo "Evidence written to $MIG_DIR"
+echo "A publishable chain, once authored and verified, uses collection dev.panproto.schema.lens."

@@ -22,6 +22,13 @@ updates:
     labels:
       - dependencies
       - rust
+    groups:
+      # These crates share arena/AST types and must resolve to one release.
+      # Independent PRs fail the codegen drift gate before the other Oxc
+      # packages have moved with them.
+      oxc-toolchain:
+        patterns:
+          - "oxc_*"
     # panproto is pinned to a release tag we bump manually.
     ignore:
       - dependency-name: "panproto-*"
@@ -37,6 +44,13 @@ updates:
     labels:
       - dependencies
       - typescript
+    groups:
+      # The Lexicon parser and syntax package publish coordinated type changes.
+      # Test them as one upgrade instead of accumulating mutually incomplete PRs.
+      atproto-sdk:
+        patterns:
+          - "@atproto/lexicon"
+          - "@atproto/syntax"
 
   - package-ecosystem: github-actions
     directory: "/"

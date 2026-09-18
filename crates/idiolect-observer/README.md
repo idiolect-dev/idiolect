@@ -30,7 +30,9 @@ flowchart LR
             M7["basis-distribution"]
             M8["attribution-chains"]
             M9["deliberation-tally"]
-            M10["dialect-federation"]
+            M10["migration-health"]
+            M11["release-adoption"]
+            MX["dialect-federation<br/>(explicit watch list)"]
         end
         IM["InstanceMethod<br/>(panproto WInstance)"]
         ADAPT["InstanceMethodAdapter"]
@@ -55,6 +57,8 @@ flowchart LR
     OH --> M8
     OH --> M9
     OH --> M10
+    OH --> M11
+    OH --> MX
     IM --> ADAPT --> OH
     FS -.triggers.-> OH
     OH --> P1
@@ -63,7 +67,7 @@ flowchart LR
     P3 -->|dev.idiolect.observation| PDS
 ```
 
-The generated default set contains nine methods:
+The generated default set contains eleven methods:
 
 - **`correction-rate`:** per-lens correction counts grouped by reason.
 - **`encounter-throughput`:** encounter traffic by kind and downstream
@@ -78,6 +82,10 @@ The generated default set contains nine methods:
 - **`basis-distribution`:** record counts by basis variant and record kind.
 - **`attribution-chains`:** belief counts by holder DID and subject AT-URI.
 - **`deliberation-tally`:** vote counts by statement and stance.
+- **`migration-health`:** latest durable migration status, progress, known
+  totals, and failure counts by community.
+- **`release-adoption`:** release, artifact, dependency, signed-release, and
+  distinct-signer counts by community.
 
 The crate also exports **`dialect-federation`**, which records each watched
 community's current dialect and the lens-set changes since the previous

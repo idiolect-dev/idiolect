@@ -1,0 +1,220 @@
+{
+  "lexicon": 1,
+  "id": "dev.idiolect.changeProposal",
+  "description": "A governed community change packet. It combines plain-language intent with compatibility consequences, review state, and three-state verification so participants can inspect both the proposal and the evidence behind it.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "description": "A proposal to change one community-governed schema or vocabulary.",
+      "record": {
+        "type": "object",
+        "required": [
+          "community",
+          "title",
+          "summary",
+          "author",
+          "status",
+          "source",
+          "target",
+          "compatibility",
+          "verificationStatus",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "community": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "Published dev.idiolect.community record governing this change."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Short participant-facing title."
+          },
+          "summary": {
+            "type": "string",
+            "maxGraphemes": 10000,
+            "description": "Plain-language intent, scope, and expected benefit."
+          },
+          "author": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the proposer."
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": [
+              "draft",
+              "review",
+              "approved",
+              "rejected",
+              "released",
+              "superseded"
+            ],
+            "description": "Current lifecycle state."
+          },
+          "source": {
+            "type": "ref",
+            "ref": "#schemaEndpoint",
+            "description": "Schema revision the change starts from."
+          },
+          "target": {
+            "type": "ref",
+            "ref": "#schemaEndpoint",
+            "description": "Schema revision the change proposes."
+          },
+          "compatibility": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": [
+              "fully-compatible",
+              "backward-compatible",
+              "breaking"
+            ],
+            "description": "Panproto compatibility classification."
+          },
+          "opticKind": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": ["iso", "lens", "prism", "affine", "traversal"],
+            "description": "Panproto optic kind when a migration chain was derived."
+          },
+          "consequences": {
+            "type": "array",
+            "maxLength": 256,
+            "items": {
+              "type": "ref",
+              "ref": "#consequence"
+            },
+            "description": "Participant-facing statements about compatibility, data retention, and migration."
+          },
+          "affected": {
+            "type": "array",
+            "maxLength": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "description": "Known applications, collections, or working groups affected."
+          },
+          "rollback": {
+            "type": "string",
+            "maxGraphemes": 10000,
+            "description": "How and under what conditions the change can be reversed."
+          },
+          "deliberation": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "Optional dev.idiolect.deliberation record carrying discussion."
+          },
+          "reviews": {
+            "type": "array",
+            "maxLength": 500,
+            "items": {
+              "type": "ref",
+              "ref": "#review"
+            },
+            "description": "Attributable reviews evaluated under community policy."
+          },
+          "verificationStatus": {
+            "type": "string",
+            "maxLength": 64,
+            "knownValues": ["verified", "refuted", "incomplete", "not-run"],
+            "description": "Aggregate verification result. Incomplete is never equivalent to verified."
+          },
+          "verifications": {
+            "type": "array",
+            "maxLength": 256,
+            "items": {
+              "type": "string",
+              "format": "at-uri"
+            },
+            "description": "Published dev.idiolect.verification records supporting the proposal."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    },
+    "schemaEndpoint": {
+      "type": "object",
+      "required": ["protocol", "location", "digest"],
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Canonical Panproto protocol registry key."
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Published URI or repository-relative path."
+        },
+        "digest": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Content digest, normally sha256:<hex>."
+        }
+      }
+    },
+    "consequence": {
+      "type": "object",
+      "required": ["code", "severity", "headline", "detail"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "severity": {
+          "type": "string",
+          "maxLength": 64,
+          "knownValues": ["information", "review", "blocking"]
+        },
+        "headline": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "detail": {
+          "type": "string",
+          "maxGraphemes": 5000
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "required": ["reviewer", "role", "stance", "reviewedAt"],
+      "properties": {
+        "reviewer": {
+          "type": "string",
+          "format": "did"
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "stance": {
+          "type": "string",
+          "maxLength": 64,
+          "knownValues": ["approve", "reject", "abstain"]
+        },
+        "comment": {
+          "type": "string",
+          "maxGraphemes": 5000
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "datetime"
+        }
+      }
+    }
+  }
+}

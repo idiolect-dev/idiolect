@@ -36,7 +36,53 @@ pub fn dispatch(
             }
             Ok("/v1/bounties/open".to_owned())
         }
+        ["changes"] => {
+            if let Some(value) = flags.get("community_uri") {
+                return Ok(format!(
+                    "/v1/changes/for-community?community_uri={}",
+                    urlencode(value)
+                ));
+            }
+            Ok("/v1/changes/open".to_owned())
+        }
+        ["federations"] => {
+            if let Some(value) = flags.get("community_uri") {
+                return Ok(format!(
+                    "/v1/federations/for-community?community_uri={}",
+                    urlencode(value)
+                ));
+            }
+            if let Some(value) = flags.get("peer_uri") {
+                return Ok(format!(
+                    "/v1/federations/for-peer?peer_uri={}",
+                    urlencode(value)
+                ));
+            }
+            Err(anyhow!(
+                "`orchestrator federations` requires one of: --community_uri, --peer_uri"
+            ))
+        }
+        ["migrations"] => {
+            if let Some(value) = flags.get("change_uri") {
+                return Ok(format!(
+                    "/v1/migrations/for-change?change_uri={}",
+                    urlencode(value)
+                ));
+            }
+            Ok("/v1/migrations/active".to_owned())
+        }
         ["recommendations"] => Ok("/v1/recommendations".to_owned()),
+        ["releases"] => {
+            if let Some(value) = flags.get("community_uri") {
+                return Ok(format!(
+                    "/v1/releases/for-community?community_uri={}",
+                    urlencode(value)
+                ));
+            }
+            Err(anyhow!(
+                "`orchestrator releases` requires one of: --community_uri"
+            ))
+        }
         ["verifications"] => {
             if let Some(value) = flags.get("lens_uri") {
                 return Ok(format!("/v1/verifications?lens_uri={}", urlencode(value)));
@@ -82,7 +128,26 @@ pub fn help_text() -> String {
         "    orchestrator bounties --requester_did VALUE   Every bounty authored by the given requester DID.\n",
     );
     s.push_str(
+        "    orchestrator changes   Every governed change that is still in draft or review.\n",
+    );
+    s.push_str(
+        "    orchestrator changes --community_uri VALUE   Every governed change owned by the selected community.\n",
+    );
+    s.push_str(
+        "    orchestrator federations --community_uri VALUE   Every federation relationship declared by the selected community.\n",
+    );
+    s.push_str(
+        "    orchestrator federations --peer_uri VALUE   Every federation relationship pointing at the selected peer community.\n",
+    );
+    s.push_str("    orchestrator migrations   Every planned, running, or paused migration run.\n");
+    s.push_str(
+        "    orchestrator migrations --change_uri VALUE   Every migration run attached to the selected governed change.\n",
+    );
+    s.push_str(
         "    orchestrator recommendations   Every recommendation whose lens_path is non-empty.\n",
+    );
+    s.push_str(
+        "    orchestrator releases --community_uri VALUE   Every signed release published for the selected community.\n",
     );
     s.push_str(
         "    orchestrator verifications --lens_uri AT_URI   Every verification in the catalog that targets the given lens.\n",

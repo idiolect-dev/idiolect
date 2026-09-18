@@ -18,7 +18,10 @@ Read these chapters in order if the project is new to you:
 3. [Idiolect, dialect, language](./idiolect-dialect-language.md) separates the
    linguistic analogy from the concrete runtime artifacts.
 4. [The `dev.idiolect.*` lexicon family](./lexicon-family.md) maps those artifacts
-   onto the sixteen record kinds shipped by the repository.
+   onto the twenty record kinds shipped by the repository.
+5. [The community control plane](./community-control-plane.md) connects a
+   proposed definition change to governance, evidence, release, migration,
+   federation, and portable exit.
 
 ## Runtime model
 
@@ -37,7 +40,7 @@ The next four chapters explain how the runtime interprets those records:
 
 [Lens semantics and laws](./lens-laws.md) is the formal center of the book. It
 introduces complements, round-trip laws, optic classification, and symmetric
-span construction against panproto 0.71.0. [Deliberation](./deliberation.md)
+span construction against panproto 0.74.4. [Deliberation](./deliberation.md)
 then separates a community's decision process from its settled beliefs and
 recommendations. [Lexicon evolution policy](./lexicon-evolution.md) closes the
 section by comparing the intended migration gate with the enforcement that the

@@ -16,7 +16,7 @@ in a shell script and CI workflow. It does not yet enforce the entire chain.
 returns `OnlyNonBreaking`: old records remain readable under the new schema, so
 the library does not manufacture a migration plan.
 
-If breaking changes exist, `plan_auto` asks panproto 0.71.0's `auto_generate`
+If breaking changes exist, `plan_auto` asks panproto 0.74.4's `auto_generate`
 for a `ProtolensChain`. Its default `Balanced` configuration uses the exact
 valued-CSP optimizer and requires a total morphism. Success returns a
 `MigrationPlan` containing the source and target schema identifiers supplied by
@@ -53,7 +53,7 @@ those policy records is created by `plan_auto`.
 
 ## Optic kinds are not governance classes
 
-panproto 0.71.0 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
+panproto 0.74.4 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
 `Traversal`. Earlier versions of this chapter described a different five-way
 set, `Iso`/`Injection`/`Projection`/`Affine`/`General`, and assigned automatic
 merge policy to it. That set is not the current `OpticKind` API.
@@ -66,27 +66,49 @@ presented as classifications returned by panproto.
 ## Current automation boundary
 
 The repository contains `scripts/lexicon-evolve.sh` and
-`.github/workflows/lexicon-evolution.yml`, but both still encode the earlier CLI
-and classification contract. With panproto 0.71.0:
+`.github/workflows/lexicon-evolution.yml` implement the first part of the EEC
+against panproto 0.74.4. The workflow installs the versioned CLI artifact,
+materializes the base revision of each changed Lexicon, and retains two forms
+of evidence: the JSON result of `schema compat` and the textual result of
+`schema diff --optic-kind`. The gate admits `iso` and `prism`, requires review
+for `lens`, and holds `affine` and `traversal` changes for a hand-authored chain
+and governance sign-off.
 
-- `schema diff` accepts positional `OLD NEW` paths rather than `--src` and
-  `--tgt`, and it has no `--json` flag;
-- `schema lens generate` requires `--protocol` and needs `--chain` to emit a
-  reusable chain;
-- `schema lens inspect` reports the current optic kinds; and
-- `schema lens verify` accepts a data file and optional schema, not the
-  directory/`--schema`/`--chain` combination in the script.
+This gate does not yet serialize the auto-derived chain. The released `diff`
+and `compat` commands load manifest-backed ATProto Lexicon projects, while the
+file-path chain-writing route does not yet share that loader. Verification and
+publication thus begin after the CI gate, using `idiolect-verify`,
+`idiolect-lens`, and an authenticated PDS writer. We call this remaining
+discrepancy the **chain-publication gap (CPG)**.
 
-The workflow makes CLI installation non-fatal and skips its pipeline when the
-installation step does not report success. It also searches for the obsolete
-classification names. Thus, the checked-in automation is a design scaffold,
-not a reliable merge gate for 0.71.0. We call this discrepancy the
-**enforcement gap (EG)**.
+## Opportunities opened by panproto 0.74.4
+
+The newer Panproto surface suggests four concrete tooling improvements beyond
+the dependency bump:
+
+1. The canonical protocol registry could replace direct calls to the ATProto
+   parser and protocol constructor in schema loading, code generation, and
+   verification. This would give those tools one capability-discovery path and
+   make support for another registered protocol an explicit configuration
+   choice.
+2. Shared `ResourceLimits` and `Budget` values could bound schema parsing,
+   morphism search, migration, and verification at every untrusted-input
+   boundary. Idiolect currently has service-level limits, but it does not yet
+   pass one Panproto budget through the entire operation.
+3. Panproto's three-valued verification result should flow into
+   `idiolect-verify` reports and published attestations. `Incomplete` is
+   evidence that a check did not finish, not a passing result; CI and CLI exit
+   codes should preserve that distinction.
+4. Cross-document ATProto parsing and the corrected VCS staged-data path could
+   make repository-wide Lexicon checks operate on one resolved project rather
+   than on files independently. This is the natural route to closing the CPG:
+   stage both revisions, derive a chain over the assembled schemas, then retain
+   its object identity with the compatibility and corpus evidence.
 
 ## A defensible gate
 
-Until the EG is closed, reviewers can apply the EEC as an explicit
-checklist:
+Until the CPG is closed, reviewers can apply the rest of the EEC as an explicit
+checklist after the automated compatibility and optic gate:
 
 1. compare the old and new parsed schemas with `idiolect-migrate::classify`;
 2. require a reviewed `MigrationPlan` or a hand-authored chain for each
@@ -103,7 +125,7 @@ Two points follow:
 2. It makes the remaining assumptions and evidence inspectable.
 
 This leaves two live questions: which additional evidence would justify a
-stronger reversibility claim, and which parts of the EEC should become enforced
-CI gates? The [migration guide](../guide/migrate.md) covers the current library
-path, while [Lens semantics and laws](./lens-laws.md) explains the obligations
-being tested.
+stronger reversibility claim, and how should a resolved project be converted
+into a publishable chain without splitting the loader path? The
+[migration guide](../guide/migrate.md) covers the current library path, while
+[Lens semantics and laws](./lens-laws.md) explains the obligations being tested.

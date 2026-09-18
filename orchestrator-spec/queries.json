@@ -145,6 +145,104 @@
       "description": "Every community whose name matches (case-insensitive)."
     },
     {
+      "name": "open_change_proposals",
+      "entity": "change_proposal",
+      "predicate": "change_proposal_is_open",
+      "params": [],
+      "http": { "path": "/v1/changes/open" },
+      "cli": { "subcommand": ["changes"], "default": true },
+      "description": "Every governed change that is still in draft or review."
+    },
+    {
+      "name": "change_proposals_for_community",
+      "entity": "change_proposal",
+      "predicate": "change_proposal_for_community",
+      "params": [
+        {
+          "name": "community_uri",
+          "rust_kind": "String",
+          "http_query": "community_uri",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/changes/for-community" },
+      "cli": { "subcommand": ["changes"], "flag": "community_uri" },
+      "description": "Every governed change owned by the selected community."
+    },
+    {
+      "name": "community_releases_for_community",
+      "entity": "community_release",
+      "predicate": "community_release_for_community",
+      "params": [
+        {
+          "name": "community_uri",
+          "rust_kind": "String",
+          "http_query": "community_uri",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/releases/for-community" },
+      "cli": { "subcommand": ["releases"], "flag": "community_uri" },
+      "description": "Every signed release published for the selected community."
+    },
+    {
+      "name": "active_migration_runs",
+      "entity": "migration_run",
+      "predicate": "migration_run_is_active",
+      "params": [],
+      "http": { "path": "/v1/migrations/active" },
+      "cli": { "subcommand": ["migrations"], "default": true },
+      "description": "Every planned, running, or paused migration run."
+    },
+    {
+      "name": "migration_runs_for_change",
+      "entity": "migration_run",
+      "predicate": "migration_run_for_change",
+      "params": [
+        {
+          "name": "change_uri",
+          "rust_kind": "String",
+          "http_query": "change_uri",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/migrations/for-change" },
+      "cli": { "subcommand": ["migrations"], "flag": "change_uri" },
+      "description": "Every migration run attached to the selected governed change."
+    },
+    {
+      "name": "federations_for_community",
+      "entity": "federation",
+      "predicate": "federation_for_community",
+      "params": [
+        {
+          "name": "community_uri",
+          "rust_kind": "String",
+          "http_query": "community_uri",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/federations/for-community" },
+      "cli": { "subcommand": ["federations"], "flag": "community_uri" },
+      "description": "Every federation relationship declared by the selected community."
+    },
+    {
+      "name": "federations_for_peer",
+      "entity": "federation",
+      "predicate": "federation_for_peer",
+      "params": [
+        {
+          "name": "peer_uri",
+          "rust_kind": "String",
+          "http_query": "peer_uri",
+          "parser": "string"
+        }
+      ],
+      "http": { "path": "/v1/federations/for-peer" },
+      "cli": { "subcommand": ["federations"], "flag": "peer_uri" },
+      "description": "Every federation relationship pointing at the selected peer community."
+    },
+    {
       "name": "dialects_for_community",
       "entity": "dialect",
       "predicate": "dialect_for_community",

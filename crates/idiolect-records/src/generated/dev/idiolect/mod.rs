@@ -5,7 +5,9 @@
 pub mod adapter;
 pub mod belief;
 pub mod bounty;
+pub mod change_proposal;
 pub mod community;
+pub mod community_release;
 pub mod correction;
 pub mod defs;
 pub mod deliberation;
@@ -14,6 +16,8 @@ pub mod deliberation_statement;
 pub mod deliberation_vote;
 pub mod dialect;
 pub mod encounter;
+pub mod federation;
+pub mod migration_run;
 pub mod observation;
 pub mod recommendation;
 pub mod retrospection;

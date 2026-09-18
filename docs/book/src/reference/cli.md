@@ -1,13 +1,20 @@
 # CLI
 
 `idiolect` is the command-line tool. The surface below reflects
-idiolect 0.12.1.
+idiolect 0.13.0.
 
 ## Top-level subcommands
 
 ```text
 idiolect resolve <did>
 idiolect fetch <at-uri>
+idiolect init --name NAME --did DID [--workspace DIR]
+idiolect check|doctor [--workspace DIR]
+idiolect propose|preview|review [...]
+idiolect verify change <packet> [...]
+idiolect keygen|release [...]
+idiolect migrate <plan|advance|status> [...]
+idiolect export --out DIR [...]
 idiolect orchestrator <subcommand>
 idiolect encounter record [...]
 idiolect oauth login | list | logout [...]
@@ -17,8 +24,8 @@ idiolect version          # also accepts --version, -V
 idiolect help [<sub>]     # also accepts --help, -h
 ```
 
-The hand-written subcommands (`resolve`, `fetch`, `oauth`,
-`publish`, `verify`, `encounter`) live in their own modules
+The hand-written subcommands (`resolve`, `fetch`, the community lifecycle,
+`oauth`, `publish`, `verify`, `encounter`) live in their own modules
 under `crates/idiolect-cli/src/`. The `orchestrator` subcommand
 is generated from `orchestrator-spec/queries.json` and routes
 its calls to the orchestrator's HTTP API.
@@ -59,12 +66,44 @@ the live list):
 | `idiolect orchestrator adapters --framework <NAME>` | `GET /v1/adapters?framework=...` |
 | `idiolect orchestrator bounties` | `GET /v1/bounties/open` |
 | `idiolect orchestrator bounties --requester_did <DID>` | `GET /v1/bounties/by-requester?requester_did=...` |
+| `idiolect orchestrator changes` | `GET /v1/changes/open` |
+| `idiolect orchestrator changes --community_uri <AT-URI>` | `GET /v1/changes/for-community?community_uri=...` |
+| `idiolect orchestrator releases --community_uri <AT-URI>` | `GET /v1/releases/for-community?community_uri=...` |
+| `idiolect orchestrator migrations` | `GET /v1/migrations/active` |
+| `idiolect orchestrator migrations --change_uri <AT-URI>` | `GET /v1/migrations/for-change?change_uri=...` |
+| `idiolect orchestrator federations --community_uri <AT-URI>` | `GET /v1/federations/for-community?community_uri=...` |
+| `idiolect orchestrator federations --peer_uri <AT-URI>` | `GET /v1/federations/for-peer?peer_uri=...` |
 | `idiolect orchestrator recommendations` | `GET /v1/recommendations` |
 | `idiolect orchestrator verifications --lens_uri <AT-URI>` | `GET /v1/verifications?lens_uri=...` |
 
 Adding a query to the spec extends both the HTTP and the CLI
 surface. See [Run codegen](../guide/codegen.md). The CLI's
 top-level `--url` flag overrides the default orchestrator base.
+
+## Community lifecycle
+
+The community commands operate on a local workspace and do not publish by
+themselves.
+
+| Command | Purpose |
+|---|---|
+| `init --name NAME --did DID` | Create `idiolect.toml`, a definition package, and managed artifact directories. |
+| `check [--json]` | Validate manifest and package layout. |
+| `doctor [--repair] [--json]` | Diagnose policy, paths, federation mappings, and artifact inventory; optionally recreate managed directories. |
+| `propose --title … --old FILE --new FILE` | Produce a resource-bounded Panproto change packet. |
+| `preview <packet> [--json]` | Print participant-facing consequences or the complete packet. |
+| `review <packet> --reviewer DID --role ROLE --stance …` | Record or replace one attributable review and re-evaluate governance. |
+| `verify change <packet> --kind KIND --outcome … --tool TOOL` | Attach `verified`, `refuted`, or `incomplete` evidence. |
+| `keygen` | Create a P-256 community release key. |
+| `release --version V --change PACKET --artifact FILE --key KEY --signer DID` | Gate, assemble, hash, sign, and write a community release. |
+| `release verify <release.json>` | Verify bundle digest, ES256 signatures, authority membership, and threshold. |
+| `migrate plan\|advance\|status` | Create and operate a durable migration run. |
+| `export --out DIR [--release FILE]` | Write a portable, inventoried exit directory. |
+
+All accept `--workspace DIR` where a workspace is required; the default is the
+current directory. Repeat `--change`, `--artifact`, and `--failure` when a
+command accepts several values. See the [new-community path](../start/index.md)
+for one complete runnable sequence.
 
 ## `oauth`
 

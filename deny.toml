@@ -10,6 +10,9 @@
 # Changes to this file touch supply-chain policy; review accordingly.
 
 [graph]
+# `wasm32` is intentionally absent: Idiolect's supported deployment matrix is
+# native. The scheduled lockfile-wide cargo-audit job separately records its
+# bounded exception for atrium-common's wasm32-only lru dependency.
 targets = [
     { triple = "x86_64-unknown-linux-gnu" },
     { triple = "aarch64-unknown-linux-gnu" },
@@ -32,8 +35,8 @@ feature-depth = 1
 version = 2
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
-# Any active advisory is a CI failure. Transient exceptions go in
-# the `ignore` list with a link to tracking issue.
+# Any active advisory in the supported target graph is a CI failure. Transient
+# exceptions must include a reason and a removal condition.
 yanked = "deny"
 ignore = []
 

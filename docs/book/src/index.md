@@ -18,7 +18,10 @@ central schema registry.
 
 ### Beginner: get a result in about five minutes
 
-[Install the checked-out CLI and resolve a record](./tutorial/01-install.md), then
+If you are supporting a group, start with [Idiolect for a new
+community](./start/index.md). It uses plain language and one local workflow from
+community rules to a portable release. If you are integrating software,
+[install the checked-out CLI and resolve a record](./tutorial/01-install.md), then
 [validate it against its Lexicon](./tutorial/02-validate.md). These first two
 steps produce a concrete resolution and validation result before introducing
 lens laws, network publication, or the project's social records.
@@ -79,6 +82,7 @@ flowchart TB
         OBS["idiolect-observer"]
         VER["idiolect-verify"]
         MIG["idiolect-migrate"]
+        COM["idiolect-community"]
         LENS["idiolect-lens"]
     end
 
@@ -94,6 +98,8 @@ flowchart TB
     LENS -->|reads/writes records| PDS
     LENS --> MIG
     LENS --> VER
+    COM -->|governed artifacts| ORC
+    COM -->|release + migration evidence| PDS
 ```
 
 Lexicons under `lexicons/dev/idiolect/` are the source of truth for the record

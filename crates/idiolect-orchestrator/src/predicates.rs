@@ -23,11 +23,14 @@
 
 use idiolect_records::generated::dev::idiolect::adapter::AdapterInvocationProtocolKind;
 use idiolect_records::generated::dev::idiolect::bounty::{BountyStatus, BountyWants};
+use idiolect_records::generated::dev::idiolect::change_proposal::ChangeProposalStatus;
 use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
+use idiolect_records::generated::dev::idiolect::migration_run::MigrationRunStatus;
 use idiolect_records::generated::dev::idiolect::verification::VerificationKind;
 use idiolect_records::generated::dev::idiolect::vocab::VocabWorld;
 use idiolect_records::{
-    Adapter, Belief, Bounty, Community, Dialect, Recommendation, Verification, Vocab,
+    Adapter, Belief, Bounty, ChangeProposal, Community, CommunityRelease, Dialect, Federation,
+    MigrationRun, Recommendation, Verification, Vocab,
 };
 
 // -----------------------------------------------------------------
@@ -133,6 +136,58 @@ pub fn community_has_member(c: &Community, member_did: &str) -> bool {
 #[must_use]
 pub fn community_by_name(c: &Community, name: &str) -> bool {
     c.name.eq_ignore_ascii_case(name)
+}
+
+// -----------------------------------------------------------------
+// Governed-change and release predicates.
+// -----------------------------------------------------------------
+
+/// A change still accepting edits or reviews.
+#[must_use]
+pub const fn change_proposal_is_open(change: &ChangeProposal) -> bool {
+    matches!(
+        change.status,
+        ChangeProposalStatus::Draft | ChangeProposalStatus::Review
+    )
+}
+
+/// Change governed by the selected community record.
+#[must_use]
+pub fn change_proposal_for_community(change: &ChangeProposal, community_uri: &str) -> bool {
+    change.community.as_str() == community_uri
+}
+
+/// Signed release published for the selected community record.
+#[must_use]
+pub fn community_release_for_community(release: &CommunityRelease, community_uri: &str) -> bool {
+    release.community.as_str() == community_uri
+}
+
+/// Migration that has not yet reached a terminal state.
+#[must_use]
+pub const fn migration_run_is_active(run: &MigrationRun) -> bool {
+    matches!(
+        run.status,
+        MigrationRunStatus::Planned | MigrationRunStatus::Running | MigrationRunStatus::Paused
+    )
+}
+
+/// Migration attached to the selected governed change.
+#[must_use]
+pub fn migration_run_for_change(run: &MigrationRun, change_uri: &str) -> bool {
+    run.change.as_str() == change_uri
+}
+
+/// Federation relationship declared by the selected community.
+#[must_use]
+pub fn federation_for_community(federation: &Federation, community_uri: &str) -> bool {
+    federation.community.as_str() == community_uri
+}
+
+/// Federation relationship pointing at the selected peer.
+#[must_use]
+pub fn federation_for_peer(federation: &Federation, peer_uri: &str) -> bool {
+    federation.peer.as_str() == peer_uri
 }
 
 // -----------------------------------------------------------------

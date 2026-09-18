@@ -31,10 +31,13 @@ use crate::catalog::{Catalog, Entry};
 // -----------------------------------------------------------------
 
 pub use crate::generated::queries::{
-    adapters_by_invocation_protocol, adapters_for_framework, beliefs_about_record,
-    beliefs_by_holder, bounties_by_requester, bounties_for_want_lens, communities_by_name,
-    communities_for_member, dialects_for_community, open_bounties, recommendations_starting_from,
-    verifications_by_kind, verifications_for_lens, vocabularies_by_name, vocabularies_with_world,
+    active_migration_runs, adapters_by_invocation_protocol, adapters_for_framework,
+    beliefs_about_record, beliefs_by_holder, bounties_by_requester, bounties_for_want_lens,
+    change_proposals_for_community, communities_by_name, communities_for_member,
+    community_releases_for_community, dialects_for_community, federations_for_community,
+    federations_for_peer, migration_runs_for_change, open_bounties, open_change_proposals,
+    recommendations_starting_from, verifications_by_kind, verifications_for_lens,
+    vocabularies_by_name, vocabularies_with_world,
 };
 
 // Reference-matching helpers stay public on the query module too so
@@ -165,12 +168,16 @@ pub fn catalog_stats(catalog: &Catalog) -> CatalogStats {
         adapters: catalog.adapters().count(),
         beliefs: catalog.beliefs().count(),
         bounties: catalog.bounties().count(),
+        change_proposals: catalog.change_proposals().count(),
         communities: catalog.communities().count(),
+        community_releases: catalog.community_releases().count(),
         deliberations: catalog.deliberations().count(),
         deliberation_statements: catalog.deliberation_statements().count(),
         deliberation_votes: catalog.deliberation_votes().count(),
         deliberation_outcomes: catalog.deliberation_outcomes().count(),
         dialects: catalog.dialects().count(),
+        federations: catalog.federations().count(),
+        migration_runs: catalog.migration_runs().count(),
         recommendations: catalog.recommendations().count(),
         verifications: catalog.verifications().count(),
         vocabularies: catalog.vocabularies().count(),
@@ -241,8 +248,12 @@ pub struct CatalogStats {
     pub beliefs: usize,
     /// Count of `Bounty` records.
     pub bounties: usize,
+    /// Count of `ChangeProposal` records.
+    pub change_proposals: usize,
     /// Count of `Community` records.
     pub communities: usize,
+    /// Count of `CommunityRelease` records.
+    pub community_releases: usize,
     /// Count of `Deliberation` records.
     pub deliberations: usize,
     /// Count of `DeliberationStatement` records.
@@ -253,6 +264,10 @@ pub struct CatalogStats {
     pub deliberation_outcomes: usize,
     /// Count of `Dialect` records.
     pub dialects: usize,
+    /// Count of `Federation` records.
+    pub federations: usize,
+    /// Count of `MigrationRun` records.
+    pub migration_runs: usize,
     /// Count of `Recommendation` records.
     pub recommendations: usize,
     /// Count of `Verification` records.
@@ -268,12 +283,16 @@ impl CatalogStats {
         self.adapters
             + self.beliefs
             + self.bounties
+            + self.change_proposals
             + self.communities
+            + self.community_releases
             + self.deliberations
             + self.deliberation_statements
             + self.deliberation_votes
             + self.deliberation_outcomes
             + self.dialects
+            + self.federations
+            + self.migration_runs
             + self.recommendations
             + self.verifications
             + self.vocabularies

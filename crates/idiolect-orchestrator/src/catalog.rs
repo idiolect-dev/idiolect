@@ -17,7 +17,11 @@
 //! - [`Belief`] — doxastic claims attributing attitudes to third parties.
 //! - [`Bounty`] — open / claimed / fulfilled requests.
 //! - [`Community`] — self-constituted groups.
+//! - [`ChangeProposal`] — governed definition changes and their evidence.
+//! - [`CommunityRelease`] — signed community release indexes.
 //! - [`Dialect`] — per-community preferred lens/schema bundles.
+//! - [`Federation`] — declared inter-community relationships.
+//! - [`MigrationRun`] — durable migration progress and failure state.
 //! - [`Recommendation`] — community-declared lens paths.
 //! - [`Verification`] — signed assertions about a lens's properties.
 //! - [`Vocab`] — published action / purpose vocabularies; the
@@ -33,8 +37,9 @@
 use std::collections::HashMap;
 
 use idiolect_records::{
-    Adapter, AnyRecord, Belief, Bounty, Community, Deliberation, DeliberationOutcome,
-    DeliberationStatement, DeliberationVote, Dialect, Recommendation, Verification, Vocab,
+    Adapter, AnyRecord, Belief, Bounty, ChangeProposal, Community, CommunityRelease, Deliberation,
+    DeliberationOutcome, DeliberationStatement, DeliberationVote, Dialect, Federation,
+    MigrationRun, Recommendation, Verification, Vocab,
 };
 
 /// Cataloged record, keyed by at-uri in the parent maps.
@@ -65,12 +70,16 @@ pub struct Catalog {
     adapters: HashMap<String, Entry<Adapter>>,
     beliefs: HashMap<String, Entry<Belief>>,
     bounties: HashMap<String, Entry<Bounty>>,
+    change_proposals: HashMap<String, Entry<ChangeProposal>>,
     communities: HashMap<String, Entry<Community>>,
+    community_releases: HashMap<String, Entry<CommunityRelease>>,
     deliberations: HashMap<String, Entry<Deliberation>>,
     deliberation_statements: HashMap<String, Entry<DeliberationStatement>>,
     deliberation_votes: HashMap<String, Entry<DeliberationVote>>,
     deliberation_outcomes: HashMap<String, Entry<DeliberationOutcome>>,
     dialects: HashMap<String, Entry<Dialect>>,
+    federations: HashMap<String, Entry<Federation>>,
+    migration_runs: HashMap<String, Entry<MigrationRun>>,
     recommendations: HashMap<String, Entry<Recommendation>>,
     verifications: HashMap<String, Entry<Verification>>,
     vocabularies: HashMap<String, Entry<Vocab>>,
@@ -134,6 +143,28 @@ impl Catalog {
                     },
                 );
             }
+            AnyRecord::ChangeProposal(c) => {
+                self.change_proposals.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: c,
+                    },
+                );
+            }
+            AnyRecord::CommunityRelease(r) => {
+                self.community_releases.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: r,
+                    },
+                );
+            }
             AnyRecord::Dialect(d) => {
                 self.dialects.insert(
                     uri.clone(),
@@ -142,6 +173,28 @@ impl Catalog {
                         author,
                         rev,
                         record: d,
+                    },
+                );
+            }
+            AnyRecord::Federation(f) => {
+                self.federations.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: f,
+                    },
+                );
+            }
+            AnyRecord::MigrationRun(m) => {
+                self.migration_runs.insert(
+                    uri.clone(),
+                    Entry {
+                        uri,
+                        author,
+                        rev,
+                        record: m,
                     },
                 );
             }
@@ -244,12 +297,16 @@ impl Catalog {
         self.adapters.remove(uri);
         self.beliefs.remove(uri);
         self.bounties.remove(uri);
+        self.change_proposals.remove(uri);
         self.communities.remove(uri);
+        self.community_releases.remove(uri);
         self.deliberations.remove(uri);
         self.deliberation_statements.remove(uri);
         self.deliberation_votes.remove(uri);
         self.deliberation_outcomes.remove(uri);
         self.dialects.remove(uri);
+        self.federations.remove(uri);
+        self.migration_runs.remove(uri);
         self.recommendations.remove(uri);
         self.verifications.remove(uri);
         self.vocabularies.remove(uri);
@@ -280,9 +337,29 @@ impl Catalog {
         self.communities.values()
     }
 
+    /// Immutable view of all governed change proposals.
+    pub fn change_proposals(&self) -> impl Iterator<Item = &Entry<ChangeProposal>> {
+        self.change_proposals.values()
+    }
+
+    /// Immutable view of all signed community releases.
+    pub fn community_releases(&self) -> impl Iterator<Item = &Entry<CommunityRelease>> {
+        self.community_releases.values()
+    }
+
     /// Immutable view of all cataloged dialects.
     pub fn dialects(&self) -> impl Iterator<Item = &Entry<Dialect>> {
         self.dialects.values()
+    }
+
+    /// Immutable view of all declared federation relationships.
+    pub fn federations(&self) -> impl Iterator<Item = &Entry<Federation>> {
+        self.federations.values()
+    }
+
+    /// Immutable view of all durable migration runs.
+    pub fn migration_runs(&self) -> impl Iterator<Item = &Entry<MigrationRun>> {
+        self.migration_runs.values()
     }
 
     /// Immutable view of all cataloged recommendations.
@@ -337,8 +414,20 @@ impl Catalog {
         if let Some(e) = self.communities.get(uri) {
             return Some(CatalogRef::Community(e));
         }
+        if let Some(e) = self.change_proposals.get(uri) {
+            return Some(CatalogRef::ChangeProposal(e));
+        }
+        if let Some(e) = self.community_releases.get(uri) {
+            return Some(CatalogRef::CommunityRelease(e));
+        }
         if let Some(e) = self.dialects.get(uri) {
             return Some(CatalogRef::Dialect(e));
+        }
+        if let Some(e) = self.federations.get(uri) {
+            return Some(CatalogRef::Federation(e));
+        }
+        if let Some(e) = self.migration_runs.get(uri) {
+            return Some(CatalogRef::MigrationRun(e));
         }
         if let Some(e) = self.recommendations.get(uri) {
             return Some(CatalogRef::Recommendation(e));
@@ -358,8 +447,12 @@ impl Catalog {
         self.adapters.len()
             + self.beliefs.len()
             + self.bounties.len()
+            + self.change_proposals.len()
             + self.communities.len()
+            + self.community_releases.len()
             + self.dialects.len()
+            + self.federations.len()
+            + self.migration_runs.len()
             + self.recommendations.len()
             + self.verifications.len()
             + self.vocabularies.len()
@@ -383,10 +476,18 @@ pub enum CatalogRef<'a> {
     Belief(&'a Entry<Belief>),
     /// A [`Bounty`] record.
     Bounty(&'a Entry<Bounty>),
+    /// A [`ChangeProposal`] record.
+    ChangeProposal(&'a Entry<ChangeProposal>),
     /// A [`Community`] record.
     Community(&'a Entry<Community>),
+    /// A [`CommunityRelease`] record.
+    CommunityRelease(&'a Entry<CommunityRelease>),
     /// A [`Dialect`] record.
     Dialect(&'a Entry<Dialect>),
+    /// A [`Federation`] record.
+    Federation(&'a Entry<Federation>),
+    /// A [`MigrationRun`] record.
+    MigrationRun(&'a Entry<MigrationRun>),
     /// A [`Recommendation`] record.
     Recommendation(&'a Entry<Recommendation>),
     /// A [`Verification`] record.

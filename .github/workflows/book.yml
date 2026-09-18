@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -81,7 +81,7 @@ jobs:
       # We use a separate PAT (not GITHUB_TOKEN, which is scoped to
       # this repo only) so we can push back.
       - name: checkout landing-page repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: idiolect-dev/idiolect-dev.github.io
           token: ${{ secrets.LANDING_PAGE_PAT }}

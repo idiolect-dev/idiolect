@@ -1,8 +1,8 @@
 //! Reference orchestrator for the `dev.idiolect.*` record family.
 //!
 //! The orchestrator is the read-side counterpart to the observer: it
-//! ingests the *declarative* records — adapters, bounties, communities,
-//! dialects, recommendations, verifications — and answers
+//! ingests the *declarative* records — including adapters, governance,
+//! releases, migrations, and federation relationships — and answers
 //! principle-compatible queries (P4 community self-constitution, P5
 //! non-mediating federation) over them.
 //!
@@ -29,8 +29,9 @@
 //!
 //! # Scope
 //!
-//! - Ingests: `Adapter`, `Bounty`, `Community`, `Dialect`,
-//!   `Recommendation`, `Verification`.
+//! - Ingests: `Adapter`, `Belief`, `Bounty`, `Community`, `Dialect`,
+//!   `Recommendation`, `Verification`, `Vocab`, deliberation-family records,
+//!   `ChangeProposal`, `CommunityRelease`, `MigrationRun`, and `Federation`.
 //! - Ignores (observer territory): `Encounter`, `Correction`,
 //!   `Retrospection`, `Observation`.
 //! - Ignores (vendored): `dev.panproto.*`.
