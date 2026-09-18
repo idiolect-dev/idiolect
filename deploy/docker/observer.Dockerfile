@@ -18,7 +18,7 @@
 #     -e IDIOLECT_OBSERVER_DID=did:plc:your-observer-did \
 #     idiolect-observer:local
 
-FROM rust:1.96-slim-bookworm AS builder
+FROM rust:1.97-slim-bookworm AS builder
 WORKDIR /src
 
 RUN apt-get update \
