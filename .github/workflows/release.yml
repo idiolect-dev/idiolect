@@ -22,8 +22,8 @@
 #      - signed with cosign keyless (sigstore OIDC via GitHub Actions)
 #   3. @idiolect-dev/schema npm package.
 #   4. Publishable Rust crates to crates.io
-#      (idiolect-records, idiolect-lens, idiolect-indexer, idiolect-oauth)
-#      in topological order.
+#      (idiolect-community, idiolect-records, idiolect-identity,
+#      idiolect-indexer) in topological order.
 #
 # Every signed artifact can be verified by a downstream consumer with
 # `cosign verify-blob` (binaries) or `cosign verify` (containers).
@@ -599,13 +599,11 @@ jobs:
             echo "::warning::CARGO_REGISTRY_TOKEN not set; skipping crates.io publish"
             exit 0
           fi
-          # Order matters: each crate's dependencies must already be
-          # on crates.io by the time it publishes. The list is the set
-          # of publishable = true crates in topological order; every
-          # panproto-dependent crate (lens, oauth, migrate, verify) is
-          # `publish = false` at the workspace level until panproto
-          # lands on crates.io, so they're deliberately absent here.
-          for crate in idiolect-records idiolect-identity idiolect-indexer; do
+          # Keep this explicit list in dependency order so adding a
+          # publishable workspace crate cannot silently change release
+          # behavior. CI packages idiolect-community separately to
+          # catch registry-manifest regressions before a tag is pushed.
+          for crate in idiolect-community idiolect-records idiolect-identity idiolect-indexer; do
             echo "::group::publish $crate"
             cargo publish -p "$crate" --locked --no-verify || {
               code=$?
