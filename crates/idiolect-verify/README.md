@@ -1,14 +1,27 @@
 # idiolect-verify
 
-Verification runners for `dev.idiolect.verification` records.
+Tests claims about a schema translation and expresses the result as a
+publishable verification record.
 
-## Overview
+## What it does
 
-A `Verification` record reports a claim about a lens: a corpus may satisfy
-`put(get(x)) == x`, both schemas may validate against a protocol, or a
-bounded property search may find no falsifier. The runners in this crate
-evaluate those claims and produce the records consulted by the
+A `Verification` record reports a claim about a lens: a corpus may satisfy a
+round-trip law, both schemas may validate against a protocol, or a bounded
+property search may find no counterexample. The runners in this crate perform
+the check rather than merely recording that somebody requested it. Their
+output is the evidence consulted by the
 orchestrator's `sufficient_verifications_for` query.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Lens target plus fixed corpus | Applies the lens forward and backward to every case | Holds, falsified, or inconclusive verification |
+| Lens target plus generator and budget | Searches generated cases for a counterexample | Bounded property-test result with failing case when found |
+| Source schema, target schema, and protocol | Validates both schema graphs | Static-check verification |
+| Lens plus coercion-law service | Requests Panproto's law checker | Verification containing reported violations |
+
+Use this crate when a recommendation, release, or application policy requires
+evidence about a translation. A falsified claim is a successful test result
+with negative evidence, not a runner error.
 
 ## Architecture
 
@@ -104,7 +117,7 @@ let verification = runner.run(&target).await?;
 // Publish via idiolect_lens::RecordPublisher::create.
 ```
 
-## Design notes
+## Boundaries and design choices
 
 - A falsified property returns `Ok(Verification { result: Falsified,
   counterexample: Some(…), .. })`, not an error. A falsified result is
@@ -117,12 +130,6 @@ let verification = runner.run(&target).await?;
   [`verify-spec/runners.json`](../../verify-spec/runners.json) with its
   matching atproto-shaped lexicon. Codegen emits `generated.rs` carrying
   descriptors for every shipped runner.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

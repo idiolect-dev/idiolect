@@ -1,13 +1,28 @@
 # idiolect-observer
 
-Reference observer daemon for `dev.idiolect.*`.
+Turns a stream of Idiolect records into publishable measurements about how
+the network is behaving.
 
-## Overview
+## What it does
 
-An *observer* consumes idiolect records from the firehose, runs a pluggable
-aggregation method over them, and periodically publishes a
-structured `dev.idiolect.observation` record summarizing what it has
-seen. Aggregation remains separate from orchestration: several observers may
+An *observer* consumes Idiolect records from the firehose, groups or counts
+them with a selected method, and periodically emits a structured
+`dev.idiolect.observation` record. The shipped methods measure such things as
+verification coverage, lens adoption, deliberation votes, migration health,
+and release adoption.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Typed firehose events | Updates one aggregation method | In-memory method state |
+| Flush schedule or explicit flush | Takes a snapshot at the selected boundary | `dev.idiolect.observation` body |
+| Publisher implementation | Stores, logs, or writes the snapshot to a PDS | Inspectable observation record or structured log |
+| Optional schema resolver | Converts flat records into Panproto graph instances | Input for graph-aware observation methods |
+
+Use this crate when a community needs measurements that other participants can
+inspect and choose to trust. It reports observations; it does not rank records,
+enforce policy, or decide which observer is authoritative.
+
+Aggregation remains separate from orchestration: several observers may
 publish different summaries of the same firehose, and clients decide which
 observer records to trust.
 
@@ -153,18 +168,12 @@ that only want a structured `tracing::info!` per snapshot. Setting
 `IDIOLECT_OBSERVER_CURSORS` points the cursor store at a persistent
 sqlite file so restarts resume.
 
-## Design notes
+## Boundaries and design choices
 
 - Authentication is not wired at the binary layer. Deployments that
   publish authenticated writes wrap the daemon in their own `main`,
   construct an authenticated `AtriumPdsClient`, and pass it to
   `PdsPublisher::new` directly.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

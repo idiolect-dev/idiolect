@@ -1,9 +1,25 @@
 # @idiolect-dev/schema
 
-TypeScript validators, record types, and NSID constants for the
-`dev.idiolect.*` lexicon family.
+The TypeScript data model and runtime-validation boundary for Idiolect
+records.
 
-## Overview
+## What it does
+
+TypeScript types disappear at runtime, but records arriving from a network or
+database still need to be checked. This package classifies unknown JSON,
+validates it against the Idiolect lexicons, narrows it to a generated record
+type, and exposes the NSID constants needed for routing.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Unknown JSON plus an expected NSID | Validates the record's ATProto structure | Boolean type guard or validation result |
+| Unknown JSON without an expected kind | Tests the generated record family | Matching NSID or `null` |
+| Typed record plus NSID | Adds the family discriminator | Tagged `AnyRecord` value |
+| Bundled lexicon documents | Builds an `@atproto/lexicon` registry | Validator set that an application can extend |
+
+Use this package at TypeScript API, event-stream, storage, and plugin
+boundaries. It describes and validates records; it does not fetch, publish, or
+index them.
 
 This package is the TypeScript counterpart of
 [`idiolect-records`](../../crates/idiolect-records). Both are generated from
@@ -87,20 +103,13 @@ const tagged: AnyRecord = tagRecord(NSID.encounter, e);
 - `loadLexiconDocs()` / `defaultLexicons()`: re-exported lexicon JSON
   plus a `Lexicons` instance for consumers that extend the validator set.
 
-## Design notes
+## Boundaries and design choices
 
 - The generated TypeScript under `src/generated/` is emitted by
   [`idiolect-codegen`](../../crates/idiolect-codegen). CI runs
   `cargo run -p idiolect-codegen -- check` and fails the build if the
   committed output differs from what the current lexicons would produce.
   Hand-edits to `src/generated/` never merge.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change TypeScript exports, lexicon
-shapes, wire formats, or the validator surface. Pin an exact version if you
-depend on this package, and read [CHANGELOG.md](../../CHANGELOG.md) before
-upgrading.
 
 ## Related
 

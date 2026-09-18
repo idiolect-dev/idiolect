@@ -1,12 +1,25 @@
 # Morphisms
 
-These files define inter-theory functors for the attitudinal substrate. Most
-are inclusions of the form `ThAtt ↪ ThX`, where `ThX` extends `ThAtt`, with
-explicit mappings for sorts and operations.
+These files tell Panproto how Idiolect's semantic theories share a common
+attitudinal structure.
 
-## Overview
+## What it does
 
-panproto uses morphisms to turn a composition
+Most files are inclusions of the form `ThAtt ↪ ThX`, where `ThX` extends
+`ThAtt`. Each one explicitly maps the shared sorts and operations so Panproto
+can construct and compare composed theories.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Base theory and extending theory | Maps corresponding sorts and operations | Checked inter-theory functor |
+| Several theories plus their morphisms | Computes the requested pushout composition | One composed theory used to interpret records |
+| Record interpreted under one theory | Translates structure along the morphism | Corresponding instance in the target theory |
+
+Use these files when changing the formal relationship among Idiolect theories.
+They do not translate community data values; instance-level translations
+belong under [`lenses/`](../../lenses).
+
+Panproto uses morphisms to turn a composition
 (`ThAtt + ThAssertive + ThUse`) into a single pushout diagram. Morphisms also
 translate a record from one theory to another. Compatibility checks can thus
 compare records built from different attitudinal theories.

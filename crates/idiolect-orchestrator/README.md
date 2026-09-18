@@ -1,17 +1,32 @@
 # idiolect-orchestrator
 
-Reference orchestrator for the `dev.idiolect.*` record family.
+Builds a read-only catalog that clients can search for Idiolect communities,
+translations, evidence, releases, and migrations.
 
-## Overview
+## What it does
 
-The orchestrator folds sixteen declarative record kinds from the firehose into
-an in-memory catalog: adapters, beliefs, bounties, communities, dialects,
-recommendations, verifications, vocabularies, deliberations, deliberation
-statements, deliberation votes, deliberation outcomes, change proposals,
-community releases, migration runs, and federations. It answers queries
-over those records without ranking or enforcing them. For a recommendation,
-for instance, the orchestrator reports the record and whether its required
-verifications exist; the caller decides whether to adopt it.
+The orchestrator consumes published records from the firehose and keeps the
+latest value for each AT-URI in a local catalog. It exposes generated Rust
+queries, HTTP endpoints, and XRPC endpoints over adapters, beliefs, bounties,
+communities, dialects, recommendations, verifications, vocabularies,
+deliberations, deliberation statements, deliberation votes, deliberation
+outcomes, change proposals, community releases, migration runs, and
+federations. It answers queries over those records without ranking or enforcing
+them. For a recommendation, for instance, the orchestrator reports the record
+and whether its required verifications exist; the caller decides whether to
+adopt it.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Typed firehose upsert or delete | Updates the one current catalog slot for that AT-URI | In-memory and optional SQLite projection |
+| Rust query call | Filters and joins cataloged records | Typed result list or summary |
+| HTTP or XRPC request | Parses filters, pagination, and predicate arguments | Read-only JSON response |
+| Declarative query spec at build time | Generates query, HTTP, XRPC, and CLI wiring | Synchronized interfaces for each query |
+
+Run the orchestrator when clients need one place to discover and inspect
+published state. It is an appview, not an authority: records enter through the
+firehose, and the service neither accepts writes nor chooses which result a
+client should trust.
 
 ## Architecture
 
@@ -143,7 +158,7 @@ cargo run -p idiolect-orchestrator --features daemon
 
 The daemon shuts down gracefully on SIGINT or SIGTERM.
 
-## Design notes
+## Boundaries and design choices
 
 - The catalog is one slot per at-uri across record kinds. A re-upsert
   to a different kind evicts the prior slot. Adoption is a caller
@@ -158,12 +173,6 @@ The daemon shuts down gracefully on SIGINT or SIGTERM.
   written logic and a panproto-expr engine for spec-driven boolean
   conditions on record bodies. Both forms see the same `Catalog`
   borrow.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

@@ -1,15 +1,30 @@
 # idiolect-codegen
 
-Lexicon-driven code generator: emits Rust record types, TypeScript
-validators, and spec-driven wire-up for the `dev.idiolect.*` lexicon
-family plus the vendored `dev.panproto.*` tree.
+Turns Idiolect's declarative record and query definitions into the Rust and
+TypeScript code that the runtime uses.
 
-## Overview
+## What it does
+
+`idiolect-codegen` is the build-time bridge between protocol definitions and
+application code. It reads ATProto lexicons and Idiolect's declarative service
+specs, validates them, and writes formatted source files that are committed to
+the repository. It also compares a changed lexicon tree with a baseline so CI
+can report compatibility before generated code is accepted.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| `lexicons/dev/**/*.json` | Parses record definitions and emits language ASTs | Rust record types and TypeScript types, constants, and validators |
+| Orchestrator, observer, and verifier specs | Validates each spec against its own lexicon and emits dispatch code | Rust queries, HTTP handlers, CLI commands, and method descriptors |
+| Current and baseline lexicon trees | Classifies changes with Panproto | Compatibility report and CI exit status |
+| Current checkout | Recomputes every generated file | Drift report when committed output is stale |
+
+Use this crate when adding a record kind, query, observation method, or
+verification runner. Runtime applications consume its output; they do not
+normally call the generator.
 
 The crate exposes three deterministic artifact generators and a compatibility
-gate through one library and binary. It reads lexicons and specs from JSON and
-writes formatted Rust and TypeScript that are committed to the repository.
-The emitted tree mirrors the lexicon tree one-to-one:
+gate through one library and binary. The emitted tree mirrors the lexicon tree
+one-to-one:
 `lexicons/dev/panproto/schema/lens.json` becomes
 `generated/dev/panproto/schema/lens.rs` (and `.ts`), with
 per-directory `mod.rs` / `index.ts` barrels stitching the tree. The
@@ -101,7 +116,7 @@ cargo run -p idiolect-codegen -- check-compat --baseline /path/to/old-lexicons
 cargo run -p idiolect-codegen -- doctor
 ```
 
-## Design notes
+## Boundaries and design choices
 
 - Every emitter constructs a language AST (`syn` for Rust, `oxc` for
   TypeScript) rather than assembling source text by concatenation. This
@@ -111,12 +126,6 @@ cargo run -p idiolect-codegen -- doctor
   `dev.idiolect.internal.spec.*` namespace. Loading a spec always
   round-trips it through `parse_lexicon` + `parse_json` first, so a spec
   that drifts from its lexicon surfaces at load time, not at emit time.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

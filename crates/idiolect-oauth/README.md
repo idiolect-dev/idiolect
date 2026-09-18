@@ -1,12 +1,28 @@
 # idiolect-oauth
 
-Panproto-native schema and store trait for atproto OAuth session state.
+Stores the local credentials that an Idiolect client uses to write ATProto
+records.
 
-## Overview
+## What it does
 
-OAuth tokens do not travel back to a PDS as published records. They are
-ephemeral secrets held by the authoring client. The crate still models them
-with a panproto schema. We call this the internal-state schema pattern: local
+OAuth tokens, refresh tokens, and DPoP keys are private client state. This
+crate gives that state one typed shape, persistence traits, expiry helpers, an
+in-memory store, a permission-restricted JSON-file store, and a SQLite store.
+A publisher can load a session by DID and use it to authenticate writes
+without treating credentials as public records.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Login result or refreshed credentials | Normalizes the fields into `OAuthSession` | Typed session with expiry metadata |
+| Session and account DID | Saves, loads, lists, or removes credentials | Store-specific persisted state |
+| Current time and refresh margin | Compares token expiries | Decision to refresh before a write |
+
+Use this crate in an authoring client or service that publishes records. It
+does not implement the interactive authorization flow and never publishes
+session data to a PDS.
+
+The crate models local sessions with a Panproto schema. We call this the
+**internal-state schema pattern**: local
 state such as sessions, firehose cursors, identity caches, and DPoP nonces
 uses the same schema operations without entering the federated record stream.
 
@@ -25,7 +41,7 @@ flowchart LR
 
     subgraph store["OAuthTokenStore"]
         MEM["InMemoryOAuthTokenStore"]
-        FS["FilesystemOAuthTokenStore<br/>(encrypted)"]
+        FS["FilesystemOAuthTokenStore<br/>(mode-restricted JSON)"]
         SQL["SqliteOAuthTokenStore<br/>(WAL)"]
     end
 
@@ -72,18 +88,20 @@ if session.needs_refresh(OffsetDateTime::now_utc(), Duration::minutes(5)) {
 
 | Flag | Default | Effect |
 | ---- | ------- | ------ |
-| `store-filesystem` | off | `FilesystemOAuthTokenStore`: one encrypted file per session. |
+| `store-filesystem` | off | `FilesystemOAuthTokenStore`: one permission-restricted JSON file per session. |
 | `store-sqlite` | off | `SqliteOAuthTokenStore`: one row per session, WAL-journaled. |
 
 ## Security
 
 The `access_jwt`, `refresh_jwt`, and `dpop_private_key_jwk` fields are
 secrets. `Debug` is derived for development ergonomics but must be
-filtered from production logs. Disk-backed stores are responsible for
-encryption at rest. The refresh token grants full repo write until the
-account re-authenticates.
+filtered from production logs. The filesystem store writes plaintext JSON
+with owner-only permissions on Unix; the SQLite store also does not add
+encryption. Use an encrypted volume or another store when encryption at rest
+is required. The refresh token grants full repo write until the account
+re-authenticates.
 
-## Design notes
+## Boundaries and design choices
 
 - The schema's nsid is `dev.idiolect.internal.oauthSession`. The
   `internal.` segment keeps the namespace under `dev.idiolect.*` (so
@@ -94,12 +112,6 @@ account re-authenticates.
   `get`, and revoke via a token-dropping `put`. Those lenses
   live in whichever component needs them. This crate ships only the
   schema, the struct, and the store trait.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

@@ -1,12 +1,27 @@
 # idiolect-indexer
 
-Firehose consumer parameterized over a record family.
+Keeps an application synchronized with selected ATProto record families.
 
-## Overview
+## What it does
+
+The indexer reads commits from a firehose or test stream, discards collections
+outside the selected record family, decodes matching record bodies, and hands
+typed events to application code. It advances a durable cursor only after a
+live event has been handled, so a process can resume after restart.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Firehose or in-memory event stream | Filters by record family and decodes each matching commit | Typed `IndexerEvent<F>` values sent to a handler |
+| `RecordHandler<F>` | Runs application-specific upsert and delete behavior | Updated catalog, observation state, or other application state |
+| Cursor store | Reads the resume point and commits acknowledged live positions | Restart-safe subscription progress |
+| Optional resilience wrappers | Reconnects streams, retries handlers, or opens a circuit breaker | Controlled behavior under transport or handler failure |
+
+Use this crate to build an appview, catalog, observer, search index, or any
+service that follows published ATProto records over time. It does not prescribe
+what the local projection should contain.
 
 The indexer sits between a firehose transport (`tapped`, jetstream, or a
-custom adapter) and an appview's per-record handlers. It owns the event
-loop, cursor management, and reconnect and retry policies. Consumers provide
+custom adapter) and an appview's per-record handlers. Consumers provide
 handler logic, select a transport by feature flag, and pin the loop to a
 [`RecordFamily`](../idiolect-records/src/family.rs). The default family
 is `IdiolectFamily` (the `dev.idiolect.*` record set). Downstream
@@ -119,7 +134,7 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
 | `reconnecting` | off | `ReconnectingEventStream` + `BackoffPolicy`. |
 | `resilience` | off | `RetryingHandler` + `CircuitBreakerHandler`. |
 
-## Design notes
+## Boundaries and design choices
 
 - Every event carries a `live: bool`. Live and backfill events dispatch
   identically at the handler, but the cursor store only advances on live
@@ -137,12 +152,6 @@ drive_indexer::<MyFamily, _, _, _>(&mut stream, &handler, &cursors, &cfg).await?
 - Trait objects are not dyn-compatible because the traits use native
   `async fn`. The crate ships Arc blanket impls so consumers share state
   via `Arc<ConcreteImpl>` instead.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

@@ -1,14 +1,30 @@
 # idiolect-cli
 
-Command-line access to the idiolect libraries and orchestrator API.
+The shell interface for community workspaces, schema translation, ATProto
+records, and Idiolect services.
 
-## Overview
+## What it does
 
-The `idiolect` binary resolves DIDs, fetches and publishes records, manages
+The `idiolect` binary lets people use the repository's libraries without
+writing Rust. It creates and diagnoses community workspaces, analyzes and
+reviews schema changes, signs releases, tracks migrations, and exports a
+portable copy. It also resolves DIDs, fetches and publishes records, manages
 PDS sessions, queries an orchestrator, composes encounter records, and runs
 lens verifications. Its orchestrator subcommands are generated from
 [`orchestrator-spec/queries.json`](../../orchestrator-spec/queries.json)
 so the CLI and HTTP API share one command inventory.
+
+| Input | What the command does | Output |
+| --- | --- | --- |
+| Workspace paths and schema files | Runs the community change and release lifecycle | Human summary plus JSON artifacts on disk |
+| DID or AT-URI | Resolves an identity or fetches a record from its PDS | Formatted JSON |
+| Stored session plus record JSON | Validates and publishes an authenticated record | Created-record response |
+| Orchestrator query and filters | Calls the read-only catalog API | Formatted JSON query result |
+| Lens, schemas, and test data | Runs a verification method | Verification record JSON |
+
+Use the CLI for work that belongs in local files, shell scripts, CI jobs, or
+Git review. Use the underlying crates when an application needs the same
+operations in-process.
 
 ## Architecture
 
@@ -24,6 +40,7 @@ flowchart LR
         AUTH["oauth"]
         PUB["publish"]
         VER["verify"]
+        COM["community lifecycle<br/>init · propose · review · release · migrate · export"]
     end
     OSPEC["orchestrator-spec/queries.json"]
     CG["idiolect-codegen"]
@@ -31,6 +48,7 @@ flowchart LR
     ID["idiolect-identity"]
     LENSP["idiolect-lens<br/>(ReqwestPdsClient · fetcher_for_did)"]
     STORE[("session store")]
+    WORK[("community workspace")]
     PDS[("ATProto PDS")]
     VERIFY["idiolect-verify"]
     ORCHTTP["orchestrator HTTP API"]
@@ -45,6 +63,7 @@ flowchart LR
     PARSER --> PUB --> STORE
     PUB --> PDS
     PARSER --> VER --> VERIFY
+    PARSER --> COM --> WORK
     OSPEC --> CG -.emits subcommands.-> ORCSUB
 ```
 
@@ -55,8 +74,6 @@ Pipe those results through `jq` for further filtering.
 
 ```sh
 cargo install --path crates/idiolect-cli
-# Or, once released:
-cargo install idiolect-cli
 ```
 
 Binary archives for every release ship on the
@@ -66,6 +83,11 @@ Linux (x86_64, aarch64) and macOS (x86_64, aarch64).
 ## Usage
 
 ```sh
+# Create and inspect a community workspace.
+idiolect init --workspace neighborhood-archive \
+  --name "Neighborhood Archive" --did did:plc:replace-me
+idiolect doctor --workspace neighborhood-archive
+
 # Identity resolution.
 idiolect resolve did:plc:alice
 
@@ -111,7 +133,7 @@ idiolect verify coercion-law \
   --vcs-url https://vcs.example.com --standard json
 ```
 
-## Design notes
+## Boundaries and design choices
 
 - The orchestrator query spec drives the `orchestrator` subcommand
   dispatcher. The next codegen run adds a CLI subcommand for each new query.
@@ -120,12 +142,8 @@ idiolect verify coercion-law \
   that session for authenticated writes. Set `IDIOLECT_SESSION_DIR` to use
   a different store.
 - The orchestrator API is read-only and public by design.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
+- Community lifecycle commands write local workspace artifacts. They do not
+  publish those artifacts to a PDS automatically.
 
 ## Related
 

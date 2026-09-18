@@ -1,6 +1,20 @@
 # idiolect documentation
 
-This directory contains the source for `idiolect.dev/book/`. The build uses
+## What it does
+
+This directory contains the user and developer documentation published at
+`idiolect.dev/book/`. It explains what Idiolect is for, walks a new community
+through its first governed change, provides task-oriented operating guides,
+and documents the current CLI, crates, HTTP API, lexicons, and data model.
+
+| Audience | Start here | What the section provides |
+| --- | --- | --- |
+| New community participant | `src/start/` | Plain-language workspace, proposal, review, release, migration, and exit path |
+| Application developer | `src/tutorial/` and `src/guide/` | Runnable integration path and focused implementation tasks |
+| Operator | `src/guide/` | Indexer, orchestrator, observer, authentication, and deployment procedures |
+| Protocol implementer | `src/concepts/` and `src/reference/` | Model, guarantees, record shapes, commands, routes, and symbols |
+
+The build uses
 [mdBook](https://rust-lang.github.io/mdBook/) plus
 [mdbook-katex](https://github.com/lzanini/mdbook-katex) for math
 and [mdbook-mermaid](https://github.com/badboy/mdbook-mermaid) for

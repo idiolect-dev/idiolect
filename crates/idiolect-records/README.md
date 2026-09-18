@@ -1,13 +1,28 @@
 # idiolect-records
 
-Serde record types and typed atproto identifiers for the
-`dev.idiolect.*` lexicon family.
+The Rust data model for Idiolect records and ATProto identifiers.
 
-## Overview
+## What it does
 
-The crate has an identifier layer and a record-family layer. The identifier
-layer parses `Nsid`, `AtUri`, and `Did` values before they reach routing,
-codegen, or dispatch. The record-family layer is generated: every lexicon in
+This crate prevents services from passing unvalidated identifier strings and
+untyped JSON through the runtime. It parses `Nsid`, `AtUri`, and `Did` values,
+provides one Rust structure per lexicon, and decodes an unknown record into an
+exhaustive tagged union. Services can also select or compose a whole record
+family at the indexer boundary.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| DID, NSID, or AT-URI string | Validates the ATProto identifier grammar | Typed identifier or parse error |
+| NSID plus JSON body | Selects the generated record type and deserializes it | `AnyRecord` variant or decode error |
+| Concrete generated record | Supplies its collection NSID through `Record` | Generic typed read and write support |
+| Two `RecordFamily` implementations | Composes membership and decoding | One family accepted by a shared indexer |
+
+Use this crate at every Rust boundary that accepts, routes, stores, or emits
+Idiolect records. It contains data shapes and dispatch, not network transport
+or storage.
+
+The crate has an identifier layer and a record-family layer. The record-family
+layer is generated: every lexicon in
 `lexicons/dev/idiolect/` (plus the vendored `dev/panproto/` tree)
 produces a strongly-typed struct, deserializable from the lexicon's
 canonical JSON shape. The generated tree mirrors the lexicon
@@ -136,7 +151,7 @@ use idiolect_records::generated::dev::idiolect::defs::{LensRef, SchemaRef};
 use idiolect_records::generated::dev::panproto::schema::lens::PanprotoLens;
 ```
 
-## Design notes
+## Boundaries and design choices
 
 - Records use `#[serde(rename_all = "camelCase")]`.
 - Enum variants use `#[serde(rename_all = "kebab-case")]`.
@@ -151,12 +166,6 @@ use idiolect_records::generated::dev::panproto::schema::lens::PanprotoLens;
   camelCase). `AtUri::parse` rejects fragments, query strings, and
   trailing or extra path segments because idiolect AT-URIs identify one
   record.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

@@ -1,14 +1,28 @@
 # idiolect-lens
 
-Resolve `PanprotoLens` records and run them through the panproto lens
-runtime.
+Loads a published schema translation and applies it to record data.
 
-## Overview
+## What it does
+
+Applications use a lens when the data they have and the data they need follow
+different schemas. This crate resolves a `dev.panproto.schema.lens` record
+from an AT-URI or Panproto store, loads the source and target schemas named by
+that record, compiles the translation, and applies it to a JSON record body.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Lens AT-URI | Resolves and optionally re-hashes the published lens record | Authenticated `PanprotoLens` definition |
+| Source and target schema hashes | Loads the exact schema objects required by the lens | Compiled translation context |
+| Source record body | Runs the forward lens operation | Target record plus complement data needed for reversal |
+| Edited target plus complement | Runs the backward lens operation | Reconstructed source record |
+| DID and typed record | Resolves the PDS and performs a typed read or authenticated write | Typed Rust record or create-record response |
+
+Use this crate when two communities use different record shapes, when an
+application reads an older schema through a newer interface, or when a
+migration worker needs to translate one record at a time.
 
 The `dev.panproto.schema.lens` record type carries a protolens chain and
-the hashes of its source and target schemas. This crate resolves that record
-from its AT-URI, loads both schemas, compiles the chain against the source
-schema, and applies
+the hashes of its source and target schemas. This crate applies
 `get` / `put` / edit-lens / symmetric-lens pipelines against record
 bodies.
 
@@ -128,7 +142,7 @@ from DID to typed writes in one call.
 | `dpop-p256` | off | `P256DpopProver` (ES256 DPoP via the `p256` crate). Implies `pds-reqwest`. |
 | `pds-smoke-test` | off | Live-network test against a public PDS. Intentionally off in CI. |
 
-## Design notes
+## Boundaries and design choices
 
 - Resolver, client, and writer are three separate traits even
   though atrium happens to ship a single client that does all
@@ -143,12 +157,6 @@ from DID to typed writes in one call.
 - Trait objects are not dyn-compatible because the traits use
   native `async fn`. The crate ships Arc blanket impls so consumers
   share state via `Arc<ConcreteImpl>` instead.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

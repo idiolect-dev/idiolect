@@ -1,13 +1,29 @@
 # idiolect-migrate
 
-Schema diff and lens-based record migration.
+Explains a schema change, proposes a translation when possible, and applies a
+published translation to existing data.
 
-## Overview
+## What it does
 
-This crate provides one typed API over `panproto-check` diff classification
+This crate answers the three questions a migration worker needs to separate:
+did the schema change break compatibility, can Panproto derive a translation,
+and how should one record be translated with an approved lens? Keeping those
+questions separate lets a community review the plan before any data is
+rewritten.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Current schema, proposed schema, and protocol | Diffs and classifies structural changes | `CompatReport` with compatible and breaking items |
+| Both schemas plus their content hashes | Attempts to synthesize a protolens chain | `MigrationPlan` or an explanation of unsupported changes |
+| Published lens URI and source record | Resolves and applies the lens | Migrated record body |
+
+Use this crate inside a migration planner or worker. Use
+[`idiolect-community`](../idiolect-community) around it when the migration
+also needs approvals, release policy, checkpoints, and failure history.
+
+The crate provides one typed API over `panproto-check` diff classification
 and [`idiolect-lens`](../idiolect-lens) record translation. It holds no
-runtime state. Its three operations classify a schema change, derive a
-migration plan, and apply a published lens to one record.
+runtime state.
 
 ## Architecture
 
@@ -74,7 +90,7 @@ let migrated = migrate_record(
 ).await?;
 ```
 
-## Design notes
+## Boundaries and design choices
 
 Non-goals:
 
@@ -84,12 +100,6 @@ Non-goals:
   `PdsWriter`. This crate does not reach out to a PDS.
 - Batch-rewriting records on disk. Compose `migrate_record` with your
   own record stream.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

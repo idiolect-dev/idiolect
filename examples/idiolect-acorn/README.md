@@ -1,6 +1,10 @@
 # idiolect-acorn
 
-This example bridges idiolect with Blacksky's
+This example shows how an Idiolect service can understand records owned by
+another community without copying that community's schema into the core
+`dev.idiolect.*` family.
+
+It bridges Idiolect with Blacksky's
 [Acorn](https://acorn.blacksky.community/) community infrastructure. It shows
 how a downstream project can generate a record family from another
 community's ATProto lexicons, compose that family with `IdiolectFamily`, and
@@ -9,6 +13,19 @@ translate its records through published lenses.
 The directory is organized as a possible standalone package: vendored
 lexicons, generated-family inputs, authored bridge records, and lens
 specifications remain separate.
+
+## What it does
+
+| Input | Operation | Result |
+| --- | --- | --- |
+| Vendored Blacksky lexicons | Generate a separate `BlackskyFamily` | Typed records that retain Blacksky's namespace |
+| `BlackskyFamily` plus `IdiolectFamily` | Compose families at the indexer boundary | One stream consumer that accepts both record sets |
+| Bridge vocabulary | Relate Blacksky vote values to Idiolect stance terms | Explicit vocabulary mapping rather than hard-coded labels |
+| Authored lens specifications | Translate Acorn records at query time | Idiolect deliberation records plus complement data where information differs |
+| Community, dialect, and adapter records | Describe ownership, available mappings, and the AppView surface | Discoverable integration metadata |
+
+Use this directory as a pattern for downstream integrations. It is an example
+package and data fixture, not a running bridge service.
 
 ## Contents
 

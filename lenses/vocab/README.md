@@ -1,16 +1,28 @@
 # Vocabulary lenses
 
-These files define translations between ThUse vocabularies. Each lens takes
-a Use instance whose `action` resolves against the source vocabulary and
-produces a Use whose `action` resolves against the target vocabulary. A
-complement records the information that the translation does not carry into
-the target.
+These files translate action terms from one community vocabulary into another
+without pretending that differently organized vocabularies are identical.
 
-## Overview
+## What it does
+
+Each lens takes a Use instance whose `action` resolves against the source
+vocabulary and produces a Use whose `action` resolves against the target
+vocabulary. A complement records the information that the translation does
+not carry into the target.
 
 A vocabulary lens is a `dev.panproto.schema.lens` record on ATProto. A
 community may publish a bridge without making it canonical for other
 communities; consumers select lenses according to their own trust policy.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Source Use plus source vocabulary | Matches the source action to a declared step | Selected rename, expansion, contraction, drop, or addition |
+| Target vocabulary | Checks that the translated action belongs to the target | Target Use |
+| Information not represented by the target | Captures values or forward defaults | Complement witness for review or reversal |
+
+Use these files as authoring examples or publishable bridge definitions. The
+runtime that compiles and applies them lives in
+[`idiolect-lens`](../../crates/idiolect-lens).
 
 ## Architecture
 
@@ -79,7 +91,7 @@ an implicit default does not.
 instance. The result is `(translated_use, complement_witness)`. Callers pass
 the complement to the policy engine that handles missing or ambiguous data.
 
-## Example
+## Included example
 
 - `action-v1-to-granular-v1.yaml`: reference action vocabulary to a
   hypothetical finer-grained vocabulary that splits `train_model` into

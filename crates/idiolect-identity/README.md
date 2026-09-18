@@ -1,13 +1,28 @@
 # idiolect-identity
 
-DID resolution for idiolect: `did:plc` via plc.directory, `did:web` via
-`/.well-known/did.json`.
+Finds the ATProto account and data-server information represented by a DID or
+handle.
 
-## Overview
+## What it does
 
-The crate maps DIDs to W3C DID documents and exposes the repository's PDS
-base URL through `DidDocument::pds_url`. Resolution is transport-agnostic.
-Tests can use `InMemoryIdentityResolver`, while the feature-gated
+Applications often begin with a DID such as `did:plc:alice` but need the URL
+of the personal data server that stores Alice's records. This crate resolves
+`did:plc` identifiers through plc.directory, resolves `did:web` identifiers
+through `/.well-known/did.json`, and extracts the ATProto service endpoint
+from the resulting DID document. It can also resolve a handle to its DID and
+PDS location.
+
+| Input | Work performed | Output |
+| --- | --- | --- |
+| Parsed `Did` | Loads and parses the corresponding DID document | `DidDocument` with identity fields and PDS URL |
+| ATProto handle | Resolves the handle, then its DID document | DID and PDS location |
+| Any resolver wrapped in `CachingIdentityResolver` | Reuses results until the configured TTL expires | Same typed result with fewer upstream requests |
+
+Use this crate when a client has an identity but does not yet know where to
+fetch or publish that identity's records.
+
+Resolution is transport-agnostic. Tests can use `InMemoryIdentityResolver`,
+while the feature-gated
 `ReqwestIdentityResolver` handles live requests. A
 `CachingIdentityResolver<R>` adds a TTL cache to either implementation.
 
@@ -64,7 +79,7 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
 | ---- | ------- | ------ |
 | `resolver-reqwest` | off | Live `ReqwestIdentityResolver` + `CachingIdentityResolver`. Runtime crates that never need live resolution stay transport-agnostic without this flag. |
 
-## Design notes
+## Boundaries and design choices
 
 - `Did` is the typed identifier from
   [`idiolect-records`](../idiolect-records). This crate re-exports it,
@@ -75,12 +90,6 @@ let handle_pds = resolver.resolve_handle("alice.bsky.social").await?;
   spec. Unknown fields survive via an `extras: BTreeMap<String, Value>`
   so round-trip through the struct preserves what the PLC directory or
   the `/.well-known/did.json` endpoint returned.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, or CLI surfaces. Pin an exact version if you depend on this
-crate, and read [CHANGELOG.md](../../CHANGELOG.md) before upgrading.
 
 ## Related
 

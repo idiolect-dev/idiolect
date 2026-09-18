@@ -5,43 +5,95 @@
   <img src=".github/assets/wordmark.svg" alt="idiolect" height="140"/>
 </picture>
 
-<p><strong>Mutual intelligibility for schema idiolects.</strong></p>
+<p><strong>Infrastructure for communities to define, translate, verify, and evolve shared data.</strong></p>
 
 <p>
   <a href="https://github.com/idiolect-dev/idiolect/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/idiolect-dev/idiolect/actions/workflows/ci.yml/badge.svg"/></a>
-  <a href="https://github.com/idiolect-dev/idiolect/actions/workflows/release.yml"><img alt="Release" src="https://img.shields.io/github/v/release/idiolect-dev/idiolect?sort=semver&label=release"/></a>
-  <a href="https://crates.io/crates/idiolect-records"><img alt="idiolect-records on crates.io" src="https://img.shields.io/crates/v/idiolect-records?label=idiolect-records&color=orange"/></a>
-  <a href="https://www.npmjs.com/package/@idiolect-dev/schema"><img alt="@idiolect-dev/schema on npm" src="https://img.shields.io/npm/v/@idiolect-dev/schema?color=red"/></a>
+  <a href="https://idiolect.dev/book/"><img alt="Documentation" src="https://img.shields.io/badge/docs-idiolect.dev-blue"/></a>
   <a href="https://github.com/idiolect-dev/idiolect/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/idiolect-dev/idiolect?color=blue"/></a>
-  <img alt="rustc 1.95+" src="https://img.shields.io/badge/rustc-1.95%2B-blue"/>
 </p>
 
 </div>
 
 ---
 
+## What Idiolect is for
+
+Idiolect is a toolkit for groups that share data but may not share one fixed
+schema forever. A community can use it to define its record formats, explain a
+proposed change, translate old records into a new shape, record who approved
+the change, verify the translation, produce a signed release, and keep a
+portable history of the process.
+
+Consider two communities that both record votes. One stores `yes` and `no`;
+the other stores `support`, `oppose`, and `abstain`. Idiolect lets them publish
+their own definitions and a checked translation between them. Neither
+community has to surrender control of its schema, and an application can
+inspect the translation and its verification evidence before using it. The
+same machinery handles a community changing its own schema over time.
+
+Use Idiolect when you need to:
+
+- maintain shared schemas and vocabularies under explicit community rules;
+- translate records between schema variants without hiding the conversion in
+  application code;
+- determine how a schema change affects existing records and readers;
+- attach reviews, verification results, signatures, and migration progress to
+  a change;
+- index and query published records without appointing one global authority;
+- export a community's definitions and decision history to another host.
+
+Idiolect does not decide which schema is correct, which community should be
+trusted, or which translation an application must use. It makes those choices
+inspectable and portable.
+
+## How it works
+
 Idiolect treats the linguistic distinction between *idiolects*, *dialects*,
-and *languages* as a three-level operating model:
+and *languages* as an operating model. An **idiolect** is one party's schemas,
+translations, and conventions. A **dialect** is the bundle a community adopts.
+The **language** is the federated substrate on which communities publish,
+compare, and translate those bundles without a central schema owner.
 
-1. An idiolect is one party's choice of schemas, lenses, and
-conventions.
-2. A dialect is the bundle of idiolects a community treats as
-canonical.
-3. A language is the federated substrate over which idiolects and
-   dialects meet, disagree, and may slowly converge without a central arbiter.
+A typical community workflow is:
 
-Architectural primitives are signed, content-addressed records on
-[ATProto](https://atproto.com). Schemas and translations between
-schemas are [panproto](https://github.com/panproto/panproto) artifacts. The
-repository contains a CLI, orchestrator and observer daemons, a verification
-runtime, a community governance and release library, and a migration library built over a small family of
-`dev.idiolect.*` lexicons.
+1. Define record shapes as ATProto lexicons and generate matching Rust and
+   TypeScript types.
+2. Compare a proposed definition with the current one and produce a change
+   packet that explains compatibility, data loss, and migration needs.
+3. Review the packet under the community's governance policy and attach
+   verification evidence.
+4. Sign a release containing the approved definitions, translations, and
+   change records.
+5. Migrate records with resumable checkpoints, then retain or export the full
+   workspace.
 
-Idiolect 0.13 adds a **community control plane**: one portable path from an
-explained definition change through attributable review, explicit verification,
-signed release, durable migration, federation, and ordinary exit. Begin with
-the [newcomer path](docs/book/src/start/index.md), or inspect the
-[`idiolect-community`](crates/idiolect-community) crate directly.
+Schemas and translations are
+[Panproto](https://github.com/panproto/panproto) artifacts. Public identities,
+records, and discovery use [ATProto](https://atproto.com). Local drafts, keys,
+migration checkpoints, and exports remain ordinary files under the
+community's control.
+
+Begin with [Idiolect for a new community](docs/book/src/start/index.md). It
+requires no prior knowledge of ATProto, Panproto, or Rust.
+
+## What each component does
+
+| Component | What it does | Use it when |
+| --- | --- | --- |
+| [`idiolect-cli`][cli] | Exposes the workspace, identity, record, query, and verification operations as shell commands. | You want to operate Idiolect without writing Rust. |
+| [`idiolect-community`][community] | Stores community policy, change packets, reviews, signed releases, migration runs, federation dependencies, and exports. | A group needs an accountable definition-change process. |
+| [`idiolect-codegen`][cg] | Turns lexicons and declarative specs into checked Rust, TypeScript, CLI, and HTTP code. | You author or change a record definition or query. |
+| [`idiolect-records`][recs] | Provides typed Rust identifiers and record structures generated from the lexicons. | A Rust service reads or writes Idiolect records. |
+| [`@idiolect-dev/schema`][npm] | Provides the same record types and runtime validators for TypeScript. | A TypeScript boundary must classify or validate incoming records. |
+| [`idiolect-lens`][lens] | Resolves a published translation, loads its schemas, and applies it to record data. | Two data shapes need to interoperate. |
+| [`idiolect-migrate`][mig] | Classifies schema changes, proposes migrations, and translates individual records. | Existing data must move to a revised schema. |
+| [`idiolect-verify`][ver] | Runs round-trip, property, static, and coercion checks and emits verification records. | A consumer needs evidence that a translation satisfies a stated property. |
+| [`idiolect-indexer`][idx] | Reads an ATProto event stream, decodes selected record families, dispatches handlers, and persists cursors. | A service must keep local state synchronized with published records. |
+| [`idiolect-orchestrator`][orc] | Builds a searchable catalog of published records and serves read-only queries. | Clients need to discover communities, translations, evidence, releases, or migrations. |
+| [`idiolect-observer`][obs] | Aggregates event-stream activity into publishable observation records. | A community wants auditable measurements such as adoption or migration health. |
+| [`idiolect-identity`][id] | Resolves DIDs and locates the account's personal data server. | Code starts with an identity and needs to find its records. |
+| [`idiolect-oauth`][oauth] | Models and stores local authentication sessions used for record writes. | A client must authenticate to a personal data server without publishing credentials as records. |
 
 ## Architecture
 
@@ -119,22 +171,33 @@ Some runtime state must remain local. Firehose cursors and OAuth tokens use
 the same panproto schema machinery as federated records, but their
 `dev.idiolect.internal.*` namespace tells firehose consumers to skip them.
 
+## Choose an entry point
+
+- Use [Fieldwork](https://idiolect.dev/fieldwork/) for a browser interface
+  that reveals technical evidence progressively.
+- Use the [`idiolect` CLI](crates/idiolect-cli) for local files, Git review,
+  CI automation, and shell workflows.
+- Use the Rust crates or TypeScript package to build Idiolect into an appview,
+  community service, or client.
+
 ## Quickstart
 
 ```sh
-# CLI: resolve a DID and fetch a record.
+# Install the CLI from this checkout.
 cargo install --path crates/idiolect-cli
-idiolect resolve did:plc:example
-idiolect fetch at://did:plc:example/dev.idiolect.bounty/3l5
-
-# Talk to a local orchestrator.
-idiolect orchestrator stats
-idiolect orchestrator adapters --framework hasura
 
 # Start a portable community workspace.
 idiolect init --workspace neighborhood-archive \
   --name "Neighborhood Archive" --did did:plc:replace-me
 idiolect doctor --workspace neighborhood-archive
+
+# Resolve a public identity and fetch one of its records.
+idiolect resolve did:plc:example
+idiolect fetch at://did:plc:example/dev.idiolect.bounty/3l5
+
+# Query a local orchestrator catalog.
+idiolect orchestrator stats
+idiolect orchestrator adapters --framework hasura
 
 # TypeScript: validate incoming records at an appview boundary.
 bun add @idiolect-dev/schema
@@ -148,24 +211,6 @@ if (isRecord(NSID.encounter, payload)) {
   console.log(e.kind);
 }
 ```
-
-## Crates
-
-| Crate                          | What it is                                                                |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| [`idiolect-records`][recs]     | Serde record types mirroring the `dev.idiolect.*` lexicons. Generated.    |
-| [`idiolect-codegen`][cg]       | Lexicon-driven Rust + TypeScript emitter. Compares generated sources.     |
-| [`idiolect-lens`][lens]        | Resolve `PanprotoLens` records; run `apply_lens` / `apply_lens_put`.      |
-| [`idiolect-identity`][id]      | DID resolution (`did:plc` via plc.directory, `did:web` via well-known).   |
-| [`idiolect-indexer`][idx]      | Firehose consumer: `EventStream` + `RecordHandler` + `CursorStore`.       |
-| [`idiolect-oauth`][oauth]      | Panproto schema + store trait for atproto OAuth session state.            |
-| [`idiolect-observer`][obs]     | Fold encounter-family records into `dev.idiolect.observation` records.    |
-| [`idiolect-orchestrator`][orc] | Catalog + read-only HTTP query API over cataloged records.                |
-| [`idiolect-verify`][ver]       | Verification runners (`roundtrip-test`, `property-test`, `static-check`, `coercion-law`). |
-| [`idiolect-migrate`][mig]      | Schema diff (panproto-check) + lens-based record migration.               |
-| [`idiolect-community`][community] | Governed changes, signed releases, durable migrations, federation, and portable export. |
-| [`idiolect-cli`][cli]          | Command-line tool wrapping the library crates.                            |
-| [`@idiolect-dev/schema`][npm]  | TypeScript validators, types, and NSID constants (same lexicons).         |
 
 [recs]: crates/idiolect-records
 [cg]: crates/idiolect-codegen
@@ -191,11 +236,11 @@ with sigstore keyless. Container images for the daemons ship to
 [`docs/ci-cd.md`](docs/ci-cd.md) for artifact verification, and
 [`RELEASE.md`](RELEASE.md) for the release cadence.
 
-## Stack
+## Implementation stack
 
-- **Rust:** edition 2024, toolchain 1.95, resolver 3, cargo-nextest.
-- **TypeScript:** bun 1.2, biome 2.3, tsc 5.7.
-- **Monorepo:** moon for polyglot task orchestration and toolchain pinning.
+- **Rust:** runtime libraries, daemons, CLI, and code generation.
+- **TypeScript:** generated browser and server validators.
+- **Moon:** polyglot task orchestration and toolchain pinning.
 
 ## Getting started as a contributor
 
@@ -216,13 +261,6 @@ Before opening a PR, confirm `cargo fmt --all`, `cargo clippy --workspace
 --all-targets -- -D warnings`, `cargo test --workspace`, and `bun run lint
 && bun run typecheck && bun run test` all pass. CI runs the same commands
 plus a lexicon breaking-change gate against the PR's merge base.
-
-## Stability
-
-idiolect is pre-1.0. Minor releases may change Rust APIs, lexicon shapes,
-wire formats, daemon HTTP routes, or CLI surfaces. Pin an exact version if
-you depend on the project, and read [CHANGELOG.md](CHANGELOG.md) before
-upgrading.
 
 ## Contributing
 
