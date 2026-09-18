@@ -92,7 +92,7 @@ panproto-expr-parser = { git = "https://github.com/panproto/panproto.git", tag =
 panproto-parse = { git = "https://github.com/panproto/panproto.git", tag = "v0.74.4", default-features = false, features = ["lang-rust", "lang-typescript"] }
 
 anyhow = "1.0.100"
-base64 = "0.22"
+base64 = "0.23"
 p256 = { version = "0.13", features = ["ecdsa"] }
 rand = "0.8"
 sha2 = "0.10"
