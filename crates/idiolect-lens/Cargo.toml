@@ -81,7 +81,7 @@ reqwest            = { version = "0.12", optional = true, default-features = fal
 idiolect-identity  = { version = "0.13.0", path = "../idiolect-identity", optional = true }
 
 # DPoP ES256 proof construction. All optional; enabled via `dpop-p256`.
-p256   = { version = "0.13", optional = true, default-features = false, features = ["ecdsa", "pem", "std"] }
+p256   = { version = "0.14", optional = true, default-features = false, features = ["ecdsa", "pem", "std"] }
 sha2   = { version = "0.10", optional = true, default-features = false, features = ["std"] }
 base64 = { version = "0.22", optional = true, default-features = false, features = ["std"] }
 rand   = { version = "0.8", optional = true, default-features = false, features = ["std", "std_rng"] }
