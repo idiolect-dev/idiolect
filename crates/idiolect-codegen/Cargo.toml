@@ -46,7 +46,7 @@ thiserror   = { workspace = true }
 syn          = { version = "2", features = ["full", "extra-traits"] }
 quote        = "1"
 proc-macro2  = "1"
-prettyplease = "0.2"
+prettyplease = "0.3"
 
 # typescript emitter: oxc's arena-allocated ast plus its ast-to-source
 # printer. every declaration (interface, type alias, import, const,
