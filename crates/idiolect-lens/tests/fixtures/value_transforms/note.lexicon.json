@@ -1,0 +1,54 @@
+{
+  "lexicon": 1,
+  "id": "com.example.note",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "author": {
+            "type": "ref",
+            "ref": "#person"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "ref",
+              "ref": "#tag"
+            }
+          }
+        }
+      }
+    },
+    "person": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "rank": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

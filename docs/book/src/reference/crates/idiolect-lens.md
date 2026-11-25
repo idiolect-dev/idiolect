@@ -36,6 +36,23 @@ Shipped implementations:
 | `CachingResolver<R>` | TTL'd cache wrapping any `R: Resolver`. |
 | `VerifyingResolver<R, H>` | Re-hashes the bytes, refuses on mismatch. |
 
+### Lens bodies
+
+The `blob` of a lens record decodes into a `LensBody`:
+
+| Variant | Body |
+| --- | --- |
+| `Staged(StagedLens)` | Ordered `stages`, each a protolens chain with the value transforms that run with it. A body with `steps` and `field_transforms` but no `stages` is read as one stage. |
+| `Chain(ProtolensChain)` | Structural steps only. |
+| `Single(Box<Protolens>)` | One structural step. |
+
+The staged form is what panproto writes for a compiled lens document,
+including the `schema lens compile` artifact. Its `stages` are
+authoritative: a lens that only rewrites values has no structural step, so
+its `steps` list is empty. A body in another format, or one holding a
+symmetric document, is refused when it is decoded. Stages that panproto does
+not fuse into one lens are refused when the body is instantiated.
+
 ### Schema loaders
 
 `SchemaLoader` is also object-safe. Shipped implementations:

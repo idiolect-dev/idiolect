@@ -1,0 +1,235 @@
+{
+  "field_transforms": {
+    "com.example.note:body": [
+      {
+        "ApplyExpr": {
+          "coercion_class": "Iso",
+          "expr": {
+            "Match": {
+              "arms": [
+                [
+                  {
+                    "Lit": {
+                      "Bool": true
+                    }
+                  },
+                  {
+                    "Lit": {
+                      "Str": "new"
+                    }
+                  }
+                ],
+                [
+                  "Wildcard",
+                  {
+                    "Var": "kind"
+                  }
+                ]
+              ],
+              "scrutinee": {
+                "Builtin": [
+                  "Eq",
+                  [
+                    {
+                      "Var": "kind"
+                    },
+                    {
+                      "Lit": {
+                        "Str": "old"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "inverse": {
+            "Match": {
+              "arms": [
+                [
+                  {
+                    "Lit": {
+                      "Bool": true
+                    }
+                  },
+                  {
+                    "Lit": {
+                      "Str": "old"
+                    }
+                  }
+                ],
+                [
+                  "Wildcard",
+                  {
+                    "Var": "kind"
+                  }
+                ]
+              ],
+              "scrutinee": {
+                "Builtin": [
+                  "Eq",
+                  [
+                    {
+                      "Var": "kind"
+                    },
+                    {
+                      "Lit": {
+                        "Str": "new"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "key": "kind"
+        }
+      }
+    ]
+  },
+  "stages": [
+    {
+      "chain": {
+        "steps": [
+          {
+            "complement_constructor": "Empty",
+            "name": "rename_edge_label_kind",
+            "source": {
+              "name": "id",
+              "precondition": "Unconstrained",
+              "transform": "Identity"
+            },
+            "target": {
+              "name": "rename_edge_label_kind",
+              "precondition": "Unconstrained",
+              "transform": {
+                "RenameEdgeName": {
+                  "new_name": "kind",
+                  "old_name": "label",
+                  "src_sort": "com.example.note:body",
+                  "tgt_sort": "com.example.note:body.label"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "chain": {
+        "steps": []
+      },
+      "field_transforms": {
+        "com.example.note:body": [
+          {
+            "ApplyExpr": {
+              "coercion_class": "Iso",
+              "expr": {
+                "Match": {
+                  "arms": [
+                    [
+                      {
+                        "Lit": {
+                          "Bool": true
+                        }
+                      },
+                      {
+                        "Lit": {
+                          "Str": "new"
+                        }
+                      }
+                    ],
+                    [
+                      "Wildcard",
+                      {
+                        "Var": "kind"
+                      }
+                    ]
+                  ],
+                  "scrutinee": {
+                    "Builtin": [
+                      "Eq",
+                      [
+                        {
+                          "Var": "kind"
+                        },
+                        {
+                          "Lit": {
+                            "Str": "old"
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "inverse": {
+                "Match": {
+                  "arms": [
+                    [
+                      {
+                        "Lit": {
+                          "Bool": true
+                        }
+                      },
+                      {
+                        "Lit": {
+                          "Str": "old"
+                        }
+                      }
+                    ],
+                    [
+                      "Wildcard",
+                      {
+                        "Var": "kind"
+                      }
+                    ]
+                  ],
+                  "scrutinee": {
+                    "Builtin": [
+                      "Eq",
+                      [
+                        {
+                          "Var": "kind"
+                        },
+                        {
+                          "Lit": {
+                            "Str": "new"
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "key": "kind"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "complement_constructor": "Empty",
+      "name": "rename_edge_label_kind",
+      "source": {
+        "name": "id",
+        "precondition": "Unconstrained",
+        "transform": "Identity"
+      },
+      "target": {
+        "name": "rename_edge_label_kind",
+        "precondition": "Unconstrained",
+        "transform": {
+          "RenameEdgeName": {
+            "new_name": "kind",
+            "old_name": "label",
+            "src_sort": "com.example.note:body",
+            "tgt_sort": "com.example.note:body.label"
+          }
+        }
+      }
+    }
+  ]
+}
