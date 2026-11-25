@@ -60,6 +60,7 @@ idiolect-lens    = { version = "0.13.0", path = "../idiolect-lens" }
 # before dispatching to a graph-form observation method.
 panproto-schema = { workspace = true }
 panproto-inst   = { workspace = true }
+panproto-protocols = { workspace = true }
 
 serde      = { workspace = true }
 serde_json = { workspace = true }

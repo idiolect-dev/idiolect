@@ -1,0 +1,186 @@
+{
+  "field_transforms": {
+    "com.example.note:body": [
+      {
+        "ApplyExpr": {
+          "coercion_class": "Iso",
+          "expr": {
+            "Match": {
+              "arms": [
+                [
+                  {
+                    "Lit": {
+                      "Bool": true
+                    }
+                  },
+                  {
+                    "Lit": {
+                      "Str": "new"
+                    }
+                  }
+                ],
+                [
+                  "Wildcard",
+                  {
+                    "Var": "label"
+                  }
+                ]
+              ],
+              "scrutinee": {
+                "Builtin": [
+                  "Eq",
+                  [
+                    {
+                      "Var": "label"
+                    },
+                    {
+                      "Lit": {
+                        "Str": "old"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "inverse": {
+            "Match": {
+              "arms": [
+                [
+                  {
+                    "Lit": {
+                      "Bool": true
+                    }
+                  },
+                  {
+                    "Lit": {
+                      "Str": "old"
+                    }
+                  }
+                ],
+                [
+                  "Wildcard",
+                  {
+                    "Var": "label"
+                  }
+                ]
+              ],
+              "scrutinee": {
+                "Builtin": [
+                  "Eq",
+                  [
+                    {
+                      "Var": "label"
+                    },
+                    {
+                      "Lit": {
+                        "Str": "new"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "key": "label"
+        }
+      }
+    ]
+  },
+  "stages": [
+    {
+      "chain": {
+        "steps": []
+      },
+      "field_transforms": {
+        "com.example.note:body": [
+          {
+            "ApplyExpr": {
+              "coercion_class": "Iso",
+              "expr": {
+                "Match": {
+                  "arms": [
+                    [
+                      {
+                        "Lit": {
+                          "Bool": true
+                        }
+                      },
+                      {
+                        "Lit": {
+                          "Str": "new"
+                        }
+                      }
+                    ],
+                    [
+                      "Wildcard",
+                      {
+                        "Var": "label"
+                      }
+                    ]
+                  ],
+                  "scrutinee": {
+                    "Builtin": [
+                      "Eq",
+                      [
+                        {
+                          "Var": "label"
+                        },
+                        {
+                          "Lit": {
+                            "Str": "old"
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "inverse": {
+                "Match": {
+                  "arms": [
+                    [
+                      {
+                        "Lit": {
+                          "Bool": true
+                        }
+                      },
+                      {
+                        "Lit": {
+                          "Str": "old"
+                        }
+                      }
+                    ],
+                    [
+                      "Wildcard",
+                      {
+                        "Var": "label"
+                      }
+                    ]
+                  ],
+                  "scrutinee": {
+                    "Builtin": [
+                      "Eq",
+                      [
+                        {
+                          "Var": "label"
+                        },
+                        {
+                          "Lit": {
+                            "Str": "new"
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "key": "label"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "steps": []
+}

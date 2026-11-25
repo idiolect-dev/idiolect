@@ -13,9 +13,10 @@
 //! # Lens types supported
 //!
 //! The runtime decodes a `dev.panproto.schema.lens` blob into a
-//! [`LensBody`], which covers the two protolens-level shapes panproto
-//! serializes:
+//! [`LensBody`], which covers the shapes panproto serializes:
 //!
+//! - A staged lens: structural steps together with the value transforms
+//!   that run with them, as a compiled lens document carries them.
 //! - A single [`Protolens`] (one elementary step — `rename_sort`,
 //!   `add_sort`, etc.).
 //! - A [`ProtolensChain`] (a sequential pipeline of elementary steps,
@@ -37,10 +38,13 @@
 //!   [`SymmetricLens`] over a shared middle schema, then run either
 //!   leg.
 
+use std::collections::HashMap;
+
+use panproto_gat::Name;
 use panproto_inst::parse::{parse_json, to_json};
-use panproto_inst::{TreeEdit, WInstance};
+use panproto_inst::{BoundaryProtocols, FieldTransform, RestrictPlan, TreeEdit, WInstance};
 use panproto_lens::protolens::{Protolens, ProtolensChain};
-use panproto_lens::{Complement, EditLens, Lens, SymmetricLens};
+use panproto_lens::{Complement, EditLens, Lens, LensPath, SymmetricLens};
 use panproto_schema::{Protocol, Schema, primary_entry};
 use serde::{Deserialize, Serialize};
 
@@ -55,25 +59,137 @@ use crate::schema_loader::SchemaLoader;
 /// The schema-parameterized lens expression stored inside a
 /// `dev.panproto.schema.lens` record's `blob`.
 ///
-/// panproto serializes both single protolenses and protolens chains as
-/// plain json; they are structurally distinct (`Protolens` is a struct
-/// with `name`, `source`, `target`, `complement_constructor` fields;
-/// `ProtolensChain` is a struct with a `steps` field), so the
-/// `#[serde(untagged)]` dispatch is unambiguous.
+/// panproto writes a compiled lens as ordered `stages`, each pairing a
+/// [`ProtolensChain`] with its value transforms. `stages` is authoritative
+/// when present: a value rule has no structural step, so its `steps` list
+/// is empty. Older output carries `steps` and `field_transforms` alone,
+/// which is read as one stage. A body with no value transforms is a
+/// [`ProtolensChain`] or a single [`Protolens`].
+///
+/// A body this type cannot represent is refused when it is decoded, so a
+/// lens never runs without a part of itself.
 ///
 /// The `Single` variant is boxed because `Protolens` is substantially
-/// larger than `ProtolensChain` (which is only a `Vec`), and
-/// clippy's `large_enum_variant` rule would otherwise flag the size
-/// disparity.
+/// larger than the other variants, and clippy's `large_enum_variant` rule
+/// would otherwise flag the size disparity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(try_from = "serde_json::Value", untagged)]
 pub enum LensBody {
+    /// Structural steps with the value transforms that run with them.
+    Staged(StagedLens),
     /// A pipeline of elementary protolens steps, as emitted by
     /// `panproto_lens::auto_generate` or user-composed via
     /// [`ProtolensChain::new`].
     Chain(ProtolensChain),
     /// A single elementary protolens step.
     Single(Box<Protolens>),
+}
+
+/// A compiled lens as its ordered stages.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StagedLens {
+    /// The stages, in forward execution order.
+    pub stages: Vec<LensStage>,
+}
+
+/// One stage of a [`StagedLens`].
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LensStage {
+    /// The structural steps of the stage.
+    pub chain: ProtolensChain,
+    /// The stage's value transforms, keyed by the vertex whose fields they
+    /// read and write.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub field_transforms: HashMap<Name, Vec<FieldTransform>>,
+}
+
+/// Format tag of the artifact `schema lens compile` writes.
+const COMPILED_LENS_FORMAT: &str = "panproto-compiled-lens-v1";
+
+impl TryFrom<serde_json::Value> for LensBody {
+    type Error = String;
+
+    fn try_from(value: serde_json::Value) -> Result<Self, Self::Error> {
+        fn present(value: Option<&serde_json::Value>) -> bool {
+            match value {
+                None | Some(serde_json::Value::Null) => false,
+                Some(serde_json::Value::Array(items)) => !items.is_empty(),
+                Some(serde_json::Value::Object(members)) => !members.is_empty(),
+                Some(_) => true,
+            }
+        }
+        fn decode<T: serde::de::DeserializeOwned>(value: serde_json::Value) -> Result<T, String> {
+            serde_json::from_value(value).map_err(|e| e.to_string())
+        }
+
+        if let Some(format) = value.get("format").filter(|v| !v.is_null())
+            && format != COMPILED_LENS_FORMAT
+        {
+            return Err(format!("unknown compiled lens format {format}"));
+        }
+        if present(value.get("symmetric")) {
+            return Err("a symmetric lens document is not an asymmetric lens body".to_owned());
+        }
+        if present(value.get("stages")) {
+            return decode(value).map(Self::Staged);
+        }
+        // The compiled artifact names its structural summary `chain`; a
+        // serialized chain holds `steps` itself.
+        let chain = value.get("chain").unwrap_or(&value).clone();
+        if present(value.get("field_transforms")) {
+            return Ok(Self::Staged(StagedLens {
+                stages: vec![LensStage {
+                    chain: decode(chain)?,
+                    field_transforms: decode(value["field_transforms"].clone())?,
+                }],
+            }));
+        }
+        if chain.get("steps").is_some() {
+            return decode(chain).map(Self::Chain);
+        }
+        decode(value).map(Self::Single)
+    }
+}
+
+impl StagedLens {
+    /// Instantiate each stage at the schema the previous one produces and
+    /// compose them, as panproto's lens-document compiler does.
+    fn instantiate(&self, schema: &Schema, protocol: &Protocol) -> Result<Lens, LensError> {
+        let instantiate = |e: panproto_lens::LensError| LensError::Instantiate(e.to_string());
+        let mut path: Option<LensPath> = None;
+        for stage in &self.stages {
+            let running = path.as_ref().map_or(schema, LensPath::tgt_schema);
+            let mut lens = stage
+                .chain
+                .instantiate(running, protocol)
+                .map_err(instantiate)?;
+            for (anchor, transforms) in &stage.field_transforms {
+                lens.compiled
+                    .field_transforms
+                    .entry(anchor.clone())
+                    .or_default()
+                    .extend(transforms.iter().cloned());
+            }
+            RestrictPlan::compile_with_protocols(
+                &lens.src_schema,
+                &lens.tgt_schema,
+                &lens.compiled,
+                BoundaryProtocols {
+                    src: protocol,
+                    tgt: protocol,
+                },
+            )
+            .map_err(|e| LensError::Instantiate(e.to_string()))?;
+            let stage_path = LensPath::single(lens);
+            path = Some(match path {
+                Some(so_far) => so_far.then(&stage_path).map_err(instantiate)?,
+                None => stage_path,
+            });
+        }
+        path.unwrap_or_else(|| LensPath::identity(schema))
+            .into_single()
+            .map_err(instantiate)
+    }
 }
 
 impl LensBody {
@@ -83,9 +199,12 @@ impl LensBody {
     /// # Errors
     ///
     /// Returns [`LensError::Instantiate`] if any step's theory
-    /// transform cannot be applied at the given schema.
+    /// transform cannot be applied at the given schema, if a value
+    /// transform writes a field the target schema does not declare, or if
+    /// the stages do not fuse into one lens.
     pub fn instantiate(&self, schema: &Schema, protocol: &Protocol) -> Result<Lens, LensError> {
         match self {
+            Self::Staged(staged) => staged.instantiate(schema, protocol),
             Self::Chain(chain) => chain
                 .instantiate(schema, protocol)
                 .map_err(|e| LensError::Instantiate(e.to_string())),
@@ -279,7 +398,8 @@ where
     let (view, complement) = panproto_lens::get(&lens, &src_instance)
         .map_err(|e| LensError::Translate(e.to_string()))?;
 
-    let target_record = to_json(&tgt_schema, &view);
+    let target_record =
+        to_json(&tgt_schema, &view).map_err(|e| LensError::Translate(e.to_string()))?;
 
     Ok(ApplyLensOutput {
         target_record,
@@ -324,13 +444,20 @@ where
 
     // parse the target view against the target schema.
     let target_root = pick_root(&tgt_schema, input.target_root_vertex.as_deref())?;
-    let view = parse_json(&tgt_schema, &target_root, &input.target_record)
+    let view = parse_json(&tgt_schema, protocol, &target_root, &input.target_record)
         .map_err(|e| LensError::InstanceParse(e.to_string()))?;
+
+    // Reading json numbers the nodes afresh, and the complement refers to
+    // nodes by the ids `get` gave them.
+    let view = panproto_lens::align_view_to_complement(&lens, &view, &input.complement)
+        .map_err(|e| LensError::Translate(e.to_string()))?;
+    let view = panproto_lens::fold_computed_children_into_fields(&lens, &view, &input.complement);
 
     let reconstructed = panproto_lens::put(&lens, &view, &input.complement)
         .map_err(|e| LensError::Translate(e.to_string()))?;
 
-    let source_record = to_json(&lens.src_schema, &reconstructed);
+    let source_record = to_json(&lens.src_schema, &reconstructed)
+        .map_err(|e| LensError::Translate(e.to_string()))?;
 
     Ok(ApplyLensPutOutput { source_record })
 }
@@ -497,7 +624,7 @@ where
     match input.direction {
         SymmetricDirection::LeftToRight => {
             let root = pick_root(&left_tgt, input.input_root_vertex.as_deref())?;
-            let left_view = parse_json(&left_tgt, &root, &input.record)
+            let left_view = parse_json(&left_tgt, protocol, &root, &input.record)
                 .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
             // Step one inverts the left leg into the span's shared
@@ -511,12 +638,13 @@ where
                 .map_err(|e| LensError::Translate(e.to_string()))?;
 
             Ok(ApplyLensSymmetricOutput {
-                record: to_json(&right_tgt, &right_view),
+                record: to_json(&right_tgt, &right_view)
+                    .map_err(|e| LensError::Translate(e.to_string()))?,
             })
         }
         SymmetricDirection::RightToLeft => {
             let root = pick_root(&right_tgt, input.input_root_vertex.as_deref())?;
-            let right_view = parse_json(&right_tgt, &root, &input.record)
+            let right_view = parse_json(&right_tgt, protocol, &root, &input.record)
                 .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
             let middle_instance = panproto_lens::put_without_complement(&sym.right, &right_view)
@@ -525,7 +653,8 @@ where
                 .map_err(|e| LensError::Translate(e.to_string()))?;
 
             Ok(ApplyLensSymmetricOutput {
-                record: to_json(&left_tgt, &left_view),
+                record: to_json(&left_tgt, &left_view)
+                    .map_err(|e| LensError::Translate(e.to_string()))?,
             })
         }
     }
@@ -563,7 +692,7 @@ where
     let lens = body.instantiate(&src_schema, protocol)?;
 
     let source_root = pick_root(&lens.src_schema, source_root_vertex)?;
-    let src_instance = parse_json(&lens.src_schema, &source_root, source_record)
+    let src_instance = parse_json(&lens.src_schema, protocol, &source_root, source_record)
         .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
     Ok((lens, src_schema, tgt_schema, src_instance))

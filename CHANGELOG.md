@@ -11,6 +11,31 @@ if you depend on this project, and read this file before bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Panproto pins now target v0.78.0 across the workspace, the standalone
+  tutorial crate, the documentation, and vendored-Lexicon provenance. The
+  vendored Lexicons are unchanged. Reading and writing record JSON now
+  follow Panproto's protocol-aware `parse_json` and fallible `to_json`.
+- **Breaking.** The minimum Rust version moves from 1.95 to 1.97, which
+  Panproto v0.78.0 requires. CI, the release workflow, and the Docker
+  builders move with it.
+- **Breaking.** `LensBody` gains a `Staged` variant, and a body it cannot
+  represent is refused when it is decoded. A lens whose stages do not fuse
+  into one is refused with `LensError::Instantiate`.
+- **Breaking.** `apply_lens_put` aligns the JSON view to the complement, so
+  it refuses a complement that records no view positions. Run `apply_lens`
+  again to obtain one that does.
+
+### Fixed
+
+- `apply_lens` and `apply_lens_put` run the value transforms a published lens
+  carries. They were dropped, so a lens whose only rule rewrote a value was
+  applied as the identity
+  ([#117](https://github.com/idiolect-dev/idiolect/issues/117)).
+- `apply_lens_put` restores the fields a lens drops when its view has been
+  read back from JSON.
+
 ## [0.13.0] - 2026-09-18
 
 ### Added

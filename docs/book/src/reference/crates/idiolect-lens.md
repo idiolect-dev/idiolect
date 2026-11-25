@@ -8,7 +8,7 @@
 
 Resolve `dev.panproto.schema.lens` [records](../../glossary.md#record)
 and run `apply_lens`. The crate connects idiolect's record runtime to
-panproto 0.74.4's lens runtime.
+panproto 0.78.0's lens runtime.
 
 Because the crate is `publish = false`, downstream consumers
 depend on it via a git or path reference rather than a
@@ -36,6 +36,23 @@ Shipped implementations:
 | `CachingResolver<R>` | TTL'd cache wrapping any `R: Resolver`. |
 | `VerifyingResolver<R, H>` | Re-hashes the bytes, refuses on mismatch. |
 
+### Lens bodies
+
+The `blob` of a lens record decodes into a `LensBody`:
+
+| Variant | Body |
+| --- | --- |
+| `Staged(StagedLens)` | Ordered `stages`, each a protolens chain with the value transforms that run with it. A body with `steps` and `field_transforms` but no `stages` is read as one stage. |
+| `Chain(ProtolensChain)` | Structural steps only. |
+| `Single(Box<Protolens>)` | One structural step. |
+
+The staged form is what panproto writes for a compiled lens document,
+including the `schema lens compile` artifact. Its `stages` are
+authoritative: a lens that only rewrites values has no structural step, so
+its `steps` list is empty. A body in another format, or one holding a
+symmetric document, is refused when it is decoded. Stages that panproto does
+not fuse into one lens are refused when the body is instantiated.
+
 ### Schema loaders
 
 `SchemaLoader` is also object-safe. Shipped implementations:
@@ -51,7 +68,7 @@ The runtime shipped under `idiolect_lens::runtime`:
 - `apply_lens_get_edit` / `apply_lens_put_edit` — edit-based
   variants for incremental translation.
 - `apply_lens_symmetric` pairs two state-based lenses that share a
-  middle schema. This view-only helper calls panproto 0.74.4's
+  middle schema. This view-only helper calls panproto 0.78.0's
   `put_without_complement`, so the incoming span leg must be an
   isomorphism. A lossy incoming leg requires complement state from an
   earlier `get` and direct use of panproto's lower-level

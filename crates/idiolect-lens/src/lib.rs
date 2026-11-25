@@ -104,9 +104,9 @@ pub use resolver::{
 };
 pub use runtime::{
     ApplyLensEditInput, ApplyLensEditOutput, ApplyLensInput, ApplyLensOutput, ApplyLensPutInput,
-    ApplyLensPutOutput, ApplyLensSymmetricInput, ApplyLensSymmetricOutput, LensBody,
-    SymmetricDirection, apply_lens, apply_lens_get_edit, apply_lens_put, apply_lens_put_edit,
-    apply_lens_symmetric,
+    ApplyLensPutOutput, ApplyLensSymmetricInput, ApplyLensSymmetricOutput, LensBody, LensStage,
+    StagedLens, SymmetricDirection, apply_lens, apply_lens_get_edit, apply_lens_put,
+    apply_lens_put_edit, apply_lens_symmetric,
 };
 pub use schema_loader::{
     FilesystemSchemaLoader, InMemorySchemaLoader, PdsSchemaLoader, SchemaLoader,

@@ -2129,7 +2129,7 @@ mod validation_tests {
                     if relation == "parent_of" && a == "alice" && b == "bob"
             ),
             "got {:?}",
-            &v[0]
+            v[0]
         );
     }
 

@@ -25,6 +25,7 @@ use idiolect_records::generated::dev::idiolect::observation::{
 };
 use panproto_inst::WInstance;
 use panproto_inst::parse::parse_json;
+use panproto_protocols::web_document::atproto;
 use panproto_schema::Schema;
 
 use crate::error::{ObserverError, ObserverResult};
@@ -233,7 +234,7 @@ where
                 event.collection,
             ))
         })?;
-        let instance = parse_json(&schema, &root, &body).map_err(|e| {
+        let instance = parse_json(&schema, &atproto::protocol(), &root, &body).map_err(|e| {
             ObserverError::Method(format!(
                 "instance-method adapter: parse_json({}): {e}",
                 event.collection,

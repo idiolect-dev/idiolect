@@ -1,7 +1,7 @@
 name: lexicon-evolution
 
 # Produce compatibility and optic-classification evidence whenever an
-# idiolect-owned Lexicon changes. The gate uses Panproto's released v0.74.4
+# idiolect-owned Lexicon changes. The gate uses Panproto's released v0.78.0
 # commands; authored-chain verification and publication remain explicit
 # follow-up steps for changes that need them.
 
@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 env:
-  PANPROTO_VERSION: "0.74.4"
+  PANPROTO_VERSION: "0.78.0"
 
 jobs:
   evolve:
