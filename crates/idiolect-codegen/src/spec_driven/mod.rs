@@ -47,7 +47,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use panproto_inst::parse::parse_json;
-use panproto_protocols::web_document::atproto::parse_lexicon;
+use panproto_protocols::web_document::atproto::{self, parse_lexicon};
 use panproto_schema::Schema;
 use proc_macro2::TokenStream;
 use quote::{TokenStreamExt, quote};
@@ -94,7 +94,7 @@ pub fn validate_spec_through_panproto(
             lexicon_path.display()
         )
     })?;
-    parse_json(&schema, root, &spec_for_validation).with_context(|| {
+    parse_json(&schema, &atproto::protocol(), root, &spec_for_validation).with_context(|| {
         format!(
             "spec {} failed structural validation against {}",
             spec_path.display(),

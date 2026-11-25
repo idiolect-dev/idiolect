@@ -279,7 +279,8 @@ where
     let (view, complement) = panproto_lens::get(&lens, &src_instance)
         .map_err(|e| LensError::Translate(e.to_string()))?;
 
-    let target_record = to_json(&tgt_schema, &view);
+    let target_record = to_json(&tgt_schema, &view)
+        .map_err(|e| LensError::Translate(e.to_string()))?;
 
     Ok(ApplyLensOutput {
         target_record,
@@ -324,13 +325,14 @@ where
 
     // parse the target view against the target schema.
     let target_root = pick_root(&tgt_schema, input.target_root_vertex.as_deref())?;
-    let view = parse_json(&tgt_schema, &target_root, &input.target_record)
+    let view = parse_json(&tgt_schema, protocol, &target_root, &input.target_record)
         .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
     let reconstructed = panproto_lens::put(&lens, &view, &input.complement)
         .map_err(|e| LensError::Translate(e.to_string()))?;
 
-    let source_record = to_json(&lens.src_schema, &reconstructed);
+    let source_record = to_json(&lens.src_schema, &reconstructed)
+        .map_err(|e| LensError::Translate(e.to_string()))?;
 
     Ok(ApplyLensPutOutput { source_record })
 }
@@ -497,7 +499,7 @@ where
     match input.direction {
         SymmetricDirection::LeftToRight => {
             let root = pick_root(&left_tgt, input.input_root_vertex.as_deref())?;
-            let left_view = parse_json(&left_tgt, &root, &input.record)
+            let left_view = parse_json(&left_tgt, protocol, &root, &input.record)
                 .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
             // Step one inverts the left leg into the span's shared
@@ -511,12 +513,13 @@ where
                 .map_err(|e| LensError::Translate(e.to_string()))?;
 
             Ok(ApplyLensSymmetricOutput {
-                record: to_json(&right_tgt, &right_view),
+                record: to_json(&right_tgt, &right_view)
+        .map_err(|e| LensError::Translate(e.to_string()))?,
             })
         }
         SymmetricDirection::RightToLeft => {
             let root = pick_root(&right_tgt, input.input_root_vertex.as_deref())?;
-            let right_view = parse_json(&right_tgt, &root, &input.record)
+            let right_view = parse_json(&right_tgt, protocol, &root, &input.record)
                 .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
             let middle_instance = panproto_lens::put_without_complement(&sym.right, &right_view)
@@ -525,7 +528,8 @@ where
                 .map_err(|e| LensError::Translate(e.to_string()))?;
 
             Ok(ApplyLensSymmetricOutput {
-                record: to_json(&left_tgt, &left_view),
+                record: to_json(&left_tgt, &left_view)
+        .map_err(|e| LensError::Translate(e.to_string()))?,
             })
         }
     }
@@ -563,7 +567,7 @@ where
     let lens = body.instantiate(&src_schema, protocol)?;
 
     let source_root = pick_root(&lens.src_schema, source_root_vertex)?;
-    let src_instance = parse_json(&lens.src_schema, &source_root, source_record)
+    let src_instance = parse_json(&lens.src_schema, protocol, &source_root, source_record)
         .map_err(|e| LensError::InstanceParse(e.to_string()))?;
 
     Ok((lens, src_schema, tgt_schema, src_instance))

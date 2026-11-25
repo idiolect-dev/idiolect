@@ -1,7 +1,7 @@
 # Install the CLI and fetch a lens
 
 This chapter gets you from a fresh checkout to a live idiolect record in about
-five minutes. You need Git, Rust 1.95 or later, and a network connection. You do
+five minutes. You need Git, Rust 1.97 or later, and a network connection. You do
 not need an ATProto account.
 
 ## Install from the checkout

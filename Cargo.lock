@@ -407,6 +407,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "ciborium"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
+dependencies = [
+ "ciborium-io",
+ "ciborium-ll",
+ "serde",
+]
+
+[[package]]
+name = "ciborium-io"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
+
+[[package]]
+name = "ciborium-ll"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
+dependencies = [
+ "ciborium-io",
+ "half",
+]
+
+[[package]]
 name = "cid"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -540,6 +567,12 @@ name = "crossbeam-utils"
 version = "0.8.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6"
+
+[[package]]
+name = "crunchy"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "crypto-bigint"
@@ -996,6 +1029,17 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "half"
+version = "2.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b"
+dependencies = [
+ "cfg-if",
+ "crunchy",
+ "zerocopy",
 ]
 
 [[package]]
@@ -2253,13 +2297,11 @@ dependencies = [
 
 [[package]]
 name = "panproto-check"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "memchr",
  "panproto-gat",
- "panproto-lens",
- "panproto-mig",
  "panproto-schema",
  "rustc-hash",
  "serde",
@@ -2269,8 +2311,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-expr"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -2279,8 +2321,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-expr-parser"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "chumsky",
  "logos",
@@ -2289,8 +2331,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-gat"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "miette",
  "panproto-expr",
@@ -2301,8 +2343,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-grammars"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "cc",
  "serde",
@@ -2313,24 +2355,28 @@ dependencies = [
 
 [[package]]
 name = "panproto-inst"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
- "bumpalo",
+ "blake3",
+ "ciborium",
  "panproto-expr",
  "panproto-gat",
  "panproto-schema",
+ "regex",
+ "rmp-serde",
  "rustc-hash",
  "serde",
  "serde_json",
  "smallvec 2.0.0-alpha.13",
  "thiserror 2.0.20",
+ "unicode-segmentation",
 ]
 
 [[package]]
 name = "panproto-lens"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "panproto-expr",
  "panproto-gat",
@@ -2346,8 +2392,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-mig"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -2362,8 +2408,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-parse"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "memchr",
  "miette",
@@ -2383,8 +2429,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-protocols"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -2400,8 +2446,8 @@ dependencies = [
 
 [[package]]
 name = "panproto-schema"
-version = "0.74.4"
-source = "git+https://github.com/panproto/panproto.git?tag=v0.74.4#869adad52114fdef6d7a0c2e0d6526bec43d84c2"
+version = "0.78.0"
+source = "git+https://github.com/panproto/panproto.git?tag=v0.78.0#af3d4f1f935af70da8deab04665bb35d685d12f1"
 dependencies = [
  "blake3",
  "panproto-expr",
@@ -2868,6 +2914,25 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "rmp"
+version = "0.8.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "1.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72f81bee8c8ef9b577d1681a70ebbc962c232461e397b22c208c43c04b67a155"
+dependencies = [
+ "rmp",
+ "serde",
 ]
 
 [[package]]

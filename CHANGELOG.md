@@ -11,6 +11,16 @@ if you depend on this project, and read this file before bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Panproto pins now target v0.78.0 across the workspace, the standalone
+  tutorial crate, the documentation, and vendored-Lexicon provenance. The
+  vendored Lexicons are unchanged. Reading and writing record JSON now
+  follow Panproto's protocol-aware `parse_json` and fallible `to_json`.
+- **Breaking.** The minimum Rust version moves from 1.95 to 1.97, which
+  Panproto v0.78.0 requires. CI, the release workflow, and the Docker
+  builders move with it.
+
 ## [0.13.0] - 2026-09-18
 
 ### Added

@@ -16,7 +16,7 @@ in a shell script and CI workflow. It does not yet enforce the entire chain.
 returns `OnlyNonBreaking`: old records remain readable under the new schema, so
 the library does not manufacture a migration plan.
 
-If breaking changes exist, `plan_auto` asks panproto 0.74.4's `auto_generate`
+If breaking changes exist, `plan_auto` asks panproto 0.78.0's `auto_generate`
 for a `ProtolensChain`. Its default `Balanced` configuration uses the exact
 valued-CSP optimizer and requires a total morphism. Success returns a
 `MigrationPlan` containing the source and target schema identifiers supplied by
@@ -53,7 +53,7 @@ those policy records is created by `plan_auto`.
 
 ## Optic kinds are not governance classes
 
-panproto 0.74.4 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
+panproto 0.78.0 classifies transforms as `Iso`, `Lens`, `Prism`, `Affine`, or
 `Traversal`. Earlier versions of this chapter described a different five-way
 set, `Iso`/`Injection`/`Projection`/`Affine`/`General`, and assigned automatic
 merge policy to it. That set is not the current `OpticKind` API.
@@ -67,7 +67,7 @@ presented as classifications returned by panproto.
 
 The repository contains `scripts/lexicon-evolve.sh` and
 `.github/workflows/lexicon-evolution.yml` implement the first part of the EEC
-against panproto 0.74.4. The workflow installs the versioned CLI artifact,
+against panproto 0.78.0. The workflow installs the versioned CLI artifact,
 materializes the base revision of each changed Lexicon, and retains two forms
 of evidence: the JSON result of `schema compat` and the textual result of
 `schema diff --optic-kind`. The gate admits `iso` and `prism`, requires review

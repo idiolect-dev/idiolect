@@ -35,7 +35,7 @@ for path in "$OLD_PATH" "$NEW_PATH"; do
 done
 
 if ! command -v schema >/dev/null 2>&1; then
-  echo "Panproto 'schema' CLI not on PATH; install Panproto v0.74.4" >&2
+  echo "Panproto 'schema' CLI not on PATH; install Panproto v0.78.0" >&2
   exit 1
 fi
 
@@ -82,7 +82,7 @@ case "$COMPAT_EXIT" in
     ;;
 esac
 
-# Panproto v0.74.4 parses the manifest-backed ATProto projects through `diff`
+# Panproto v0.78.0 parses the manifest-backed ATProto projects through `diff`
 # and auto-classifies their generated migration. Chain serialization is a
 # separate authoring step because the released CLI's file-path `--lens --save`
 # route is not yet wired to the same project loader.
